@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Size
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.SessionCapacityValidation
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.SessionDateRangeValidation
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.SessionTimeSlotValidation
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
 
 data class UpdateSessionTemplateDto(
   @Schema(description = "Name for Session template", example = "Monday Xmas", required = true)
@@ -44,4 +45,7 @@ data class UpdateSessionTemplateDto(
 
   @Schema(description = "list of group references for allowed prisoner incentive levels", required = false)
   val incentiveLevelGroupReferences: List<String>? = null,
+
+  @Schema(description = "Session template user clients.", required = false)
+  val clients: List<UserClientDto>? = null,
 )

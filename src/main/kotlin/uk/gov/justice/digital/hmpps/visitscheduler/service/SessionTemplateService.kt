@@ -11,6 +11,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTempl
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTemplateRangeType.CURRENT_OR_FUTURE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTemplateRangeType.HISTORIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ExcludeDateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
@@ -36,6 +38,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundExcepti
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VSiPValidationException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplateUserClient
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionPrisonerCategory
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.SessionIncentiveLevelGroup
@@ -46,6 +49,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionCategoryGro
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionIncentiveLevelGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionLocationGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateUserClientRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateComparator
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateMapper
@@ -62,6 +66,7 @@ class SessionTemplateService(
   private val sessionLocationGroupRepository: SessionLocationGroupRepository,
   private val sessionCategoryGroupRepository: SessionCategoryGroupRepository,
   private val sessionIncentiveLevelGroupRepository: SessionIncentiveLevelGroupRepository,
+  private val sessionTemplateUserClientRepository: SessionTemplateUserClientRepository,
   private val visitRepository: VisitRepository,
   private val prisonsService: PrisonsService,
   private val updateSessionTemplateValidator: UpdateSessionTemplateValidator,
@@ -164,6 +169,7 @@ class SessionTemplateService(
       visitType = VisitType.SOCIAL,
       active = false,
       includeLocationGroupType = createSessionTemplateDto.includeLocationGroupType,
+
     )
 
     createSessionTemplateDto.categoryGroupReferences?.let {
@@ -179,6 +185,9 @@ class SessionTemplateService(
     }
 
     val sessionTemplateEntitySave = sessionTemplateRepository.saveAndFlush(sessionTemplateEntity)
+
+    val clients = createSessionTemplateDto.clients.map { SessionTemplateUserClient(sessionTemplateId = sessionTemplateEntitySave.id, sessionTemplate = sessionTemplateEntitySave, userType = it.userType, active = it.active) }
+    sessionTemplateEntitySave.clients.addAll(clients)
 
     return SessionTemplateDto(
       sessionTemplateEntitySave,
@@ -233,6 +242,23 @@ class SessionTemplateService(
     updateSessionTemplateDto.incentiveLevelGroupReferences?.let {
       updatedSessionTemplateEntity.permittedSessionIncentiveLevelGroups.clear()
       it.toSet().forEach { ref -> updatedSessionTemplateEntity.permittedSessionIncentiveLevelGroups.add(this.getIncentiveLevelGroupByReference(ref)) }
+    }
+
+    updateSessionTemplateDto.clients?.let {
+      updatedSessionTemplateEntity.clients.clear()
+      sessionTemplateRepository.saveAndFlush(updatedSessionTemplateEntity)
+      it.toSet().forEach { userClient ->
+        updatedSessionTemplateEntity.clients.add(
+          SessionTemplateUserClient(
+            sessionTemplate = updatedSessionTemplateEntity,
+            sessionTemplateId = updatedSessionTemplateEntity.id,
+            userType = userClient.userType,
+            active = userClient.active,
+          ),
+        )
+      }
+
+      sessionTemplateRepository.saveAndFlush(updatedSessionTemplateEntity)
     }
     return SessionTemplateDto(updatedSessionTemplateEntity)
   }
@@ -569,6 +595,34 @@ class SessionTemplateService(
     // ensure the prison is enabled
     val sessionTemplate = getSessionTemplate(sessionTemplateReference)
     return excludeDateService.getExcludeDates(sessionTemplate.excludeDates)
+  }
+
+  @Transactional
+  fun activateSessionTemplateClient(sessionTemplateReference: String, type: UserType): UserClientDto = createOrUpdateSessionTemplateClient(sessionTemplateReference, type, true)
+
+  @Transactional
+  fun deActivateSessionTemplateClient(sessionTemplateReference: String, type: UserType): UserClientDto = createOrUpdateSessionTemplateClient(sessionTemplateReference, type, false)
+
+  private fun createOrUpdateSessionTemplateClient(
+    sessionTemplateReference: String,
+    userType: UserType,
+    active: Boolean,
+  ): UserClientDto {
+    val sessionTemplateUserClient: SessionTemplateUserClient
+    if (sessionTemplateUserClientRepository.doesSessionTemplateClientExist(sessionTemplateReference, userType)) {
+      sessionTemplateUserClient = sessionTemplateUserClientRepository.getSessionTemplateClient(sessionTemplateReference, userType)
+      sessionTemplateUserClient.active = active
+    } else {
+      val sessionTemplate = getSessionTemplate(sessionTemplateReference)
+      sessionTemplateUserClient = SessionTemplateUserClient(
+        sessionTemplate = sessionTemplate,
+        sessionTemplateId = sessionTemplate.id,
+        userType = userType,
+        active = active,
+      )
+      sessionTemplate.clients.add(sessionTemplateUserClient)
+    }
+    return UserClientDto(sessionTemplateUserClient.userType, sessionTemplateUserClient.active)
   }
 }
 

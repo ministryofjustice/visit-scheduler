@@ -25,6 +25,8 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ValidationErrorResponse
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.MoveVisitsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.RequestSessionTemplateVisitStatsDto
@@ -42,6 +44,8 @@ const val REFERENCE_SESSION_TEMPLATE_PATH: String = "$SESSION_TEMPLATE_PATH/{ref
 const val SESSION_TEMPLATE_VISIT_STATS: String = "$SESSION_TEMPLATE_PATH/{reference}/stats"
 const val ACTIVATE_SESSION_TEMPLATE: String = "$SESSION_TEMPLATE_PATH/{reference}/activate"
 const val DEACTIVATE_SESSION_TEMPLATE: String = "$SESSION_TEMPLATE_PATH/{reference}/deactivate"
+const val ACTIVATE_SESSION_TEMPLATE_CLIENT: String = "$REFERENCE_SESSION_TEMPLATE_PATH/client/{type}/activate"
+const val DEACTIVATE_SESSION_TEMPLATE_CLIENT: String = "$REFERENCE_SESSION_TEMPLATE_PATH/client/{type}/deactivate"
 
 enum class SessionTemplateRangeType {
   CURRENT_OR_FUTURE,
@@ -457,4 +461,76 @@ class SessionTemplateAdminController(
     @RequestBody @Valid
     moveVisitsDto: MoveVisitsDto,
   ): Int = sessionTemplateService.moveSessionTemplateVisits(moveVisitsDto.fromSessionTemplateReference, moveVisitsDto.toSessionTemplateReference, moveVisitsDto.fromDate)
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
+  @PutMapping(ACTIVATE_SESSION_TEMPLATE_CLIENT)
+  @Operation(
+    summary = "Activate session template client using given session template reference and client type",
+    description = "Activate a session template for a user client type",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "session template client activated",
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to activate prison client",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "session template cannot be found to activate session template client",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun activateSessionTemplateForClient(
+    @Schema(description = "session template reference", example = "aaa-bbb-ccc", required = true)
+    @PathVariable
+    reference: String,
+    @Schema(description = "type", example = "STAFF", required = true)
+    @PathVariable
+    type: UserType,
+  ): UserClientDto = sessionTemplateService.activateSessionTemplateClient(reference, type)
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
+  @PutMapping(DEACTIVATE_SESSION_TEMPLATE_CLIENT)
+  @Operation(
+    summary = "Deactivate session template client using given session template reference and client type",
+    description = "Deactivate a session template for a user client type",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "session template client deactivated",
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to activate prison client",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "session template cannot be found to deactivate session template client",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun deActivateSessionTemplateClient(
+    @Schema(description = "session template reference", example = "aaa-bbb-ccc", required = true)
+    @PathVariable
+    reference: String,
+    @Schema(description = "type", example = "STAFF", required = true)
+    @PathVariable
+    type: UserType,
+  ): UserClientDto = sessionTemplateService.deActivateSessionTemplateClient(reference, type)
 }
