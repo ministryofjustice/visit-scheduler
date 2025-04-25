@@ -1,5 +1,5 @@
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "8.0.0"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "8.1.0"
   kotlin("plugin.spring") version "2.1.20"
   kotlin("plugin.jpa") version "2.1.20"
   idea
@@ -57,7 +57,7 @@ dependencies {
   testImplementation("org.springframework.security:spring-security-test")
   testImplementation("org.testcontainers:postgresql:1.21.0")
   testImplementation("com.amazonaws:aws-java-sdk-s3:1.12.782")
-  testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.3")
+  testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.19.0")
   testImplementation("org.junit-pioneer:junit-pioneer:2.3.0")
 }
 
