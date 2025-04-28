@@ -9,6 +9,7 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
 import org.mockito.kotlin.whenever
+import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonerContactRegistryClient
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonAssociationDomainEventType.NON_ASSOCIATION_CREATED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OtherPrisonerDetails
@@ -26,6 +27,7 @@ class VisitNotificationEventServiceTest {
   private val visitNotificationFlaggingService = mock<VisitNotificationFlaggingService>()
   private val visitNotificationEventRepository = mock<VisitNotificationEventRepository>()
   private val prisonerService = mock<PrisonerService>()
+  private val prisonerContactRegistryClient = mock<PrisonerContactRegistryClient>()
   private val pairedNotificationEventsUtil = mock<PairedNotificationEventsUtil>()
 
   private lateinit var visitNotificationEventService: VisitNotificationEventService
@@ -36,7 +38,7 @@ class VisitNotificationEventServiceTest {
 
   @BeforeEach
   fun beforeEachTestSetup() {
-    visitNotificationEventService = VisitNotificationEventService(visitService, visitNotificationEventRepository, prisonerService, visitNotificationFlaggingService, pairedNotificationEventsUtil)
+    visitNotificationEventService = VisitNotificationEventService(visitService, visitNotificationEventRepository, prisonerService, visitNotificationFlaggingService, pairedNotificationEventsUtil, prisonerContactRegistryClient)
 
     whenever(prisonerService.getPrisoner(primaryNonAssociationNumber)).thenReturn(
       PrisonerDto(
