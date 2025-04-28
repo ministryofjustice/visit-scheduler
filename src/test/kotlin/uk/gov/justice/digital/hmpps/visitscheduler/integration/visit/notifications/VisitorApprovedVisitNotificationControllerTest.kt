@@ -308,27 +308,4 @@ class VisitorApprovedVisitNotificationControllerTest : NotificationTestBase() {
     verify(prisonerContactRegistryClientSpy, times(1)).getPrisonersSocialContacts(prisonerId, withAddress = false, approvedVisitorsOnly = true)
     verify(telemetryClient, times(0)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
   }
-
-  // TODO - fix this
-/*
-  @Test
-  fun `when visitor is re-approved but prisoner in different prison then no call is made to prisoner contact registry`() {
-    // Given
-    val prisonCodeOther = "XYZ"
-    val notificationDto = VisitorApprovedUnapprovedNotificationDto(visitorId = visitorId, prisonerNumber = prisonerId)
-    prisonerContactRegistryMockServer.stubGetPrisonerContacts(prisonerId, withAddress = false, approvedVisitorsOnly = true, null, HttpStatus.INTERNAL_SERVER_ERROR)
-    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCodeOther)
-    whenever(prisonerService.getPrisonerPrisonCodeFromPrisonId(prisonerId)).thenReturn(prisonCodeOther)
-
-    // When
-    val responseSpec = callNotifyVSiPThatVisitorApproved(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
-
-    // Then
-    responseSpec.expectStatus().isOk
-    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
-    assertThat(visitNotifications).hasSize(0)
-
-    verify(prisonerContactRegistryClientSpy, times(0)).getPrisonersSocialContacts(prisonerId, withAddress = false, approvedVisitorsOnly = true)
-    verify(telemetryClient, times(0)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
-  }*/
 }
