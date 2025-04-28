@@ -89,8 +89,8 @@ class SessionTemplateSQLGenerator {
 
   enum class GroupType(val type: String, val file: String, val columnSize: Int) {
     LOCATION("location", "session-location-data.csv", SessionLocationColumnNames.entries.size),
-    PRISONER_CATEGORY("prisoner-category", "session-prisoner-category-data.csv", SessionPrisonerCategoryColumnNames.values().size),
-    PRISONER_INCENTIVE_LEVEL("prisoner-incentive-level", "session-prisoner-incentive-data.csv", SessionPrisonerCategoryColumnNames.values().size),
+    PRISONER_CATEGORY("prisoner-category", "session-prisoner-category-data.csv", SessionPrisonerCategoryColumnNames.entries.size),
+    PRISONER_INCENTIVE_LEVEL("prisoner-incentive-level", "session-prisoner-incentive-data.csv", SessionPrisonerCategoryColumnNames.entries.size),
   }
 
   companion object {
@@ -103,7 +103,7 @@ class SessionTemplateSQLGenerator {
       .setSkipHeaderRecord(true)
       .setHeader()
       .setIgnoreHeaderCase(true)
-      .build()
+      .get()
 
     fun toList(value: String? = null): List<String> {
       val values = value?.uppercase()?.split(DELIMITER)?.toSet() ?: run { listOf() }
@@ -161,7 +161,7 @@ class SessionTemplateSQLGenerator {
     val records: Iterable<CSVRecord> = CVS_FORMAT.parse(FileReader(csvFile))
     val prisonTemplateRecords = ArrayList<SessionTemplateColumns>()
     for (record in records) {
-      if (record.size() != SessionColumnNames.values().size) {
+      if (record.size() != SessionColumnNames.entries.size) {
         throw IllegalArgumentException("Some session columns are missing line number: ${record.recordNumber}, expected ${SessionColumnNames.entries.size} but got ${record.size()} ${record.toList()}")
       }
       val sessionTemplateColumn = SessionTemplateColumns(record)
@@ -176,7 +176,7 @@ class SessionTemplateSQLGenerator {
     return CVS_FORMAT.parse(reader)
   }
 
-  fun getSessionGroupColumns(groupType: GroupType, csvFile: File): List<GroupColumns> {
+  private fun getSessionGroupColumns(groupType: GroupType, csvFile: File): List<GroupColumns> {
     val records = getCsvRecords(csvFile)
     val groupColumns = ArrayList<GroupColumns>()
 
@@ -197,13 +197,13 @@ class SessionTemplateSQLGenerator {
     GroupType.PRISONER_INCENTIVE_LEVEL -> PrisonerIncentiveLevelGroupsColumns(csvRecord)
   }
 
-  fun validateGroupColumns(groupColumns: List<GroupColumns>) {
+  private fun validateGroupColumns(groupColumns: List<GroupColumns>) {
     groupColumns.forEach {
       it.validate()
     }
   }
 
-  fun getSessionItems(groupColumnsList: List<GroupColumns>): List<SessionItem> {
+  private fun getSessionItems(groupColumnsList: List<GroupColumns>): List<SessionItem> {
     val sessionItems = ArrayList<SessionItem>()
     groupColumnsList.forEach {
       sessionItems.addAll(it.createItemList())
@@ -337,10 +337,10 @@ class SessionTemplateSQLGenerator {
   class LocationGroupsColumns(
     override var prisonCode: String,
     override val key: String,
-    val levelOne: List<String> = listOf(),
-    val levelTwo: List<String> = listOf(),
-    val levelThree: List<String> = listOf(),
-    val levelFour: List<String> = listOf(),
+    private val levelOne: List<String> = listOf(),
+    private val levelTwo: List<String> = listOf(),
+    private val levelThree: List<String> = listOf(),
+    private val levelFour: List<String> = listOf(),
     override val name: String? = null,
   ) : GroupColumns(prisonCode, key, name) {
     constructor(sessionRecord: CSVRecord) : this(
@@ -354,12 +354,12 @@ class SessionTemplateSQLGenerator {
     )
 
     override fun validate() {
-      val childHasMoreThanOneParent = BiPredicate<List<String>, List<String>> { parentLevel, childlevel ->
-        parentLevel.size > 1 && childlevel.isNotEmpty()
+      val childHasMoreThanOneParent = BiPredicate<List<String>, List<String>> { parentLevel, childLevel ->
+        parentLevel.size > 1 && childLevel.isNotEmpty()
       }
 
-      val childCantHaveEmptyParent = BiPredicate<List<String>, List<String>> { parentLevel, childlevel ->
-        parentLevel.isEmpty() && childlevel.isNotEmpty()
+      val childCantHaveEmptyParent = BiPredicate<List<String>, List<String>> { parentLevel, childLevel ->
+        parentLevel.isEmpty() && childLevel.isNotEmpty()
       }
 
       with(this) {
