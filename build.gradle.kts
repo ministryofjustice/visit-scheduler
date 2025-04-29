@@ -35,8 +35,8 @@ dependencies {
   implementation("org.springdoc:springdoc-openapi-starter-common:2.8.6")
 
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-  implementation("net.javacrumbs.shedlock:shedlock-spring:6.4.0")
-  implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:6.4.0")
+  implementation("net.javacrumbs.shedlock:shedlock-spring:6.5.0")
+  implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:6.5.0")
   implementation("org.apache.commons:commons-csv:1.14.0")
   implementation("org.freemarker:freemarker:2.3.34")
 
