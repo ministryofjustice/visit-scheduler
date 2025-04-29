@@ -16,7 +16,7 @@ class PrisonerContactRegistryMockServer : WireMockServer(8095) {
     httpStatus: HttpStatus = HttpStatus.NOT_FOUND,
   ) {
     stubFor(
-      get("/prisoners/$prisonerId/contacts/social?${getContactsQueryParams(withAddress, approvedVisitorsOnly)}")
+      get("/v2/prisoners/$prisonerId/contacts/social?${getContactsQueryParams(withAddress, approvedVisitorsOnly)}")
         .willReturn(
           if (contactsList == null) {
             aResponse()

@@ -26,8 +26,8 @@ class PrisonerContactRegistryClient(
     withAddress: Boolean,
     approvedVisitorsOnly: Boolean,
   ): List<PrisonerContactDto>? {
-    val uri = "/prisoners/$prisonerId/contacts/social"
-    return getPrisonersSocialContactsAsMono(prisonerId, withAddress, approvedVisitorsOnly)
+    val uri = "/v2/prisoners/$prisonerId/contacts/social"
+    return getPrisonersSocialContactsAsMono(prisonerId, withAddress = withAddress, approvedVisitorsOnly = approvedVisitorsOnly)
       .onErrorResume { e ->
         if (!isNotFoundError(e)) {
           LOG.error("getPrisonersSocialContacts Failed for get request $uri")
@@ -45,9 +45,9 @@ class PrisonerContactRegistryClient(
     withAddress: Boolean,
     approvedVisitorsOnly: Boolean,
   ): Mono<List<PrisonerContactDto>> {
-    val uri = "/prisoners/$prisonerId/contacts/social"
+    val uri = "/v2/prisoners/$prisonerId/contacts/social"
     return webClient.get().uri(uri) {
-      getSocialContactsUriBuilder(withAddress, approvedVisitorsOnly, it).build()
+      getSocialContactsUriBuilder(withAddress = withAddress, approvedVisitorsOnly = approvedVisitorsOnly, uriBuilder = it).build()
     }
       .retrieve()
       .bodyToMono<List<PrisonerContactDto>>()
