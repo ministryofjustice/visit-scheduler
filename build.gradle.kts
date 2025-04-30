@@ -23,7 +23,7 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-security")
   implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
   implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
-  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:5.4.2")
+  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:5.4.4")
 
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8")
@@ -35,8 +35,8 @@ dependencies {
   implementation("org.springdoc:springdoc-openapi-starter-common:2.8.6")
 
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-  implementation("net.javacrumbs.shedlock:shedlock-spring:6.4.0")
-  implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:6.4.0")
+  implementation("net.javacrumbs.shedlock:shedlock-spring:6.5.0")
+  implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:6.5.0")
   implementation("org.apache.commons:commons-csv:1.14.0")
   implementation("org.freemarker:freemarker:2.3.34")
 
