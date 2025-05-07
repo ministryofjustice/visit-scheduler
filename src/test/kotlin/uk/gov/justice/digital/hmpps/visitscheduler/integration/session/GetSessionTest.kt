@@ -105,7 +105,7 @@ class GetSessionTest : IntegrationTestBase() {
     testSessionSlotRepository.save(SessionSlot(sessionTemplate.reference, prison.id, sessionDate, sessionDate.atTime(9, 0), sessionDate.atTime(10, 0)))
 
     visitEntityHelper.create(visitStatus = BOOKED, slotDate = sessionDate, sessionTemplate = sessionTemplate, visitContact = ContactDto("Jane Doe", "01111111111", "email@example.com"), visitRestriction = VisitRestriction.OPEN)
-    applicationEntityHelper.create(slotDate = sessionDate, sessionTemplate = sessionTemplate, reservedSlot = true, completed = false, applicationStatus = IN_PROGRESS, visitRestriction = VisitRestriction.OPEN)
+    applicationEntityHelper.create(slotDate = sessionDate, sessionTemplate = sessionTemplate, reservedSlot = true, applicationStatus = IN_PROGRESS, visitRestriction = VisitRestriction.OPEN)
 
     // When
     val responseSpec = callGetVisitSession(prisonCode, sessionDate, sessionTemplate.reference)

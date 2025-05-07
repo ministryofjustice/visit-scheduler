@@ -52,7 +52,7 @@ open class DataBaseTest(
     visitEntityHelper.createSupport(visit = visitWithApplication, description = "Some Text")
     visitWithApplication = visitEntityHelper.save(visitWithApplication)
 
-    applicationWithVisit = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplateDefault, reservedSlot = true, completed = true, applicationStatus = ACCEPTED)
+    applicationWithVisit = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplateDefault, reservedSlot = true, applicationStatus = ACCEPTED)
     applicationEntityHelper.createContact(application = applicationWithVisit, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = applicationWithVisit, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = applicationWithVisit, description = "Some Text")
@@ -69,7 +69,7 @@ open class DataBaseTest(
     sessionTemplateDefault.permittedSessionLocationGroups.add(sessionGroup2)
     sessionTemplateDefault = testTemplateRepository.saveAndFlush(sessionTemplateDefault)
 
-    inCompleteApplication = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplateDefault, reservedSlot = true, completed = false, applicationStatus = IN_PROGRESS)
+    inCompleteApplication = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplateDefault, reservedSlot = true, applicationStatus = IN_PROGRESS)
     applicationEntityHelper.createContact(application = inCompleteApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = inCompleteApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = inCompleteApplication, description = "Some Text")

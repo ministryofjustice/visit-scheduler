@@ -152,7 +152,7 @@ class ReserveSlotTest : IntegrationTestBase() {
     val sessionRestriction = SessionRestriction.get(visitRestriction)
 
     val sessionTemplate = sessionTemplateEntityHelper.create(openCapacity = 1, closedCapacity = 1)
-    val application = createApplicationAndSave(sessionTemplate = sessionTemplate, completed = false, applicationStatus = IN_PROGRESS, reservedSlot = true, visitRestriction = visitRestriction)
+    val application = createApplicationAndSave(sessionTemplate = sessionTemplate, applicationStatus = IN_PROGRESS, reservedSlot = true, visitRestriction = visitRestriction)
     val reserveVisitSlotDto = createReserveVisitSlotDto(
       prisonerId = application.prisonerId,
       sessionTemplate = sessionTemplate,

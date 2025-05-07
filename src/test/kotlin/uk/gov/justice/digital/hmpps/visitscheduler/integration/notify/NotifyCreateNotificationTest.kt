@@ -35,7 +35,7 @@ class NotifyCreateNotificationTest : IntegrationTestBase() {
   @Test
   fun `when notify create notification called and no other notification for notification id exists an entry is created`() {
     // Given
-    val application = createApplicationAndSave(completed = true, applicationStatus = ACCEPTED)
+    val application = createApplicationAndSave(applicationStatus = ACCEPTED)
     val visit = createVisitAndSave(VisitStatus.BOOKED, application)
     val eventAudit = eventAuditEntityHelper.create(
       reference = visit.reference,
@@ -67,7 +67,7 @@ class NotifyCreateNotificationTest : IntegrationTestBase() {
   @Test
   fun `when notify create notification called and notification already exists for notification id exists no new entry is created`() {
     // Given
-    val application = createApplicationAndSave(completed = true, applicationStatus = ACCEPTED)
+    val application = createApplicationAndSave(applicationStatus = ACCEPTED)
     val visit = createVisitAndSave(VisitStatus.BOOKED, application)
     val eventAudit = eventAuditEntityHelper.create(
       reference = visit.reference,

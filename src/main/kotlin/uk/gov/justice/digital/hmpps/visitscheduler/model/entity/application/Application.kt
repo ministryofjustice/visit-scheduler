@@ -65,10 +65,6 @@ class Application(
   @Column(name = "user_type", nullable = false)
   val userType: UserType,
 
-  @Deprecated(message = "Replaced with applicationStatus")
-  @Column(nullable = false)
-  var completed: Boolean = false,
-
   @Column(nullable = false)
   val createdBy: String,
 

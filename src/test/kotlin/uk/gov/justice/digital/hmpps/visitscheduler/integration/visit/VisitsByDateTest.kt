@@ -74,7 +74,7 @@ class VisitsByDateTest : IntegrationTestBase() {
   }
 
   private fun createApplication(sessionTemplate: SessionTemplate, prisonerId: String, slotDate: LocalDate): Application {
-    var application = applicationEntityHelper.create(sessionTemplate = sessionTemplate, prisonerId = prisonerId, completed = false, applicationStatus = IN_PROGRESS, slotDate = slotDate)
+    var application = applicationEntityHelper.create(sessionTemplate = sessionTemplate, prisonerId = prisonerId, applicationStatus = IN_PROGRESS, slotDate = slotDate)
     applicationEntityHelper.createContact(application = application, name = "Jane Doe", phone = "01234 098765", "email@example.com")
     applicationEntityHelper.createVisitor(application = application, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = application, description = "Some Text")

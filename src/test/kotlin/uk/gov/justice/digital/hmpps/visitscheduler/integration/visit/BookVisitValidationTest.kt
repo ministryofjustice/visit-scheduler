@@ -50,7 +50,6 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonerId = prisonerId,
       prisonCode = prisonCode,
       sessionTemplate = sessionTemplateDefault,
-      completed = false,
       applicationStatus = IN_PROGRESS,
       userType = UserType.PUBLIC,
     )
@@ -64,7 +63,6 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonerId = prisonerId,
       prisonCode = prisonCode,
       sessionTemplate = sessionTemplateDefault,
-      completed = false,
       applicationStatus = IN_PROGRESS,
       userType = UserType.STAFF,
     )
@@ -133,7 +131,6 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonerId = prisonerId,
       prisonCode = prisonCode,
       sessionTemplate = sessionTemplate,
-      completed = false,
       applicationStatus = IN_PROGRESS,
       userType = UserType.PUBLIC,
     )
@@ -169,7 +166,6 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonerId = prisonerId,
       prisonCode = prisonCode,
       sessionTemplate = sessionTemplate,
-      completed = false,
       applicationStatus = IN_PROGRESS,
       userType = UserType.PUBLIC,
     )
@@ -202,7 +198,6 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonerId = prisonerId,
       prisonCode = prisonCode,
       sessionTemplate = sessionTemplate,
-      completed = false,
       applicationStatus = IN_PROGRESS,
       userType = UserType.PUBLIC,
     )
@@ -239,7 +234,6 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonerId = prisonerId,
       prisonCode = prisonCode,
       sessionTemplate = sessionTemplate,
-      completed = false,
       applicationStatus = IN_PROGRESS,
       userType = UserType.PUBLIC,
     )
@@ -275,7 +269,6 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonerId = prisonerId,
       prisonCode = prisonCode,
       sessionTemplate = sessionTemplate,
-      completed = false,
       applicationStatus = IN_PROGRESS,
       userType = UserType.PUBLIC,
     )
@@ -313,7 +306,6 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonerId = prisonerId,
       prisonCode = prisonCode,
       sessionTemplate = sessionTemplate,
-      completed = false,
       applicationStatus = IN_PROGRESS,
       userType = UserType.PUBLIC,
     )
@@ -403,7 +395,6 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonerId = nonAssociationPrisonerId,
       prisonCode = prisonCode,
       sessionTemplate = sessionTemplateDefault,
-      completed = false,
       applicationStatus = IN_PROGRESS,
       userType = UserType.PUBLIC,
     )
@@ -428,7 +419,6 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonerId = nonAssociationPrisonerId,
       prisonCode = prisonCode,
       sessionTemplate = sessionTemplateDefault,
-      completed = false,
       applicationStatus = IN_PROGRESS,
       userType = UserType.STAFF,
     )
@@ -606,7 +596,6 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonerId = prisonerId,
       prisonCode = prisonCode,
       sessionTemplate = sessionTemplateDefault,
-      completed = false,
       applicationStatus = IN_PROGRESS,
       userType = UserType.PUBLIC,
     )
@@ -632,7 +621,6 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonerId = prisonerId,
       prisonCode = prisonCode,
       sessionTemplate = sessionTemplateDefault,
-      completed = false,
       applicationStatus = IN_PROGRESS,
       userType = UserType.STAFF,
     )
@@ -662,7 +650,6 @@ class BookVisitValidationTest : IntegrationTestBase() {
     visit = visitEntityHelper.save(visit)
 
     var updateVisitApplication = applicationEntityHelper.create(visit)
-    updateVisitApplication.completed = false
     updateVisitApplication.applicationStatus = IN_PROGRESS
     updateVisitApplication.visitId = visit.id
 
@@ -708,7 +695,6 @@ class BookVisitValidationTest : IntegrationTestBase() {
     updateVisitApplication.visitId = visit1.id
     // update visit to change application slot to existing slot
     updateVisitApplication.sessionSlotId = visit2.sessionSlotId
-    updateVisitApplication.completed = false
     updateVisitApplication.applicationStatus = IN_PROGRESS
     updateVisitApplication = applicationEntityHelper.save(updateVisitApplication)
 
@@ -844,7 +830,6 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonerId = prisonerId,
       prisonCode = prisonCode,
       sessionTemplate = sessionTemplate,
-      completed = false,
       applicationStatus = IN_PROGRESS,
       userType = UserType.PUBLIC,
     )
@@ -886,7 +871,6 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonerId = prisonerId,
       prisonCode = prisonCode,
       sessionTemplate = sessionTemplate,
-      completed = false,
       applicationStatus = IN_PROGRESS,
       userType = UserType.PUBLIC,
     )
@@ -929,7 +913,6 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonerId = prisonerId,
       prisonCode = prisonCode,
       sessionTemplate = sessionTemplate,
-      completed = false,
       applicationStatus = IN_PROGRESS,
       userType = UserType.PUBLIC,
     )
@@ -969,7 +952,6 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonerId = prisonerId,
       prisonCode = prisonCode,
       sessionTemplate = sessionTemplate,
-      completed = false,
       applicationStatus = IN_PROGRESS,
       userType = UserType.PUBLIC,
       visitRestriction = VisitRestriction.CLOSED,

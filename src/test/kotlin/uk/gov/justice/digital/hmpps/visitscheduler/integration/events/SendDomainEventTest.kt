@@ -68,7 +68,7 @@ class SendDomainEventTest : IntegrationTestBase() {
     @Test
     fun `send visit booked event on update`() {
       // Given
-      val applicationEntity = createApplicationAndSave(completed = false, applicationStatus = IN_PROGRESS)
+      val applicationEntity = createApplicationAndSave(applicationStatus = IN_PROGRESS)
       eventAuditEntityHelper.create(applicationEntity)
 
       val applicationReference = applicationEntity.reference
@@ -125,7 +125,7 @@ class SendDomainEventTest : IntegrationTestBase() {
     @Test
     fun `send visit cancelled event`() {
       // Given
-      val applicationEntity = createApplicationAndSave(completed = true, applicationStatus = ACCEPTED)
+      val applicationEntity = createApplicationAndSave(applicationStatus = ACCEPTED)
       val visitEntity = createVisitAndSave(BOOKED, applicationEntity)
       val reference = visitEntity.reference
       val authHeader = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))

@@ -42,7 +42,6 @@ class ApplicationEntityHelper(
       restriction = visit.visitRestriction,
       createdBy = "",
       reservedSlot = true,
-      completed = true,
       userType = STAFF,
       applicationStatus = ACCEPTED,
     )
@@ -58,7 +57,6 @@ class ApplicationEntityHelper(
         restriction = visit.visitRestriction,
         createdBy = "",
         reservedSlot = true,
-        completed = false,
         userType = STAFF,
         applicationStatus = IN_PROGRESS,
       )
@@ -89,7 +87,6 @@ class ApplicationEntityHelper(
     prisonCode: String? = sessionTemplate.prison.code,
     visitType: VisitType = sessionTemplate.visitType,
     reservedSlot: Boolean = true,
-    completed: Boolean = true,
     userType: UserType = STAFF,
     createdBy: String = "",
     applicationStatus: ApplicationStatus,
@@ -112,7 +109,6 @@ class ApplicationEntityHelper(
         restriction = visitRestriction,
         createdBy = createdBy,
         reservedSlot = reservedSlot,
-        completed = completed,
         userType = userType,
         applicationStatus = applicationStatus,
       ),
@@ -129,7 +125,6 @@ class ApplicationEntityHelper(
     prisonCode: String?,
     visitType: VisitType = VisitType.SOCIAL,
     reservedSlot: Boolean = true,
-    completed: Boolean = true,
     applicationStatus: ApplicationStatus = ACCEPTED,
   ): Application {
     val prison = prisonEntityHelper.create(prisonCode ?: "MDI", activePrison)
@@ -146,7 +141,6 @@ class ApplicationEntityHelper(
         restriction = visitRestriction,
         createdBy = "",
         reservedSlot = reservedSlot,
-        completed = completed,
         userType = STAFF,
         applicationStatus = applicationStatus,
       ),

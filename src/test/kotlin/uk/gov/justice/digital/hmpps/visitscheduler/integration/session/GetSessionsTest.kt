@@ -1090,7 +1090,6 @@ class GetSessionsTest : IntegrationTestBase() {
       visitType = SOCIAL,
       visitRestriction = OPEN,
       sessionTemplate = sessionTemplate,
-      completed = false,
       applicationStatus = IN_PROGRESS,
       reservedSlot = true,
     )
@@ -1105,7 +1104,6 @@ class GetSessionsTest : IntegrationTestBase() {
       visitType = SOCIAL,
       visitRestriction = OPEN,
       sessionTemplate = sessionTemplate,
-      completed = false,
       applicationStatus = IN_PROGRESS,
       reservedSlot = false,
     )
@@ -1220,7 +1218,6 @@ class GetSessionsTest : IntegrationTestBase() {
       visitType = SOCIAL,
       visitRestriction = CLOSED,
       sessionTemplate = sessionTemplate,
-      completed = true,
       applicationStatus = ACCEPTED,
       reservedSlot = false,
     )
@@ -1235,7 +1232,6 @@ class GetSessionsTest : IntegrationTestBase() {
       visitType = SOCIAL,
       visitRestriction = CLOSED,
       sessionTemplate = sessionTemplate,
-      completed = true,
       applicationStatus = ACCEPTED,
       reservedSlot = true,
     )
@@ -1249,7 +1245,6 @@ class GetSessionsTest : IntegrationTestBase() {
       visitType = SOCIAL,
       visitRestriction = CLOSED,
       sessionTemplate = sessionTemplate,
-      completed = false,
       applicationStatus = IN_PROGRESS,
       reservedSlot = true,
     )
@@ -1327,7 +1322,6 @@ class GetSessionsTest : IntegrationTestBase() {
       visitType = SOCIAL,
       visitRestriction = CLOSED,
       sessionTemplate = sessionTemplate,
-      completed = false,
       applicationStatus = IN_PROGRESS,
       reservedSlot = true,
     )
@@ -1341,7 +1335,6 @@ class GetSessionsTest : IntegrationTestBase() {
       visitType = SOCIAL,
       visitRestriction = CLOSED,
       sessionTemplate = sessionTemplate,
-      completed = true,
       applicationStatus = ACCEPTED,
       reservedSlot = true,
     )
@@ -1355,7 +1348,6 @@ class GetSessionsTest : IntegrationTestBase() {
       visitType = SOCIAL,
       visitRestriction = CLOSED,
       sessionTemplate = sessionTemplate,
-      completed = true,
       applicationStatus = ACCEPTED,
       reservedSlot = false,
     )
@@ -1546,7 +1538,6 @@ class GetSessionsTest : IntegrationTestBase() {
       visitRestriction = OPEN,
       sessionTemplate = sessionTemplate,
       reservedSlot = true,
-      completed = false,
       applicationStatus = IN_PROGRESS,
     )
 
@@ -1560,7 +1551,6 @@ class GetSessionsTest : IntegrationTestBase() {
       visitRestriction = OPEN,
       sessionTemplate = sessionTemplate,
       reservedSlot = true,
-      completed = false,
       applicationStatus = IN_PROGRESS,
     )
 
@@ -1918,7 +1908,6 @@ class GetSessionsTest : IntegrationTestBase() {
       visitRestriction = OPEN,
       sessionTemplate = sessionTemplate1,
       reservedSlot = true,
-      completed = false,
       applicationStatus = IN_PROGRESS,
     )
 
@@ -2046,7 +2035,6 @@ class GetSessionsTest : IntegrationTestBase() {
       visitType = SOCIAL,
       visitRestriction = OPEN,
       sessionTemplate = sessionTemplate1,
-      completed = true,
       applicationStatus = ACCEPTED,
     )
 

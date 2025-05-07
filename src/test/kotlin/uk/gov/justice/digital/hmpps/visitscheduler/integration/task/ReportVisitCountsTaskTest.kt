@@ -90,7 +90,7 @@ class ReportVisitCountsTaskTest : IntegrationTestBase() {
     // visit 4 against sessionTemplate6Prison1, CLOSED and BOOKED - included in closedBookedCount
     visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplate6Prison1, slotDate = reportDate, visitRestriction = VisitRestriction.CLOSED)
     // visit 5 against sessionTemplate6Prison1, OPEN and RESERVED - not included in counts
-    applicationEntityHelper.create(prisonCode = prison1.code, sessionTemplate = sessionTemplate6Prison1, slotDate = reportDate, completed = true, applicationStatus = ACCEPTED)
+    applicationEntityHelper.create(prisonCode = prison1.code, sessionTemplate = sessionTemplate6Prison1, slotDate = reportDate, applicationStatus = ACCEPTED)
     // visit 6 against sessionTemplate6Prison1, OPEN and CANCELLED - included in openCancelledCount
     visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.CANCELLED, sessionTemplate = sessionTemplate6Prison1, slotDate = reportDate, outcomeStatus = OutcomeStatus.ADMINISTRATIVE_CANCELLATION)
     // visit 7 against sessionTemplate6Prison1, OPEN and CANCELLED but SUPERSEDED_CANCELLATION - included in closedBookedCount as outcomeStatus does not matter anymore
