@@ -18,6 +18,7 @@ import jakarta.persistence.PostPersist
 import jakarta.persistence.Table
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
@@ -64,11 +65,16 @@ class Application(
   @Column(name = "user_type", nullable = false)
   val userType: UserType,
 
+  @Deprecated(message = "Replaced with applicationStatus")
   @Column(nullable = false)
   var completed: Boolean = false,
 
   @Column(nullable = false)
   val createdBy: String,
+
+  @Column(nullable = false)
+  @Enumerated(EnumType.STRING)
+  var applicationStatus: ApplicationStatus,
 
 ) : AbstractIdEntity() {
 

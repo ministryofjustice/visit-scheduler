@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.ACCEPTED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.IN_PROGRESS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
@@ -138,6 +140,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       slotDate = nextAllowedDay,
       sessionTemplate = sessionTemplate1,
       completed = false,
+      applicationStatus = IN_PROGRESS,
       reservedSlot = true,
       visitRestriction = VisitRestriction.OPEN,
     )
@@ -175,6 +178,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       slotDate = nextAllowedDay,
       sessionTemplate = sessionTemplate1,
       completed = false,
+      applicationStatus = IN_PROGRESS,
       reservedSlot = true,
       visitRestriction = VisitRestriction.OPEN,
     )
@@ -213,6 +217,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       slotDate = nextAllowedDay,
       sessionTemplate = sessionTemplate1,
       completed = false,
+      applicationStatus = IN_PROGRESS,
       reservedSlot = true,
       visitRestriction = VisitRestriction.OPEN,
     )
@@ -249,6 +254,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       slotDate = nextAllowedDay,
       sessionTemplate = sessionTemplate1,
       completed = false,
+      applicationStatus = IN_PROGRESS,
       reservedSlot = true,
       visitRestriction = VisitRestriction.CLOSED,
     )
@@ -287,6 +293,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       slotDate = nextAllowedDay,
       sessionTemplate = sessionTemplate1,
       completed = false,
+      applicationStatus = IN_PROGRESS,
       reservedSlot = true,
       visitRestriction = VisitRestriction.CLOSED,
     )
@@ -325,6 +332,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       slotDate = nextAllowedDay,
       sessionTemplate = sessionTemplate1,
       completed = false,
+      applicationStatus = IN_PROGRESS,
       reservedSlot = true,
       visitRestriction = VisitRestriction.CLOSED,
     )
@@ -428,6 +436,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       visitRestriction = VisitRestriction.CLOSED,
       slotDate = nextAllowedDay,
       completed = false,
+      applicationStatus = IN_PROGRESS,
     )
 
     // When
@@ -486,6 +495,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       visitRestriction = VisitRestriction.CLOSED,
       slotDate = nextAllowedDay,
       completed = false,
+      applicationStatus = IN_PROGRESS,
       createdBy = "username",
     )
 
@@ -495,6 +505,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       visitRestriction = VisitRestriction.CLOSED,
       slotDate = nextAllowedDay,
       completed = false,
+      applicationStatus = IN_PROGRESS,
       createdBy = "username",
     )
 
@@ -556,6 +567,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       visitRestriction = VisitRestriction.CLOSED,
       slotDate = nextAllowedDay,
       completed = false,
+      applicationStatus = IN_PROGRESS,
     )
 
     // When
@@ -793,6 +805,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       slotDate = nextAllowedDay,
       visitRestriction = VisitRestriction.CLOSED,
       completed = false,
+      applicationStatus = IN_PROGRESS,
     )
 
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(
@@ -1633,6 +1646,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       visitRestriction = VisitRestriction.OPEN,
       sessionTemplate = sessionTemplate,
       completed = false,
+      applicationStatus = IN_PROGRESS,
       reservedSlot = true,
     )
 
@@ -1647,6 +1661,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       visitRestriction = VisitRestriction.OPEN,
       sessionTemplate = sessionTemplate,
       completed = false,
+      applicationStatus = IN_PROGRESS,
       reservedSlot = false,
     )
 
@@ -1716,6 +1731,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       visitRestriction = VisitRestriction.OPEN,
       sessionTemplate = sessionTemplate,
       reservedSlot = false,
+      applicationStatus = ACCEPTED,
     )
 
     this.applicationEntityHelper.create(
@@ -1728,6 +1744,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       visitRestriction = VisitRestriction.CLOSED,
       sessionTemplate = sessionTemplate,
       reservedSlot = false,
+      applicationStatus = ACCEPTED,
     )
 
     // When
@@ -1771,6 +1788,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       visitRestriction = VisitRestriction.CLOSED,
       sessionTemplate = sessionTemplate,
       completed = true,
+      applicationStatus = ACCEPTED,
       reservedSlot = false,
     )
 
@@ -1785,6 +1803,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       visitRestriction = VisitRestriction.CLOSED,
       sessionTemplate = sessionTemplate,
       completed = true,
+      applicationStatus = ACCEPTED,
       reservedSlot = true,
     )
 
@@ -1798,6 +1817,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       visitRestriction = VisitRestriction.CLOSED,
       sessionTemplate = sessionTemplate,
       completed = false,
+      applicationStatus = IN_PROGRESS,
       reservedSlot = true,
     )
 
@@ -1881,6 +1901,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       visitRestriction = VisitRestriction.CLOSED,
       sessionTemplate = sessionTemplate,
       completed = false,
+      applicationStatus = IN_PROGRESS,
       reservedSlot = true,
     )
 
@@ -1894,6 +1915,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       visitRestriction = VisitRestriction.CLOSED,
       sessionTemplate = sessionTemplate,
       completed = true,
+      applicationStatus = ACCEPTED,
       reservedSlot = true,
     )
 
@@ -1907,6 +1929,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       visitRestriction = VisitRestriction.CLOSED,
       sessionTemplate = sessionTemplate,
       completed = true,
+      applicationStatus = ACCEPTED,
       reservedSlot = false,
     )
 
@@ -2105,6 +2128,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       sessionTemplate = sessionTemplate,
       reservedSlot = true,
       completed = false,
+      applicationStatus = IN_PROGRESS,
     )
 
     this.applicationEntityHelper.create(
@@ -2118,6 +2142,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       sessionTemplate = sessionTemplate,
       reservedSlot = true,
       completed = false,
+      applicationStatus = IN_PROGRESS,
     )
 
     this.visitEntityHelper.create(

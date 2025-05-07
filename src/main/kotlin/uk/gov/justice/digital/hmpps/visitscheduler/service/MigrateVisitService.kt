@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigratedCancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.SnsDomainEventPublishDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.ACCEPTED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
@@ -182,6 +183,7 @@ class MigrateVisitService(
       completed = true,
       createdBy = actionedBy,
       userType = STAFF,
+      applicationStatus = ACCEPTED,
     )
     return applicationService.createApplicationFromMigration(migrateVisitRequest, applicationFromMigration)
   }

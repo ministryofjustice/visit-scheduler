@@ -6,6 +6,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.ACCEPTED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.DOUBLE_BOOKING_OR_RESERVATION
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
@@ -74,6 +75,7 @@ class GetSessionsDoubleBookingTest : IntegrationTestBase() {
       visitEnd = sessionTemplate.endTime,
       sessionTemplate = sessionTemplate,
       createdBy = "TEST-USER",
+      applicationStatus = ACCEPTED,
     )
 
     // When
@@ -99,6 +101,7 @@ class GetSessionsDoubleBookingTest : IntegrationTestBase() {
       visitEnd = sessionTemplate.endTime,
       sessionTemplate = sessionTemplate,
       createdBy = "TEST-USER",
+      applicationStatus = ACCEPTED,
     )
 
     // When
@@ -124,6 +127,7 @@ class GetSessionsDoubleBookingTest : IntegrationTestBase() {
       visitEnd = sessionTemplate.endTime,
       sessionTemplate = sessionTemplate,
       createdBy = currentUser,
+      applicationStatus = ACCEPTED,
     )
 
     // When

@@ -3,6 +3,9 @@ package uk.gov.justice.digital.hmpps.visitscheduler.helper
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.ACCEPTED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.IN_PROGRESS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
@@ -41,6 +44,7 @@ class ApplicationEntityHelper(
       reservedSlot = true,
       completed = true,
       userType = STAFF,
+      applicationStatus = ACCEPTED,
     )
 
     fun createUpdateVisitApplication(visit: Visit, newSessionSlot: SessionSlot): Application {
@@ -56,6 +60,7 @@ class ApplicationEntityHelper(
         reservedSlot = true,
         completed = false,
         userType = STAFF,
+        applicationStatus = IN_PROGRESS,
       )
       return application
     }
@@ -87,6 +92,7 @@ class ApplicationEntityHelper(
     completed: Boolean = true,
     userType: UserType = STAFF,
     createdBy: String = "",
+    applicationStatus: ApplicationStatus,
   ): Application {
     val slotDateLocal = slotDate ?: run {
       sessionTemplate.validFromDate.with(sessionTemplate.dayOfWeek).plusWeeks(1)
@@ -108,6 +114,7 @@ class ApplicationEntityHelper(
         reservedSlot = reservedSlot,
         completed = completed,
         userType = userType,
+        applicationStatus = applicationStatus,
       ),
     )
   }
@@ -123,6 +130,7 @@ class ApplicationEntityHelper(
     visitType: VisitType = VisitType.SOCIAL,
     reservedSlot: Boolean = true,
     completed: Boolean = true,
+    applicationStatus: ApplicationStatus = ACCEPTED,
   ): Application {
     val prison = prisonEntityHelper.create(prisonCode ?: "MDI", activePrison)
     val sessionSlot = sessionSlotEntityHelper.create(prison.id, slotDate, visitStart, visitEnd)
@@ -140,6 +148,7 @@ class ApplicationEntityHelper(
         reservedSlot = reservedSlot,
         completed = completed,
         userType = STAFF,
+        applicationStatus = applicationStatus,
       ),
     )
   }

@@ -26,6 +26,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDt
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.IN_PROGRESS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.RESERVED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
@@ -151,7 +152,7 @@ class ReserveSlotTest : IntegrationTestBase() {
     val sessionRestriction = SessionRestriction.get(visitRestriction)
 
     val sessionTemplate = sessionTemplateEntityHelper.create(openCapacity = 1, closedCapacity = 1)
-    val application = createApplicationAndSave(sessionTemplate = sessionTemplate, completed = false, reservedSlot = true, visitRestriction = visitRestriction)
+    val application = createApplicationAndSave(sessionTemplate = sessionTemplate, completed = false, applicationStatus = IN_PROGRESS, reservedSlot = true, visitRestriction = visitRestriction)
     val reserveVisitSlotDto = createReserveVisitSlotDto(
       prisonerId = application.prisonerId,
       sessionTemplate = sessionTemplate,
@@ -422,7 +423,7 @@ class ReserveSlotTest : IntegrationTestBase() {
     assertThat(returnedApplication.endTimestamp.toLocalTime()).isEqualTo(sessionTemplate.endTime)
     assertThat(returnedApplication.visitType).isEqualTo(persistedApplication.visitType)
     assertThat(returnedApplication.reserved).isTrue()
-    assertThat(returnedApplication.completed).isFalse()
+    assertThat(returnedApplication.applicationStatus).isEqualTo(IN_PROGRESS)
     assertThat(returnedApplication.visitRestriction.name).isEqualTo(createApplicationRequest.applicationRestriction.name)
     assertThat(returnedApplication.sessionTemplateReference).isEqualTo(createApplicationRequest.sessionTemplateReference)
     assertThat(returnedApplication.userType).isEqualTo(createApplicationRequest.userType)

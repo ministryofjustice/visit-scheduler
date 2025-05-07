@@ -27,6 +27,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDt
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.IN_PROGRESS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CHANGING_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.RESERVED_VISIT
@@ -450,7 +451,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     assertThat(returnedApplication.endTimestamp.toLocalTime()).isEqualTo(sessionTemplate.endTime)
     assertThat(returnedApplication.visitType).isEqualTo(lastBooking.visitType)
     assertThat(returnedApplication.reserved).isEqualTo(reserved)
-    assertThat(returnedApplication.completed).isFalse()
+    assertThat(returnedApplication.applicationStatus).isEqualTo(IN_PROGRESS)
     assertThat(returnedApplication.visitRestriction.name).isEqualTo(createApplicationRequest.applicationRestriction.name)
     assertThat(returnedApplication.sessionTemplateReference).isEqualTo(createApplicationRequest.sessionTemplateReference)
     assertThat(returnedApplication.userType).isEqualTo(createApplicationRequest.userType)

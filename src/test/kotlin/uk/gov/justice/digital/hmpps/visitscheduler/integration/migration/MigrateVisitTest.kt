@@ -20,6 +20,7 @@ import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateLegacyContactOnVisitRequestDto.Companion.UNKNOWN_TOKEN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.ACCEPTED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus.COMPLETED_NORMALLY
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus.NOT_RECORDED
@@ -121,7 +122,7 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
       assertThat(visit.getApplications().size).isEqualTo(1)
       val application = visit.getLastApplication()!!
       assertVisitMatchesApplication(visit, application)
-      assertThat(application.completed).isTrue()
+      assertThat(application.applicationStatus).isEqualTo(ACCEPTED)
       assertThat(application.reservedSlot).isTrue()
       assertThat(application.userType).isEqualTo(STAFF)
     }

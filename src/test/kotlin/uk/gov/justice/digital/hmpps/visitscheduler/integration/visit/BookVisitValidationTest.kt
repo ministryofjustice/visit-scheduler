@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ApplicationValidationErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.IN_PROGRESS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_NON_ASSOCIATION_VISITS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_NO_SLOT_CAPACITY
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_NO_VO_BALANCE
@@ -50,6 +51,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonCode = prisonCode,
       sessionTemplate = sessionTemplateDefault,
       completed = false,
+      applicationStatus = IN_PROGRESS,
       userType = UserType.PUBLIC,
     )
 
@@ -63,6 +65,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonCode = prisonCode,
       sessionTemplate = sessionTemplateDefault,
       completed = false,
+      applicationStatus = IN_PROGRESS,
       userType = UserType.STAFF,
     )
 
@@ -131,6 +134,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonCode = prisonCode,
       sessionTemplate = sessionTemplate,
       completed = false,
+      applicationStatus = IN_PROGRESS,
       userType = UserType.PUBLIC,
     )
 
@@ -166,6 +170,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonCode = prisonCode,
       sessionTemplate = sessionTemplate,
       completed = false,
+      applicationStatus = IN_PROGRESS,
       userType = UserType.PUBLIC,
     )
     applicationEntityHelper.createContact(application = application, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
@@ -198,6 +203,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonCode = prisonCode,
       sessionTemplate = sessionTemplate,
       completed = false,
+      applicationStatus = IN_PROGRESS,
       userType = UserType.PUBLIC,
     )
 
@@ -234,6 +240,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonCode = prisonCode,
       sessionTemplate = sessionTemplate,
       completed = false,
+      applicationStatus = IN_PROGRESS,
       userType = UserType.PUBLIC,
     )
     applicationEntityHelper.createContact(application = application, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
@@ -269,6 +276,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonCode = prisonCode,
       sessionTemplate = sessionTemplate,
       completed = false,
+      applicationStatus = IN_PROGRESS,
       userType = UserType.PUBLIC,
     )
 
@@ -306,6 +314,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonCode = prisonCode,
       sessionTemplate = sessionTemplate,
       completed = false,
+      applicationStatus = IN_PROGRESS,
       userType = UserType.PUBLIC,
     )
     applicationEntityHelper.createContact(application = application, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
@@ -395,6 +404,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonCode = prisonCode,
       sessionTemplate = sessionTemplateDefault,
       completed = false,
+      applicationStatus = IN_PROGRESS,
       userType = UserType.PUBLIC,
     )
 
@@ -419,6 +429,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonCode = prisonCode,
       sessionTemplate = sessionTemplateDefault,
       completed = false,
+      applicationStatus = IN_PROGRESS,
       userType = UserType.STAFF,
     )
 
@@ -596,6 +607,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonCode = prisonCode,
       sessionTemplate = sessionTemplateDefault,
       completed = false,
+      applicationStatus = IN_PROGRESS,
       userType = UserType.PUBLIC,
     )
 
@@ -621,6 +633,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonCode = prisonCode,
       sessionTemplate = sessionTemplateDefault,
       completed = false,
+      applicationStatus = IN_PROGRESS,
       userType = UserType.STAFF,
     )
 
@@ -650,6 +663,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     var updateVisitApplication = applicationEntityHelper.create(visit)
     updateVisitApplication.completed = false
+    updateVisitApplication.applicationStatus = IN_PROGRESS
     updateVisitApplication.visitId = visit.id
 
     // change to only add a visitor
@@ -695,6 +709,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
     // update visit to change application slot to existing slot
     updateVisitApplication.sessionSlotId = visit2.sessionSlotId
     updateVisitApplication.completed = false
+    updateVisitApplication.applicationStatus = IN_PROGRESS
     updateVisitApplication = applicationEntityHelper.save(updateVisitApplication)
 
     // When
@@ -830,6 +845,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonCode = prisonCode,
       sessionTemplate = sessionTemplate,
       completed = false,
+      applicationStatus = IN_PROGRESS,
       userType = UserType.PUBLIC,
     )
 
@@ -871,6 +887,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonCode = prisonCode,
       sessionTemplate = sessionTemplate,
       completed = false,
+      applicationStatus = IN_PROGRESS,
       userType = UserType.PUBLIC,
     )
 
@@ -913,6 +930,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonCode = prisonCode,
       sessionTemplate = sessionTemplate,
       completed = false,
+      applicationStatus = IN_PROGRESS,
       userType = UserType.PUBLIC,
     )
 
@@ -952,6 +970,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonCode = prisonCode,
       sessionTemplate = sessionTemplate,
       completed = false,
+      applicationStatus = IN_PROGRESS,
       userType = UserType.PUBLIC,
       visitRestriction = VisitRestriction.CLOSED,
     )

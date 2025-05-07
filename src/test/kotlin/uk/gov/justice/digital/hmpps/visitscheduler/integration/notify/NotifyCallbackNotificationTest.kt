@@ -9,6 +9,7 @@ import org.springframework.web.reactive.function.BodyInserters
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomUtils
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFY_CONTROLLER_CALLBACK_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.NotifyHistoryDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.ACCEPTED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.notify.NotifyNotificationType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.notify.NotifyNotificationType.EMAIL
@@ -45,7 +46,7 @@ class NotifyCallbackNotificationTest : IntegrationTestBase() {
     roleGovNotifyHttpHeaders = setAuthorisation(roles = notifyRoles)
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = visitSchedulerRoles)
 
-    val application = createApplicationAndSave(completed = true)
+    val application = createApplicationAndSave(completed = true, applicationStatus = ACCEPTED)
     visit = createVisitAndSave(VisitStatus.BOOKED, application)
     eventAudit = eventAuditEntityHelper.create(
       reference = visit.reference,

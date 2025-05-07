@@ -15,6 +15,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.IN_PROGRESS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.APPLICATION_DELETED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
@@ -50,13 +51,13 @@ class CleanUpApplicationsScheduleTest : IntegrationTestBase() {
 
   @BeforeEach
   internal fun setUp() {
-    reservedVisitNotExpired = createApplicationAndSave(prisonerId = "NOT_EXPIRED", sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = true)
-    reservedVisitNotExpiredChangingStatus = createApplicationAndSave(prisonerId = "NOT_EXPIRED", sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = false)
+    reservedVisitNotExpired = createApplicationAndSave(prisonerId = "NOT_EXPIRED", sessionTemplate = sessionTemplateDefault, completed = false, applicationStatus = IN_PROGRESS, reservedSlot = true)
+    reservedVisitNotExpiredChangingStatus = createApplicationAndSave(prisonerId = "NOT_EXPIRED", sessionTemplate = sessionTemplateDefault, completed = false, applicationStatus = IN_PROGRESS, reservedSlot = false)
 
-    reservedVisitExpired = createApplicationAndSave(prisonerId = "EXPIRED", sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = true)
+    reservedVisitExpired = createApplicationAndSave(prisonerId = "EXPIRED", sessionTemplate = sessionTemplateDefault, completed = false, applicationStatus = IN_PROGRESS, reservedSlot = true)
     testApplicationRepository.updateModifyTimestamp(LocalDateTime.now().minusHours(25), reservedVisitExpired.id)
 
-    reservedVisitExpiredChangingStatus = createApplicationAndSave(prisonerId = "EXPIRED", sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = false)
+    reservedVisitExpiredChangingStatus = createApplicationAndSave(prisonerId = "EXPIRED", sessionTemplate = sessionTemplateDefault, completed = false, applicationStatus = IN_PROGRESS, reservedSlot = false)
     testApplicationRepository.updateModifyTimestamp(LocalDateTime.now().minusHours(24), reservedVisitExpiredChangingStatus.id)
   }
 

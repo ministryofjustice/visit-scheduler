@@ -13,6 +13,7 @@ import software.amazon.awssdk.services.sqs.model.QueueAttributeName
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.IN_PROGRESS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
@@ -46,7 +47,7 @@ class SendDomainEventDisabledTest : IntegrationTestBase() {
   @Test
   fun `booked visit no event sent`() {
     // Given
-    val applicationEntity = createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false)
+    val applicationEntity = createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, applicationStatus = IN_PROGRESS)
 
     val applicationReference = applicationEntity.reference
     val authHeader = setAuthorisation(roles = ROLES)
