@@ -1,5 +1,5 @@
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "8.0.0"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "8.1.0"
   kotlin("plugin.spring") version "2.1.20"
   kotlin("plugin.jpa") version "2.1.20"
   idea
@@ -23,20 +23,20 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-security")
   implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
   implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
-  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:5.4.2")
+  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:5.4.4")
 
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8")
-  implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.14.0")
+  implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.15.0")
 
-  implementation("org.springframework.data:spring-data-commons:3.4.4")
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:2.8.6")
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6")
-  implementation("org.springdoc:springdoc-openapi-starter-common:2.8.6")
+  implementation("org.springframework.data:spring-data-commons:3.4.5")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:2.8.8")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.8")
+  implementation("org.springdoc:springdoc-openapi-starter-common:2.8.8")
 
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-  implementation("net.javacrumbs.shedlock:shedlock-spring:6.3.1")
-  implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:6.3.1")
+  implementation("net.javacrumbs.shedlock:shedlock-spring:6.6.0")
+  implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:6.6.0")
   implementation("org.apache.commons:commons-csv:1.14.0")
   implementation("org.freemarker:freemarker:2.3.34")
 
@@ -49,15 +49,15 @@ dependencies {
   testImplementation("io.swagger.parser.v3:swagger-parser:2.1.26")
   testImplementation("com.github.tomakehurst:wiremock-jre8-standalone:3.0.1")
   testImplementation("org.mockito:mockito-inline:5.2.0")
-  testImplementation("org.testcontainers:localstack:1.20.6")
+  testImplementation("org.testcontainers:localstack:1.21.0")
   testImplementation("org.awaitility:awaitility-kotlin:4.3.0")
   testImplementation("javax.xml.bind:jaxb-api:2.4.0-b180830.0359")
   testImplementation("org.springframework.boot:spring-boot-starter-test")
   testImplementation("io.jsonwebtoken:jjwt:0.12.6")
   testImplementation("org.springframework.security:spring-security-test")
-  testImplementation("org.testcontainers:postgresql:1.20.6")
-  testImplementation("com.amazonaws:aws-java-sdk-s3:1.12.782")
-  testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.3")
+  testImplementation("org.testcontainers:postgresql:1.21.0")
+  testImplementation("com.amazonaws:aws-java-sdk-s3:1.12.783")
+  testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.19.0")
   testImplementation("org.junit-pioneer:junit-pioneer:2.3.0")
 }
 
