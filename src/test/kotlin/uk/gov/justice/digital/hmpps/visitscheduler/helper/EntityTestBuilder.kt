@@ -56,6 +56,8 @@ fun sessionTemplate(
   weeklyFrequency: Int = 1,
   isActive: Boolean = true,
   includeLocationGroupType: Boolean = true,
+  includeCategoryGroupType: Boolean = true,
+  includeIncentiveGroupType: Boolean = true,
   prison: Prison,
 ): SessionTemplate = SessionTemplate(
   name = name + dayOfWeek,
@@ -75,6 +77,8 @@ fun sessionTemplate(
   permittedSessionLocationGroups = permittedSessionLocationGroups,
   permittedSessionCategoryGroups = permittedSessionCategoryGroups,
   includeLocationGroupType = includeLocationGroupType,
+  includeCategoryGroupType = includeCategoryGroupType,
+  includeIncentiveGroupType = includeIncentiveGroupType,
 ).also { it.reference = UUID.randomUUID().toString() }
 
 fun sessionTemplate(
@@ -100,6 +104,8 @@ fun sessionTemplate(
   adultAgeYears: Int = 18,
   isActive: Boolean = true,
   includeLocationGroupType: Boolean = true,
+  includeCategoryGroupType: Boolean = true,
+  includeIncentiveGroupType: Boolean = true,
 ): SessionTemplate {
   val prison = Prison(code = prisonCode, active = isActive, policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears)
 
@@ -121,6 +127,8 @@ fun sessionTemplate(
     permittedSessionLocationGroups = permittedSessionLocationGroups,
     permittedSessionCategoryGroups = permittedSessionCategoryGroups,
     includeLocationGroupType = includeLocationGroupType,
+    includeCategoryGroupType = includeCategoryGroupType,
+    includeIncentiveGroupType = includeIncentiveGroupType,
   ).also { it.reference = UUID.randomUUID().toString() }
 }
 
@@ -137,6 +145,8 @@ fun createCreateSessionTemplateDto(
   categoryGroupReferences: List<String> = listOf(),
   incentiveLevelGroupReferences: List<String> = listOf(),
   includeLocationGroupType: Boolean = true,
+  includeCategoryGroupType: Boolean = true,
+  includeIncentiveGroupType: Boolean = true,
 ): CreateSessionTemplateDto = CreateSessionTemplateDto(
   name = name + dayOfWeek,
   prisonCode = prisonCode,
@@ -150,6 +160,8 @@ fun createCreateSessionTemplateDto(
   categoryGroupReferences = categoryGroupReferences,
   incentiveLevelGroupReferences = incentiveLevelGroupReferences,
   includeLocationGroupType = includeLocationGroupType,
+  includeCategoryGroupType = includeCategoryGroupType,
+  includeIncentiveGroupType = includeIncentiveGroupType,
 )
 
 fun createCreateSessionTemplateDto(
@@ -160,6 +172,8 @@ fun createCreateSessionTemplateDto(
   sessionTimeSlot: SessionTimeSlotDto? = sessionTemplateDto.sessionTimeSlot,
   weeklyFrequency: Int? = sessionTemplateDto.weeklyFrequency,
   includeLocationGroupType: Boolean = true,
+  includeCategoryGroupType: Boolean = true,
+  includeIncentiveGroupType: Boolean = true,
 ): CreateSessionTemplateDto = CreateSessionTemplateDto(
   name = name + sessionTemplateDto.dayOfWeek,
   prisonCode = sessionTemplateDto.prisonCode,
@@ -173,6 +187,8 @@ fun createCreateSessionTemplateDto(
   categoryGroupReferences = sessionTemplateDto.prisonerCategoryGroups.stream().map { it.reference }.toList(),
   incentiveLevelGroupReferences = sessionTemplateDto.prisonerIncentiveLevelGroups.stream().map { it.reference }.toList(),
   includeLocationGroupType = includeLocationGroupType,
+  includeCategoryGroupType = includeCategoryGroupType,
+  includeIncentiveGroupType = includeIncentiveGroupType,
 )
 
 fun createUpdateSessionTemplateDto(

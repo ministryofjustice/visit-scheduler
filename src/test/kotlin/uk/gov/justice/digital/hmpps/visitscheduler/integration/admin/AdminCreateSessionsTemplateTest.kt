@@ -46,6 +46,9 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
       locationGroupReferences = mutableListOf(sessionLocationGroup.reference, sessionLocationGroup.reference),
       categoryGroupReferences = mutableListOf(sessionCategoryGroup.reference, sessionCategoryGroup.reference),
       incentiveLevelGroupReferences = mutableListOf(sessionIncentiveGroup.reference, sessionIncentiveGroup.reference),
+      includeLocationGroupType = true,
+      includeCategoryGroupType = true,
+      includeIncentiveGroupType = false,
     )
 
     // When
@@ -75,6 +78,9 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
     Assertions.assertThat(sessionTemplateDto.prisonerIncentiveLevelGroups.stream().map { it.incentiveLevels }).containsExactlyInAnyOrder(enhancedIncentives)
     Assertions.assertThat(sessionTemplateDto.prisonerIncentiveLevelGroups[0].reference).isEqualTo(dto.incentiveLevelGroupReferences!![0])
     Assertions.assertThat(sessionTemplateDto.active).isFalse
+    Assertions.assertThat(sessionTemplateDto.includeLocationGroupType).isTrue
+    Assertions.assertThat(sessionTemplateDto.includeCategoryGroupType).isTrue
+    Assertions.assertThat(sessionTemplateDto.includeIncentiveGroupType).isFalse
   }
 
   @Test
@@ -83,6 +89,8 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
     val dto = createCreateSessionTemplateDto(
       sessionDateRange = SessionDateRangeDto(LocalDate.now().plusDays(1), null),
       includeLocationGroupType = true,
+      includeCategoryGroupType = false,
+      includeIncentiveGroupType = true,
     )
 
     // When
@@ -107,6 +115,8 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
     Assertions.assertThat(sessionTemplateDto.prisonerCategoryGroups).isEmpty()
     Assertions.assertThat(sessionTemplateDto.prisonerIncentiveLevelGroups).isEmpty()
     Assertions.assertThat(sessionTemplateDto.includeLocationGroupType).isEqualTo(dto.includeLocationGroupType)
+    Assertions.assertThat(sessionTemplateDto.includeCategoryGroupType).isFalse
+    Assertions.assertThat(sessionTemplateDto.includeIncentiveGroupType).isTrue
   }
 
   @Test
