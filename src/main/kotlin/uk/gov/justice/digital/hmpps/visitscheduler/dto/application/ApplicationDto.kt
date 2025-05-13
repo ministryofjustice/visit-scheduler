@@ -7,6 +7,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitNoteDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
@@ -52,8 +53,13 @@ data class ApplicationDto(
   val reserved: Boolean,
   @Schema(description = "Is the application complete", example = "true", required = true)
   @field:NotNull
+  @Deprecated(message = "Replaced with applicationStatus")
   val completed: Boolean,
   @Schema(description = "User type", example = "STAFF", required = true)
   @field:NotNull
   val userType: UserType,
+  @Schema(description = "Application status", example = "IN_PROGRESS", required = true)
+  @field:NotNull
+  val applicationStatus: ApplicationStatus,
+
 )

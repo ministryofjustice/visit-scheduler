@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMPLATE_VISIT_STATS
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.IN_PROGRESS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OPEN
@@ -73,7 +74,7 @@ class AdminSessionTemplateVisitStatsTest(
     visitEntityHelper.create(visitStatus = CANCELLED, sessionTemplate = sessionTemplate1, visitRestriction = CLOSED, slotDate = tomorrow)
 
     // applications are not counted
-    applicationEntityHelper.create(sessionTemplate = sessionTemplate1, visitRestriction = CLOSED, slotDate = tomorrow, completed = false, reservedSlot = true)
+    applicationEntityHelper.create(sessionTemplate = sessionTemplate1, visitRestriction = CLOSED, slotDate = tomorrow, completed = false, applicationStatus = IN_PROGRESS, reservedSlot = true)
 
     visitEntityHelper.create(sessionTemplate = sessionTemplate1, visitRestriction = OPEN, slotDate = visitsFromDate.plusDays(2))
     visitEntityHelper.create(sessionTemplate = sessionTemplate1, visitRestriction = OPEN, slotDate = visitsFromDate.plusDays(3))

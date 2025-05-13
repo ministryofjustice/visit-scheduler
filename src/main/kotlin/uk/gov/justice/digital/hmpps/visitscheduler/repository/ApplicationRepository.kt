@@ -18,7 +18,7 @@ interface ApplicationRepository :
 
   @Query(
     "SELECT a FROM Application a " +
-      "WHERE a.completed = false" +
+      "WHERE a.applicationStatus = 'IN_PROGRESS'" +
       " AND a.modifyTimestamp < :expiredDateAndTime ORDER BY a.id",
   )
   fun findApplicationByModifyTimes(expiredDateAndTime: LocalDateTime): List<Application>
@@ -30,13 +30,13 @@ interface ApplicationRepository :
 
   @Modifying
   @Query(
-    "Update application SET completed = true WHERE reference = :applicationReference",
+    "Update application SET application_status = 'ACCEPTED' WHERE reference = :applicationReference",
     nativeQuery = true,
   )
   fun completeApplication(applicationReference: String): Int
 
   @Query(
-    "SELECT count(a)>0 FROM Application a WHERE a.completed = true AND a.reference = :applicationReference",
+    "SELECT count(a)>0 FROM Application a WHERE a.applicationStatus = 'ACCEPTED' AND a.reference = :applicationReference",
   )
   fun isApplicationCompleted(applicationReference: String): Boolean
 
@@ -44,7 +44,7 @@ interface ApplicationRepository :
     "SELECT a.restriction AS visitRestriction, COUNT(*) AS count  FROM application a " +
       "WHERE a.session_slot_id = :sessionSlotId AND " +
       " a.restriction IN ('OPEN','CLOSED') AND " +
-      " a.reserved_slot = true AND a.completed = false AND" +
+      " a.reserved_slot = true AND (a.application_status = 'IN_PROGRESS') AND" +
       " a.modify_timestamp >= :expiredDateAndTime AND " +
       " (:excludedApplicationReference is null OR a.reference != :excludedApplicationReference ) " +
       " GROUP BY a.restriction",
@@ -62,7 +62,7 @@ interface ApplicationRepository :
       "inner join actioned_by ab on ea.actioned_by_id = ab.id " +
       "WHERE a.session_slot_id = :sessionSlotId AND " +
       " a.restriction IN ('OPEN','CLOSED') AND " +
-      " a.reserved_slot = true AND a.completed = false AND" +
+      " a.reserved_slot = true AND a.application_status = 'IN_PROGRESS' AND" +
       " a.modify_timestamp >= :expiredDateAndTime AND " +
       " (:excludedApplicationReference is null OR a.reference != :excludedApplicationReference ) AND " +
       " (ea.type = 'RESERVED_VISIT' AND " +
@@ -81,7 +81,7 @@ interface ApplicationRepository :
     "SELECT COUNT(*) AS count  FROM application a " +
       "WHERE a.session_slot_id = :sessionSlotId AND " +
       " a.restriction = 'CLOSED' AND " +
-      " a.reserved_slot = true AND a.completed = false AND" +
+      " a.reserved_slot = true AND a.application_status = 'IN_PROGRESS' AND" +
       " a.modify_timestamp >= :expiredDateAndTime AND " +
       " (:excludedApplicationReference is null OR a.reference != :excludedApplicationReference )",
     nativeQuery = true,
@@ -96,7 +96,7 @@ interface ApplicationRepository :
     "SELECT COUNT(*) AS count  FROM application a " +
       "WHERE a.session_slot_id = :sessionSlotId AND " +
       " a.restriction = 'OPEN' AND " +
-      " a.reserved_slot = true AND a.completed = false AND" +
+      " a.reserved_slot = true AND a.application_status = 'IN_PROGRESS' AND" +
       " a.modify_timestamp >= :expiredDateAndTime AND " +
       " (:excludedApplicationReference is null OR a.reference != :excludedApplicationReference )",
     nativeQuery = true,
@@ -109,7 +109,7 @@ interface ApplicationRepository :
 
   @Query(
     "SELECT COUNT(a) > 0 FROM Application a " +
-      "WHERE a.completed = false AND a.reservedSlot = true AND " +
+      "WHERE a.applicationStatus = 'IN_PROGRESS' AND a.reservedSlot = true AND " +
       "a.prisonerId = :prisonerId AND " +
       "a.modifyTimestamp >= :expiredDateAndTime AND " +
       "a.sessionSlotId = :sessionSlotId AND " +
@@ -126,7 +126,7 @@ interface ApplicationRepository :
     "SELECT COUNT(a) > 0 FROM Application a " +
       "inner join EventAudit ea on a.reference = ea.applicationReference " +
       "inner join ActionedBy ab on ea.actionedById = ab.id " +
-      "WHERE a.completed = false AND a.reservedSlot = true AND " +
+      "WHERE a.applicationStatus = 'IN_PROGRESS' AND a.reservedSlot = true AND " +
       "a.prisonerId = :prisonerId AND " +
       "a.modifyTimestamp >= :expiredDateAndTime AND " +
       "a.sessionSlotId = :sessionSlotId AND " +
@@ -148,7 +148,7 @@ interface ApplicationRepository :
       "a.prison_id = :prisonId AND " +
       "sl.slot_date = :sessionDate AND " +
       "a.modify_timestamp >= :expiredDateAndTime AND " +
-      "a.completed = false AND a.reserved_slot = true",
+      "a.application_status = 'IN_PROGRESS' AND a.reserved_slot = true",
     nativeQuery = true,
   )
   fun hasActiveApplicationsForDate(

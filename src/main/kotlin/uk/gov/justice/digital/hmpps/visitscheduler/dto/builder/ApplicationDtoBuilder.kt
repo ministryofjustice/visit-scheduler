@@ -28,5 +28,6 @@ class ApplicationDtoBuilder {
     reserved = applicationEntity.reservedSlot,
     completed = applicationEntity.completed,
     userType = applicationEntity.userType,
+    applicationStatus = applicationEntity.applicationStatus,
   )
 }

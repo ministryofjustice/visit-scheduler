@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.IN_PROGRESS
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
@@ -32,7 +33,7 @@ class DoubleBookingVisitTest : IntegrationTestBase() {
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
-    reservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false)
+    reservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false, applicationStatus = IN_PROGRESS)
     applicationEntityHelper.createContact(application = reservedApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = reservedApplication, nomisPersonId = 321L, visitContact = true)
     reservedApplication = applicationEntityHelper.save(reservedApplication)
@@ -90,7 +91,7 @@ class DoubleBookingVisitTest : IntegrationTestBase() {
   fun `When booking a visit a capacity exception rolls back to incomplete`() {
     // Given
     val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", openCapacity = 0)
-    val reservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false)
+    val reservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false, applicationStatus = IN_PROGRESS)
     val applicationReference = reservedApplication.reference
 
     // When
@@ -102,7 +103,7 @@ class DoubleBookingVisitTest : IntegrationTestBase() {
     val application = testApplicationRepository.findByApplicationReference(applicationReference)
     assertThat(application).isNotNull
     application?.let {
-      assertThat(application.completed).isFalse()
+      assertThat(application.applicationStatus).isEqualTo(IN_PROGRESS)
       assertThat(application.visit).isNull()
     }
   }

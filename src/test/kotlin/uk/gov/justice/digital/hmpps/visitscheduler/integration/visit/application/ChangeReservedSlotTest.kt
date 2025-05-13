@@ -25,6 +25,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ChangeApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.IN_PROGRESS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OPEN
@@ -60,8 +61,8 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
 
     sessionTemplateDefault = sessionTemplateEntityHelper.create()
 
-    applicationMin = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplateDefault, reservedSlot = true, completed = false)
-    applicationFull = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplateDefault, reservedSlot = true, completed = false)
+    applicationMin = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplateDefault, reservedSlot = true, completed = false, applicationStatus = IN_PROGRESS)
+    applicationFull = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplateDefault, reservedSlot = true, completed = false, applicationStatus = IN_PROGRESS)
 
     applicationEntityHelper.createContact(application = applicationFull, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = applicationFull, nomisPersonId = 321L, visitContact = true)
@@ -598,7 +599,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     Assertions.assertThat(applicationDto.endTimestamp.toLocalTime()).isEqualTo(sessionTemplate.endTime)
     Assertions.assertThat(applicationDto.visitType).isEqualTo(originalApplication.visitType)
     Assertions.assertThat(applicationDto.reserved).isTrue()
-    Assertions.assertThat(applicationDto.completed).isFalse()
+    Assertions.assertThat(applicationDto.applicationStatus).isEqualTo(IN_PROGRESS)
 
     Assertions.assertThat(applicationDto.visitRestriction.name).isEqualTo(updateRequest.applicationRestriction?.name)
     Assertions.assertThat(applicationDto.sessionTemplateReference).isEqualTo(updateRequest.sessionTemplateReference)

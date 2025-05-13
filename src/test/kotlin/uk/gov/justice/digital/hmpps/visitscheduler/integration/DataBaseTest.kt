@@ -10,6 +10,8 @@ import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpHeaders
 import org.springframework.transaction.annotation.Propagation.REQUIRES_NEW
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.ACCEPTED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.IN_PROGRESS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISITOR_CONCERN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISIT_COMMENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISIT_OUTCOMES
@@ -50,7 +52,7 @@ open class DataBaseTest(
     visitEntityHelper.createSupport(visit = visitWithApplication, description = "Some Text")
     visitWithApplication = visitEntityHelper.save(visitWithApplication)
 
-    applicationWithVisit = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplateDefault, reservedSlot = true, completed = true)
+    applicationWithVisit = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplateDefault, reservedSlot = true, completed = true, applicationStatus = ACCEPTED)
     applicationEntityHelper.createContact(application = applicationWithVisit, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = applicationWithVisit, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = applicationWithVisit, description = "Some Text")
@@ -67,7 +69,7 @@ open class DataBaseTest(
     sessionTemplateDefault.permittedSessionLocationGroups.add(sessionGroup2)
     sessionTemplateDefault = testTemplateRepository.saveAndFlush(sessionTemplateDefault)
 
-    inCompleteApplication = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplateDefault, reservedSlot = true, completed = false)
+    inCompleteApplication = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplateDefault, reservedSlot = true, completed = false, applicationStatus = IN_PROGRESS)
     applicationEntityHelper.createContact(application = inCompleteApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = inCompleteApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = inCompleteApplication, description = "Some Text")

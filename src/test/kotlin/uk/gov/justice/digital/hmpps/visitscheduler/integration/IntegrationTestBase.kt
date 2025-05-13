@@ -29,6 +29,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDt
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.ACCEPTED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.BOOKED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CANCELLED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.RESERVED_VISIT
@@ -276,7 +278,7 @@ abstract class IntegrationTestBase {
     visitContact: ContactDto = ContactDto(name = "Jane Doe", telephone = "01234 098765", email = "email@example.com"),
     userType: UserType = STAFF,
   ): Visit {
-    val application = createApplicationAndSave(prisonerId = prisonerId, sessionTemplate, sessionTemplate.prison.code, slotDate, completed = true, visitRestriction = visitRestriction, visitContact = visitContact, userType = userType)
+    val application = createApplicationAndSave(prisonerId = prisonerId, sessionTemplate, sessionTemplate.prison.code, slotDate, completed = true, applicationStatus = ACCEPTED, visitRestriction = visitRestriction, visitContact = visitContact, userType = userType)
     return createVisitAndSave(visitStatus = visitStatus!!, applicationEntity = application, sessionTemplateLocal = sessionTemplate)
   }
 
@@ -288,7 +290,7 @@ abstract class IntegrationTestBase {
     prisonCode: String? = null,
     userType: UserType = STAFF,
   ): Visit {
-    val application = createApplicationAndSave(prisonerId = prisonerId, slotDate = slotDate, completed = true, visitRestriction = visitRestriction, prisonCode = prisonCode, userType = userType)
+    val application = createApplicationAndSave(prisonerId = prisonerId, slotDate = slotDate, completed = true, applicationStatus = ACCEPTED, visitRestriction = visitRestriction, prisonCode = prisonCode, userType = userType)
     return createVisitAndSave(visitStatus = visitStatus!!, applicationEntity = application)
   }
 
@@ -297,9 +299,10 @@ abstract class IntegrationTestBase {
     prisonCode: String? = null,
     slotDate: LocalDate,
     completed: Boolean,
+    applicationStatus: ApplicationStatus,
     reservedSlot: Boolean = true,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
-  ): Application = createApplicationAndSave(prisonerId = prisonerId, sessionTemplate = sessionTemplateDefault, prisonCode = prisonCode, slotDate = slotDate, completed = completed, reservedSlot = reservedSlot, visitRestriction = visitRestriction)
+  ): Application = createApplicationAndSave(prisonerId = prisonerId, sessionTemplate = sessionTemplateDefault, prisonCode = prisonCode, slotDate = slotDate, completed = completed, applicationStatus = applicationStatus, reservedSlot = reservedSlot, visitRestriction = visitRestriction)
 
   fun createApplicationAndSave(
     prisonerId: String? = "testPrisonerId",
@@ -307,6 +310,7 @@ abstract class IntegrationTestBase {
     prisonCode: String? = sessionTemplateDefault.prison.code,
     slotDate: LocalDate? = null,
     completed: Boolean,
+    applicationStatus: ApplicationStatus,
     reservedSlot: Boolean = true,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
     visitContact: ContactDto = ContactDto(name = "Jane Doe", telephone = "01234 098765", email = "email@example.com"),
@@ -321,6 +325,7 @@ abstract class IntegrationTestBase {
       prisonerId = prisonerId!!,
       sessionTemplate = sessionTemplateLocal,
       completed = completed,
+      applicationStatus = applicationStatus,
       reservedSlot = reservedSlot,
       prisonCode = prisonCode,
       slotDate = slotDateLocal,
