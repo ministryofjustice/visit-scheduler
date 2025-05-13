@@ -60,7 +60,7 @@ open class DataBaseTest(
 
     visitWithApplication.addApplication(applicationWithVisit)
 
-    sessionTemplateDefault = sessionTemplateEntityHelper.create(validFromDate = LocalDate.now())
+    sessionTemplateDefault = sessionTemplateEntityHelper.create(validFromDate = LocalDate.now(), clients = emptyList())
     val allowedPermittedLocations1 = listOf(AllowedSessionLocationHierarchy("A", "1", "001"))
     val sessionGroup1 = sessionLocationGroupHelper.create(prisonCode = sessionTemplateDefault.prison.code, prisonHierarchies = allowedPermittedLocations1)
     val allowedPermittedLocations2 = listOf(AllowedSessionLocationHierarchy("B"))

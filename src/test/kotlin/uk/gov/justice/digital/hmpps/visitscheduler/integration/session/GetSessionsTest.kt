@@ -4,15 +4,18 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_SESSION_CONTROLLER_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.ACCEPTED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.IN_PROGRESS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
@@ -29,7 +32,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.temporal.TemporalAdjusters
 
-@DisplayName("Get /visit-sessions")
+@DisplayName("GET $VISIT_SESSION_CONTROLLER_PATH")
 class GetSessionsTest : IntegrationTestBase() {
 
   private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
@@ -38,8 +41,11 @@ class GetSessionsTest : IntegrationTestBase() {
 
   private val prisonCode = "STC"
 
+  private lateinit var authHttpHeaders: (HttpHeaders) -> Unit
+
   @BeforeEach
   internal fun setUpTests() {
+    authHttpHeaders = setAuthorisation(roles = requiredRole)
     prison = prisonEntityHelper.create(prisonCode = prisonCode)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
   }
@@ -59,7 +65,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -89,7 +95,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonId = prisonCode, prisonerId)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -119,7 +125,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonId = "AWE", prisonerId)
+    val responseSpec = callGetSessions(prisonCode = "AWE", prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -150,7 +156,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonId = "AWE", prisonerId)
+    val responseSpec = callGetSessions(prisonCode = "AWE", prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -195,7 +201,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonId = "AWE", prisonerId)
+    val responseSpec = callGetSessions(prisonCode = "AWE", prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -242,7 +248,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonId = "AWE", prisonerId)
+    val responseSpec = callGetSessions(prisonCode = "AWE", prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -290,7 +296,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonId = "AWE", prisonerId)
+    val responseSpec = callGetSessions(prisonCode = "AWE", prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -351,7 +357,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -389,9 +395,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -423,9 +427,7 @@ class GetSessionsTest : IntegrationTestBase() {
 
     // When
 
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -456,9 +458,7 @@ class GetSessionsTest : IntegrationTestBase() {
 
     // When
 
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -493,9 +493,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -530,9 +528,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -571,9 +567,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -612,9 +606,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -642,9 +634,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -690,9 +680,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -737,9 +725,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -773,7 +759,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -811,7 +797,7 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -843,7 +829,7 @@ class GetSessionsTest : IntegrationTestBase() {
 
     // When
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
-    val responseSpec = callGetSessions(prisonCode = prisonCode, prisonerId = prisonerId, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax)
+    val responseSpec = callGetSessions(prisonCode = prisonCode, prisonerId = prisonerId, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -875,7 +861,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -911,7 +897,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, 0, 28)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, 0, 28, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -945,7 +931,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -973,7 +959,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     assertNoResponse(responseSpec)
@@ -993,7 +979,7 @@ class GetSessionsTest : IntegrationTestBase() {
 
     // When
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
-    val responseSpec = callGetSessions(prisonCode, prisonerId, policyNoticeDaysMin, policyNoticeDaysMax)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, policyNoticeDaysMin, policyNoticeDaysMax, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     assertNoResponse(responseSpec)
@@ -1011,7 +997,7 @@ class GetSessionsTest : IntegrationTestBase() {
 
     // When
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
-    val responseSpec = callGetSessions(prisonCode, prisonerId, policyNoticeDaysMin, policyNoticeDaysMax)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, policyNoticeDaysMin, policyNoticeDaysMax, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     assertNoResponse(responseSpec)
@@ -1028,7 +1014,7 @@ class GetSessionsTest : IntegrationTestBase() {
     sessionTemplateEntityHelper.create(validFromDate = nextAllowedDay, validToDate = nextAllowedDay)
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, policyNoticeDaysMin, policyNoticeDaysMax)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, policyNoticeDaysMin, policyNoticeDaysMax, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     assertNoResponse(responseSpec)
@@ -1043,7 +1029,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     assertNoResponse(responseSpec)
@@ -1058,7 +1044,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     assertNoResponse(responseSpec)
@@ -1135,7 +1121,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     assertBookCounts(responseSpec, openCount = 2, closeCount = 0)
@@ -1185,7 +1171,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     assertBookCounts(responseSpec, openCount = 0, closeCount = 0)
@@ -1277,7 +1263,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     assertBookCounts(responseSpec, openCount = 0, closeCount = 2)
@@ -1418,7 +1404,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     assertBookCounts(responseSpec, openCount = 5, closeCount = 1)
@@ -1437,9 +1423,7 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     assertResponseLength(responseSpec, 4)
@@ -1462,9 +1446,7 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     assertResponseLength(responseSpec, 4)
@@ -1500,9 +1482,7 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -1576,9 +1556,7 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -1626,9 +1604,7 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     assertResponseLength(responseSpec, 4)
@@ -1664,9 +1640,7 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     assertResponseLength(responseSpec, 3)
@@ -1703,9 +1677,7 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     assertResponseLength(responseSpec, 4)
@@ -1741,9 +1713,7 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     assertResponseLength(responseSpec, 4)
@@ -1778,9 +1748,7 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     assertResponseLength(responseSpec, 4)
@@ -1850,12 +1818,10 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetPrisonerHousingLocation(associationPrisonerId, "${prison.code}-A-1-C001")
 
     // When
-    val responseResult = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange().expectBody()
+    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
-    val sessions = getResults(responseResult)
+    val sessions = getResults(responseResult.expectBody())
 
     assertThat(sessions.map { it.startTimestamp.toLocalDate() }).doesNotContain(visit.sessionSlot.slotDate)
     assertThat(sessions.size).isEqualTo(3)
@@ -1925,9 +1891,7 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetPrisonerHousingLocation(associationPrisonerId, "${prison.code}-A-1-C001")
 
     // When
-    val responseResult = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange().expectBody()
+    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders).expectBody()
 
     // Then
     val sessions = getResults(responseResult)
@@ -1989,9 +1953,7 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetPrisonerHousingLocation(associationPrisonerId, "$associationPrisonerPrison-A-1-C001")
 
     // When
-    val responseResult = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange().expectBody()
+    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders).expectBody()
 
     // Then
     val sessions = getResults(responseResult)
@@ -2052,9 +2014,7 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetPrisonerHousingLocation(associationPrisonerId, "$associationPrisonerPrison-A-1-C001")
 
     // When
-    val responseResult = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange().expectBody()
+    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders).expectBody()
 
     // Then
     val sessions = getResults(responseResult)
@@ -2075,9 +2035,7 @@ class GetSessionsTest : IntegrationTestBase() {
 
     // When
     // get sessions call is being made with the incorrect prison Code
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$incorrectPrisonCode&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions(incorrectPrisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
 
@@ -2112,9 +2070,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isNotFound.expectBody()
@@ -2148,9 +2104,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isNotFound.expectBody()
@@ -2184,9 +2138,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     responseSpec.expectStatus().isOk
@@ -2218,26 +2170,11 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     responseSpec.expectStatus().isBadRequest
   }
-
-  private fun callGetSessions(
-    prisonCode: String? = "SPC",
-    prisonerId: String,
-    policyNoticeDaysMin: Int,
-    policyNoticeDaysMax: Int,
-  ): ResponseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId&min=$policyNoticeDaysMin&max=$policyNoticeDaysMax")
-    .headers(setAuthorisation(roles = requiredRole))
-    .exchange()
-
-  private fun callGetSessions(prisonId: String? = "MDI", prisonerId: String): ResponseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
-    .headers(setAuthorisation(roles = requiredRole))
-    .exchange()
 
   private fun getNextAllowedDay(): LocalDate {
     // The 3 days is based on the default SessionService.policyNoticeDaysMin
