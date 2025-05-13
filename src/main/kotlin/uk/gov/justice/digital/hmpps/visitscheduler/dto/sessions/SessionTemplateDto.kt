@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.SessionCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.SessionIncentiveLevelGroupDto
@@ -46,6 +47,8 @@ data class SessionTemplateDto(
   val prisonerIncentiveLevelGroups: List<SessionIncentiveLevelGroupDto> = listOf(),
   @Schema(description = "Determines behaviour of location groups. True equates to these location groups being included, false equates to them being excluded.", required = true)
   val includeLocationGroupType: Boolean,
+  @Schema(description = "User Client's for the session template", required = false)
+  val clients: List<UserClientDto> = mutableListOf(),
   @Schema(description = "Determines behaviour of category groups. True equates to these category groups being included, false equates to them being excluded.", required = true)
   val includeCategoryGroupType: Boolean,
   @Schema(description = "Determines behaviour of incentive groups. True equates to these incentive groups being included, false equates to them being excluded.", required = true)
@@ -69,5 +72,6 @@ data class SessionTemplateDto(
     includeLocationGroupType = sessionTemplateEntity.includeLocationGroupType,
     includeCategoryGroupType = sessionTemplateEntity.includeCategoryGroupType,
     includeIncentiveGroupType = sessionTemplateEntity.includeIncentiveGroupType,
+    clients = sessionTemplateEntity.clients.map { UserClientDto(it.userType, it.active) },
   )
 }

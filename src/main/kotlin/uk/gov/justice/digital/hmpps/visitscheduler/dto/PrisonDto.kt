@@ -41,10 +41,8 @@ data class PrisonDto(
   @field:NotNull
   val adultAgeYears: Int,
   @Schema(description = "prison user client", required = false)
-  val clients: List<PrisonUserClientDto> = mutableListOf(),
-
+  val clients: List<UserClientDto> = mutableListOf(),
 ) {
-
   constructor(prisonEntity: Prison) : this(
     code = prisonEntity.code,
     active = prisonEntity.active,
@@ -54,6 +52,6 @@ data class PrisonDto(
     maxAdultVisitors = prisonEntity.maxAdultVisitors,
     maxChildVisitors = prisonEntity.maxChildVisitors,
     adultAgeYears = prisonEntity.adultAgeYears,
-    clients = prisonEntity.clients.map { PrisonUserClientDto(it.userType, it.active) }.toList(),
+    clients = prisonEntity.clients.map { UserClientDto(it.userType, it.active) }.toList(),
   )
 }
