@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
+import jakarta.validation.ValidationException
 import jakarta.validation.constraints.NotNull
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -9,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.DOUBLE_BOOKING_OR_RESERVATION
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.NON_ASSOCIATION
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AvailableVisitSessionDto
@@ -32,6 +34,7 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
+import java.util.function.Predicate
 import java.util.stream.Stream
 
 @Service
@@ -57,7 +60,7 @@ class SessionService(
   }
 
   @Transactional(readOnly = true)
-  fun getVisitSession(prisonCode: String, sessionDate: LocalDate, sessionTemplateReference: String): VisitSessionDto {
+  fun getIndividualVisitSession(prisonCode: String, sessionDate: LocalDate, sessionTemplateReference: String): VisitSessionDto {
     val sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesForSession(
       prisonCode,
       sessionDate,
@@ -88,14 +91,19 @@ class SessionService(
   }
 
   @Transactional(readOnly = true)
-  fun getVisitSessions(
+  fun getAllVisitSessions(
     prisonCode: String,
     prisonerId: String,
     currentApplicationReference: String? = null,
     minOverride: Int? = null,
     maxOverride: Int? = null,
     usernameToExcludeFromReservedApplications: String? = null,
+    userType: UserType,
   ): List<VisitSessionDto> {
+    if (userType != UserType.STAFF) {
+      throw ValidationException("Cannot call endpoint for userType - $userType")
+    }
+
     val prison = prisonsService.findPrisonByCode(prisonCode)
     val dateRange = getDateRange(prison, minOverride, maxOverride)
 
@@ -105,27 +113,17 @@ class SessionService(
       dateRange = dateRange,
       excludedApplicationReference = currentApplicationReference,
       usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications,
+      userType = userType,
     )
   }
 
-  @Transactional(readOnly = true)
-  fun getVisitSessions(
-    prisonCode: String,
-    prisonerId: String,
-    dateRange: DateRange,
-    excludedApplicationReference: String? = null,
-    usernameToExcludeFromReservedApplications: String? = null,
-  ): List<VisitSessionDto> {
-    val prison = prisonsService.findPrisonByCode(prisonCode)
-    return getVisitSessions(prison, prisonerId, dateRange, excludedApplicationReference, usernameToExcludeFromReservedApplications)
-  }
-
-  fun getVisitSessions(
+  private fun getVisitSessions(
     prison: Prison,
     prisonerId: String,
     dateRange: DateRange,
     excludedApplicationReference: String? = null,
     usernameToExcludeFromReservedApplications: String? = null,
+    userType: UserType,
   ): List<VisitSessionDto> {
     val prisonCode = prison.code
     LOG.debug("Enter getVisitSessions prisonCode:${prison.code}, prisonerId : $prisonerId ")
@@ -136,9 +134,11 @@ class SessionService(
       prisonerValidationService.validatePrisonerIsFromPrison(it!!, prisonCode)
     }!!
 
-    var sessionTemplates = getAllSessionTemplatesForDateRange(prisonCode, dateRange)
+    var sessionTemplates = getAllSessionTemplatesForDateRange(prisonCode, dateRange).filter { sessionsByUserClientFilter(userType).test(it) }
+
     val prisonerHousingLevels = prisonerService.getPrisonerHousingLevels(prisonerId = prisonerId, prisonCode = prisonCode, sessionTemplates = sessionTemplates)
 
+    // get all sessions available to the prisoner
     sessionTemplates = sessionTemplates.filter { sessionTemplate ->
       // checks for location, incentive and category
       prisonerSessionValidationService.isSessionAvailableToPrisoner(sessionTemplates, sessionTemplate, prisoner, prisonerHousingLevels)
@@ -163,13 +163,15 @@ class SessionService(
     }.sortedWith(compareBy { it.startTimestamp })
   }
 
-  fun getAvailableVisitSessions(
+  @Transactional(readOnly = true)
+  fun getOnlyAvailableVisitSessions(
     prisonCode: String,
     prisonerId: String,
     sessionRestriction: SessionRestriction,
     dateRange: DateRange,
     excludedApplicationReference: String?,
     usernameToExcludeFromReservedApplications: String?,
+    userType: UserType,
   ): List<AvailableVisitSessionDto> {
     LOG.debug(
       "Enter getAvailableVisitSessions prisonCode:{}, prisonerId : {}, sessionRestriction: {}, dateRange - {}, excludedApplicationReference - {}, excludeReservedApplicationsForUser - {} ",
@@ -180,12 +182,31 @@ class SessionService(
       excludedApplicationReference,
       usernameToExcludeFromReservedApplications,
     )
+    // get all visit sessions for usertype
+    val prison = prisonsService.findPrisonByCode(prisonCode)
 
-    val visitSessions = getVisitSessions(prisonCode = prisonCode, prisonerId = prisonerId, dateRange = dateRange, excludedApplicationReference = excludedApplicationReference, usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications)
+    val visitSessions = getVisitSessions(
+      prison = prison,
+      prisonerId = prisonerId,
+      dateRange = dateRange,
+      excludedApplicationReference = excludedApplicationReference,
+      usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications,
+      userType = userType,
+    )
 
+    // finally filter out sessions without conflicts and with capacity
     return visitSessions.filter {
       hasSessionGotCapacity(it, sessionRestriction).and(it.sessionConflicts.isEmpty())
     }.map { AvailableVisitSessionDto(it, sessionRestriction) }.toList()
+  }
+
+  private fun sessionsByUserClientFilter(userType: UserType): Predicate<SessionTemplate> = Predicate {
+    it.clients.filter { userClient ->
+      userClient.active
+    }.map { userClient ->
+      userClient.userType
+    }
+      .contains(userType)
   }
 
   private fun hasSessionGotCapacity(session: VisitSessionDto, sessionRestriction: SessionRestriction): Boolean = when (sessionRestriction) {

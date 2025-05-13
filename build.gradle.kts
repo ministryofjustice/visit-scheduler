@@ -35,8 +35,8 @@ dependencies {
   implementation("org.springdoc:springdoc-openapi-starter-common:2.8.8")
 
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-  implementation("net.javacrumbs.shedlock:shedlock-spring:6.6.0")
-  implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:6.6.0")
+  implementation("net.javacrumbs.shedlock:shedlock-spring:6.6.1")
+  implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:6.6.1")
   implementation("org.apache.commons:commons-csv:1.14.0")
   implementation("org.freemarker:freemarker:2.3.34")
 
@@ -46,7 +46,7 @@ dependencies {
 
   annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
-  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.26")
+  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.27")
   testImplementation("com.github.tomakehurst:wiremock-jre8-standalone:3.0.1")
   testImplementation("org.mockito:mockito-inline:5.2.0")
   testImplementation("org.testcontainers:localstack:1.21.0")
