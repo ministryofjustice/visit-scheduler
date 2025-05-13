@@ -17,14 +17,12 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonAssociationDomainEventType.NON_ASSOCIATION_CREATED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.NON_ASSOCIATION_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_RELEASED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerReleaseReasonType.RELEASED
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
@@ -344,7 +342,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     test = getVisitAssert(prisonerBVisit, NON_ASSOCIATION_EVENT.description)
     test.accept(flaggedVisitForPrisoner2)
 
-    verify(sessionService, times(0)).getAllVisitSessions(any(), any(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), any())
+    verify(sessionService, times(0)).getVisitSessions(any(), any(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())
   }
 
   @Test
@@ -389,7 +387,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     test = getVisitAssert(prisonerBVisit, NON_ASSOCIATION_EVENT.description)
     test.accept(flaggedVisitForPrisoner2)
 
-    verify(sessionService, times(0)).getAllVisitSessions(any(), any(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), any())
+    verify(sessionService, times(0)).getVisitSessions(any(), any(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())
   }
 
   @Test
@@ -409,7 +407,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     // When
     flagVisitsTask.flagVisits()
     verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), mapCapture.capture(), isNull())
-    verify(sessionService, times(1)).getAllVisitSessions(any(), any(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), any())
+    verify(sessionService, times(1)).getVisitSessions(any(), any(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())
   }
 
   private fun assertFlaggedVisitEvent(visit: Visit, additionalInformation: String) {
@@ -445,7 +443,6 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     permittedLocations: List<AllowedSessionLocationHierarchy>? = null,
     permittedCategories: List<PrisonerCategoryType>? = null,
     permittedIncentiveLevels: List<IncentiveLevel>? = null,
-    userTypes: List<UserType> = listOf(UserType.STAFF, UserType.PUBLIC),
   ): SessionTemplate {
     val permittedLocationGroups: MutableList<SessionLocationGroup> = mutableListOf()
     val permittedCategoryGroups: MutableList<SessionCategoryGroup> = mutableListOf()
@@ -471,7 +468,6 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
       permittedLocationGroups = permittedLocationGroups,
       permittedCategories = permittedCategoryGroups,
       permittedIncentiveLevels = permittedIncentiveLevelGroups,
-      clients = userTypes.map { UserClientDto(it, true) },
     )
   }
 }

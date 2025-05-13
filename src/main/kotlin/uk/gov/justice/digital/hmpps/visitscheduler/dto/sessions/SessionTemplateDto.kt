@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.SessionCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.SessionIncentiveLevelGroupDto
@@ -47,8 +46,6 @@ data class SessionTemplateDto(
   val prisonerIncentiveLevelGroups: List<SessionIncentiveLevelGroupDto> = listOf(),
   @Schema(description = "Determines behaviour of location groups. True will mean these location groups are included, false means they will be excluded.", required = true)
   val includeLocationGroupType: Boolean,
-  @Schema(description = "User Client's for the session template", required = false)
-  val clients: List<UserClientDto> = mutableListOf(),
 ) {
   constructor(sessionTemplateEntity: SessionTemplate) : this(
     reference = sessionTemplateEntity.reference,
@@ -66,6 +63,5 @@ data class SessionTemplateDto(
     weeklyFrequency = sessionTemplateEntity.weeklyFrequency,
     active = sessionTemplateEntity.active,
     includeLocationGroupType = sessionTemplateEntity.includeLocationGroupType,
-    clients = sessionTemplateEntity.clients.map { UserClientDto(it.userType, it.active) },
   )
 }

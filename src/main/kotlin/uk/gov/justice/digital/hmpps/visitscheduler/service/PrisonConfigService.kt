@@ -8,8 +8,8 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ExcludeDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonUserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdatePrisonDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonUserClient
@@ -86,10 +86,10 @@ class PrisonConfigService(
   }
 
   @Transactional
-  fun activatePrisonClient(prisonCode: String, type: UserType): UserClientDto = createOrUpdatePrisonClient(prisonCode, type, true)
+  fun activatePrisonClient(prisonCode: String, type: UserType): PrisonUserClientDto = createOrUpdatePrisonClient(prisonCode, type, true)
 
   @Transactional
-  fun deActivatePrisonClient(prisonCode: String, type: UserType): UserClientDto = createOrUpdatePrisonClient(prisonCode, type, false)
+  fun deActivatePrisonClient(prisonCode: String, type: UserType): PrisonUserClientDto = createOrUpdatePrisonClient(prisonCode, type, false)
 
   @Transactional
   fun deActivatePrison(prisonCode: String): PrisonDto {
@@ -132,7 +132,7 @@ class PrisonConfigService(
     prisonCode: String,
     userType: UserType,
     active: Boolean,
-  ): UserClientDto {
+  ): PrisonUserClientDto {
     val prisonUserClient: PrisonUserClient
     if (prisonUserClientRepository.doesPrisonClientExist(prisonCode, userType)) {
       prisonUserClient = prisonUserClientRepository.getPrisonClient(prisonCode, userType)
@@ -142,7 +142,7 @@ class PrisonConfigService(
       prisonUserClient = PrisonUserClient(prison.id, prison, userType, active)
       prison.clients.add(prisonUserClient)
     }
-    return UserClientDto(prisonUserClient.userType, prisonUserClient.active)
+    return PrisonUserClientDto(prisonUserClient.userType, prisonUserClient.active)
   }
 
   private fun validatePrisonDetails(

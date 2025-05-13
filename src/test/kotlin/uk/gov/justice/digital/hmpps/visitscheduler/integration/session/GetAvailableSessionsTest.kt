@@ -4,12 +4,10 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_SESSIONS_AVAILABLE_CONTROLLER_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.ACCEPTED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.IN_PROGRESS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
@@ -26,13 +24,14 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AvailableVisitSe
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.submitApplication
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.service.DateRange
 import java.time.DayOfWeek.MONDAY
 import java.time.DayOfWeek.SUNDAY
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.temporal.TemporalAdjusters
 
-@DisplayName("GET $VISIT_SESSIONS_AVAILABLE_CONTROLLER_PATH")
+@DisplayName("Get /visit-sessions/available")
 class GetAvailableSessionsTest : IntegrationTestBase() {
 
   private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
@@ -41,11 +40,8 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
 
   private val prisonCode = "STC"
 
-  private lateinit var authHttpHeaders: (HttpHeaders) -> Unit
-
   @BeforeEach
   internal fun setUpTests() {
-    authHttpHeaders = setAuthorisation(roles = requiredRole)
     prison = prisonEntityHelper.create(prisonCode = prisonCode)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
   }
@@ -71,7 +67,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -114,7 +109,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       CLOSED,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -151,7 +145,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, OPEN, 2, 28, excludedApplicationReference = reservedApplication.reference, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, OPEN, 2, 28, excludedApplicationReference = reservedApplication.reference)
 
     // Then
     responseSpec.expectStatus().isOk
@@ -188,7 +182,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, OPEN, 1, 7, excludedApplicationReference = reservedApplication.reference, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, OPEN, 1, 7, excludedApplicationReference = reservedApplication.reference)
 
     // Then
     responseSpec.expectStatus().isOk
@@ -226,7 +220,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, OPEN, 1, 7, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, OPEN, 1, 7)
 
     // Then
     responseSpec.expectStatus().isOk
@@ -262,7 +256,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, CLOSED, 2, 28, excludedApplicationReference = reservedApplication.reference, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, CLOSED, 2, 28, excludedApplicationReference = reservedApplication.reference)
 
     // Then
     responseSpec.expectStatus().isOk
@@ -300,7 +294,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, CLOSED, 1, 7, excludedApplicationReference = reservedApplication.reference, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, CLOSED, 1, 7, excludedApplicationReference = reservedApplication.reference)
 
     // Then
     responseSpec.expectStatus().isOk
@@ -338,7 +332,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, CLOSED, 1, 7, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, CLOSED, 1, 7)
 
     // Then
     responseSpec.expectStatus().isOk
@@ -387,7 +381,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       CLOSED,
       2,
       28,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -446,7 +439,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       CLOSED,
       2,
       28,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -516,7 +508,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       2,
       28,
       username = "username",
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -576,7 +567,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       CLOSED,
       2,
       28,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -628,7 +618,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       OPEN,
       2,
       28,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -679,7 +668,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -748,7 +736,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -820,7 +807,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -858,7 +844,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       OPEN,
       policyNoticeDaysMin = policyNoticeDaysMin,
       policyNoticeDaysMax = policyNoticeDaysMax,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -893,7 +878,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode = "AWE",
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -955,7 +939,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -998,7 +981,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -1035,7 +1017,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -1071,7 +1052,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -1111,7 +1091,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -1151,7 +1130,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -1195,7 +1173,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -1239,7 +1216,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -1272,7 +1248,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -1322,7 +1297,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -1372,7 +1346,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -1410,7 +1383,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -1450,7 +1422,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       OPEN,
       0,
       28,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -1488,7 +1459,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -1521,7 +1491,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -1548,7 +1517,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       OPEN,
       policyNoticeDaysMin,
       policyNoticeDaysMax,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -1573,7 +1541,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       OPEN,
       policyNoticeDaysMin,
       policyNoticeDaysMax,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -1597,7 +1564,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       OPEN,
       policyNoticeDaysMin,
       policyNoticeDaysMax,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -1617,7 +1583,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -1637,7 +1602,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -1719,7 +1683,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -1776,7 +1739,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -1875,7 +1837,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -2023,7 +1984,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -2049,7 +2009,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
     // Then
     assertResponseLength(responseSpec, 4)
@@ -2076,7 +2035,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -2117,7 +2075,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -2193,7 +2150,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -2238,7 +2194,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -2280,7 +2235,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -2321,7 +2275,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -2361,7 +2314,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -2392,7 +2344,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonerId = prisonerId,
       sessionRestriction = OPEN,
       username = createdByUser,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -2426,7 +2377,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonerId = prisonerId,
       sessionRestriction = OPEN,
       username = "other-user",
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -2459,7 +2409,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode = prisonCode,
       prisonerId = prisonerId,
       sessionRestriction = OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -2485,7 +2434,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       incorrectPrisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -2525,7 +2473,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -2564,7 +2511,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -2603,7 +2549,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -2640,7 +2585,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-      authHttpHeaders = authHttpHeaders,
     )
 
     // Then
@@ -2668,7 +2612,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode = "AWE", prisonerId = prisonerId, sessionRestriction = OPEN, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetAvailableSessions(prisonCode = "AWE", prisonerId = prisonerId, sessionRestriction = OPEN)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -2711,7 +2655,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode = "AWE", prisonerId = prisonerId, sessionRestriction = OPEN, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetAvailableSessions(prisonCode = "AWE", prisonerId = prisonerId, sessionRestriction = OPEN)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -2758,7 +2702,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode = "AWE", prisonerId = prisonerId, OPEN, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetAvailableSessions(prisonCode = "AWE", prisonerId = prisonerId, OPEN)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -2806,7 +2750,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode = "AWE", prisonerId = prisonerId, sessionRestriction = OPEN, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetAvailableSessions(prisonCode = "AWE", prisonerId = prisonerId, sessionRestriction = OPEN)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -2819,6 +2763,65 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     assertSession(visitSessionResults[1], nextWeek, sessionTemplate2, OPEN)
   }
 
+  private fun callGetAvailableSessions(
+    prisonCode: String? = "SPC",
+    prisonerId: String,
+    sessionRestriction: SessionRestriction,
+    policyNoticeDaysMin: Int = 2,
+    policyNoticeDaysMax: Int = 28,
+    excludedApplicationReference: String? = null,
+    username: String? = null,
+  ): ResponseSpec {
+    val today = LocalDate.now()
+    val fromDate = today.plusDays(policyNoticeDaysMin.toLong())
+    val toDate = today.plusDays(policyNoticeDaysMax.toLong())
+    val dateRange = DateRange(fromDate, toDate)
+
+    val uri = "/visit-sessions/available"
+    val uriQueryParams = getAvailableSessionsQueryParams(
+      prisonCode = prisonCode!!,
+      prisonerId = prisonerId,
+      sessionRestriction = sessionRestriction,
+      dateRange = dateRange,
+      policyNoticeDaysMin = policyNoticeDaysMin,
+      policyNoticeDaysMax = policyNoticeDaysMax,
+      excludedApplicationReference = excludedApplicationReference,
+      username = username,
+    ).joinToString("&")
+
+    return webTestClient.get().uri("$uri?$uriQueryParams")
+      .headers(setAuthorisation(roles = requiredRole))
+      .exchange()
+  }
+
+  private fun getAvailableSessionsQueryParams(
+    prisonCode: String,
+    prisonerId: String,
+    sessionRestriction: SessionRestriction,
+    dateRange: DateRange,
+    policyNoticeDaysMin: Int,
+    policyNoticeDaysMax: Int,
+    excludedApplicationReference: String?,
+    username: String?,
+  ): List<String> {
+    val queryParams = ArrayList<String>()
+    queryParams.add("prisonId=$prisonCode")
+    queryParams.add("prisonerId=$prisonerId")
+    queryParams.add("sessionRestriction=$sessionRestriction")
+    queryParams.add("fromDate=${dateRange.fromDate}")
+    queryParams.add("toDate=${dateRange.toDate}")
+    queryParams.add("policyNoticeDaysMin=$policyNoticeDaysMin")
+    queryParams.add("policyNoticeDaysMax=$policyNoticeDaysMax")
+
+    excludedApplicationReference?.let {
+      queryParams.add("excludedApplicationReference=$excludedApplicationReference")
+    }
+
+    username?.let {
+      queryParams.add("username=$username")
+    }
+    return queryParams
+  }
   private fun getNextAllowedDay(): LocalDate {
     // The 3 days is based on the default SessionService.policyNoticeDaysMin
     return LocalDate.now().plusDays(3)

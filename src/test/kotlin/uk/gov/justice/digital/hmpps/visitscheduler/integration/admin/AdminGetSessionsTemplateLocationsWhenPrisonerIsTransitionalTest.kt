@@ -5,7 +5,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatusCode
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
@@ -17,7 +16,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TransitionalLocatio
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TransitionalLocationTypes.ECL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TransitionalLocationTypes.RECP
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TransitionalLocationTypes.TAP
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -28,11 +26,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionT
 import java.time.LocalDate
 import java.time.LocalTime
 
-@DisplayName("GET $ADMIN_SESSION_TEMPLATES_PATH with temp location")
+@DisplayName("Get  $ADMIN_SESSION_TEMPLATES_PATH with temp location")
 class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : IntegrationTestBase() {
   private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
-
-  private lateinit var authHttpHeaders: (HttpHeaders) -> Unit
 
   private val nextAllowedDay = getNextAllowedDay()
 
@@ -42,7 +38,6 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
   internal fun setUpTests() {
     prisonOther = prisonEntityHelper.create()
     prison = prisonEntityHelper.create("CR1")
-    authHttpHeaders = setAuthorisation(roles = requiredRole)
   }
 
   @Test
@@ -55,7 +50,7 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
     val sessionTemplate = setupSessionTemplate(prisonCode)
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessionsByPrisonerIdAndPrison(prisonCode, prisonerId)
 
     // Then
     assertReturnedResult(responseSpec, sessionTemplate)
@@ -72,7 +67,7 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
     val sessionTemplate = setupSessionTemplate(prisonCode)
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessionsByPrisonerIdAndPrison(prisonCode, prisonerId)
 
     // Then
     assertReturnedResult(responseSpec, sessionTemplate)
@@ -90,7 +85,7 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
     val sessionTemplateTAP = setupSessionTemplate(prisonCode, allowedPermittedLocations = listOf(allowedSessionLocationHierarchy))
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessionsByPrisonerIdAndPrison(prisonCode, prisonerId)
 
     // Then
     assertReturnedResult(responseSpec, sessionTemplateTAP)
@@ -107,7 +102,7 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
     val sessionTemplate = setupSessionTemplate(prisonCode)
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessionsByPrisonerIdAndPrison(prisonCode, prisonerId)
 
     // Then
     assertReturnedResult(responseSpec, sessionTemplate)
@@ -124,7 +119,7 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
     val sessionTemplate = setupSessionTemplate(prisonCode)
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessionsByPrisonerIdAndPrison(prisonCode, prisonerId)
 
     // Then
     assertReturnedResult(responseSpec, sessionTemplate)
@@ -141,7 +136,7 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
     val sessionTemplate = setupSessionTemplate(prisonCode)
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessionsByPrisonerIdAndPrison(prisonCode, prisonerId)
 
     // Then
     assertReturnedResult(responseSpec, sessionTemplate)
@@ -159,7 +154,7 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
     val sessionTemplate = setupSessionTemplate(prisonCode)
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessionsByPrisonerIdAndPrison(prisonCode, prisonerId)
 
     // Then
     assertReturnedResult(responseSpec, sessionTemplate)
@@ -176,7 +171,7 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
     setupSessionTemplate(prisonCode)
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessionsByPrisonerIdAndPrison(prisonCode, prisonerId)
 
     // Then
     assertNoResult(responseSpec)
@@ -193,7 +188,7 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = prisonerId, prisonCode = prisonCode)
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessionsByPrisonerIdAndPrison(prisonCode, prisonerId)
 
     // Then
     assertNoResult(responseSpec)
@@ -212,7 +207,7 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
     prisonOffenderSearchMockServer.stubGetPrisoner(prisonerId = prisonerId, null)
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessionsByPrisonerIdAndPrison(prisonCode, prisonerId)
 
     // Then
     assertErrorResult(
@@ -235,7 +230,7 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
     prisonOffenderSearchMockServer.stubGetPrisoner(prisonerId, null)
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessionsByPrisonerIdAndPrison(prisonCode, prisonerId)
 
     // Then
     assertErrorResult(
@@ -292,6 +287,10 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
       includeLocationGroupType = includeLocationGroupType,
     )
   }
+
+  private fun callGetSessionsByPrisonerIdAndPrison(prisonId: String, prisonerId: String): ResponseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
+    .headers(setAuthorisation(roles = requiredRole))
+    .exchange()
 
   private fun getNextAllowedDay(): LocalDate {
     // The two days is based on the default SessionService.policyNoticeDaysMin

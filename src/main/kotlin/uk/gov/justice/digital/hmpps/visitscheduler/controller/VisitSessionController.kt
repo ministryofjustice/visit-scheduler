@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AvailableVisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionScheduleDto
@@ -92,10 +91,7 @@ class VisitSessionController(
       example = "user-1",
     )
     username: String? = null,
-    @RequestParam
-    @Parameter(description = "userType", example = "STAFF", required = true)
-    userType: UserType,
-  ): List<VisitSessionDto> = sessionService.getAllVisitSessions(prisonCode, prisonerId, minOverride = min, maxOverride = max, usernameToExcludeFromReservedApplications = username, userType = userType)
+  ): List<VisitSessionDto> = sessionService.getVisitSessions(prisonCode, prisonerId, minOverride = min, maxOverride = max, usernameToExcludeFromReservedApplications = username)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(VISIT_SESSIONS_AVAILABLE_CONTROLLER_PATH)
@@ -162,10 +158,7 @@ class VisitSessionController(
       example = "user-1",
     )
     username: String? = null,
-    @RequestParam
-    @Parameter(description = "userType", example = "STAFF", required = true)
-    userType: UserType,
-  ): List<AvailableVisitSessionDto> = sessionService.getOnlyAvailableVisitSessions(prisonCode, prisonerId, sessionRestriction, DateRange(fromDate, toDate), excludedApplicationReference, usernameToExcludeFromReservedApplications = username, userType = userType)
+  ): List<AvailableVisitSessionDto> = sessionService.getAvailableVisitSessions(prisonCode, prisonerId, sessionRestriction, DateRange(fromDate, toDate), excludedApplicationReference, usernameToExcludeFromReservedApplications = username)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(GET_SESSION_SCHEDULE)
@@ -309,5 +302,5 @@ class VisitSessionController(
       example = "xye-fjc-abc",
     )
     sessionTemplateReference: String,
-  ): VisitSessionDto? = sessionService.getIndividualVisitSession(prisonCode, sessionDate, sessionTemplateReference)
+  ): VisitSessionDto? = sessionService.getVisitSession(prisonCode, sessionDate, sessionTemplateReference)
 }
