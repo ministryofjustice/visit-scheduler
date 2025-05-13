@@ -74,7 +74,7 @@ class AdminSessionTemplateVisitStatsTest(
     visitEntityHelper.create(visitStatus = CANCELLED, sessionTemplate = sessionTemplate1, visitRestriction = CLOSED, slotDate = tomorrow)
 
     // applications are not counted
-    applicationEntityHelper.create(sessionTemplate = sessionTemplate1, visitRestriction = CLOSED, slotDate = tomorrow, completed = false, applicationStatus = IN_PROGRESS, reservedSlot = true)
+    applicationEntityHelper.create(sessionTemplate = sessionTemplate1, visitRestriction = CLOSED, slotDate = tomorrow, applicationStatus = IN_PROGRESS, reservedSlot = true)
 
     visitEntityHelper.create(sessionTemplate = sessionTemplate1, visitRestriction = OPEN, slotDate = visitsFromDate.plusDays(2))
     visitEntityHelper.create(sessionTemplate = sessionTemplate1, visitRestriction = OPEN, slotDate = visitsFromDate.plusDays(3))

@@ -66,9 +66,6 @@ class Application(
   val userType: UserType,
 
   @Column(nullable = false)
-  var completed: Boolean = false,
-
-  @Column(nullable = false)
   val createdBy: String,
 
   @Column(nullable = false)

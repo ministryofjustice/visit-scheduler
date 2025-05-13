@@ -61,8 +61,8 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
 
     sessionTemplateDefault = sessionTemplateEntityHelper.create()
 
-    applicationMin = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplateDefault, reservedSlot = true, completed = false, applicationStatus = IN_PROGRESS)
-    applicationFull = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplateDefault, reservedSlot = true, completed = false, applicationStatus = IN_PROGRESS)
+    applicationMin = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplateDefault, reservedSlot = true, applicationStatus = IN_PROGRESS)
+    applicationFull = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplateDefault, reservedSlot = true, applicationStatus = IN_PROGRESS)
 
     applicationEntityHelper.createContact(application = applicationFull, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = applicationFull, nomisPersonId = 321L, visitContact = true)

@@ -199,7 +199,6 @@ class ApplicationService(
         visitType = sessionTemplate.visitType,
         restriction = createApplicationDto.applicationRestriction.getVisitRestriction(),
         userType = createApplicationDto.userType,
-        completed = false,
         createdBy = createApplicationDto.actionedBy,
         applicationStatus = IN_PROGRESS,
       ),

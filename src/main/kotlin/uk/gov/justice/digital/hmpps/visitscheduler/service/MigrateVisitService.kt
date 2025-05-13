@@ -180,7 +180,6 @@ class MigrateVisitService(
       visitType = migrateVisitRequest.visitType,
       restriction = migrateVisitRequest.visitRestriction,
       reservedSlot = true,
-      completed = true,
       createdBy = actionedBy,
       userType = STAFF,
       applicationStatus = ACCEPTED,

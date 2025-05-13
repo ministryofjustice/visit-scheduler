@@ -186,7 +186,7 @@ class PrisonExcludeDateNotificatonEventsTest : NotificationTestBase() {
     val sessionTemplateXYZ = sessionTemplateEntityHelper.create(prison = prisonXYZ, startTime = LocalTime.of(10, 0), endTime = LocalTime.of(11, 0))
 
     // existing visit for excludeDate in same prison
-    val application = createApplicationAndSave(sessionTemplate = sessionTemplateXYZ, prisonCode = prisonXYZ.code, completed = true, applicationStatus = ACCEPTED, slotDate = excludeDate)
+    val application = createApplicationAndSave(sessionTemplate = sessionTemplateXYZ, prisonCode = prisonXYZ.code, applicationStatus = ACCEPTED, slotDate = excludeDate)
     val bookedVisit = createVisitAndSave(VisitStatus.BOOKED, application, sessionTemplateXYZ)
 
     // When

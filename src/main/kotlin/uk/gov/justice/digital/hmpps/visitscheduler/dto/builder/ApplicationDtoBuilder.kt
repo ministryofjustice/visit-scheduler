@@ -26,7 +26,6 @@ class ApplicationDtoBuilder {
     modifiedTimestamp = applicationEntity.modifyTimestamp ?: LocalDateTime.now(),
     sessionTemplateReference = applicationEntity.sessionSlot.sessionTemplateReference,
     reserved = applicationEntity.reservedSlot,
-    completed = applicationEntity.completed,
     userType = applicationEntity.userType,
     applicationStatus = applicationEntity.applicationStatus,
   )

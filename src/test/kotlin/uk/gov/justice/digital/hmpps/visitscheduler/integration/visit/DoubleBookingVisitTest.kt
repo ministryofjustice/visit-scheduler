@@ -33,7 +33,7 @@ class DoubleBookingVisitTest : IntegrationTestBase() {
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
-    reservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false, applicationStatus = IN_PROGRESS)
+    reservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS)
     applicationEntityHelper.createContact(application = reservedApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = reservedApplication, nomisPersonId = 321L, visitContact = true)
     reservedApplication = applicationEntityHelper.save(reservedApplication)
@@ -91,7 +91,7 @@ class DoubleBookingVisitTest : IntegrationTestBase() {
   fun `When booking a visit a capacity exception rolls back to incomplete`() {
     // Given
     val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", openCapacity = 0)
-    val reservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false, applicationStatus = IN_PROGRESS)
+    val reservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS)
     val applicationReference = reservedApplication.reference
 
     // When

@@ -51,13 +51,13 @@ class CleanUpApplicationsScheduleTest : IntegrationTestBase() {
 
   @BeforeEach
   internal fun setUp() {
-    reservedVisitNotExpired = createApplicationAndSave(prisonerId = "NOT_EXPIRED", sessionTemplate = sessionTemplateDefault, completed = false, applicationStatus = IN_PROGRESS, reservedSlot = true)
-    reservedVisitNotExpiredChangingStatus = createApplicationAndSave(prisonerId = "NOT_EXPIRED", sessionTemplate = sessionTemplateDefault, completed = false, applicationStatus = IN_PROGRESS, reservedSlot = false)
+    reservedVisitNotExpired = createApplicationAndSave(prisonerId = "NOT_EXPIRED", sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS, reservedSlot = true)
+    reservedVisitNotExpiredChangingStatus = createApplicationAndSave(prisonerId = "NOT_EXPIRED", sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS, reservedSlot = false)
 
-    reservedVisitExpired = createApplicationAndSave(prisonerId = "EXPIRED", sessionTemplate = sessionTemplateDefault, completed = false, applicationStatus = IN_PROGRESS, reservedSlot = true)
+    reservedVisitExpired = createApplicationAndSave(prisonerId = "EXPIRED", sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS, reservedSlot = true)
     testApplicationRepository.updateModifyTimestamp(LocalDateTime.now().minusHours(25), reservedVisitExpired.id)
 
-    reservedVisitExpiredChangingStatus = createApplicationAndSave(prisonerId = "EXPIRED", sessionTemplate = sessionTemplateDefault, completed = false, applicationStatus = IN_PROGRESS, reservedSlot = false)
+    reservedVisitExpiredChangingStatus = createApplicationAndSave(prisonerId = "EXPIRED", sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS, reservedSlot = false)
     testApplicationRepository.updateModifyTimestamp(LocalDateTime.now().minusHours(24), reservedVisitExpiredChangingStatus.id)
   }
 
