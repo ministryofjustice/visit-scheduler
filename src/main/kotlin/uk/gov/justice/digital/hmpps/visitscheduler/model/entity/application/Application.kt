@@ -65,13 +65,13 @@ class Application(
   @Column(name = "user_type", nullable = false)
   val userType: UserType,
 
-  @Deprecated(message = "Replaced with applicationStatus")
   @Column(nullable = false)
   val createdBy: String,
 
   @Column(nullable = false)
   @Enumerated(EnumType.STRING)
   var applicationStatus: ApplicationStatus,
+
 ) : AbstractIdEntity() {
 
   @Column(name = "VISIT_ID", nullable = true)
