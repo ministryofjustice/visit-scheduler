@@ -464,6 +464,7 @@ class VisitNotificationEventService(
 
   private fun getValidToDateTime(validToDate: LocalDate?): LocalDateTime? = validToDate?.let { LocalDateTime.of(validToDate, LocalTime.MAX) }
 
+  @Transactional(readOnly = true)
   fun getNotificationCountForPrison(
     prisonCode: String,
     notificationEventTypes: List<NotificationEventType>?,
@@ -507,8 +508,10 @@ class VisitNotificationEventService(
     )
   }
 
+  @Transactional(readOnly = true)
   fun getNotificationsTypesForBookingReference(bookingReference: String): List<NotificationEventType> = visitNotificationEventRepository.getNotificationsTypesForBookingReference(bookingReference)
 
+  @Transactional(readOnly = true)
   fun getNotificationEventsForBookingReference(bookingReference: String): List<VisitNotificationEventDto> = this.visitNotificationEventRepository.getVisitNotificationEventsByBookingReference(bookingReference).map { VisitNotificationEventDto(it) }
 
   @Transactional
