@@ -86,7 +86,7 @@ class MigrateCancelVisitTest : MigrationIntegrationTestBase() {
   fun `cancel visit migrated by reference -  with outcome and outcome text`() {
     // Given
 
-    val application = createApplicationAndSave(completed = true, applicationStatus = ACCEPTED, sessionTemplate = sessionTemplateDefault)
+    val application = createApplicationAndSave(applicationStatus = ACCEPTED, sessionTemplate = sessionTemplateDefault)
     val visit = createVisitAndSave(visitStatus = BOOKED, application, sessionTemplateDefault)
 
     val cancelVisitDto = MigratedCancelVisitDto(
@@ -125,7 +125,7 @@ class MigrateCancelVisitTest : MigrationIntegrationTestBase() {
   @Test
   fun `when visit cancelled that has notification events then notification events are deleted and an unflag event is sent`() {
     // Given
-    val application = createApplicationAndSave(completed = true, applicationStatus = ACCEPTED, sessionTemplate = sessionTemplateDefault)
+    val application = createApplicationAndSave(applicationStatus = ACCEPTED, sessionTemplate = sessionTemplateDefault)
     val visit = createVisitAndSave(visitStatus = BOOKED, application, sessionTemplateDefault)
     visitNotificationEventHelper.create(visit.reference, NotificationEventType.NON_ASSOCIATION_EVENT)
     visitNotificationEventHelper.create(visit.reference, NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
@@ -177,7 +177,7 @@ class MigrateCancelVisitTest : MigrationIntegrationTestBase() {
   fun `when visit cancelled after visit start that has notification events then notification events are deleted and an unflag event is sent`() {
     // Given
     // past dated visit - for yesterday
-    val application = createApplicationAndSave(completed = true, applicationStatus = ACCEPTED, sessionTemplate = sessionTemplateDefault, slotDate = LocalDate.now().minusDays(1))
+    val application = createApplicationAndSave(applicationStatus = ACCEPTED, sessionTemplate = sessionTemplateDefault, slotDate = LocalDate.now().minusDays(1))
     val visit = createVisitAndSave(visitStatus = BOOKED, application, sessionTemplateDefault)
     visitNotificationEventHelper.create(visit.reference, NotificationEventType.NON_ASSOCIATION_EVENT)
     visitNotificationEventHelper.create(visit.reference, NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)

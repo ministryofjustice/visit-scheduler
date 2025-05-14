@@ -68,13 +68,13 @@ class BookVisitTest : IntegrationTestBase() {
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
-    reservedStaffApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false, applicationStatus = IN_PROGRESS)
+    reservedStaffApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS)
     applicationEntityHelper.createContact(application = reservedStaffApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = reservedStaffApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = reservedStaffApplication, description = "Some Text")
     reservedStaffApplication = applicationEntityHelper.save(reservedStaffApplication)
 
-    reservedPublicApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false, applicationStatus = IN_PROGRESS, userType = PUBLIC)
+    reservedPublicApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS, userType = PUBLIC)
     applicationEntityHelper.createContact(application = reservedPublicApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = reservedPublicApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = reservedPublicApplication, description = "Some Text")
@@ -138,7 +138,7 @@ class BookVisitTest : IntegrationTestBase() {
     // Given
     val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", openCapacity = 1)
 
-    var expiredReservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false, applicationStatus = IN_PROGRESS, visitRestriction = OPEN)
+    var expiredReservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS, visitRestriction = OPEN)
     applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = expiredReservedApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = expiredReservedApplication, description = "Some Text")
@@ -173,7 +173,7 @@ class BookVisitTest : IntegrationTestBase() {
     // Given
     val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", closedCapacity = 0)
 
-    var expiredReservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false, applicationStatus = IN_PROGRESS, visitRestriction = CLOSED)
+    var expiredReservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS, visitRestriction = CLOSED)
     applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = expiredReservedApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = expiredReservedApplication, description = "Some Text")
@@ -245,7 +245,6 @@ class BookVisitTest : IntegrationTestBase() {
   fun `when contact name and number is supplied in application for a new visit then visit will be booked with a contact name and number`() {
     var applicationWithContact = applicationEntityHelper.create(
       sessionTemplate = sessionTemplateDefault,
-      completed = false,
       applicationStatus = IN_PROGRESS,
       reservedSlot = true,
       visitRestriction = OPEN,
@@ -280,7 +279,6 @@ class BookVisitTest : IntegrationTestBase() {
   fun `when phone number or email is not supplied in application for a new visit then visit will be booked with no phone number or email for contact`() {
     val applicationWithNoPhoneNumberNoEmail = applicationEntityHelper.create(
       sessionTemplate = sessionTemplateDefault,
-      completed = false,
       applicationStatus = IN_PROGRESS,
       reservedSlot = true,
       visitRestriction = OPEN,
@@ -316,7 +314,7 @@ class BookVisitTest : IntegrationTestBase() {
   fun `Already completed application returns existing visit and no other action is performed`() {
     // Given
     val slotDateInThePast = LocalDate.now().plusDays(1)
-    val completedApplication = applicationEntityHelper.create(slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault, completed = true, applicationStatus = ACCEPTED)
+    val completedApplication = applicationEntityHelper.create(slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault, applicationStatus = ACCEPTED)
     applicationEntityHelper.createContact(application = completedApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = completedApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = completedApplication, description = "Some Text")

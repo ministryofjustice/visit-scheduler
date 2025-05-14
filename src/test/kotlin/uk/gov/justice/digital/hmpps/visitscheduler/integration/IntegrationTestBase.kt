@@ -278,7 +278,7 @@ abstract class IntegrationTestBase {
     visitContact: ContactDto = ContactDto(name = "Jane Doe", telephone = "01234 098765", email = "email@example.com"),
     userType: UserType = STAFF,
   ): Visit {
-    val application = createApplicationAndSave(prisonerId = prisonerId, sessionTemplate, sessionTemplate.prison.code, slotDate, completed = true, applicationStatus = ACCEPTED, visitRestriction = visitRestriction, visitContact = visitContact, userType = userType)
+    val application = createApplicationAndSave(prisonerId = prisonerId, sessionTemplate, sessionTemplate.prison.code, slotDate, applicationStatus = ACCEPTED, visitRestriction = visitRestriction, visitContact = visitContact, userType = userType)
     return createVisitAndSave(visitStatus = visitStatus!!, applicationEntity = application, sessionTemplateLocal = sessionTemplate)
   }
 
@@ -290,7 +290,7 @@ abstract class IntegrationTestBase {
     prisonCode: String? = null,
     userType: UserType = STAFF,
   ): Visit {
-    val application = createApplicationAndSave(prisonerId = prisonerId, slotDate = slotDate, completed = true, applicationStatus = ACCEPTED, visitRestriction = visitRestriction, prisonCode = prisonCode, userType = userType)
+    val application = createApplicationAndSave(prisonerId = prisonerId, slotDate = slotDate, applicationStatus = ACCEPTED, visitRestriction = visitRestriction, prisonCode = prisonCode, userType = userType)
     return createVisitAndSave(visitStatus = visitStatus!!, applicationEntity = application)
   }
 
@@ -298,18 +298,16 @@ abstract class IntegrationTestBase {
     prisonerId: String? = "testPrisonerId",
     prisonCode: String? = null,
     slotDate: LocalDate,
-    completed: Boolean,
     applicationStatus: ApplicationStatus,
     reservedSlot: Boolean = true,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
-  ): Application = createApplicationAndSave(prisonerId = prisonerId, sessionTemplate = sessionTemplateDefault, prisonCode = prisonCode, slotDate = slotDate, completed = completed, applicationStatus = applicationStatus, reservedSlot = reservedSlot, visitRestriction = visitRestriction)
+  ): Application = createApplicationAndSave(prisonerId = prisonerId, sessionTemplate = sessionTemplateDefault, prisonCode = prisonCode, slotDate = slotDate, applicationStatus = applicationStatus, reservedSlot = reservedSlot, visitRestriction = visitRestriction)
 
   fun createApplicationAndSave(
     prisonerId: String? = "testPrisonerId",
     sessionTemplate: SessionTemplate? = null,
     prisonCode: String? = sessionTemplateDefault.prison.code,
     slotDate: LocalDate? = null,
-    completed: Boolean,
     applicationStatus: ApplicationStatus,
     reservedSlot: Boolean = true,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
@@ -324,7 +322,6 @@ abstract class IntegrationTestBase {
     val applicationEntity = applicationEntityHelper.create(
       prisonerId = prisonerId!!,
       sessionTemplate = sessionTemplateLocal,
-      completed = completed,
       applicationStatus = applicationStatus,
       reservedSlot = reservedSlot,
       prisonCode = prisonCode,

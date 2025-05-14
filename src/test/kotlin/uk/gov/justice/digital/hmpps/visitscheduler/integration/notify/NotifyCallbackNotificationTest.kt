@@ -46,7 +46,7 @@ class NotifyCallbackNotificationTest : IntegrationTestBase() {
     roleGovNotifyHttpHeaders = setAuthorisation(roles = notifyRoles)
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = visitSchedulerRoles)
 
-    val application = createApplicationAndSave(completed = true, applicationStatus = ACCEPTED)
+    val application = createApplicationAndSave(applicationStatus = ACCEPTED)
     visit = createVisitAndSave(VisitStatus.BOOKED, application)
     eventAudit = eventAuditEntityHelper.create(
       reference = visit.reference,

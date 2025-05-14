@@ -51,15 +51,10 @@ data class ApplicationDto(
   @Schema(description = "Is the application reserved", example = "true", required = true)
   @field:NotNull
   val reserved: Boolean,
-  @Schema(description = "Is the application complete", example = "true", required = true)
-  @field:NotNull
-  @Deprecated(message = "Replaced with applicationStatus")
-  val completed: Boolean,
   @Schema(description = "User type", example = "STAFF", required = true)
   @field:NotNull
   val userType: UserType,
   @Schema(description = "Application status", example = "IN_PROGRESS", required = true)
   @field:NotNull
   val applicationStatus: ApplicationStatus,
-
 )

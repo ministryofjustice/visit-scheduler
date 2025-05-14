@@ -169,7 +169,6 @@ class SessionTemplateService(
       visitType = VisitType.SOCIAL,
       active = false,
       includeLocationGroupType = createSessionTemplateDto.includeLocationGroupType,
-
     )
 
     createSessionTemplateDto.categoryGroupReferences?.let {
