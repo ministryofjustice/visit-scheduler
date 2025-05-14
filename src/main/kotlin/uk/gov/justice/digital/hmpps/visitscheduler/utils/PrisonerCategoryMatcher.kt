@@ -21,11 +21,15 @@ class PrisonerCategoryMatcher : BiPredicate<String?, SessionTemplate> {
 
   fun isPrisonerCategoryAllowedOnSession(sessionTemplate: SessionTemplate, prisonerCategory: String?): Boolean {
     prisonerCategory?.let {
-      return getAllowedCategoriesForSessionTemplate(sessionTemplate).any { category ->
-        val match = category.equals(prisonerCategory, false)
-        LOG.debug("isPrisonerCategoryAllowedOnSession prisonerCategory:$prisonerCategory, matched $match, sessionTemplate:${sessionTemplate.reference}")
-        match
+      val includeCategory = sessionTemplate.includeCategoryGroupType
+      val allowedCategories = getAllowedCategoriesForSessionTemplate(sessionTemplate)
+      val match = if (includeCategory) {
+        allowedCategories.any { category -> category.equals(prisonerCategory, false) }
+      } else {
+        allowedCategories.none { category -> category.equals(prisonerCategory, false) }
       }
+      LOG.debug("isPrisonerCategoryAllowedOnSession prisonerCategory:$prisonerCategory, matched $match, sessionTemplate:${sessionTemplate.reference}")
+      return match
     }
 
     // if prisoner category is null - return false as prisoner should not be allowed on restricted category sessions
