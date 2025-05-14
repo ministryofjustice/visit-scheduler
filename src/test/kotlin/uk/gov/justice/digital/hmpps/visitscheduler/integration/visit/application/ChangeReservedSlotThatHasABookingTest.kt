@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_RESERVED_SLOT_CHANGE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ChangeApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.IN_PROGRESS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.CLOSED
@@ -62,7 +63,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     oldApplication = oldBooking.getLastApplication()!!
 
     newRestriction = if (oldBooking.visitRestriction == OPEN) CLOSED else OPEN
-    initialChangeApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = true, visitRestriction = newRestriction)
+    initialChangeApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS, reservedSlot = true, visitRestriction = newRestriction)
     applicationEntityHelper.createContact(application = initialChangeApplication, name = "Aled Wyn Evans", phone = "01348 811539", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = initialChangeApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = initialChangeApplication, description = "Some Text")
@@ -105,7 +106,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
 
     val visitRestriction = OPEN
     val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", openCapacity = 1, closedCapacity = 1)
-    val applicationThatNeedChanging = createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = true, visitRestriction = visitRestriction)
+    val applicationThatNeedChanging = createApplicationAndSave(sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS, reservedSlot = true, visitRestriction = visitRestriction)
 
     val updateRequest = ChangeApplicationDto(
       sessionTemplateReference = sessionTemplateDefault.reference,
@@ -129,7 +130,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
 
     val visitRestriction = OPEN
     val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", openCapacity = 1, closedCapacity = 0)
-    val applicationThatNeedChanging = createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = true, visitRestriction = visitRestriction)
+    val applicationThatNeedChanging = createApplicationAndSave(sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS, reservedSlot = true, visitRestriction = visitRestriction)
 
     val updateRequest = ChangeApplicationDto(
       sessionTemplateReference = sessionTemplateDefault.reference,
@@ -154,7 +155,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
 
     val visitRestriction = OPEN
     val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", openCapacity = 0, closedCapacity = 0)
-    val applicationThatNeedChanging = createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = true, visitRestriction = visitRestriction)
+    val applicationThatNeedChanging = createApplicationAndSave(sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS, reservedSlot = true, visitRestriction = visitRestriction)
 
     val updateRequest = ChangeApplicationDto(
       sessionTemplateReference = sessionTemplateDefault.reference,
@@ -179,7 +180,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
 
     val visitRestriction = OPEN
     val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", openCapacity = 1, closedCapacity = 0)
-    val applicationThatNeedChanging = createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = true, visitRestriction = visitRestriction)
+    val applicationThatNeedChanging = createApplicationAndSave(sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS, reservedSlot = true, visitRestriction = visitRestriction)
 
     val updateRequest = ChangeApplicationDto(
       sessionTemplateReference = sessionTemplateDefault.reference,
@@ -203,7 +204,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
 
     val visitRestriction = OPEN
     val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", openCapacity = 0, closedCapacity = 0)
-    val applicationThatNeedChanging = createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = true, visitRestriction = visitRestriction)
+    val applicationThatNeedChanging = createApplicationAndSave(sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS, reservedSlot = true, visitRestriction = visitRestriction)
 
     val updateRequest = ChangeApplicationDto(
       sessionTemplateReference = sessionTemplateDefault.reference,
@@ -318,7 +319,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
 
     Assertions.assertThat(applicationDto.visitType).isEqualTo(initialApplication.visitType)
     Assertions.assertThat(applicationDto.reserved).isEqualTo(reserved)
-    Assertions.assertThat(applicationDto.completed).isFalse()
+    Assertions.assertThat(applicationDto.applicationStatus).isEqualTo(IN_PROGRESS)
     changeApplicationRequest.applicationRestriction?.let {
       Assertions.assertThat(applicationDto.visitRestriction.name).isEqualTo(it.name)
     } ?: run {

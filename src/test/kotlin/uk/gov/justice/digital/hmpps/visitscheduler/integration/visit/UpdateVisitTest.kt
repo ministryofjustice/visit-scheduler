@@ -19,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.ACCEPTED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.IN_PROGRESS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISITOR_CONCERN
@@ -56,13 +58,13 @@ class UpdateVisitTest : IntegrationTestBase() {
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
-    reservedStaffApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false)
+    reservedStaffApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS)
     applicationEntityHelper.createContact(application = reservedStaffApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = reservedStaffApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = reservedStaffApplication, description = "Some Text")
     reservedStaffApplication = applicationEntityHelper.save(reservedStaffApplication)
 
-    reservedPublicApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false, userType = PUBLIC)
+    reservedPublicApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS, userType = PUBLIC)
     applicationEntityHelper.createContact(application = reservedPublicApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = reservedPublicApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = reservedPublicApplication, description = "Some Text")
@@ -76,9 +78,9 @@ class UpdateVisitTest : IntegrationTestBase() {
     val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", openCapacity = 1)
 
     val existingVisit = createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitRestriction = visitRestriction)
-    createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
+    createApplicationAndSave(sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS, visitRestriction = visitRestriction)
 
-    var expiredReservedApplication = applicationEntityHelper.create(slotDate = existingVisit.sessionSlot.slotDate, sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
+    var expiredReservedApplication = applicationEntityHelper.create(slotDate = existingVisit.sessionSlot.slotDate, sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS, visitRestriction = visitRestriction)
     applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = expiredReservedApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = expiredReservedApplication, description = "Some Text")
@@ -101,9 +103,9 @@ class UpdateVisitTest : IntegrationTestBase() {
     val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", closedCapacity = 1)
 
     val existingVisit = createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitRestriction = visitRestriction)
-    createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
+    createApplicationAndSave(sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS, visitRestriction = visitRestriction)
 
-    var expiredReservedApplication = applicationEntityHelper.create(slotDate = existingVisit.sessionSlot.slotDate, sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
+    var expiredReservedApplication = applicationEntityHelper.create(slotDate = existingVisit.sessionSlot.slotDate, sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS, visitRestriction = visitRestriction)
     applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = expiredReservedApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = expiredReservedApplication, description = "Some Text")
@@ -126,9 +128,9 @@ class UpdateVisitTest : IntegrationTestBase() {
     val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", openCapacity = 2)
 
     val existingVisit = createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitRestriction = visitRestriction)
-    createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
+    createApplicationAndSave(sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS, visitRestriction = visitRestriction)
 
-    var expiredReservedApplication = applicationEntityHelper.create(slotDate = existingVisit.sessionSlot.slotDate, sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
+    var expiredReservedApplication = applicationEntityHelper.create(slotDate = existingVisit.sessionSlot.slotDate, sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS, visitRestriction = visitRestriction)
     applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = expiredReservedApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = expiredReservedApplication, description = "Some Text")
@@ -152,9 +154,9 @@ class UpdateVisitTest : IntegrationTestBase() {
     val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", closedCapacity = 2)
 
     val existingVisit = createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitRestriction = visitRestriction)
-    createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
+    createApplicationAndSave(sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS, visitRestriction = visitRestriction)
 
-    var expiredReservedApplication = applicationEntityHelper.create(slotDate = existingVisit.sessionSlot.slotDate, sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
+    var expiredReservedApplication = applicationEntityHelper.create(slotDate = existingVisit.sessionSlot.slotDate, sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS, visitRestriction = visitRestriction)
     applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = expiredReservedApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = expiredReservedApplication, description = "Some Text")
@@ -179,7 +181,7 @@ class UpdateVisitTest : IntegrationTestBase() {
     val bookingToUpdate = createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitRestriction = visitRestriction)
 
     val newSlotDate = bookingToUpdate.sessionSlot.slotDate.plusWeeks(1)
-    var expiredReservedApplication = applicationEntityHelper.create(slotDate = newSlotDate, sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
+    var expiredReservedApplication = applicationEntityHelper.create(slotDate = newSlotDate, sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS, visitRestriction = visitRestriction)
     applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = expiredReservedApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = expiredReservedApplication, description = "Some Text")
@@ -204,7 +206,7 @@ class UpdateVisitTest : IntegrationTestBase() {
     val bookingToUpdate = createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitRestriction = OPEN)
     createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitRestriction = CLOSED)
 
-    var expiredReservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = CLOSED)
+    var expiredReservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS, visitRestriction = CLOSED)
     applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = expiredReservedApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = expiredReservedApplication, description = "Some Text")
@@ -231,7 +233,7 @@ class UpdateVisitTest : IntegrationTestBase() {
     val otherSlotDate = bookingToUpdate.sessionSlot.slotDate.plusWeeks(1)
     createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitRestriction = visitRestriction, slotDate = otherSlotDate)
 
-    var expiredReservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction, slotDate = otherSlotDate)
+    var expiredReservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS, visitRestriction = visitRestriction, slotDate = otherSlotDate)
     applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = expiredReservedApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = expiredReservedApplication, description = "Some Text")
@@ -288,7 +290,7 @@ class UpdateVisitTest : IntegrationTestBase() {
 
     var newApplication = applicationEntityHelper.create(
       sessionTemplate = sessionTemplateDefault,
-      completed = false,
+      applicationStatus = IN_PROGRESS,
       reservedSlot = true,
       visitRestriction = if (originalVisit.visitRestriction == OPEN) CLOSED else OPEN,
     )
@@ -312,7 +314,7 @@ class UpdateVisitTest : IntegrationTestBase() {
     assertVisitMatchesApplication(visitDto, newApplication)
 
     val application = testApplicationRepository.findByReference(visitDto.applicationReference!!)
-    assertThat(application!!.completed).isTrue()
+    assertThat(application!!.applicationStatus).isEqualTo(ACCEPTED)
 
     // And
     assertBookedEvent(visitDto, true)
@@ -328,7 +330,7 @@ class UpdateVisitTest : IntegrationTestBase() {
 
     var newApplication = applicationEntityHelper.create(
       sessionTemplate = sessionTemplateDefault,
-      completed = false,
+      applicationStatus = IN_PROGRESS,
       reservedSlot = true,
       visitRestriction = if (originalVisit.visitRestriction == OPEN) CLOSED else OPEN,
     )
@@ -354,7 +356,7 @@ class UpdateVisitTest : IntegrationTestBase() {
     assertThat(visitDto.userType).isEqualTo(PUBLIC)
     assertThat(newApplication.userType).isEqualTo(UserType.STAFF)
     val application = testApplicationRepository.findByReference(visitDto.applicationReference!!)
-    assertThat(application!!.completed).isTrue()
+    assertThat(application!!.applicationStatus).isEqualTo(ACCEPTED)
 
     // And
     assertBookedEvent(visitDto, true)
@@ -374,7 +376,7 @@ class UpdateVisitTest : IntegrationTestBase() {
 
     var newApplication = applicationEntityHelper.create(
       sessionTemplate = sessionTemplateDefault,
-      completed = false,
+      applicationStatus = IN_PROGRESS,
       reservedSlot = true,
       visitRestriction = if (originalVisit.visitRestriction == OPEN) CLOSED else OPEN,
     )
@@ -417,7 +419,7 @@ class UpdateVisitTest : IntegrationTestBase() {
 
     var newApplication = applicationEntityHelper.create(
       sessionTemplate = sessionTemplateDefault,
-      completed = false,
+      applicationStatus = IN_PROGRESS,
       reservedSlot = true,
       visitRestriction = if (originalVisit.visitRestriction == OPEN) CLOSED else OPEN,
     )
@@ -451,7 +453,7 @@ class UpdateVisitTest : IntegrationTestBase() {
   fun `Already completed application returns existing visit and no other action is performed`() {
     // Given
     val slotDateInThePast = LocalDate.now().plusDays(1)
-    val completedApplication = applicationEntityHelper.create(slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault, completed = true)
+    val completedApplication = applicationEntityHelper.create(slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault, applicationStatus = ACCEPTED)
     applicationEntityHelper.createContact(application = completedApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = completedApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = completedApplication, description = "Some Text")
@@ -486,7 +488,7 @@ class UpdateVisitTest : IntegrationTestBase() {
   fun `Amend and book expired visit - returns bad request error `() {
     // Given
     val slotDateInThePast = LocalDate.now().minusYears(1)
-    val expiredApplication = applicationEntityHelper.create(slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault, completed = false)
+    val expiredApplication = applicationEntityHelper.create(slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS)
     applicationEntityHelper.createContact(application = expiredApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = expiredApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = expiredApplication, description = "Some Text")
@@ -528,7 +530,7 @@ class UpdateVisitTest : IntegrationTestBase() {
     existingVisit = visitEntityHelper.save(existingVisit)
 
     var updateVisitApplication = applicationEntityHelper.create(existingVisit)
-    updateVisitApplication.completed = false
+    updateVisitApplication.applicationStatus = IN_PROGRESS
     updateVisitApplication.visitId = existingVisit.id
     updateVisitApplication = applicationEntityHelper.save(updateVisitApplication)
 
@@ -564,8 +566,8 @@ class UpdateVisitTest : IntegrationTestBase() {
     existingVisit = visitEntityHelper.save(existingVisit)
 
     // move visit to a different session on the same day
-    var updateVisitApplication = applicationEntityHelper.create(prisonerId = existingVisit.prisonerId, sessionTemplate = sessionTemplate1, slotDate = existingVisit.sessionSlot.slotDate)
-    updateVisitApplication.completed = false
+    var updateVisitApplication = applicationEntityHelper.create(prisonerId = existingVisit.prisonerId, sessionTemplate = sessionTemplate1, slotDate = existingVisit.sessionSlot.slotDate, applicationStatus = ACCEPTED)
+    updateVisitApplication.applicationStatus = IN_PROGRESS
     updateVisitApplication.visitId = existingVisit.id
     updateVisitApplication = applicationEntityHelper.save(updateVisitApplication)
 
@@ -600,8 +602,8 @@ class UpdateVisitTest : IntegrationTestBase() {
     existingVisit = visitEntityHelper.save(existingVisit)
 
     // move visit to a different session on the same day
-    var updateVisitApplication = applicationEntityHelper.create(prisonerId = existingVisit.prisonerId, sessionTemplate = sessionTemplateDefault, slotDate = existingVisit.sessionSlot.slotDate.plusWeeks(1))
-    updateVisitApplication.completed = false
+    var updateVisitApplication = applicationEntityHelper.create(prisonerId = existingVisit.prisonerId, sessionTemplate = sessionTemplateDefault, slotDate = existingVisit.sessionSlot.slotDate.plusWeeks(1), applicationStatus = ACCEPTED)
+    updateVisitApplication.applicationStatus = IN_PROGRESS
     updateVisitApplication.visitId = existingVisit.id
     updateVisitApplication = applicationEntityHelper.save(updateVisitApplication)
 
@@ -643,8 +645,8 @@ class UpdateVisitTest : IntegrationTestBase() {
     existingVisit = visitEntityHelper.save(existingVisit)
 
     // move visit to a different session on the same day
-    var updateVisitApplication = applicationEntityHelper.create(prisonerId = existingVisit.prisonerId, sessionTemplate = sessionTemplateDefault, slotDate = existingVisit.sessionSlot.slotDate.plusWeeks(1))
-    updateVisitApplication.completed = false
+    var updateVisitApplication = applicationEntityHelper.create(prisonerId = existingVisit.prisonerId, sessionTemplate = sessionTemplateDefault, slotDate = existingVisit.sessionSlot.slotDate.plusWeeks(1), applicationStatus = ACCEPTED)
+    updateVisitApplication.applicationStatus = IN_PROGRESS
     updateVisitApplication.visitId = existingVisit.id
 
     // visitor 2 is now the main contact
@@ -692,7 +694,7 @@ class UpdateVisitTest : IntegrationTestBase() {
 
     // move visit to a different session on the same day
     var updateVisitApplication = applicationEntityHelper.create(existingVisit)
-    updateVisitApplication.completed = false
+    updateVisitApplication.applicationStatus = IN_PROGRESS
     updateVisitApplication.visitId = existingVisit.id
 
     // visitor 3 removed
@@ -735,7 +737,7 @@ class UpdateVisitTest : IntegrationTestBase() {
 
     // update visit to add support
     var updateVisitApplication = applicationEntityHelper.create(existingVisit)
-    updateVisitApplication.completed = false
+    updateVisitApplication.applicationStatus = IN_PROGRESS
     updateVisitApplication.visitId = existingVisit.id
 
     applicationEntityHelper.createVisitor(updateVisitApplication, visitor1Id, true)
@@ -780,7 +782,7 @@ class UpdateVisitTest : IntegrationTestBase() {
 
     // update visit to remove support
     var updateVisitApplication = applicationEntityHelper.create(existingVisit)
-    updateVisitApplication.completed = false
+    updateVisitApplication.applicationStatus = IN_PROGRESS
     updateVisitApplication.visitId = existingVisit.id
 
     applicationEntityHelper.createVisitor(updateVisitApplication, visitor1Id, true)
@@ -821,7 +823,7 @@ class UpdateVisitTest : IntegrationTestBase() {
 
     // update visit to remove support
     var updateVisitApplication = applicationEntityHelper.create(existingVisit)
-    updateVisitApplication.completed = false
+    updateVisitApplication.applicationStatus = IN_PROGRESS
     updateVisitApplication.visitId = existingVisit.id
     applicationEntityHelper.createContact(updateVisitApplication, ContactDto(name = "Jane Doe", telephone = "01234 098765", email = null))
 

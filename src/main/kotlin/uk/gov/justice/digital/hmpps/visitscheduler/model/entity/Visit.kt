@@ -16,6 +16,7 @@ import jakarta.persistence.PostPersist
 import jakarta.persistence.Table
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.ACCEPTED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
@@ -117,7 +118,7 @@ class Visit(
 
   fun getLastApplication(): Application? = this.applications.lastOrNull()
 
-  fun getLastCompletedApplication(): Application? = this.applications.lastOrNull { it.completed }
+  fun getLastCompletedApplication(): Application? = this.applications.lastOrNull { it.applicationStatus == ACCEPTED }
 
   fun addApplication(application: Application) {
     applications.add(application)

@@ -132,7 +132,6 @@ fun sessionTemplate(
     permittedSessionLocationGroups = permittedSessionLocationGroups,
     permittedSessionCategoryGroups = permittedSessionCategoryGroups,
     includeLocationGroupType = includeLocationGroupType,
-
   ).also { it.reference = UUID.randomUUID().toString() }
   sessionTemplate = addUserClients(sessionTemplate, userTypes)
 
