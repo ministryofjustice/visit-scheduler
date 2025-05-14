@@ -100,4 +100,7 @@ class SessionTemplate(
 
   @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "sessionTemplate", orphanRemoval = true)
   var excludeDates: MutableList<SessionTemplateExcludeDate> = mutableListOf(),
+
+  @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "sessionTemplate", orphanRemoval = true)
+  var clients: MutableList<SessionTemplateUserClient> = mutableListOf(),
 ) : AbstractReferenceEntity(delimiter = ".", chunkSize = 3)
