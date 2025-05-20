@@ -271,4 +271,94 @@ class VisitorRestrictionUpsertedNotificationControllerTest : NotificationTestBas
       assertThat(actionedBy.userName).isNull()
     }
   }
+
+  @Test
+  fun `when multiple visitor restrictions with the same restriction type multiple notification events are added and not rejected as duplicates `() {
+    // Given
+    val notificationDto1 = VisitorRestrictionUpsertedNotificationDto(
+      visitorId = visitorId,
+      validFromDate = LocalDate.now().minusDays(2),
+      validToDate = LocalDate.now().plusDays(5),
+      restrictionType = VisitorSupportedRestrictionType.CLOSED.name,
+      restrictionId = visitorRestrictionId,
+    )
+
+    val notificationDto2 = VisitorRestrictionUpsertedNotificationDto(
+      visitorId = visitorId,
+      validFromDate = LocalDate.now().minusDays(2),
+      validToDate = LocalDate.now().plusDays(5),
+      restrictionType = VisitorSupportedRestrictionType.PREINF.name,
+      restrictionId = visitorRestrictionId,
+      )
+
+    val visit1 = createApplicationAndVisit(
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate1,
+    )
+
+    visit1.visitors.add(
+      VisitVisitor(
+        nomisPersonId = visitorId.toLong(),
+        visitId = visit1.id,
+        visit = visit1,
+        visitContact = true,
+      ),
+    )
+
+    visitEntityHelper.save(visit1)
+    eventAuditEntityHelper.create(visit1)
+
+    // When
+    var responseSpec = callNotifyVSiPThatVisitorRestrictionUpserted(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto1)
+    responseSpec.expectStatus().isOk
+    responseSpec = callNotifyVSiPThatVisitorRestrictionUpserted(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto2)
+    responseSpec.expectStatus().isOk
+
+    // Then
+    verify(visitNotificationEventRepository, times(2)).saveAndFlush(any<VisitNotificationEvent>())
+
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
+    assertThat(visitNotifications).hasSize(2)
+    assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
+    assertThat(visitNotifications[0].visitNotificationEventAttributes)
+      .extracting({ it.attributeName }, { it.attributeValue })
+      .containsExactlyInAnyOrder(
+        tuple(NotificationEventAttributeType.VISITOR_RESTRICTION, VisitorSupportedRestrictionType.CLOSED.name),
+        tuple(NotificationEventAttributeType.VISITOR_RESTRICTION_ID, visitorRestrictionId),
+        tuple(NotificationEventAttributeType.VISITOR_ID, visitorId),
+      )
+
+    assertThat(visitNotifications[1].bookingReference).isEqualTo(visit1.reference)
+    assertThat(visitNotifications[1].visitNotificationEventAttributes)
+      .extracting({ it.attributeName }, { it.attributeValue })
+      .containsExactlyInAnyOrder(
+        tuple(NotificationEventAttributeType.VISITOR_RESTRICTION, VisitorSupportedRestrictionType.PREINF.name),
+        tuple(NotificationEventAttributeType.VISITOR_RESTRICTION_ID, visitorRestrictionId),
+        tuple(NotificationEventAttributeType.VISITOR_ID, visitorId),
+      )
+
+    val auditEvents = testEventAuditRepository.getAuditByType(EventAuditType.VISITOR_RESTRICTION_UPSERTED_EVENT)
+    assertThat(auditEvents).hasSize(2)
+    with(auditEvents[0]) {
+      assertThat(bookingReference).isEqualTo(visit1.reference)
+      assertThat(applicationReference).isEqualTo(visit1.getLastApplication()?.reference)
+      assertThat(sessionTemplateReference).isEqualTo(visit1.sessionSlot.sessionTemplateReference)
+      assertThat(type).isEqualTo(EventAuditType.VISITOR_RESTRICTION_UPSERTED_EVENT)
+      assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
+      assertThat(actionedBy.userType).isEqualTo(SYSTEM)
+      assertThat(actionedBy.bookerReference).isNull()
+      assertThat(actionedBy.userName).isNull()
+    }
+    with(auditEvents[1]) {
+      assertThat(bookingReference).isEqualTo(visit1.reference)
+      assertThat(applicationReference).isEqualTo(visit1.getLastApplication()?.reference)
+      assertThat(sessionTemplateReference).isEqualTo(visit1.sessionSlot.sessionTemplateReference)
+      assertThat(type).isEqualTo(EventAuditType.VISITOR_RESTRICTION_UPSERTED_EVENT)
+      assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
+      assertThat(actionedBy.userType).isEqualTo(SYSTEM)
+      assertThat(actionedBy.bookerReference).isNull()
+      assertThat(actionedBy.userName).isNull()
+    }
+  }
 }
