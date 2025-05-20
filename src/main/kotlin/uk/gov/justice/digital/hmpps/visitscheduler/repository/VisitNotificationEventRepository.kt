@@ -99,26 +99,27 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
   ): List<VisitNotificationEvent>
 
   @Query(
-    "SELECT sum(ng) FROM (   " +
-      "SELECT count(distinct vne.reference) as ng FROM visit_notification_event vne " +
-      " JOIN visit v ON v.reference  = vne.booking_reference " +
-      " JOIN session_slot ss on ss.id  = v.session_slot_id " +
-      " JOIN prison p on p.id  = v.prison_id AND p.code = :prisonCode " +
-      " WHERE  v.visit_status = 'BOOKED' AND ss.slot_start >= NOW()   " +
-      " GROUP BY vne.reference) sq ",
+    value =
+    "SELECT COUNT(DISTINCT v.reference) " +
+      "FROM visit_notification_event vne " +
+      " JOIN visit v ON v.reference = vne.booking_reference " +
+      " JOIN session_slot ss ON ss.id = v.session_slot_id " +
+      " JOIN prison p ON p.id = v.prison_id AND p.code = :prisonCode " +
+      "WHERE v.visit_status = 'BOOKED' " +
+      "  AND ss.slot_start  >= NOW()",
     nativeQuery = true,
   )
   fun getNotificationGroupsCountByPrisonCode(prisonCode: String): Int?
 
   @Query(
-    "SELECT sum(ng) FROM (   " +
-      "SELECT count(distinct vne.reference) as ng FROM visit_notification_event vne " +
-      " JOIN visit v ON v.reference  = vne.booking_reference " +
-      " JOIN session_slot ss on ss.id  = v.session_slot_id " +
-      " JOIN prison p on p.id  = v.prison_id AND p.code = :prisonCode " +
-      " WHERE  v.visit_status = 'BOOKED' AND ss.slot_start >= NOW() AND " +
-      " vne.type in (:notificationEventTypes) " +
-      " GROUP BY vne.reference) sq ",
+    "SELECT COUNT(DISTINCT v.reference) " +
+      "FROM visit_notification_event vne " +
+      " JOIN visit v ON v.reference = vne.booking_reference " +
+      " JOIN session_slot ss ON ss.id = v.session_slot_id " +
+      " JOIN prison p ON p.id = v.prison_id AND p.code = :prisonCode " +
+      "WHERE v.visit_status = 'BOOKED' " +
+      "  AND ss.slot_start >= NOW() " +
+      "  AND vne.type IN (:notificationEventTypes)",
     nativeQuery = true,
   )
   fun getNotificationGroupsCountByPrisonCode(prisonCode: String, notificationEventTypes: List<String>): Int?
