@@ -289,7 +289,7 @@ class VisitorRestrictionUpsertedNotificationControllerTest : NotificationTestBas
       validToDate = LocalDate.now().plusDays(5),
       restrictionType = VisitorSupportedRestrictionType.PREINF.name,
       restrictionId = visitorRestrictionId,
-      )
+    )
 
     val visit1 = createApplicationAndVisit(
       slotDate = LocalDate.now().plusDays(1),
