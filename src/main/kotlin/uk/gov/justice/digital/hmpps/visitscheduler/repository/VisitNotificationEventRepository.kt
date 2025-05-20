@@ -107,7 +107,7 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
       " JOIN prison p ON p.id = v.prison_id AND p.code = :prisonCode " +
       "WHERE v.visit_status = 'BOOKED' " +
       "  AND ss.slot_start  >= NOW()",
-    nativeQuery = true
+    nativeQuery = true,
   )
   fun getNotificationGroupsCountByPrisonCode(prisonCode: String): Int?
 
