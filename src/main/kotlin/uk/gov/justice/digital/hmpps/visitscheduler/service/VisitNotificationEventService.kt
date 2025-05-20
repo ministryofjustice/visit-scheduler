@@ -231,6 +231,7 @@ class VisitNotificationEventService(
       if (affectedVisits.isNotEmpty()) {
         val notificationAttributes = hashMapOf(
           NotificationEventAttributeType.VISITOR_RESTRICTION to notificationDto.restrictionType,
+          NotificationEventAttributeType.VISITOR_RESTRICTION_ID to notificationDto.restrictionId,
           NotificationEventAttributeType.VISITOR_ID to notificationDto.visitorId,
         )
         val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, PERSON_RESTRICTION_UPSERTED_EVENT, notificationAttributes)
@@ -255,6 +256,7 @@ class VisitNotificationEventService(
       if (affectedVisits.isNotEmpty()) {
         val notificationAttributes = hashMapOf(
           NotificationEventAttributeType.VISITOR_RESTRICTION to notificationDto.restrictionType,
+          NotificationEventAttributeType.VISITOR_RESTRICTION_ID to notificationDto.restrictionId,
           NotificationEventAttributeType.VISITOR_ID to notificationDto.visitorId,
         )
         val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, VISITOR_RESTRICTION_UPSERTED_EVENT, notificationAttributes)
