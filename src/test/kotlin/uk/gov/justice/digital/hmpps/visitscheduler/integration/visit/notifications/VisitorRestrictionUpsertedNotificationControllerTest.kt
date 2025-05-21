@@ -16,8 +16,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_VISITOR_RESTRICTION_UPSERTED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventAttributeType.VISITOR_ID
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventAttributeType.VISITOR_RESTRICTION
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventAttributeType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
@@ -38,6 +37,7 @@ class VisitorRestrictionUpsertedNotificationControllerTest : NotificationTestBas
 
   val prisonerId = "A1234AA"
   val visitorId = "4427942"
+  val visitorRestrictionId = "123"
   val prisonCode = "ABC"
   val otherPrisonCode = "DEF"
 
@@ -64,6 +64,7 @@ class VisitorRestrictionUpsertedNotificationControllerTest : NotificationTestBas
       visitorId = visitorId,
       validFromDate = LocalDate.now().minusDays(1),
       restrictionType = VisitorSupportedRestrictionType.BAN.name,
+      restrictionId = visitorRestrictionId,
     )
 
     val visit1 = createApplicationAndVisit(
@@ -133,21 +134,23 @@ class VisitorRestrictionUpsertedNotificationControllerTest : NotificationTestBas
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(2)
     assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
-    assertThat(visitNotifications[0].visitNotificationEventAttributes.size).isEqualTo(2)
+    assertThat(visitNotifications[0].visitNotificationEventAttributes.size).isEqualTo(3)
     assertThat(visitNotifications[0].visitNotificationEventAttributes)
       .extracting({ it.attributeName }, { it.attributeValue })
       .containsExactlyInAnyOrder(
-        tuple(VISITOR_RESTRICTION, VisitorSupportedRestrictionType.BAN.name),
-        tuple(VISITOR_ID, visitorId),
+        tuple(NotificationEventAttributeType.VISITOR_RESTRICTION, VisitorSupportedRestrictionType.BAN.name),
+        tuple(NotificationEventAttributeType.VISITOR_RESTRICTION_ID, visitorRestrictionId),
+        tuple(NotificationEventAttributeType.VISITOR_ID, visitorId),
       )
 
     assertThat(visitNotifications[1].bookingReference).isEqualTo(visit2.reference)
-    assertThat(visitNotifications[1].visitNotificationEventAttributes.size).isEqualTo(2)
+    assertThat(visitNotifications[1].visitNotificationEventAttributes.size).isEqualTo(3)
     assertThat(visitNotifications[1].visitNotificationEventAttributes)
       .extracting({ it.attributeName }, { it.attributeValue })
       .containsExactlyInAnyOrder(
-        tuple(VISITOR_RESTRICTION, VisitorSupportedRestrictionType.BAN.name),
-        tuple(VISITOR_ID, visitorId),
+        tuple(NotificationEventAttributeType.VISITOR_RESTRICTION, VisitorSupportedRestrictionType.BAN.name),
+        tuple(NotificationEventAttributeType.VISITOR_RESTRICTION_ID, visitorRestrictionId),
+        tuple(NotificationEventAttributeType.VISITOR_ID, visitorId),
       )
 
     val auditEvents = testEventAuditRepository.getAuditByType(EventAuditType.VISITOR_RESTRICTION_UPSERTED_EVENT)
@@ -182,6 +185,7 @@ class VisitorRestrictionUpsertedNotificationControllerTest : NotificationTestBas
       validFromDate = LocalDate.now().minusDays(2),
       validToDate = LocalDate.now().minusDays(1),
       restrictionType = VisitorSupportedRestrictionType.CLOSED.name,
+      restrictionId = visitorRestrictionId,
     )
 
     // When
@@ -202,6 +206,7 @@ class VisitorRestrictionUpsertedNotificationControllerTest : NotificationTestBas
       validFromDate = LocalDate.now().minusDays(2),
       validToDate = LocalDate.now().plusDays(5),
       restrictionType = VisitorSupportedRestrictionType.CLOSED.name,
+      restrictionId = visitorRestrictionId,
     )
 
     val visit1 = createApplicationAndVisit(
@@ -275,6 +280,7 @@ class VisitorRestrictionUpsertedNotificationControllerTest : NotificationTestBas
       validFromDate = LocalDate.now().minusDays(2),
       validToDate = LocalDate.now().plusDays(5),
       restrictionType = VisitorSupportedRestrictionType.CLOSED.name,
+      restrictionId = visitorRestrictionId,
     )
 
     val notificationDto2 = VisitorRestrictionUpsertedNotificationDto(
@@ -282,6 +288,7 @@ class VisitorRestrictionUpsertedNotificationControllerTest : NotificationTestBas
       validFromDate = LocalDate.now().minusDays(2),
       validToDate = LocalDate.now().plusDays(5),
       restrictionType = VisitorSupportedRestrictionType.PREINF.name,
+      restrictionId = visitorRestrictionId,
     )
 
     val visit1 = createApplicationAndVisit(
@@ -317,16 +324,18 @@ class VisitorRestrictionUpsertedNotificationControllerTest : NotificationTestBas
     assertThat(visitNotifications[0].visitNotificationEventAttributes)
       .extracting({ it.attributeName }, { it.attributeValue })
       .containsExactlyInAnyOrder(
-        tuple(VISITOR_RESTRICTION, VisitorSupportedRestrictionType.CLOSED.name),
-        tuple(VISITOR_ID, visitorId),
+        tuple(NotificationEventAttributeType.VISITOR_RESTRICTION, VisitorSupportedRestrictionType.CLOSED.name),
+        tuple(NotificationEventAttributeType.VISITOR_RESTRICTION_ID, visitorRestrictionId),
+        tuple(NotificationEventAttributeType.VISITOR_ID, visitorId),
       )
 
     assertThat(visitNotifications[1].bookingReference).isEqualTo(visit1.reference)
     assertThat(visitNotifications[1].visitNotificationEventAttributes)
       .extracting({ it.attributeName }, { it.attributeValue })
       .containsExactlyInAnyOrder(
-        tuple(VISITOR_RESTRICTION, VisitorSupportedRestrictionType.PREINF.name),
-        tuple(VISITOR_ID, visitorId),
+        tuple(NotificationEventAttributeType.VISITOR_RESTRICTION, VisitorSupportedRestrictionType.PREINF.name),
+        tuple(NotificationEventAttributeType.VISITOR_RESTRICTION_ID, visitorRestrictionId),
+        tuple(NotificationEventAttributeType.VISITOR_ID, visitorId),
       )
 
     val auditEvents = testEventAuditRepository.getAuditByType(EventAuditType.VISITOR_RESTRICTION_UPSERTED_EVENT)
