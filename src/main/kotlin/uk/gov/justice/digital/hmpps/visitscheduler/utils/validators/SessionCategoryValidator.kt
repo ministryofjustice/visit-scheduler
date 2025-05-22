@@ -25,9 +25,11 @@ class SessionCategoryValidator(
     sessionTemplate: SessionTemplate,
   ): Boolean {
     val isSessionForAllCategoryLevels = sessionTemplate.permittedSessionCategoryGroups.isEmpty()
-    if (!isSessionForAllCategoryLevels) {
-      return prisonerCategoryMatcher.test(prisonerCategory, sessionTemplate)
+
+    return if (!isSessionForAllCategoryLevels) {
+      prisonerCategoryMatcher.test(prisonerCategory, sessionTemplate)
+    } else {
+      true
     }
-    return true
   }
 }
