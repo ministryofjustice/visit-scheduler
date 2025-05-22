@@ -29,7 +29,7 @@ data class VisitDto(
   val visitRoom: String,
   @Schema(description = "Visit Type", example = "SOCIAL", required = true)
   val visitType: VisitType,
-  @Schema(description = "Visit Status", example = "RESERVED", required = true)
+  @Schema(description = "Visit Status", example = "BOOKED", required = true)
   val visitStatus: VisitStatus,
   @Schema(description = "Outcome Status", example = "VISITOR_CANCELLED", required = false)
   val outcomeStatus: OutcomeStatus? = null,

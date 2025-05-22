@@ -7,6 +7,7 @@ import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpe
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_SESSION
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.IN_PROGRESS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
@@ -104,7 +105,7 @@ class GetSessionTest : IntegrationTestBase() {
     testSessionSlotRepository.save(SessionSlot(sessionTemplate.reference, prison.id, sessionDate, sessionDate.atTime(9, 0), sessionDate.atTime(10, 0)))
 
     visitEntityHelper.create(visitStatus = BOOKED, slotDate = sessionDate, sessionTemplate = sessionTemplate, visitContact = ContactDto("Jane Doe", "01111111111", "email@example.com"), visitRestriction = VisitRestriction.OPEN)
-    applicationEntityHelper.create(slotDate = sessionDate, sessionTemplate = sessionTemplate, reservedSlot = true, completed = false, visitRestriction = VisitRestriction.OPEN)
+    applicationEntityHelper.create(slotDate = sessionDate, sessionTemplate = sessionTemplate, reservedSlot = true, applicationStatus = IN_PROGRESS, visitRestriction = VisitRestriction.OPEN)
 
     // When
     val responseSpec = callGetVisitSession(prisonCode, sessionDate, sessionTemplate.reference)
