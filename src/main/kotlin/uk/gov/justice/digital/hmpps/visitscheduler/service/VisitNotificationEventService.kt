@@ -231,6 +231,7 @@ class VisitNotificationEventService(
       if (affectedVisits.isNotEmpty()) {
         val notificationAttributes = hashMapOf(
           NotificationEventAttributeType.VISITOR_RESTRICTION to notificationDto.restrictionType,
+          NotificationEventAttributeType.VISITOR_RESTRICTION_ID to notificationDto.restrictionId,
           NotificationEventAttributeType.VISITOR_ID to notificationDto.visitorId,
         )
         val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, PERSON_RESTRICTION_UPSERTED_EVENT, notificationAttributes)
@@ -255,6 +256,7 @@ class VisitNotificationEventService(
       if (affectedVisits.isNotEmpty()) {
         val notificationAttributes = hashMapOf(
           NotificationEventAttributeType.VISITOR_RESTRICTION to notificationDto.restrictionType,
+          NotificationEventAttributeType.VISITOR_RESTRICTION_ID to notificationDto.restrictionId,
           NotificationEventAttributeType.VISITOR_ID to notificationDto.visitorId,
         )
         val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, VISITOR_RESTRICTION_UPSERTED_EVENT, notificationAttributes)
@@ -334,15 +336,15 @@ class VisitNotificationEventService(
   }
 
   private fun processVisitsWithNotifications(processVisitNotificationDto: ProcessVisitNotificationDto) {
-    val affectedVisitsNoDuplicate = processVisitNotificationDto.affectedVisits.filter { !visitNotificationEventRepository.isEventARecentDuplicate(it.reference, processVisitNotificationDto.type) }
+    val affectedVisits = processVisitNotificationDto.affectedVisits
 
-    affectedVisitsNoDuplicate.forEach {
+    affectedVisits.forEach {
       val bookingEventAudit = visitEventAuditService.getLastEventForBooking(it.reference)
       visitNotificationFlaggingService.flagTrackEvents(it, bookingEventAudit, processVisitNotificationDto.type)
     }
 
     if (pairedNotificationEventsUtil.isPairGroupRequired(processVisitNotificationDto.type)) {
-      val affectedVisitsByDateMap = processVisitNotificationDto.affectedVisits.groupBy { it.startTimestamp.toLocalDate() }
+      val affectedVisitsByDateMap = affectedVisits.groupBy { it.startTimestamp.toLocalDate() }
       affectedVisitsByDateMap.forEach {
         val affectedPairedVisits = pairedNotificationEventsUtil.pairWithEachOther(it.value)
 
@@ -352,7 +354,7 @@ class VisitNotificationEventService(
       }
     } else {
       val saveVisitNotificationDto = SaveVisitNotificationDto(
-        affectedVisitsNoDuplicate,
+        affectedVisits,
         processVisitNotificationDto.type,
         processVisitNotificationDto.notificationEventAttributes,
       )
