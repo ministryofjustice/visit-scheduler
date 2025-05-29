@@ -40,7 +40,7 @@ dependencies {
   implementation("org.apache.commons:commons-csv:1.14.0")
   implementation("org.freemarker:freemarker:2.3.34")
 
-  runtimeOnly("org.postgresql:postgresql:42.7.5")
+  runtimeOnly("org.postgresql:postgresql:42.7.6")
   runtimeOnly("org.flywaydb:flyway-core")
   runtimeOnly("org.flywaydb:flyway-database-postgresql")
 
