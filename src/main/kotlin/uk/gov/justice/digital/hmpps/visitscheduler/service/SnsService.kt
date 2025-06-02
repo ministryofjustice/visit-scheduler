@@ -6,10 +6,9 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
-import software.amazon.awssdk.services.sns.model.MessageAttributeValue
-import software.amazon.awssdk.services.sns.model.PublishRequest
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.SnsDomainEventPublishDto
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
+import uk.gov.justice.hmpps.sqs.publish
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -87,16 +86,10 @@ class SnsService(
     log.debug("Entered : publishToDomainEventsTopic $payloadEvent")
 
     try {
-      val messageAttributes = mutableMapOf(
-        "eventType" to MessageAttributeValue.builder().dataType("String").stringValue(payloadEvent.eventType).build(),
+      val result = domaineventsTopic.publish(
+        payloadEvent.eventType,
+        objectMapper.writeValueAsString(payloadEvent),
       )
-
-      val publishRequest = PublishRequest.builder().topicArn(domaineventsTopic.arn)
-        .message(objectMapper.writeValueAsString(payloadEvent))
-        .messageAttributes(messageAttributes)
-        .build()
-
-      val result = domaineventsTopicClient.publish(publishRequest).join()
 
       telemetryClient.trackEvent(
         "${payloadEvent.eventType}-domain-event",
