@@ -76,6 +76,8 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       endTime = LocalTime.parse("10:00"),
       dayOfWeek = sessionDate.dayOfWeek,
       includeLocationGroupType = false,
+      includeCategoryGroupType = true,
+      includeIncentiveGroupType = false,
       visitRoom = "Visits Room 1",
     )
 
@@ -86,6 +88,9 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       endTime = LocalTime.parse("12:00"),
       dayOfWeek = sessionDate.dayOfWeek,
       visitRoom = "Visits Room 1",
+      includeLocationGroupType = true,
+      includeCategoryGroupType = false,
+      includeIncentiveGroupType = true,
     )
 
     val sessionTemplate3 = sessionTemplateEntityHelper.create(
@@ -95,6 +100,9 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       endTime = LocalTime.parse("09:00"),
       dayOfWeek = sessionDate.dayOfWeek,
       visitRoom = "Visits Room 2",
+      includeLocationGroupType = true,
+      includeCategoryGroupType = true,
+      includeIncentiveGroupType = true,
     )
 
     val sessionTemplate4 = sessionTemplateEntityHelper.create(
@@ -104,6 +112,9 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       endTime = LocalTime.parse("08:30"),
       dayOfWeek = sessionDate.dayOfWeek,
       visitRoom = "Visits Room 1",
+      includeLocationGroupType = false,
+      includeCategoryGroupType = false,
+      includeIncentiveGroupType = false,
     )
 
     // When
@@ -116,19 +127,30 @@ class GetSessionScheduleTest : IntegrationTestBase() {
     Assertions.assertThat(sessionScheduleResults.size).isEqualTo(4)
     Assertions.assertThat(sessionScheduleResults[0].sessionTimeSlot.startTime).isEqualTo(sessionTemplate4.startTime)
     Assertions.assertThat(sessionScheduleResults[0].sessionTimeSlot.endTime).isEqualTo(sessionTemplate4.endTime)
-    Assertions.assertThat(sessionScheduleResults[0].areLocationGroupsInclusive).isTrue()
+    Assertions.assertThat(sessionScheduleResults[0].areLocationGroupsInclusive).isFalse()
+    Assertions.assertThat(sessionScheduleResults[0].areCategoryGroupsInclusive).isFalse()
+    Assertions.assertThat(sessionScheduleResults[0].areIncentiveGroupsInclusive).isFalse()
     Assertions.assertThat(sessionScheduleResults[0].visitRoom).isEqualTo("Visits Room 1")
+
     Assertions.assertThat(sessionScheduleResults[1].sessionTimeSlot.startTime).isEqualTo(sessionTemplate3.startTime)
     Assertions.assertThat(sessionScheduleResults[1].sessionTimeSlot.endTime).isEqualTo(sessionTemplate3.endTime)
     Assertions.assertThat(sessionScheduleResults[1].areLocationGroupsInclusive).isTrue()
+    Assertions.assertThat(sessionScheduleResults[1].areCategoryGroupsInclusive).isTrue()
+    Assertions.assertThat(sessionScheduleResults[1].areIncentiveGroupsInclusive).isTrue()
     Assertions.assertThat(sessionScheduleResults[1].visitRoom).isEqualTo("Visits Room 2")
+
     Assertions.assertThat(sessionScheduleResults[2].sessionTimeSlot.startTime).isEqualTo(sessionTemplate1.startTime)
     Assertions.assertThat(sessionScheduleResults[2].sessionTimeSlot.endTime).isEqualTo(sessionTemplate1.endTime)
     Assertions.assertThat(sessionScheduleResults[2].areLocationGroupsInclusive).isFalse()
+    Assertions.assertThat(sessionScheduleResults[2].areCategoryGroupsInclusive).isTrue()
+    Assertions.assertThat(sessionScheduleResults[2].areIncentiveGroupsInclusive).isFalse()
     Assertions.assertThat(sessionScheduleResults[2].visitRoom).isEqualTo("Visits Room 1")
+
     Assertions.assertThat(sessionScheduleResults[3].sessionTimeSlot.startTime).isEqualTo(sessionTemplate2.startTime)
     Assertions.assertThat(sessionScheduleResults[3].sessionTimeSlot.endTime).isEqualTo(sessionTemplate2.endTime)
     Assertions.assertThat(sessionScheduleResults[3].areLocationGroupsInclusive).isTrue()
+    Assertions.assertThat(sessionScheduleResults[3].areCategoryGroupsInclusive).isFalse()
+    Assertions.assertThat(sessionScheduleResults[3].areIncentiveGroupsInclusive).isTrue()
     Assertions.assertThat(sessionScheduleResults[3].visitRoom).isEqualTo("Visits Room 1")
   }
 
@@ -274,6 +296,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       validToDate = sessionDate.plusDays(7),
       dayOfWeek = sessionDate.dayOfWeek,
       permittedLocationGroups = mutableListOf(sessionLocationGroup1, sessionLocationGroup2),
+      includeLocationGroupType = true,
     )
 
     // When
@@ -284,6 +307,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       .expectBody()
     val sessionScheduleResults = getResults(returnResult)
     Assertions.assertThat(sessionScheduleResults.size).isEqualTo(1)
+    Assertions.assertThat(sessionScheduleResults[0].areLocationGroupsInclusive).isEqualTo(true)
     Assertions.assertThat(sessionScheduleResults[0].prisonerLocationGroupNames[0]).isEqualTo(sessionLocationGroup1.name)
     Assertions.assertThat(sessionScheduleResults[0].prisonerLocationGroupNames[1]).isEqualTo(sessionLocationGroup2.name)
   }
@@ -301,6 +325,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       validToDate = sessionDate.plusDays(7),
       dayOfWeek = sessionDate.dayOfWeek,
       permittedCategories = mutableListOf(sessionCategoryGroup1, sessionCategoryGroup2),
+      includeCategoryGroupType = true,
     )
 
     // When
@@ -311,6 +336,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       .expectBody()
     val sessionScheduleResults = getResults(returnResult)
     Assertions.assertThat(sessionScheduleResults.size).isEqualTo(1)
+    Assertions.assertThat(sessionScheduleResults[0].areCategoryGroupsInclusive).isEqualTo(true)
     Assertions.assertThat(sessionScheduleResults[0].prisonerCategoryGroupNames[0]).isEqualTo(sessionCategoryGroup1.name)
     Assertions.assertThat(sessionScheduleResults[0].prisonerCategoryGroupNames[1]).isEqualTo(sessionCategoryGroup2.name)
   }
@@ -328,6 +354,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       validToDate = sessionDate.plusDays(7),
       dayOfWeek = sessionDate.dayOfWeek,
       permittedIncentiveLevels = mutableListOf(sessionIncentiveLevelGroup1, sessionIncentiveLevelGroup2),
+      includeIncentiveGroupType = true,
     )
 
     // When
@@ -338,6 +365,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       .expectBody()
     val sessionScheduleResults = getResults(returnResult)
     Assertions.assertThat(sessionScheduleResults.size).isEqualTo(1)
+    Assertions.assertThat(sessionScheduleResults[0].areIncentiveGroupsInclusive).isEqualTo(true)
     Assertions.assertThat(sessionScheduleResults[0].prisonerIncentiveLevelGroupNames[0]).isEqualTo(sessionIncentiveLevelGroup1.name)
     Assertions.assertThat(sessionScheduleResults[0].prisonerIncentiveLevelGroupNames[1]).isEqualTo(sessionIncentiveLevelGroup2.name)
   }

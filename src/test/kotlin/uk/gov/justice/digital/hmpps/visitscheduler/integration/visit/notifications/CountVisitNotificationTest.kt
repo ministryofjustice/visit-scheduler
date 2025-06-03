@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.HttpHeaders
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_NON_ASSOCIATION_CHANGE_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_COUNT_FOR_PRISON_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.NON_ASSOCIATION_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_ALERTS_UPDATED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_RECEIVED_EVENT
@@ -22,7 +22,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 @Transactional(propagation = SUPPORTS)
-@DisplayName("POST $VISIT_NOTIFICATION_NON_ASSOCIATION_CHANGE_PATH NON_ASSOCIATION_DELETED")
+@DisplayName("Get $VISIT_NOTIFICATION_COUNT_FOR_PRISON_PATH")
 class CountVisitNotificationTest : NotificationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
@@ -36,7 +36,7 @@ class CountVisitNotificationTest : NotificationTestBase() {
   }
 
   @Test
-  fun `when notification count is requested for a prison`() {
+  fun `when notification count is requested for a prison, then correct count is returned`() {
     // Given
 
     val visitPrimary = visitEntityHelper.create(
@@ -66,9 +66,10 @@ class CountVisitNotificationTest : NotificationTestBase() {
       prisonCode = sessionTemplateTst.prison.code,
       sessionTemplate = sessionTemplateTst,
     )
-    eventAuditEntityHelper.create(visitSecondary)
+    eventAuditEntityHelper.create(visitOther)
 
     val visitNotification = testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitPrimary.reference, NON_ASSOCIATION_EVENT))
+    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitPrimary.reference, PRISONER_RELEASED_EVENT))
     testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitSecondary.reference, NON_ASSOCIATION_EVENT, _reference = visitNotification.reference))
     testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitOther.reference, PRISONER_RESTRICTION_CHANGE_EVENT))
 
@@ -78,7 +79,7 @@ class CountVisitNotificationTest : NotificationTestBase() {
     // Then
     responseSpec.expectStatus().isOk
     val notificationCount = this.getNotificationCountDto(responseSpec)
-    Assertions.assertThat(notificationCount.count).isEqualTo(1)
+    Assertions.assertThat(notificationCount.count).isEqualTo(2)
   }
 
   @Test
@@ -110,7 +111,7 @@ class CountVisitNotificationTest : NotificationTestBase() {
       prisonCode = sessionTemplateDefault.prison.code,
       sessionTemplate = sessionTemplateDefault,
     )
-    eventAuditEntityHelper.create(visitSecondary)
+    eventAuditEntityHelper.create(visitOther)
 
     val visitNotification = testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitPrimary.reference, NON_ASSOCIATION_EVENT))
     testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitSecondary.reference, NON_ASSOCIATION_EVENT, _reference = visitNotification.reference))
@@ -182,7 +183,7 @@ class CountVisitNotificationTest : NotificationTestBase() {
       prisonCode = sessionTemplate1.prison.code,
       sessionTemplate = sessionTemplate1,
     )
-    eventAuditEntityHelper.create(futureVisitToday)
+    eventAuditEntityHelper.create(futureVisitTomorrow)
 
     val pastVisitYesterday = visitEntityHelper.create(
       prisonerId = primaryPrisonerId,
@@ -191,7 +192,7 @@ class CountVisitNotificationTest : NotificationTestBase() {
       prisonCode = sessionTemplate2.prison.code,
       sessionTemplate = sessionTemplate2,
     )
-    eventAuditEntityHelper.create(pastVisitToday)
+    eventAuditEntityHelper.create(pastVisitYesterday)
 
     testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(futureVisitToday.reference, PRISONER_RELEASED_EVENT))
     testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(pastVisitYesterday.reference, PRISONER_RELEASED_EVENT))
@@ -208,7 +209,7 @@ class CountVisitNotificationTest : NotificationTestBase() {
   }
 
   @Test
-  fun `when notification count is requested for a prison with  notification types specified then the correct count is returned`() {
+  fun `when notification count is requested for a prison with notification types specified then the correct count is returned`() {
     // Given
     val futureSessionStartTime = LocalTime.MAX
     val prisonCode = "ABC"
@@ -296,7 +297,7 @@ class CountVisitNotificationTest : NotificationTestBase() {
     // Then
     responseSpec.expectStatus().isOk
     notificationCount = this.getNotificationCountDto(responseSpec)
-    Assertions.assertThat(notificationCount.count).isEqualTo(6)
+    Assertions.assertThat(notificationCount.count).isEqualTo(4)
   }
 
   @Test
