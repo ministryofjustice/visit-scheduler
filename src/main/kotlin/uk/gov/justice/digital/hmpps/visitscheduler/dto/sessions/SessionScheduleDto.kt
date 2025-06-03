@@ -33,14 +33,8 @@ data class SessionScheduleDto(
   @Schema(description = "prisoner category groups", example = "Category A Prisoners", required = false)
   val prisonerCategoryGroupNames: List<String>,
 
-  @Schema(description = "Determines behaviour of category groups. True will mean the category groups are inclusive, false means they are exclusive.", required = true)
-  val areCategoryGroupsInclusive: Boolean,
-
   @Schema(description = "prisoner incentive level groups", example = "Enhanced Incentive Level Prisoners", required = false)
   val prisonerIncentiveLevelGroupNames: List<String>,
-
-  @Schema(description = "Determines behaviour of incentive groups. True will mean the incentive groups are inclusive, false means they are exclusive.", required = true)
-  val areIncentiveGroupsInclusive: Boolean,
 
   @Schema(description = "number of weeks until the weekly day is repeated", example = "1", required = true)
   val weeklyFrequency: Int,

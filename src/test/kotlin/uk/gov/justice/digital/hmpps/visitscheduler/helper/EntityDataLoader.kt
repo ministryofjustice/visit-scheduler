@@ -617,8 +617,6 @@ class SessionTemplateEntityHelper(
     permittedIncentiveLevels: MutableList<SessionIncentiveLevelGroup> = mutableListOf(),
     isActive: Boolean = true,
     includeLocationGroupType: Boolean = true,
-    includeCategoryGroupType: Boolean = true,
-    includeIncentiveGroupType: Boolean = true,
     excludeDates: MutableList<LocalDate> = mutableListOf(),
     clients: List<UserClientDto> = listOf(UserClientDto(STAFF, true), UserClientDto(PUBLIC, true)),
   ): SessionTemplate {
@@ -642,8 +640,6 @@ class SessionTemplateEntityHelper(
       permittedIncentiveLevels = permittedIncentiveLevels,
       isActive = isActive,
       includeLocationGroupType = includeLocationGroupType,
-      includeCategoryGroupType = includeCategoryGroupType,
-      includeIncentiveGroupType = includeIncentiveGroupType,
       excludeDates = excludeDates,
       clients = clients,
     )
@@ -668,8 +664,6 @@ class SessionTemplateEntityHelper(
     permittedCategories: MutableList<SessionCategoryGroup> = mutableListOf(),
     permittedIncentiveLevels: MutableList<SessionIncentiveLevelGroup> = mutableListOf(),
     includeLocationGroupType: Boolean = true,
-    includeCategoryGroupType: Boolean = true,
-    includeIncentiveGroupType: Boolean = true,
     excludeDates: MutableList<LocalDate> = mutableListOf(),
     clients: List<UserClientDto> = listOf(UserClientDto(STAFF, true), UserClientDto(PUBLIC, true)),
   ): SessionTemplate {
@@ -693,8 +687,6 @@ class SessionTemplateEntityHelper(
         permittedSessionCategoryGroups = permittedCategories,
         permittedSessionIncentiveLevelGroups = permittedIncentiveLevels,
         includeLocationGroupType = includeLocationGroupType,
-        includeCategoryGroupType = includeCategoryGroupType,
-        includeIncentiveGroupType = includeIncentiveGroupType,
       ),
     )
 

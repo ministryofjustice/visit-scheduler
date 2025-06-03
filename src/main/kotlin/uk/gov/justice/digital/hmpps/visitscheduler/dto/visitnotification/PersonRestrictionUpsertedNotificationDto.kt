@@ -17,6 +17,4 @@ data class PersonRestrictionUpsertedNotificationDto(
   val validToDate: LocalDate? = null,
   @NotBlank
   val restrictionType: String,
-  @NotBlank
-  val restrictionId: String,
 )

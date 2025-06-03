@@ -22,15 +22,11 @@ class PrisonerIncentiveLevelMatcher : BiPredicate<IncentiveLevel?, SessionTempla
 
   fun isPrisonerIncentiveLevelAllowedOnSession(sessionTemplate: SessionTemplate, prisonerIncentiveLevel: IncentiveLevel?): Boolean {
     prisonerIncentiveLevel?.let {
-      val includeIncentiveLevel = sessionTemplate.includeIncentiveGroupType
-      val allowedIncentiveLevels = getAllowedIncentiveLevelsForSessionTemplate(sessionTemplate)
-      val match = if (includeIncentiveLevel) {
-        allowedIncentiveLevels.any { incentive -> incentive.equals(prisonerIncentiveLevel.code, false) }
-      } else {
-        allowedIncentiveLevels.none { incentive -> incentive.equals(prisonerIncentiveLevel.code, false) }
+      return getAllowedIncentiveLevelsForSessionTemplate(sessionTemplate).any { incentiveLevel ->
+        val match = incentiveLevel.equals(it.code, false)
+        LOG.debug("isPrisonerIncentiveLevelAllowedOnSession prisonerIncentiveLevel: ${it.code}, matched $match, sessionTemplate:${sessionTemplate.reference}")
+        match
       }
-      LOG.debug("isPrisonerIncentiveLevelAllowedOnSession prisonerIncentiveLevel: ${it.code}, matched $match, sessionTemplate:${sessionTemplate.reference}")
-      return match
     }
 
     // if prisoner incentive level is null - return false as prisoner should not be allowed on restricted incentive level sessions

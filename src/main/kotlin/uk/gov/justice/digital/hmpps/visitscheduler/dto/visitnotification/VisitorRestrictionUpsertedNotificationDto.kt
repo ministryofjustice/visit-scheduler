@@ -15,6 +15,4 @@ data class VisitorRestrictionUpsertedNotificationDto(
   val validToDate: LocalDate? = null,
   @NotBlank
   val restrictionType: String,
-  @NotBlank
-  val restrictionId: String,
 )

@@ -42,12 +42,6 @@ class SessionTemplate(
   @Column(nullable = false)
   val includeLocationGroupType: Boolean,
 
-  @Column(nullable = false)
-  val includeCategoryGroupType: Boolean,
-
-  @Column(nullable = false)
-  val includeIncentiveGroupType: Boolean,
-
   @ManyToMany(fetch = FetchType.LAZY, cascade = [CascadeType.REFRESH])
   @JoinTable(
     name = "SESSION_TO_LOCATION_GROUP",

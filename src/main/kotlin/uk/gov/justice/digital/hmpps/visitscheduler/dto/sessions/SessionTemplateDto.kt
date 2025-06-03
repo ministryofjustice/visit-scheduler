@@ -45,14 +45,10 @@ data class SessionTemplateDto(
   val prisonerCategoryGroups: List<SessionCategoryGroupDto> = listOf(),
   @Schema(description = "list of permitted incentive level groups", required = false)
   val prisonerIncentiveLevelGroups: List<SessionIncentiveLevelGroupDto> = listOf(),
-  @Schema(description = "Determines behaviour of location groups. True equates to these location groups being included, false equates to them being excluded.", required = true)
+  @Schema(description = "Determines behaviour of location groups. True will mean these location groups are included, false means they will be excluded.", required = true)
   val includeLocationGroupType: Boolean,
   @Schema(description = "User Client's for the session template", required = false)
   val clients: List<UserClientDto> = mutableListOf(),
-  @Schema(description = "Determines behaviour of category groups. True equates to these category groups being included, false equates to them being excluded.", required = true)
-  val includeCategoryGroupType: Boolean,
-  @Schema(description = "Determines behaviour of incentive groups. True equates to these incentive groups being included, false equates to them being excluded.", required = true)
-  val includeIncentiveGroupType: Boolean,
 ) {
   constructor(sessionTemplateEntity: SessionTemplate) : this(
     reference = sessionTemplateEntity.reference,
@@ -70,8 +66,6 @@ data class SessionTemplateDto(
     weeklyFrequency = sessionTemplateEntity.weeklyFrequency,
     active = sessionTemplateEntity.active,
     includeLocationGroupType = sessionTemplateEntity.includeLocationGroupType,
-    includeCategoryGroupType = sessionTemplateEntity.includeCategoryGroupType,
-    includeIncentiveGroupType = sessionTemplateEntity.includeIncentiveGroupType,
     clients = sessionTemplateEntity.clients.map { UserClientDto(it.userType, it.active) },
   )
 }

@@ -26,11 +26,9 @@ class SessionIncentiveValidator(
     sessionTemplate: SessionTemplate,
   ): Boolean {
     val isSessionForAllIncentiveLevels = sessionTemplate.permittedSessionIncentiveLevelGroups.isEmpty()
-
-    return if (!isSessionForAllIncentiveLevels) {
-      incentiveLevelMatcher.test(prisonerIncentiveLevel, sessionTemplate)
-    } else {
-      true
+    if (!isSessionForAllIncentiveLevels) {
+      return incentiveLevelMatcher.test(prisonerIncentiveLevel, sessionTemplate)
     }
+    return true
   }
 }

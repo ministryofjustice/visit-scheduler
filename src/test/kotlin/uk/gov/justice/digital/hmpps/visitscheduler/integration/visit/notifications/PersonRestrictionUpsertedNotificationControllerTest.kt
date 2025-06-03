@@ -59,7 +59,6 @@ class PersonRestrictionUpsertedNotificationControllerTest : NotificationTestBase
       visitorId = visitorId,
       validFromDate = LocalDate.now().minusDays(1),
       restrictionType = VisitorSupportedRestrictionType.BAN.name,
-      restrictionId = "123",
     )
 
     val visit1 = createApplicationAndVisit(
@@ -131,9 +130,9 @@ class PersonRestrictionUpsertedNotificationControllerTest : NotificationTestBase
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(2)
     assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
-    assertThat(visitNotifications[0].visitNotificationEventAttributes.size).isEqualTo(3)
+    assertThat(visitNotifications[0].visitNotificationEventAttributes.size).isEqualTo(2)
     assertThat(visitNotifications[1].bookingReference).isEqualTo(visit2.reference)
-    assertThat(visitNotifications[1].visitNotificationEventAttributes.size).isEqualTo(3)
+    assertThat(visitNotifications[1].visitNotificationEventAttributes.size).isEqualTo(2)
 
     val auditEvents = testEventAuditRepository.getAuditByType(EventAuditType.PERSON_RESTRICTION_UPSERTED_EVENT)
     assertThat(auditEvents).hasSize(2)
@@ -167,7 +166,6 @@ class PersonRestrictionUpsertedNotificationControllerTest : NotificationTestBase
       visitorId = visitorId,
       validFromDate = LocalDate.now().minusDays(1),
       restrictionType = "UNSUPPORTED",
-      restrictionId = "123",
     )
 
     // When
@@ -189,7 +187,6 @@ class PersonRestrictionUpsertedNotificationControllerTest : NotificationTestBase
       validFromDate = LocalDate.now().minusDays(2),
       validToDate = LocalDate.now().minusDays(1),
       restrictionType = VisitorSupportedRestrictionType.CLOSED.name,
-      restrictionId = "123",
     )
 
     // When
@@ -211,7 +208,6 @@ class PersonRestrictionUpsertedNotificationControllerTest : NotificationTestBase
       validFromDate = LocalDate.now().minusDays(2),
       validToDate = LocalDate.now().plusDays(5),
       restrictionType = VisitorSupportedRestrictionType.CLOSED.name,
-      restrictionId = "123",
     )
 
     val visit1 = createApplicationAndVisit(
