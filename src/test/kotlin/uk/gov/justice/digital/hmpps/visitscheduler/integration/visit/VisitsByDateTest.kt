@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.HttpHeaders
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISITS_BY
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.IN_PROGRESS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
@@ -73,7 +74,7 @@ class VisitsByDateTest : IntegrationTestBase() {
   }
 
   private fun createApplication(sessionTemplate: SessionTemplate, prisonerId: String, slotDate: LocalDate): Application {
-    var application = applicationEntityHelper.create(sessionTemplate = sessionTemplate, prisonerId = prisonerId, completed = false, slotDate = slotDate)
+    var application = applicationEntityHelper.create(sessionTemplate = sessionTemplate, prisonerId = prisonerId, applicationStatus = IN_PROGRESS, slotDate = slotDate)
     applicationEntityHelper.createContact(application = application, name = "Jane Doe", phone = "01234 098765", "email@example.com")
     applicationEntityHelper.createVisitor(application = application, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = application, description = "Some Text")

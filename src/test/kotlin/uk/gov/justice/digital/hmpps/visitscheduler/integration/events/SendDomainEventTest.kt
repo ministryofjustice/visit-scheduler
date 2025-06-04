@@ -24,6 +24,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.ACCEPTED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.IN_PROGRESS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
@@ -66,7 +68,7 @@ class SendDomainEventTest : IntegrationTestBase() {
     @Test
     fun `send visit booked event on update`() {
       // Given
-      val applicationEntity = createApplicationAndSave(completed = false)
+      val applicationEntity = createApplicationAndSave(applicationStatus = IN_PROGRESS)
       eventAuditEntityHelper.create(applicationEntity)
 
       val applicationReference = applicationEntity.reference
@@ -123,7 +125,7 @@ class SendDomainEventTest : IntegrationTestBase() {
     @Test
     fun `send visit cancelled event`() {
       // Given
-      val applicationEntity = createApplicationAndSave(completed = true)
+      val applicationEntity = createApplicationAndSave(applicationStatus = ACCEPTED)
       val visitEntity = createVisitAndSave(BOOKED, applicationEntity)
       val reference = visitEntity.reference
       val authHeader = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))

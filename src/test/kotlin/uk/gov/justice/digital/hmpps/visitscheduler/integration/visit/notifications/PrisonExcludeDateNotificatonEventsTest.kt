@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDt
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.ACCEPTED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.PRISON_VISITS_BLOCKED_FOR_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
@@ -185,7 +186,7 @@ class PrisonExcludeDateNotificatonEventsTest : NotificationTestBase() {
     val sessionTemplateXYZ = sessionTemplateEntityHelper.create(prison = prisonXYZ, startTime = LocalTime.of(10, 0), endTime = LocalTime.of(11, 0))
 
     // existing visit for excludeDate in same prison
-    val application = createApplicationAndSave(sessionTemplate = sessionTemplateXYZ, prisonCode = prisonXYZ.code, completed = true, slotDate = excludeDate)
+    val application = createApplicationAndSave(sessionTemplate = sessionTemplateXYZ, prisonCode = prisonXYZ.code, applicationStatus = ACCEPTED, slotDate = excludeDate)
     val bookedVisit = createVisitAndSave(VisitStatus.BOOKED, application, sessionTemplateXYZ)
 
     // When
