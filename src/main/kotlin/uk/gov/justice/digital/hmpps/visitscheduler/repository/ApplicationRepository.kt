@@ -44,7 +44,7 @@ interface ApplicationRepository :
     "SELECT a.restriction AS visitRestriction, COUNT(*) AS count  FROM application a " +
       "WHERE a.session_slot_id = :sessionSlotId AND " +
       " a.restriction IN ('OPEN','CLOSED') AND " +
-      " a.reserved_slot = true AND (a.application_status = 'IN_PROGRESS') AND" +
+      " a.reserved_slot = true AND a.application_status = 'IN_PROGRESS' AND" +
       " a.modify_timestamp >= :expiredDateAndTime AND " +
       " (:excludedApplicationReference is null OR a.reference != :excludedApplicationReference ) " +
       " GROUP BY a.restriction",
