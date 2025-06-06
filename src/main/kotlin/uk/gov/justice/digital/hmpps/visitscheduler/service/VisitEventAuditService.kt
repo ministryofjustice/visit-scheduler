@@ -188,6 +188,9 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
   @Transactional(readOnly = true)
   fun getLastUserToUpdateSlotByReference(bookingReference: String): ActionedBy = eventAuditRepository.getLastUserToUpdateBookingByReference(bookingReference)
 
+  @Transactional(readOnly = true)
+  fun getBookedOrMigratedUser(bookingReference: String): ActionedBy? = eventAuditRepository.getLastBookedOrMigratedUser(bookingReference)
+
   fun updateVisitApplicationAndSaveEvent(
     bookedVisitDto: VisitDto,
     bookingRequestDto: BookingRequestDto,

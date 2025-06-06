@@ -35,6 +35,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.P
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.PRISON_EXCLUDE_DATE_REMOVED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.SESSION_EXCLUDE_DATE_REMOVED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.VISITOR_APPROVED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitorSupportedRestrictionType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NotificationGroupDto
@@ -50,8 +51,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.SaveVis
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.SessionDateBlockedDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitNotificationEventAttributeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitNotificationEventDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorApprovedUnapprovedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorRestrictionUpsertedNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.ActionedBy
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEventAttribute
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
@@ -479,6 +482,7 @@ class VisitNotificationEventService(
     }
   }
 
+  @Deprecated("to be removed")
   fun getFutureNotificationVisitGroups(prisonCode: String): List<NotificationGroupDto> {
     val futureNotifications = this.visitNotificationEventRepository.getFutureVisitNotificationEvents(prisonCode)
     val eventGroups = futureNotifications.groupByTo(mutableMapOf()) { it.reference }
@@ -496,6 +500,33 @@ class VisitNotificationEventService(
     return notificationGroupDtos
   }
 
+  fun getFutureVisitsWithNotifications(prisonCode: String, notificationEventTypes: List<NotificationEventType>?): List<VisitNotificationsDto> {
+    val futureVisitsWithNotifications = if (notificationEventTypes.isNullOrEmpty()) {
+      visitNotificationEventRepository.getFutureVisitNotificationEvents(prisonCode)
+    } else {
+      visitNotificationEventRepository.getFutureVisitNotificationEvents(prisonCode, notificationEventTypes.map { it.name })
+    }
+    val futureVisitsWithNotificationsMap = futureVisitsWithNotifications.groupByTo(mutableMapOf()) { it.bookingReference }
+
+    val visitsWithNotifications = mutableListOf<VisitNotificationsDto>()
+    futureVisitsWithNotificationsMap.forEach { (visitReference, events) ->
+      val visit = visitService.getVisitByReference(visitReference)
+      val bookedBy = getActionedBy(visitEventAuditService.getBookedOrMigratedUser(visitReference))
+      visitsWithNotifications.add(
+        VisitNotificationsDto(
+          prisonerNumber = visit.prisonerId,
+          bookedBy = bookedBy,
+          visitDate = visit.startTimestamp.toLocalDate(),
+          visitReference = visitReference,
+          notifications = events.map { VisitNotificationEventDto(it) },
+        ),
+      )
+    }
+
+    return visitsWithNotifications.toList()
+  }
+
+  @Deprecated("to be removed")
   private fun createPrisonerVisitsNotificationDto(events: MutableList<VisitNotificationEvent>): List<PrisonerVisitsNotificationDto> = events.map {
     LOG.info("createPrisonerVisitsNotificationDto Entered - created visit notification for visit with booking reference: {}", it.bookingReference)
     val visit = this.visitService.getVisitByReference(it.bookingReference)
@@ -590,4 +621,8 @@ class VisitNotificationEventService(
     val prisonerApprovedContacts = prisonerContactRegistryClient.getPrisonersSocialContacts(prisonerId, withAddress = false, approvedVisitorsOnly = true)
     return prisonerApprovedContacts?.filter { it.personId != null }?.map { it.personId.toString() }?.contains(visitorId) ?: false
   }
+
+  private fun getActionedBy(actionedBy: ActionedBy?): ActionedByDto = actionedBy?.let {
+    ActionedByDto(it)
+  } ?: ActionedByDto(userType = UserType.SYSTEM, userName = null, bookerReference = null)
 }

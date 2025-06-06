@@ -99,10 +99,22 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
       " JOIN prison p on p.id  = v.prison_id  AND p.code= :prisonCode " +
       " JOIN session_slot ss on ss.id  = v.session_slot_id " +
       " WHERE v.visit_status = 'BOOKED' AND ss.slot_start >= NOW()  " +
-      " ORDER BY ss.slot_date, vne.reference, v.id",
+      " ORDER BY ss.slot_start, v.id",
     nativeQuery = true,
   )
   fun getFutureVisitNotificationEvents(@Param("prisonCode") prisonCode: String): List<VisitNotificationEvent>
+
+  @Query(
+    "SELECT vne.* FROM visit_notification_event vne " +
+      " JOIN visit v ON v.reference  = vne.booking_reference " +
+      " JOIN prison p on p.id  = v.prison_id  AND p.code= :prisonCode " +
+      " JOIN session_slot ss on ss.id  = v.session_slot_id " +
+      " WHERE v.visit_status = 'BOOKED' AND ss.slot_start >= NOW()  " +
+      "  AND vne.type IN (:notificationEventTypes) " +
+      " ORDER BY ss.slot_start, v.id",
+    nativeQuery = true,
+  )
+  fun getFutureVisitNotificationEvents(@Param("prisonCode") prisonCode: String, notificationEventTypes: List<String>): List<VisitNotificationEvent>
 
   @Query(
     "select vne.* FROM visit_notification_event vne " +

@@ -6,7 +6,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.ActionedBy
 
 @Schema(description = "Actioned By")
-class ActionedByDto(
+data class ActionedByDto(
 
   @Schema(description = "booker reference", example = "asd-aed-vhj", required = false)
   val bookerReference: String?,
