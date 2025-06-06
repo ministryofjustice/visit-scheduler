@@ -29,13 +29,13 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NotificationCountDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NotificationGroupDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NotificationVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PersonRestrictionUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertCreatedUpdatedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerRestrictionChangeNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitNotificationEventDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorApprovedUnapprovedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorRestrictionUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitNotificationEventService
@@ -480,7 +480,7 @@ class VisitNotificationController(
     @Schema(description = "list of notificationEventTypes", required = false)
     @RequestParam(value = "types", required = false)
     notificationEventTypes: List<NotificationEventType>?,
-  ): List<NotificationVisitDto> = visitNotificationEventService.getFutureNotificationVisits(prisonCode, notificationEventTypes)
+  ): List<VisitNotificationsDto> = visitNotificationEventService.getFutureVisitsWithNotifications(prisonCode, notificationEventTypes)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(VISIT_NOTIFICATION_EVENTS)

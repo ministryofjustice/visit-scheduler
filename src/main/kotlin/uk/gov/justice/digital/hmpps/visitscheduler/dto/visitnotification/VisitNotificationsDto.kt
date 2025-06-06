@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.ActionedByDto
 import java.time.LocalDate
 
-class NotificationVisitDto(
+class VisitNotificationsDto(
   @Schema(description = "Visit Booking Reference", example = "v9-d7-ed-7u", required = true)
   val visitReference: String,
   @Schema(description = "Prisoner Number", example = "AF34567G", required = true)
