@@ -37,6 +37,13 @@ interface EventAuditRepository : JpaRepository<EventAudit, Long> {
   )
   fun getLastUserToUpdateBookingByReference(bookingReference: String): ActionedBy
 
+  @Query(
+    "SELECT ea.actionedBy FROM EventAudit ea " +
+      " WHERE ea.bookingReference = :bookingReference AND ea.type in (uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.BOOKED_VISIT, uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.MIGRATED_VISIT) " +
+      "ORDER BY ea.id DESC LIMIT 1 ",
+  )
+  fun getLastBookedOrMigratedUser(bookingReference: String): ActionedBy?
+
   @Transactional
   @Modifying
   @Query(
