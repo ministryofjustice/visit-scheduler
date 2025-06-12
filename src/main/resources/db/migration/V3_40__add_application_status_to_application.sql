@@ -1,5 +1,6 @@
--- add application_status column to application
-ALTER TABLE application ADD application_status VARCHAR(80);
+-- add application_status column to application  and set DEFAULT to ACCEPTED for timebeing
+ALTER TABLE application ADD application_status VARCHAR(80) NOT NULL DEFAULT 'ACCEPTED';
+-- update all applications that should not be ACCEPTED to IN_PROGRESS
 UPDATE application set application_status = 'IN_PROGRESS' where (completed IS NULL OR completed = false);
-UPDATE application set application_status = 'ACCEPTED' where completed = true;
-ALTER TABLE application ALTER COLUMN application_status SET NOT NULL;
+-- finally drop the default value of ACCEPTED from application table
+ALTER TABLE application ALTER COLUMN application_status DROP DEFAULT;
