@@ -112,7 +112,7 @@ class VisitorUnapprovedVisitNotificationControllerTest : NotificationTestBase() 
 
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(1)
-    assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
+    assertThat(visitNotifications[0].visit.reference).isEqualTo(visit1.reference)
     assertThat(visitNotifications[0].visitNotificationEventAttributes.size).isEqualTo(1)
     assertThat(visitNotifications[0].visitNotificationEventAttributes[0].attributeName).isEqualTo(NotificationEventAttributeType.VISITOR_ID)
 
@@ -275,7 +275,7 @@ class VisitorUnapprovedVisitNotificationControllerTest : NotificationTestBase() 
 
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(1)
-    assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
+    assertThat(visitNotifications[0].visit.reference).isEqualTo(visit1.reference)
     assertThat(visitNotifications[0].visitNotificationEventAttributes.size).isEqualTo(1)
     assertThat(visitNotifications[0].visitNotificationEventAttributes[0].attributeName).isEqualTo(NotificationEventAttributeType.VISITOR_ID)
 
@@ -352,7 +352,7 @@ class VisitorUnapprovedVisitNotificationControllerTest : NotificationTestBase() 
 
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(1)
-    assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
+    assertThat(visitNotifications[0].visit.reference).isEqualTo(visit1.reference)
     assertThat(visitNotifications[0].visitNotificationEventAttributes.size).isEqualTo(1)
     assertThat(visitNotifications[0].visitNotificationEventAttributes[0].attributeName).isEqualTo(NotificationEventAttributeType.VISITOR_ID)
 

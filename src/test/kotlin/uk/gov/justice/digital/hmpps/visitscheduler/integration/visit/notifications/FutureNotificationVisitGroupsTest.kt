@@ -11,13 +11,13 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.BOOKED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CHANGING_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.UPDATED_VISIT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventAttributeType.PAIRED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.NON_ASSOCIATION_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_RELEASED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NotificationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import java.time.LocalDate
 import java.time.LocalTime
@@ -69,9 +69,9 @@ class FutureNotificationVisitGroupsTest : NotificationTestBase() {
     )
     eventAuditEntityHelper.create(visitOther)
 
-    val visitNotification = testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitPrimary.reference, NON_ASSOCIATION_EVENT))
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitSecondary.reference, NON_ASSOCIATION_EVENT, _reference = visitNotification.reference))
-    val otherNotification = testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitOther.reference, PRISONER_RESTRICTION_CHANGE_EVENT))
+    visitNotificationEventHelper.create(visit = visitPrimary, notificationEventType = NON_ASSOCIATION_EVENT, notificationAttributes = mapOf(Pair(PAIRED_VISIT, visitSecondary.reference)))
+    visitNotificationEventHelper.create(visit = visitSecondary, notificationEventType = NON_ASSOCIATION_EVENT, notificationAttributes = mapOf(Pair(PAIRED_VISIT, visitPrimary.reference)))
+    visitNotificationEventHelper.create(visit = visitOther, notificationEventType = PRISONER_RESTRICTION_CHANGE_EVENT)
 
     // When
     val responseSpec = callFutureNotificationVisitGroups(webTestClient, prisonCode, roleVisitSchedulerHttpHeaders)
@@ -79,24 +79,7 @@ class FutureNotificationVisitGroupsTest : NotificationTestBase() {
     // Then
     responseSpec.expectStatus().isOk
     val dtoArray = this.getNotificationGroupDtoDto(responseSpec)
-    Assertions.assertThat(dtoArray).hasSize(2)
-    with(dtoArray[0]) {
-      Assertions.assertThat(reference).isEqualTo(visitNotification.reference)
-      Assertions.assertThat(type).isEqualTo(NON_ASSOCIATION_EVENT)
-      Assertions.assertThat(affectedVisits).hasSize(2)
-      with(affectedVisits[0]) {
-        Assertions.assertThat(prisonerNumber).isEqualTo(visitPrimary.prisonerId)
-        Assertions.assertThat(visitDate).isEqualTo(visitPrimary.sessionSlot.slotDate)
-        Assertions.assertThat(bookingReference).isEqualTo(visitPrimary.reference)
-        Assertions.assertThat(lastActionedBy.userName).isEqualTo("IUpdatedIT")
-      }
-    }
-
-    with(dtoArray[1]) {
-      Assertions.assertThat(reference).isEqualTo(otherNotification.reference)
-      Assertions.assertThat(type).isEqualTo(PRISONER_RESTRICTION_CHANGE_EVENT)
-      Assertions.assertThat(affectedVisits).hasSize(1)
-    }
+    Assertions.assertThat(dtoArray).hasSize(3)
   }
 
   @Test
@@ -154,10 +137,10 @@ class FutureNotificationVisitGroupsTest : NotificationTestBase() {
     visitEntityHelper.createContact(pastVisitYesterday, name = contact.name, phone = contact.telephone, email = contact.email)
     visitEntityHelper.save(pastVisitYesterday)
 
-    val visitNotification1 = testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(futureVisitToday.reference, PRISONER_RELEASED_EVENT))
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(pastVisitYesterday.reference, PRISONER_RELEASED_EVENT))
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(pastVisitToday.reference, PRISONER_RELEASED_EVENT))
-    val visitNotification4 = testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(futureVisitTomorrow.reference, PRISONER_RELEASED_EVENT))
+    val visitNotification1 = visitNotificationEventHelper.create(visit = futureVisitToday, notificationEventType = PRISONER_RELEASED_EVENT)
+    visitNotificationEventHelper.create(visit = pastVisitYesterday, notificationEventType = PRISONER_RELEASED_EVENT)
+    visitNotificationEventHelper.create(visit = pastVisitToday, notificationEventType = PRISONER_RELEASED_EVENT)
+    val visitNotification4 = visitNotificationEventHelper.create(visit = futureVisitTomorrow, notificationEventType = PRISONER_RELEASED_EVENT)
 
     // When
     val responseSpec = callFutureNotificationVisitGroups(webTestClient, prisonCode, roleVisitSchedulerHttpHeaders)

@@ -127,9 +127,9 @@ class MigrateCancelVisitTest : MigrationIntegrationTestBase() {
     // Given
     val application = createApplicationAndSave(applicationStatus = ACCEPTED, sessionTemplate = sessionTemplateDefault)
     val visit = createVisitAndSave(visitStatus = BOOKED, application, sessionTemplateDefault)
-    visitNotificationEventHelper.create(visit.reference, NotificationEventType.NON_ASSOCIATION_EVENT)
-    visitNotificationEventHelper.create(visit.reference, NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
-    visitNotificationEventHelper.create(visit.reference, NotificationEventType.PRISONER_RELEASED_EVENT)
+    visitNotificationEventHelper.create(visit, NotificationEventType.NON_ASSOCIATION_EVENT)
+    visitNotificationEventHelper.create(visit, NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
+    visitNotificationEventHelper.create(visit, NotificationEventType.PRISONER_RELEASED_EVENT)
 
     var visitNotifications = visitNotificationEventHelper.getVisitNotifications(visit.reference)
     assertThat(visitNotifications.size).isEqualTo(3)
@@ -167,7 +167,7 @@ class MigrateCancelVisitTest : MigrationIntegrationTestBase() {
     assertThat(eventAuditList[0].actionedBy.userType).isEqualTo(STAFF)
 
     visitNotifications = visitNotificationEventHelper.getVisitNotifications(visit.reference)
-    verify(visitNotificationEventRepositorySpy, times(1)).deleteByBookingReference(eq(visit.reference))
+    verify(visitNotificationEventRepositorySpy, times(1)).deleteVisitNotificationEventByVisitReference(eq(visit.reference))
 
     assertThat(visitNotifications.size).isEqualTo(0)
     assertUnFlagEvent(visitCancelled)
@@ -179,9 +179,9 @@ class MigrateCancelVisitTest : MigrationIntegrationTestBase() {
     // past dated visit - for yesterday
     val application = createApplicationAndSave(applicationStatus = ACCEPTED, sessionTemplate = sessionTemplateDefault, slotDate = LocalDate.now().minusDays(1))
     val visit = createVisitAndSave(visitStatus = BOOKED, application, sessionTemplateDefault)
-    visitNotificationEventHelper.create(visit.reference, NotificationEventType.NON_ASSOCIATION_EVENT)
-    visitNotificationEventHelper.create(visit.reference, NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
-    visitNotificationEventHelper.create(visit.reference, NotificationEventType.PRISONER_RELEASED_EVENT)
+    visitNotificationEventHelper.create(visit, NotificationEventType.NON_ASSOCIATION_EVENT)
+    visitNotificationEventHelper.create(visit, NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
+    visitNotificationEventHelper.create(visit, NotificationEventType.PRISONER_RELEASED_EVENT)
 
     var visitNotifications = visitNotificationEventHelper.getVisitNotifications(visit.reference)
     assertThat(visitNotifications.size).isEqualTo(3)
@@ -220,7 +220,7 @@ class MigrateCancelVisitTest : MigrationIntegrationTestBase() {
     assertThat(eventAuditList[0].actionedBy.userType).isEqualTo(STAFF)
 
     visitNotifications = visitNotificationEventHelper.getVisitNotifications(visit.reference)
-    verify(visitNotificationEventRepositorySpy, times(1)).deleteByBookingReference(eq(visit.reference))
+    verify(visitNotificationEventRepositorySpy, times(1)).deleteVisitNotificationEventByVisitReference(eq(visit.reference))
 
     assertThat(visitNotifications.size).isEqualTo(0)
 

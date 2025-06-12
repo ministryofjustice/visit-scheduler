@@ -12,14 +12,14 @@ import java.time.LocalDate
 interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEvent, Int> {
   @Query(
     "SELECT vne.* FROM visit_notification_event vne " +
-      " JOIN visit v on v.reference  = vne.booking_reference  " +
+      " JOIN visit v on v.id  = vne.visit_id  " +
       " JOIN session_slot ss on ss.id  = v.session_slot_id " +
       " JOIN prison p on p.id  = v.prison_id " +
       " WHERE ss.slot_date >= NOW() " +
       " AND v.prisoner_id = :prisonerNumber " +
       " AND p.code = :prisonCode " +
       " AND vne.type=:#{#notificationEvent.name()}" +
-      " ORDER BY vne.reference, vne.id",
+      " ORDER BY vne.id",
     nativeQuery = true,
   )
   fun getEventsBy(
@@ -30,7 +30,7 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
 
   @Query(
     "SELECT vne.* FROM visit_notification_event vne " +
-      " JOIN visit v on v.reference  = vne.booking_reference  " +
+      " JOIN visit v on v.id  = vne.visit_id  " +
       " JOIN session_slot ss on ss.id  = v.session_slot_id " +
       " JOIN prison p on p.id  = v.prison_id " +
       " JOIN visit_visitor vv on vv.visit_id = v.id " +
@@ -39,7 +39,7 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
       " AND p.code = :prisonCode " +
       " AND vv.nomis_person_id = :visitorId " +
       " AND vne.type=:#{#notificationEvent.name()}" +
-      " ORDER BY vne.reference, vne.id",
+      " ORDER BY vne.id",
     nativeQuery = true,
   )
   fun getEventsByVisitor(
@@ -51,14 +51,14 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
 
   @Query(
     "SELECT vne.* FROM visit_notification_event vne " +
-      " JOIN visit v on v.reference  = vne.booking_reference  " +
+      " JOIN visit v on v.id  = vne.visit_id " +
       " JOIN session_slot ss on ss.id  = v.session_slot_id " +
       " JOIN prison p on p.id  = v.prison_id " +
       " WHERE ss.slot_date >= :slotDate" +
       " AND ss.slot_date < (CAST(:slotDate AS DATE) + CAST('1 day' AS INTERVAL))" +
       " AND p.code = :prisonCode " +
       " AND vne.type=:#{#notificationEvent.name()}" +
-      " ORDER BY vne.reference, vne.id",
+      " ORDER BY vne.id",
     nativeQuery = true,
   )
   fun getEventsByVisitDate(
@@ -69,9 +69,9 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
 
   @Query(
     value =
-    "SELECT COUNT(DISTINCT v.reference) " +
+    "SELECT COUNT(DISTINCT v.id) " +
       "FROM visit_notification_event vne " +
-      " JOIN visit v ON v.reference = vne.booking_reference " +
+      " JOIN visit v ON v.id = vne.visit_id " +
       " JOIN session_slot ss ON ss.id = v.session_slot_id " +
       " JOIN prison p ON p.id = v.prison_id AND p.code = :prisonCode " +
       "WHERE v.visit_status = 'BOOKED' " +
@@ -83,7 +83,7 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
   @Query(
     "SELECT COUNT(DISTINCT v.reference) " +
       "FROM visit_notification_event vne " +
-      " JOIN visit v ON v.reference = vne.booking_reference " +
+      " JOIN visit v ON v.id = vne.visit_id " +
       " JOIN session_slot ss ON ss.id = v.session_slot_id " +
       " JOIN prison p ON p.id = v.prison_id AND p.code = :prisonCode " +
       "WHERE v.visit_status = 'BOOKED' " +
@@ -95,7 +95,7 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
 
   @Query(
     "SELECT vne.* FROM visit_notification_event vne " +
-      " JOIN visit v ON v.reference  = vne.booking_reference " +
+      " JOIN visit v ON v.id  = vne.visit_id " +
       " JOIN prison p on p.id  = v.prison_id  AND p.code= :prisonCode " +
       " JOIN session_slot ss on ss.id  = v.session_slot_id " +
       " WHERE v.visit_status = 'BOOKED' AND ss.slot_start >= NOW()  " +
@@ -106,7 +106,7 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
 
   @Query(
     "SELECT vne.* FROM visit_notification_event vne " +
-      " JOIN visit v ON v.reference  = vne.booking_reference " +
+      " JOIN visit v ON v.id  = vne.visit_id " +
       " JOIN prison p on p.id  = v.prison_id  AND p.code= :prisonCode " +
       " JOIN session_slot ss on ss.id  = v.session_slot_id " +
       " WHERE v.visit_status = 'BOOKED' AND ss.slot_start >= NOW()  " +
@@ -126,16 +126,18 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
   fun getPairedVisitNotificationEvents(visitReference: String): List<VisitNotificationEvent>
 
   @Query(
-    "SELECT vne.type FROM visit_notification_event vne WHERE vne.booking_reference=:bookingReference GROUP by id",
+    "SELECT vne.type FROM visit_notification_event vne JOIN visit v " +
+      "ON vne.visit_id = v.id " +
+      "WHERE v.reference=:bookingReference GROUP by vne.type",
     nativeQuery = true,
   )
   fun getNotificationsTypesForBookingReference(@Param("bookingReference") bookingReference: String): List<NotificationEventType>
 
-  fun getVisitNotificationEventsByBookingReference(
-    bookingReference: String,
+  fun findVisitNotificationEventByVisitReference(
+    reference: String,
   ): List<VisitNotificationEvent>
 
-  fun deleteByBookingReference(@Param("bookingReference") bookingReference: String): Int
+  fun deleteVisitNotificationEventByVisitReference(reference: String): Int
 
   fun deleteByReference(@Param("reference") reference: String): Int
 }
