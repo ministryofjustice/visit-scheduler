@@ -30,13 +30,13 @@ dependencies {
   implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.16.0")
 
   implementation("org.springframework.data:spring-data-commons:3.5.0")
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:2.8.8")
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.8")
-  implementation("org.springdoc:springdoc-openapi-starter-common:2.8.8")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:2.8.9")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9")
+  implementation("org.springdoc:springdoc-openapi-starter-common:2.8.9")
 
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-  implementation("net.javacrumbs.shedlock:shedlock-spring:6.8.0")
-  implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:6.8.0")
+  implementation("net.javacrumbs.shedlock:shedlock-spring:6.9.0")
+  implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:6.9.0")
   implementation("org.apache.commons:commons-csv:1.14.0")
   implementation("org.freemarker:freemarker:2.3.34")
 
