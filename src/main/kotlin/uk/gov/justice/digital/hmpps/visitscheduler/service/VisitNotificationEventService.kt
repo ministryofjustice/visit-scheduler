@@ -38,18 +38,15 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.V
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitorSupportedRestrictionType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NotificationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PersonRestrictionUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonDateBlockedDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertCreatedUpdatedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerRestrictionChangeNotificationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerVisitsNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.ProcessVisitNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.SaveVisitNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.SessionDateBlockedDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitNotificationEventAttributeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitNotificationEventDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorApprovedUnapprovedNotificationDto
@@ -494,24 +491,6 @@ class VisitNotificationEventService(
     }
   }
 
-  @Deprecated("to be removed")
-  fun getFutureNotificationVisitGroups(prisonCode: String): List<NotificationGroupDto> {
-    val futureNotifications = this.visitNotificationEventRepository.getFutureVisitNotificationEvents(prisonCode)
-    val eventGroups = futureNotifications.groupByTo(mutableMapOf()) { it.reference }
-    val notificationGroupDtos = mutableListOf<NotificationGroupDto>()
-    eventGroups.forEach { (reference, events) ->
-      notificationGroupDtos.add(
-        NotificationGroupDto(
-          reference,
-          events.first().type,
-          createPrisonerVisitsNotificationDto(events),
-        ),
-      )
-    }
-
-    return notificationGroupDtos
-  }
-
   fun getFutureVisitsWithNotifications(prisonCode: String, notificationEventTypes: List<NotificationEventType>?): List<VisitNotificationsDto> {
     val futureVisitsWithNotifications = if (notificationEventTypes.isNullOrEmpty()) {
       visitNotificationEventRepository.getFutureVisitNotificationEvents(prisonCode)
@@ -536,21 +515,6 @@ class VisitNotificationEventService(
     }
 
     return visitsWithNotifications.toList()
-  }
-
-  @Deprecated("to be removed")
-  private fun createPrisonerVisitsNotificationDto(events: MutableList<VisitNotificationEvent>): List<PrisonerVisitsNotificationDto> = events.map {
-    LOG.info("createPrisonerVisitsNotificationDto Entered - created visit notification for visit with booking reference: {}", it.visit.reference)
-    val visit = this.visitService.getVisitByReference(it.visit.reference)
-    val actionedBy = this.visitEventAuditService.getLastUserToUpdateSlotByReference(it.visit.reference)
-
-    PrisonerVisitsNotificationDto(
-      prisonerNumber = visit.prisonerId,
-      lastActionedBy = ActionedByDto(actionedBy),
-      visitDate = visit.startTimestamp.toLocalDate(),
-      bookingReference = it.visit.reference,
-      notificationEventAttributes = it.visitNotificationEventAttributes.map { attribute -> VisitNotificationEventAttributeDto(attribute) }.toList(),
-    )
   }
 
   @Transactional(readOnly = true)

@@ -126,7 +126,7 @@ class SessionService(
     userType: UserType,
   ): List<VisitSessionDto> {
     val prisonCode = prison.code
-    LOG.debug("Enter getVisitSessions prisonCode:${prison.code}, prisonerId : $prisonerId ")
+    LOG.debug("Enter getVisitSessions prisonCode:${prison.code}, prisonerId : $prisonerId")
 
     // ensure the prisoner - if supplied belongs to the same prison as supplied prisonCode
     val prisoner = prisonerService.getPrisoner(prisonerId).also {
@@ -135,6 +135,8 @@ class SessionService(
     }!!
 
     var sessionTemplates = getAllSessionTemplatesForDateRange(prisonCode, dateRange).filter { sessionsByUserClientFilter(userType).test(it) }
+
+    LOG.info("Retrieved ${sessionTemplates.size} sessions before beginning filtering for prisoner $prisonerId, with date range $dateRange")
 
     val prisonerHousingLevels = prisonerService.getPrisonerHousingLevels(prisonerId = prisonerId, prisonCode = prisonCode, sessionTemplates = sessionTemplates)
 
@@ -160,7 +162,9 @@ class SessionService(
       addConflicts(it, nonAssociationConflictSessions, doubleBookingOrReservationSessions)
     }.also {
       populateBookedCount(sessionSlots, it, excludedApplicationReference, usernameToExcludeFromReservedApplications, true)
-    }.sortedWith(compareBy { it.startTimestamp })
+    }.sortedWith(compareBy { it.startTimestamp }).also {
+      LOG.info("Final count for sessions of ${it.size}, after filtering for prisoner $prisonerId, with date range $dateRange")
+    }
   }
 
   @Transactional(readOnly = true)
@@ -197,7 +201,9 @@ class SessionService(
     // finally filter out sessions without conflicts and with capacity
     return visitSessions.filter {
       hasSessionGotCapacity(it, sessionRestriction).and(it.sessionConflicts.isEmpty())
-    }.map { AvailableVisitSessionDto(it, sessionRestriction) }.toList()
+    }.map { AvailableVisitSessionDto(it, sessionRestriction) }.toList().also {
+      LOG.info("Returning final count for public filtered sessions ${it.size} for prisonerId - $prisonerId, after applying capacity filtering")
+    }
   }
 
   private fun sessionsByUserClientFilter(userType: UserType): Predicate<SessionTemplate> = Predicate {
