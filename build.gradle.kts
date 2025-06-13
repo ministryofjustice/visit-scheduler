@@ -40,7 +40,7 @@ dependencies {
   implementation("org.apache.commons:commons-csv:1.14.0")
   implementation("org.freemarker:freemarker:2.3.34")
 
-  runtimeOnly("org.postgresql:postgresql:42.7.6")
+  runtimeOnly("org.postgresql:postgresql:42.7.7")
   runtimeOnly("org.flywaydb:flyway-core")
   runtimeOnly("org.flywaydb:flyway-database-postgresql")
 
@@ -56,7 +56,7 @@ dependencies {
   testImplementation("io.jsonwebtoken:jjwt:0.12.6")
   testImplementation("org.springframework.security:spring-security-test")
   testImplementation("org.testcontainers:postgresql:1.21.1")
-  testImplementation("com.amazonaws:aws-java-sdk-s3:1.12.785")
+  testImplementation("com.amazonaws:aws-java-sdk-s3:1.12.786")
   testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.19.0")
   testImplementation("org.junit-pioneer:junit-pioneer:2.3.0")
 }
