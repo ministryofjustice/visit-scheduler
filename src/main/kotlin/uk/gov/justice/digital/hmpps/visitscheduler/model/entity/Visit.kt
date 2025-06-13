@@ -24,6 +24,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.base.AbstractIdEntity
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.QuotableEncoder
 import java.time.LocalDateTime
@@ -85,6 +86,9 @@ class Visit(
 
   @OneToMany(fetch = FetchType.LAZY, cascade = [ALL], mappedBy = "visit", orphanRemoval = true)
   val visitNotes: MutableList<VisitNote> = mutableListOf()
+
+  @OneToMany(fetch = FetchType.LAZY, cascade = [ALL], mappedBy = "visit", orphanRemoval = true)
+  val visitNotificationEvents: MutableList<VisitNotificationEvent> = mutableListOf()
 
   @OrderBy("id")
   @OneToMany(fetch = FetchType.LAZY, cascade = [ALL], mappedBy = "visit", orphanRemoval = true)

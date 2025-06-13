@@ -203,7 +203,7 @@ class CancelVisitTest : IntegrationTestBase() {
     // And
     verify(telemetryClient, times(1)).trackEvent(eq("visit-bad-request-error"), any(), isNull())
     verify(telemetryClient, times(0)).trackEvent("prison-visit.cancelled-domain-event", eventsMap, null)
-    verify(visitNotificationEventRepository, times(0)).deleteByBookingReference(eq(visit.reference))
+    verify(visitNotificationEventRepository, times(0)).deleteVisitNotificationEventByVisitReference(eq(visit.reference))
   }
 
   @Test
@@ -296,7 +296,7 @@ class CancelVisitTest : IntegrationTestBase() {
 
     // And
     verify(telemetryClient, times(0)).trackEvent(eq("visit.cancelled-domain-event"), any(), isNull())
-    verify(visitNotificationEventRepository, times(0)).deleteByBookingReference(eq(reference))
+    verify(visitNotificationEventRepository, times(0)).deleteVisitNotificationEventByVisitReference(eq(reference))
   }
 
   @Test
@@ -326,7 +326,7 @@ class CancelVisitTest : IntegrationTestBase() {
     // And
     verify(telemetryClient, times(1)).trackEvent(eq("visit-access-denied-error"), any(), isNull())
     verify(telemetryClient, times(0)).trackEvent(eq("visit.cancelled-domain-event"), any(), isNull())
-    verify(visitNotificationEventRepository, times(0)).deleteByBookingReference(eq(reference))
+    verify(visitNotificationEventRepository, times(0)).deleteVisitNotificationEventByVisitReference(eq(reference))
   }
 
   @Test
@@ -385,7 +385,7 @@ class CancelVisitTest : IntegrationTestBase() {
     // And
     verify(telemetryClient, times(1)).trackEvent(eq("visit-bad-request-error"), any(), isNull())
     verify(telemetryClient, times(0)).trackEvent(eq("visit.cancelled-domain-event"), any(), isNull())
-    verify(visitNotificationEventRepository, times(0)).deleteByBookingReference(eq(reference))
+    verify(visitNotificationEventRepository, times(0)).deleteVisitNotificationEventByVisitReference(eq(reference))
   }
 
   /**
@@ -485,9 +485,9 @@ class CancelVisitTest : IntegrationTestBase() {
   fun `when cancel visit by reference then any associated notifications are also deleted`() {
     // Given
     val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111", "email@example.com"))
-    visitNotificationEventHelper.create(visit.reference, NotificationEventType.NON_ASSOCIATION_EVENT)
-    visitNotificationEventHelper.create(visit.reference, NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
-    visitNotificationEventHelper.create(visit.reference, NotificationEventType.PRISONER_RELEASED_EVENT)
+    visitNotificationEventHelper.create(visit, NotificationEventType.NON_ASSOCIATION_EVENT)
+    visitNotificationEventHelper.create(visit, NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
+    visitNotificationEventHelper.create(visit, NotificationEventType.PRISONER_RELEASED_EVENT)
 
     var visitNotifications = visitNotificationEventHelper.getVisitNotifications(visit.reference)
     assertThat(visitNotifications.size).isEqualTo(3)
@@ -516,7 +516,7 @@ class CancelVisitTest : IntegrationTestBase() {
 
     assertHelper.assertVisitCancellation(visitCancelled, OutcomeStatus.PRISONER_CANCELLED, cancelVisitDto.actionedBy)
     visitNotifications = visitNotificationEventHelper.getVisitNotifications(visit.reference)
-    verify(visitNotificationEventRepository, times(1)).deleteByBookingReference(eq(visit.reference))
+    verify(visitNotificationEventRepository, times(1)).deleteVisitNotificationEventByVisitReference(eq(visit.reference))
 
     assertThat(visitNotifications.size).isEqualTo(0)
     assertUnFlagEvent(visitCancelled)

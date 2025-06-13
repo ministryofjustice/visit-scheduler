@@ -10,11 +10,11 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_NON_ASSOCIATION_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonAssociationDomainEventType.NON_ASSOCIATION_UPSERT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventAttributeType.PAIRED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.NON_ASSOCIATION_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatNonAssociationHasChanged
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import java.time.LocalDate
 
 @Transactional(propagation = SUPPORTS)
@@ -57,8 +57,8 @@ class UpsertNonAssociationVisitNotificationControllerTest : NotificationTestBase
     )
     eventAuditEntityHelper.create(visitSecondary)
 
-    val visitNotification = testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitPrimary.reference, NON_ASSOCIATION_EVENT))
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitSecondary.reference, NON_ASSOCIATION_EVENT, _reference = visitNotification.reference))
+    visitNotificationEventHelper.create(visit = visitPrimary, notificationEventType = NON_ASSOCIATION_EVENT, notificationAttributes = mapOf(Pair(PAIRED_VISIT, visitSecondary.reference)))
+    visitNotificationEventHelper.create(visit = visitSecondary, notificationEventType = NON_ASSOCIATION_EVENT, notificationAttributes = mapOf(Pair(PAIRED_VISIT, visitPrimary.reference)))
 
     // When
     val responseSpec = callNotifyVSiPThatNonAssociationHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, nonAssociationChangedNotification)

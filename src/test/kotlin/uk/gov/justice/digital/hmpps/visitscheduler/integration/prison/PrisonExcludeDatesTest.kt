@@ -187,7 +187,7 @@ class PrisonExcludeDatesTest : IntegrationTestBase() {
 
     // only 1 visit for the same date with status of BOOKED will be flagged.
     Assertions.assertThat(visitNotifications).hasSize(1)
-    Assertions.assertThat(visitNotifications[0].bookingReference).isEqualTo(bookedVisitForSamePrison.reference)
+    Assertions.assertThat(visitNotifications[0].visit.reference).isEqualTo(bookedVisitForSamePrison.reference)
     verify(telemetryClient, times(1)).trackEvent(eq("add-exclude-date"), any(), isNull())
   }
 
@@ -263,7 +263,7 @@ class PrisonExcludeDatesTest : IntegrationTestBase() {
     // existing visit for excludeDate in same prison
     val bookedVisitForSamePrison = visitEntityHelper.create(sessionTemplate = sessionTemplateDefault, visitStatus = VisitStatus.BOOKED, prisonCode = prison.code)
 
-    visitNotificationEventHelper.create(bookedVisitForSamePrison.reference, NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE)
+    visitNotificationEventHelper.create(bookedVisitForSamePrison, NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE)
 
     // When
     val responseSpec = callRemovePrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prison.code, excludeDate, actionedBy = TEST_USER)

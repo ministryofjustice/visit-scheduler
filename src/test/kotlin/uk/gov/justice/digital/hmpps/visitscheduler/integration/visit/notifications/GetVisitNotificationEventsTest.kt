@@ -13,6 +13,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_EVENTS
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventAttributeType.PAIRED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventAttributeType.VISITOR_ID
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventAttributeType.VISITOR_RESTRICTION
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
@@ -23,7 +24,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitNotificationEventAttributeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitNotificationEventDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGetVisitNotificationEvents
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEventAttribute
 import java.time.LocalDate
 
@@ -64,9 +64,9 @@ class GetVisitNotificationEventsTest : NotificationTestBase() {
     )
     eventAuditEntityHelper.create(visitSecondary)
 
-    val visitNotification = testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitPrimary.reference, NON_ASSOCIATION_EVENT))
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitSecondary.reference, NON_ASSOCIATION_EVENT, _reference = visitNotification.reference))
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitPrimary.reference, PRISONER_RESTRICTION_CHANGE_EVENT))
+    visitNotificationEventHelper.create(visit = visitPrimary, notificationEventType = NON_ASSOCIATION_EVENT, notificationAttributes = mapOf(Pair(PAIRED_VISIT, visitSecondary.reference)))
+    visitNotificationEventHelper.create(visit = visitSecondary, notificationEventType = NON_ASSOCIATION_EVENT, notificationAttributes = mapOf(Pair(PAIRED_VISIT, visitPrimary.reference)))
+    visitNotificationEventHelper.create(visit = visitPrimary, notificationEventType = PRISONER_RESTRICTION_CHANGE_EVENT)
 
     // When
     val responseSpec = callGetVisitNotificationEvents(webTestClient, visitPrimary.reference, roleVisitSchedulerHttpHeaders)
@@ -75,7 +75,7 @@ class GetVisitNotificationEventsTest : NotificationTestBase() {
     responseSpec.expectStatus().isOk
     val notifications = this.getVisitNotificationEvents(responseSpec)
     Assertions.assertThat(notifications.size).isEqualTo(2)
-    assertNotificationEvent(notifications[0], NON_ASSOCIATION_EVENT, emptyList())
+    assertNotificationEvent(notifications[0], NON_ASSOCIATION_EVENT, listOf(VisitNotificationEventAttributeDto(PAIRED_VISIT, visitSecondary.reference)))
     assertNotificationEvent(notifications[1], PRISONER_RESTRICTION_CHANGE_EVENT, emptyList())
   }
 
@@ -92,7 +92,7 @@ class GetVisitNotificationEventsTest : NotificationTestBase() {
     )
     eventAuditEntityHelper.create(visitPrimary)
 
-    val notification = testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitPrimary.reference, VISITOR_RESTRICTION_UPSERTED_EVENT))
+    val notification = visitNotificationEventHelper.create(visit = visitPrimary, notificationEventType = VISITOR_RESTRICTION_UPSERTED_EVENT)
     val eventAttribute1 = VisitNotificationEventAttribute(
       attributeName = VISITOR_ID,
       attributeValue = "10001",
@@ -110,7 +110,7 @@ class GetVisitNotificationEventsTest : NotificationTestBase() {
     notification.visitNotificationEventAttributes.addAll(listOf(eventAttribute1, eventAttribute2))
     testVisitNotificationEventRepository.saveAndFlush(notification)
 
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitPrimary.reference, PRISONER_RESTRICTION_CHANGE_EVENT))
+    visitNotificationEventHelper.create(visit = visitPrimary, notificationEventType = PRISONER_RESTRICTION_CHANGE_EVENT)
 
     // When
     val responseSpec = callGetVisitNotificationEvents(webTestClient, visitPrimary.reference, roleVisitSchedulerHttpHeaders)

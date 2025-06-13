@@ -13,12 +13,12 @@ interface TestVisitNotificationEventRepository : JpaRepository<VisitNotification
       " JOIN visit v ON v.reference  = vne.booking_reference AND v.visit_status = 'BOOKED'  " +
       " JOIN session_slot ss ON ss.id  = v.session_slot_id " +
       " JOIN prison p on p.id  = v.prison_id  AND p.code= :prisonCode " +
-      " ORDER BY ss.slot_date, ss.slot_start, vne.reference",
+      " ORDER BY ss.slot_start",
     nativeQuery = true,
   )
   fun getFutureVisitNotificationEvents(@Param("prisonCode") prisonCode: String): List<VisitNotificationEvent>
 
-  fun findByBookingReference(@Param("bookingReference") bookingReference: String): List<VisitNotificationEvent>
+  fun findVisitNotificationEventByVisitReference(@Param("bookingReference") bookingReference: String): List<VisitNotificationEvent>
 
   @Query("SELECT vne FROM VisitNotificationEvent vne  ORDER BY vne.id")
   fun findAllOrderById(): List<VisitNotificationEvent>

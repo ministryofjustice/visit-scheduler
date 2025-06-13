@@ -8,6 +8,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_COUNT_FOR_PRISON_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventAttributeType.PAIRED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.NON_ASSOCIATION_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_ALERTS_UPDATED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_RECEIVED_EVENT
@@ -17,7 +18,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCountVisitNotification
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -68,10 +68,10 @@ class CountVisitNotificationTest : NotificationTestBase() {
     )
     eventAuditEntityHelper.create(visitOther)
 
-    val visitNotification = testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitPrimary.reference, NON_ASSOCIATION_EVENT))
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitPrimary.reference, PRISONER_RELEASED_EVENT))
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitSecondary.reference, NON_ASSOCIATION_EVENT, _reference = visitNotification.reference))
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitOther.reference, PRISONER_RESTRICTION_CHANGE_EVENT))
+    visitNotificationEventHelper.create(visit = visitPrimary, notificationEventType = NON_ASSOCIATION_EVENT, notificationAttributes = mapOf(Pair(PAIRED_VISIT, visitSecondary.reference)))
+    visitNotificationEventHelper.create(visit = visitPrimary, notificationEventType = PRISONER_RELEASED_EVENT)
+    visitNotificationEventHelper.create(visit = visitSecondary, notificationEventType = NON_ASSOCIATION_EVENT, notificationAttributes = mapOf(Pair(PAIRED_VISIT, visitPrimary.reference)))
+    visitNotificationEventHelper.create(visit = visitOther, notificationEventType = PRISONER_RESTRICTION_CHANGE_EVENT)
 
     // When
     val responseSpec = callCountVisitNotification(webTestClient, prisonCode = sessionTemplateDefault.prison.code, notificationEventTypes = null, roleVisitSchedulerHttpHeaders)
@@ -113,9 +113,9 @@ class CountVisitNotificationTest : NotificationTestBase() {
     )
     eventAuditEntityHelper.create(visitOther)
 
-    val visitNotification = testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitPrimary.reference, NON_ASSOCIATION_EVENT))
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitSecondary.reference, NON_ASSOCIATION_EVENT, _reference = visitNotification.reference))
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitOther.reference, PRISONER_RESTRICTION_CHANGE_EVENT))
+    visitNotificationEventHelper.create(visit = visitPrimary, notificationEventType = NON_ASSOCIATION_EVENT, notificationAttributes = mapOf(Pair(PAIRED_VISIT, visitSecondary.reference)))
+    visitNotificationEventHelper.create(visit = visitSecondary, notificationEventType = NON_ASSOCIATION_EVENT, notificationAttributes = mapOf(Pair(PAIRED_VISIT, visitPrimary.reference)))
+    visitNotificationEventHelper.create(visit = visitOther, notificationEventType = PRISONER_RESTRICTION_CHANGE_EVENT)
 
     // When
     val responseSpec = callCountVisitNotification(webTestClient, prisonCode = sessionTemplateDefault.prison.code, notificationEventTypes = null, roleVisitSchedulerHttpHeaders)
@@ -194,10 +194,10 @@ class CountVisitNotificationTest : NotificationTestBase() {
     )
     eventAuditEntityHelper.create(pastVisitYesterday)
 
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(futureVisitToday.reference, PRISONER_RELEASED_EVENT))
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(pastVisitYesterday.reference, PRISONER_RELEASED_EVENT))
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(pastVisitToday.reference, PRISONER_RELEASED_EVENT))
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(futureVisitTomorrow.reference, PRISONER_RELEASED_EVENT))
+    visitNotificationEventHelper.create(visit = futureVisitToday, notificationEventType = PRISONER_RELEASED_EVENT)
+    visitNotificationEventHelper.create(visit = pastVisitYesterday, notificationEventType = PRISONER_RELEASED_EVENT)
+    visitNotificationEventHelper.create(visit = pastVisitToday, notificationEventType = PRISONER_RELEASED_EVENT)
+    visitNotificationEventHelper.create(visit = futureVisitTomorrow, notificationEventType = PRISONER_RELEASED_EVENT)
 
     // When
     val responseSpec = callCountVisitNotification(webTestClient, prisonCode = prisonCode, notificationEventTypes = null, roleVisitSchedulerHttpHeaders)
@@ -252,12 +252,12 @@ class CountVisitNotificationTest : NotificationTestBase() {
     )
     eventAuditEntityHelper.create(futureVisit4)
 
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(futureVisit1.reference, PRISONER_RELEASED_EVENT))
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(futureVisit2.reference, PRISONER_ALERTS_UPDATED_EVENT))
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(futureVisit3.reference, PRISON_VISITS_BLOCKED_FOR_DATE))
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(futureVisit4.reference, PRISONER_RELEASED_EVENT))
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(futureVisit4.reference, PRISONER_RECEIVED_EVENT))
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(futureVisit4.reference, PRISONER_ALERTS_UPDATED_EVENT))
+    visitNotificationEventHelper.create(visit = futureVisit1, notificationEventType = PRISONER_RELEASED_EVENT)
+    visitNotificationEventHelper.create(visit = futureVisit2, notificationEventType = PRISONER_ALERTS_UPDATED_EVENT)
+    visitNotificationEventHelper.create(visit = futureVisit3, notificationEventType = PRISON_VISITS_BLOCKED_FOR_DATE)
+    visitNotificationEventHelper.create(visit = futureVisit4, notificationEventType = PRISONER_RELEASED_EVENT)
+    visitNotificationEventHelper.create(visit = futureVisit4, notificationEventType = PRISONER_RECEIVED_EVENT)
+    visitNotificationEventHelper.create(visit = futureVisit4, notificationEventType = PRISONER_ALERTS_UPDATED_EVENT)
 
     // When notification count sought for PRISONER_RELEASED_EVENT
     var responseSpec = callCountVisitNotification(webTestClient, prisonCode = prisonCode, notificationEventTypes = listOf(PRISONER_RELEASED_EVENT), roleVisitSchedulerHttpHeaders)
@@ -345,12 +345,12 @@ class CountVisitNotificationTest : NotificationTestBase() {
     )
     eventAuditEntityHelper.create(pastVisit4)
 
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(pastVisit1.reference, PRISONER_RELEASED_EVENT))
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(pastVisit2.reference, PRISONER_ALERTS_UPDATED_EVENT))
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(pastVisit3.reference, PRISON_VISITS_BLOCKED_FOR_DATE))
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(pastVisit4.reference, PRISONER_RELEASED_EVENT))
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(pastVisit4.reference, PRISONER_RECEIVED_EVENT))
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(pastVisit4.reference, PRISONER_ALERTS_UPDATED_EVENT))
+    visitNotificationEventHelper.create(visit = pastVisit1, notificationEventType = PRISONER_RELEASED_EVENT)
+    visitNotificationEventHelper.create(visit = pastVisit2, notificationEventType = PRISONER_ALERTS_UPDATED_EVENT)
+    visitNotificationEventHelper.create(visit = pastVisit3, notificationEventType = PRISON_VISITS_BLOCKED_FOR_DATE)
+    visitNotificationEventHelper.create(visit = pastVisit4, notificationEventType = PRISONER_RELEASED_EVENT)
+    visitNotificationEventHelper.create(visit = pastVisit4, notificationEventType = PRISONER_RECEIVED_EVENT)
+    visitNotificationEventHelper.create(visit = pastVisit4, notificationEventType = PRISONER_ALERTS_UPDATED_EVENT)
 
     // When notification count sought for PRISONER_RELEASED_EVENT
     var responseSpec = callCountVisitNotification(webTestClient, prisonCode = prisonCode, notificationEventTypes = listOf(PRISONER_RELEASED_EVENT), roleVisitSchedulerHttpHeaders)

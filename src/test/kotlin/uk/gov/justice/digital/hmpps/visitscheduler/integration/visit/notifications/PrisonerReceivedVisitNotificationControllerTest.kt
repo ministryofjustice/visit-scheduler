@@ -121,9 +121,9 @@ class PrisonerReceivedVisitNotificationControllerTest : NotificationTestBase() {
 
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(2)
-    assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
+    assertThat(visitNotifications[0].visit.reference).isEqualTo(visit1.reference)
     assertThat(visitNotifications[0].visitNotificationEventAttributes.size).isEqualTo(0)
-    assertThat(visitNotifications[1].bookingReference).isEqualTo(visit2.reference)
+    assertThat(visitNotifications[1].visit.reference).isEqualTo(visit2.reference)
     assertThat(visitNotifications[1].visitNotificationEventAttributes.size).isEqualTo(0)
 
     val auditEvents = testEventAuditRepository.getAuditByType(PRISONER_RECEIVED_EVENT)
@@ -164,7 +164,7 @@ class PrisonerReceivedVisitNotificationControllerTest : NotificationTestBase() {
     )
     eventAuditEntityHelper.create(visit)
 
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visit.reference, NotificationEventType.PRISONER_RECEIVED_EVENT))
+    visitNotificationEventHelper.create(visit = visit, notificationEventType = NotificationEventType.PRISONER_RECEIVED_EVENT)
 
     // When
     val responseSpec = callNotifyVSiPThatPrisonerHadBeenReceived(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)

@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.BOOKED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventAttributeType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
@@ -40,6 +41,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEventAttribute
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplateExcludeDate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplateUserClient
@@ -881,18 +883,36 @@ class VisitNotificationEventHelper(
   private val visitNotificationEventRepository: TestVisitNotificationEventRepository,
 ) {
   fun create(
-    visitBookingReference: String,
+    visit: Visit,
     notificationEventType: NotificationEventType,
-  ): VisitNotificationEvent = visitNotificationEventRepository.saveAndFlush(
-    VisitNotificationEvent(
-      bookingReference = visitBookingReference,
-      type = notificationEventType,
-    ),
-  )
+    notificationAttributes: Map<NotificationEventAttributeType, String> = emptyMap(),
+  ): VisitNotificationEvent {
+    val notificationEvent = visitNotificationEventRepository.save(
+      VisitNotificationEvent(
+        visitId = visit.id,
+        visit = visit,
+        type = notificationEventType,
+        bookingReference = visit.reference,
+      ),
+    )
+
+    notificationAttributes.forEach {
+      notificationEvent.visitNotificationEventAttributes.add(
+        VisitNotificationEventAttribute(
+          attributeName = it.key,
+          attributeValue = it.value,
+          visitNotificationEvent = notificationEvent,
+          visitNotificationEventId = notificationEvent.id,
+        ),
+      )
+    }
+
+    return visitNotificationEventRepository.saveAndFlush(notificationEvent)
+  }
 
   fun getVisitNotifications(
     visitBookingReference: String,
-  ): List<VisitNotificationEvent> = visitNotificationEventRepository.findByBookingReference(visitBookingReference)
+  ): List<VisitNotificationEvent> = visitNotificationEventRepository.findVisitNotificationEventByVisitReference(visitBookingReference)
 }
 
 @Component

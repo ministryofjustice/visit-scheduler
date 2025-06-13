@@ -27,7 +27,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitNo
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import java.time.LocalDate
 
@@ -57,11 +56,9 @@ class FutureNotificationVisitsTest : NotificationTestBase() {
       visitStatus = BOOKED,
       sessionTemplate = sessionTemplate1,
     )
-    testVisitNotificationEventRepository.saveAndFlush(
-      VisitNotificationEvent(
-        pastVisitWithNotification.reference,
-        NON_ASSOCIATION_EVENT,
-      ),
+    visitNotificationEventHelper.create(
+      visit = pastVisitWithNotification,
+      notificationEventType = NON_ASSOCIATION_EVENT,
     )
 
     val futureVisitWithNotification1 = createApplicationAndVisit(
@@ -77,11 +74,9 @@ class FutureNotificationVisitsTest : NotificationTestBase() {
       type = CHANGING_VISIT,
       actionedByValue = "IChangeSomething",
     )
-    val visit1Notification1 = testVisitNotificationEventRepository.saveAndFlush(
-      VisitNotificationEvent(
-        futureVisitWithNotification1.reference,
-        NON_ASSOCIATION_EVENT,
-      ),
+    val visit1Notification1 = visitNotificationEventHelper.create(
+      visit = futureVisitWithNotification1,
+      notificationEventType = NON_ASSOCIATION_EVENT,
     )
 
     val futureVisitWithNotification2 = createApplicationAndVisit(
@@ -90,23 +85,17 @@ class FutureNotificationVisitsTest : NotificationTestBase() {
       visitStatus = BOOKED,
       sessionTemplate = sessionTemplate1,
     )
-    val visit2Notification1 = testVisitNotificationEventRepository.saveAndFlush(
-      VisitNotificationEvent(
-        futureVisitWithNotification2.reference,
-        NON_ASSOCIATION_EVENT,
-      ),
+    val visit2Notification1 = visitNotificationEventHelper.create(
+      visit = futureVisitWithNotification2,
+      notificationEventType = NON_ASSOCIATION_EVENT,
     )
-    val visit2Notification2 = testVisitNotificationEventRepository.saveAndFlush(
-      VisitNotificationEvent(
-        futureVisitWithNotification2.reference,
-        PRISONER_RECEIVED_EVENT,
-      ),
+    val visit2Notification2 = visitNotificationEventHelper.create(
+      visit = futureVisitWithNotification2,
+      notificationEventType = PRISONER_RECEIVED_EVENT,
     )
-    val visit2Notification3 = testVisitNotificationEventRepository.saveAndFlush(
-      VisitNotificationEvent(
-        futureVisitWithNotification2.reference,
-        PRISONER_RESTRICTION_CHANGE_EVENT,
-      ),
+    val visit2Notification3 = visitNotificationEventHelper.create(
+      visit = futureVisitWithNotification2,
+      notificationEventType = PRISONER_RESTRICTION_CHANGE_EVENT,
     )
 
     // this visit has no notifications so should not be returned
@@ -153,11 +142,9 @@ class FutureNotificationVisitsTest : NotificationTestBase() {
       visitStatus = BOOKED,
       sessionTemplate = sessionTemplate1,
     )
-    testVisitNotificationEventRepository.saveAndFlush(
-      VisitNotificationEvent(
-        pastVisitWithNotification.reference,
-        NON_ASSOCIATION_EVENT,
-      ),
+    visitNotificationEventHelper.create(
+      visit = pastVisitWithNotification,
+      notificationEventType = NON_ASSOCIATION_EVENT,
     )
 
     val futureVisitWithNotification1 = createApplicationAndVisit(
@@ -174,11 +161,9 @@ class FutureNotificationVisitsTest : NotificationTestBase() {
       actionedByValue = "IChangeSomething",
     )
 
-    testVisitNotificationEventRepository.saveAndFlush(
-      VisitNotificationEvent(
-        futureVisitWithNotification1.reference,
-        NON_ASSOCIATION_EVENT,
-      ),
+    visitNotificationEventHelper.create(
+      visit = futureVisitWithNotification1,
+      notificationEventType = NON_ASSOCIATION_EVENT,
     )
 
     val futureVisitWithNotification2 = createApplicationAndVisit(
@@ -187,25 +172,19 @@ class FutureNotificationVisitsTest : NotificationTestBase() {
       visitStatus = BOOKED,
       sessionTemplate = sessionTemplate1,
     )
-    testVisitNotificationEventRepository.saveAndFlush(
-      VisitNotificationEvent(
-        futureVisitWithNotification2.reference,
-        NON_ASSOCIATION_EVENT,
-      ),
+    visitNotificationEventHelper.create(
+      visit = futureVisitWithNotification2,
+      notificationEventType = NON_ASSOCIATION_EVENT,
     )
 
-    testVisitNotificationEventRepository.saveAndFlush(
-      VisitNotificationEvent(
-        futureVisitWithNotification2.reference,
-        PRISONER_RECEIVED_EVENT,
-      ),
+    visitNotificationEventHelper.create(
+      visit = futureVisitWithNotification2,
+      notificationEventType = PRISONER_RECEIVED_EVENT,
     )
 
-    val visit2Notification3 = testVisitNotificationEventRepository.saveAndFlush(
-      VisitNotificationEvent(
-        futureVisitWithNotification2.reference,
-        PRISONER_RESTRICTION_CHANGE_EVENT,
-      ),
+    val visit2Notification3 = visitNotificationEventHelper.create(
+      visit = futureVisitWithNotification2,
+      notificationEventType = PRISONER_RESTRICTION_CHANGE_EVENT,
     )
 
     // this visit has no notifications so should not be returned
@@ -244,11 +223,9 @@ class FutureNotificationVisitsTest : NotificationTestBase() {
       visitStatus = BOOKED,
       sessionTemplate = sessionTemplate1,
     )
-    testVisitNotificationEventRepository.saveAndFlush(
-      VisitNotificationEvent(
-        pastVisitWithNotification.reference,
-        NON_ASSOCIATION_EVENT,
-      ),
+    visitNotificationEventHelper.create(
+      visit = pastVisitWithNotification,
+      notificationEventType = NON_ASSOCIATION_EVENT,
     )
 
     // future visit without notifications

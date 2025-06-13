@@ -10,11 +10,11 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_NON_ASSOCIATION_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonAssociationDomainEventType.NON_ASSOCIATION_CLOSED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventAttributeType.PAIRED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.NON_ASSOCIATION_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatNonAssociationHasChanged
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import java.time.LocalDate
 
 @Transactional(propagation = SUPPORTS)
@@ -61,7 +61,7 @@ class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase
 
     val visitPrimary = visitEntityHelper.create(
       prisonerId = primaryPrisonerId,
-      slotDate = LocalDate.now().plusDays(1),
+      slotDate = LocalDate.now().plusDays(2),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
       sessionTemplate = sessionTemplateDefault,
@@ -77,8 +77,8 @@ class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase
     )
     eventAuditEntityHelper.create(visitSecondary)
 
-    val visitNotification = testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitPrimary.reference, NON_ASSOCIATION_EVENT))
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitSecondary.reference, NON_ASSOCIATION_EVENT, _reference = visitNotification.reference))
+    visitNotificationEventHelper.create(visit = visitPrimary, notificationEventType = NON_ASSOCIATION_EVENT, notificationAttributes = mapOf(Pair(PAIRED_VISIT, visitSecondary.reference)))
+    visitNotificationEventHelper.create(visit = visitSecondary, notificationEventType = NON_ASSOCIATION_EVENT, notificationAttributes = mapOf(Pair(PAIRED_VISIT, visitPrimary.reference)))
 
     // When
     val responseSpec = callNotifyVSiPThatNonAssociationHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, nonAssociationChangedNotification)
@@ -114,8 +114,8 @@ class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase
     )
     eventAuditEntityHelper.create(visitPastSecondary)
 
-    val pastVisitNotification = testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitPastPrimary.reference, NON_ASSOCIATION_EVENT))
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitPastSecondary.reference, NON_ASSOCIATION_EVENT, _reference = pastVisitNotification.reference))
+    visitNotificationEventHelper.create(visit = visitPastPrimary, notificationEventType = NON_ASSOCIATION_EVENT, notificationAttributes = mapOf(Pair(PAIRED_VISIT, visitPastSecondary.reference)))
+    visitNotificationEventHelper.create(visit = visitPastSecondary, notificationEventType = NON_ASSOCIATION_EVENT, notificationAttributes = mapOf(Pair(PAIRED_VISIT, visitPastPrimary.reference)))
 
     // When
     val responseSpec = callNotifyVSiPThatNonAssociationHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, nonAssociationChangedNotification)
@@ -127,12 +127,12 @@ class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase
     Assertions.assertThat(visitNotifications).hasSize(2)
     with(visitNotifications[0]) {
       Assertions.assertThat(reference).isNotNull()
-      Assertions.assertThat(bookingReference).isEqualTo(visitPastPrimary.reference)
+      Assertions.assertThat(visit.reference).isEqualTo(visitPastPrimary.reference)
       Assertions.assertThat(type).isEqualTo(NON_ASSOCIATION_EVENT)
     }
     with(visitNotifications[1]) {
-      Assertions.assertThat(bookingReference).isEqualTo(visitPastSecondary.reference)
-      Assertions.assertThat(reference).isEqualTo(visitNotifications[0].reference)
+      Assertions.assertThat(visit.reference).isEqualTo(visitPastSecondary.reference)
+      Assertions.assertThat(reference).isNotNull()
       Assertions.assertThat(type).isEqualTo(NON_ASSOCIATION_EVENT)
     }
   }
@@ -161,8 +161,8 @@ class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase
     )
     eventAuditEntityHelper.create(visitSecondary)
 
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitPrimary.reference, NON_ASSOCIATION_EVENT))
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitSecondary.reference, NON_ASSOCIATION_EVENT))
+    visitNotificationEventHelper.create(visit = visitPrimary, notificationEventType = NON_ASSOCIATION_EVENT)
+    visitNotificationEventHelper.create(visit = visitSecondary, notificationEventType = NON_ASSOCIATION_EVENT)
 
     // When
     val responseSpec = callNotifyVSiPThatNonAssociationHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, nonAssociationChangedNotification)
@@ -198,8 +198,8 @@ class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase
     )
     eventAuditEntityHelper.create(visitSecondary)
 
-    val visitNotification = testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitPrimary.reference, NON_ASSOCIATION_EVENT))
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitSecondary.reference, NON_ASSOCIATION_EVENT, _reference = visitNotification.reference))
+    visitNotificationEventHelper.create(visit = visitPrimary, notificationEventType = NON_ASSOCIATION_EVENT, notificationAttributes = mapOf(Pair(PAIRED_VISIT, visitSecondary.reference)))
+    visitNotificationEventHelper.create(visit = visitSecondary, notificationEventType = NON_ASSOCIATION_EVENT, notificationAttributes = mapOf(Pair(PAIRED_VISIT, visitPrimary.reference)))
 
     // When
     val responseSpec = callNotifyVSiPThatNonAssociationHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, nonAssociationChangedNotification)
@@ -236,8 +236,8 @@ class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase
     )
     eventAuditEntityHelper.create(visitSecondary)
 
-    val visitNotification = testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitPrimary.reference, NON_ASSOCIATION_EVENT))
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitSecondary.reference, NON_ASSOCIATION_EVENT, _reference = visitNotification.reference))
+    visitNotificationEventHelper.create(visit = visitPrimary, notificationEventType = NON_ASSOCIATION_EVENT, notificationAttributes = mapOf(Pair(PAIRED_VISIT, visitSecondary.reference)))
+    visitNotificationEventHelper.create(visit = visitSecondary, notificationEventType = NON_ASSOCIATION_EVENT, notificationAttributes = mapOf(Pair(PAIRED_VISIT, visitPrimary.reference)))
 
     // When
     val responseSpec = callNotifyVSiPThatNonAssociationHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, nonAssociationChangedNotification)
