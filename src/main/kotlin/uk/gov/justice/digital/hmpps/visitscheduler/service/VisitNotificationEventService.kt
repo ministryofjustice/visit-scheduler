@@ -51,6 +51,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitNo
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorApprovedUnapprovedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorRestrictionUpsertedNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.ActionedBy
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEventAttribute
@@ -377,7 +378,7 @@ class VisitNotificationEventService(
     reason: UnFlagEventReason,
   ) {
     visitNotificationEvents.forEach {
-      visitNotificationFlaggingService.unFlagTrackEvents(it.bookingReference, listOf(notificationEventType), reason, null)
+      visitNotificationFlaggingService.unFlagTrackEvents(it.visit.reference, listOf(notificationEventType), reason, null)
     }
     visitNotificationEventRepository.deleteAll(visitNotificationEvents)
   }
@@ -387,10 +388,13 @@ class VisitNotificationEventService(
     type: NotificationEventType,
     notificationEventAttributes: HashMap<NotificationEventAttributeType, String>? = null,
   ): String {
+    val visit = visitRepository.findByReference(impactedVisit.reference) ?: throw VisitNotFoundException("Visit with reference  ${impactedVisit.reference} not found")
     val savedVisitNotificationEvent = visitNotificationEventRepository.save(
       VisitNotificationEvent(
-        bookingReference = impactedVisit.reference,
+        visit = visit,
+        visitId = visit.id,
         type = type,
+        bookingReference = visit.reference,
       ),
     )
 
@@ -424,10 +428,18 @@ class VisitNotificationEventService(
     val nonAssociationPrisonersNotifications = visitNotificationEventRepository.getEventsBy(notificationDto.nonAssociationPrisonerNumber, prisonCode, NON_ASSOCIATION_EVENT)
 
     val prisonerEventsToBeDeleted = prisonersNotifications.filter { prisonersNotify ->
-      nonAssociationPrisonersNotifications.any { it.reference == prisonersNotify.reference }
+      nonAssociationPrisonersNotifications.any {
+        it.visitNotificationEventAttributes.any { nonAssociationEventAttribute ->
+          nonAssociationEventAttribute.attributeName == NotificationEventAttributeType.PAIRED_VISIT && nonAssociationEventAttribute.attributeValue == prisonersNotify.visit.reference
+        }
+      }
     }
     val nsPrisonerEventsToBeDeleted = nonAssociationPrisonersNotifications.filter { nsPrisonersNotify ->
-      prisonerEventsToBeDeleted.any { it.reference == nsPrisonersNotify.reference }
+      prisonerEventsToBeDeleted.any {
+        it.visitNotificationEventAttributes.any { nonAssociationEventAttribute ->
+          nonAssociationEventAttribute.attributeName == NotificationEventAttributeType.PAIRED_VISIT && nonAssociationEventAttribute.attributeValue == nsPrisonersNotify.visit.reference
+        }
+      }
     }
 
     return (prisonerEventsToBeDeleted + nsPrisonerEventsToBeDeleted).sortedBy { it.reference }
@@ -485,7 +497,7 @@ class VisitNotificationEventService(
     } else {
       visitNotificationEventRepository.getFutureVisitNotificationEvents(prisonCode, notificationEventTypes.map { it.name })
     }
-    val futureVisitsWithNotificationsMap = futureVisitsWithNotifications.groupByTo(mutableMapOf()) { it.bookingReference }
+    val futureVisitsWithNotificationsMap = futureVisitsWithNotifications.groupByTo(mutableMapOf()) { it.visit.reference }
 
     val visitsWithNotifications = mutableListOf<VisitNotificationsDto>()
     futureVisitsWithNotificationsMap.forEach { (visitReference, events) ->
@@ -509,7 +521,7 @@ class VisitNotificationEventService(
   fun getNotificationsTypesForBookingReference(bookingReference: String): List<NotificationEventType> = visitNotificationEventRepository.getNotificationsTypesForBookingReference(bookingReference)
 
   @Transactional(readOnly = true)
-  fun getNotificationEventsForBookingReference(bookingReference: String): List<VisitNotificationEventDto> = this.visitNotificationEventRepository.getVisitNotificationEventsByBookingReference(bookingReference).map { VisitNotificationEventDto(it) }
+  fun getNotificationEventsForBookingReference(bookingReference: String): List<VisitNotificationEventDto> = this.visitNotificationEventRepository.findVisitNotificationEventByVisitReference(bookingReference).map { VisitNotificationEventDto(it) }
 
   @Transactional
   fun ignoreVisitNotifications(visitReference: String, ignoreVisitNotification: IgnoreVisitNotificationsDto): VisitDto {
@@ -525,7 +537,7 @@ class VisitNotificationEventService(
   }
 
   private fun createPairedNotificationEvent(visit1: VisitDto, visit2: VisitDto, notificationEventType: NotificationEventType) {
-    val visitsPairedNotifications = visitNotificationEventRepository.getVisitNotificationEventsByBookingReference(visit1.reference).filter { it.type == notificationEventType }
+    val visitsPairedNotifications = visitNotificationEventRepository.findVisitNotificationEventByVisitReference(visit1.reference).filter { it.type == notificationEventType }
     val visitsPairedNotificationEventAttributes = visitsPairedNotifications.flatMap { it.visitNotificationEventAttributes }.filter { it.attributeName == NotificationEventAttributeType.PAIRED_VISIT }
 
     // if not already added as a paired visit
@@ -554,10 +566,10 @@ class VisitNotificationEventService(
 
   @Transactional
   fun deleteVisitNotificationEvents(visitReference: String, reason: UnFlagEventReason, text: String? = null) {
-    val visitNotificationEvents = visitNotificationEventRepository.getVisitNotificationEventsByBookingReference(visitReference)
+    val visitNotificationEvents = visitNotificationEventRepository.findVisitNotificationEventByVisitReference(visitReference)
 
     if (visitNotificationEvents.isNotEmpty()) {
-      visitNotificationEventRepository.deleteByBookingReference(visitReference)
+      visitNotificationEventRepository.deleteVisitNotificationEventByVisitReference(visitReference)
 
       // after deleting the visit notifications - update application insights
       visitNotificationFlaggingService.unFlagTrackEvents(visitReference, visitNotificationEvents.map { it.type }, reason, text)
@@ -573,12 +585,12 @@ class VisitNotificationEventService(
     visitNotificationEventRepository.deleteByReference(visitNotificationEvent.reference)
 
     // finally add an event audit for the paired event
-    visitRepository.findByReference(visitNotificationEvent.bookingReference)?.let { pairedVisit ->
+    visitRepository.findByReference(visitNotificationEvent.visit.reference)?.let { pairedVisit ->
       visitEventAuditService.savePairedVisitChangeEventAudit(pairedVisit, pairedUnFlagEventAuditType, pairedUnFlagEventAuditText)
     }
 
     // after deleting the visit notifications - update application insights
-    visitNotificationFlaggingService.unFlagTrackEvents(visitNotificationEvent.bookingReference, listOf(visitNotificationEvent.type), pairedUnFlagEventReason, text)
+    visitNotificationFlaggingService.unFlagTrackEvents(visitNotificationEvent.visit.reference, listOf(visitNotificationEvent.type), pairedUnFlagEventReason, text)
   }
 
   private fun doesSocialRelationshipForVisitorStillExist(prisonerId: String, visitorId: String): Boolean {

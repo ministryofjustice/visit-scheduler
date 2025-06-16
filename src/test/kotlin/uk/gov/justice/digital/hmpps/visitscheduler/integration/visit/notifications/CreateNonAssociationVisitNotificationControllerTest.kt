@@ -574,19 +574,16 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
       sessionTemplate = sessionTemplateDefault,
     )
 
-    val firstVisit = testVisitNotificationEventRepository.saveAndFlush(
-      VisitNotificationEvent(
-        primaryVisit.reference,
-        NotificationEventType.NON_ASSOCIATION_EVENT,
-      ),
+    visitNotificationEventHelper.create(
+      visit = primaryVisit,
+      notificationEventType = NotificationEventType.NON_ASSOCIATION_EVENT,
+      notificationAttributes = mapOf(Pair(PAIRED_VISIT, secondaryVisit.reference)),
     )
 
-    testVisitNotificationEventRepository.saveAndFlush(
-      VisitNotificationEvent(
-        secondaryVisit.reference,
-        NotificationEventType.NON_ASSOCIATION_EVENT,
-        _reference = firstVisit.reference,
-      ),
+    visitNotificationEventHelper.create(
+      visit = secondaryVisit,
+      notificationEventType = NotificationEventType.NON_ASSOCIATION_EVENT,
+      notificationAttributes = mapOf(Pair(PAIRED_VISIT, primaryVisit.reference)),
     )
 
     // When
@@ -876,7 +873,7 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
   }
 
   private fun assertNotificationEvent(visitNotificationEvent: VisitNotificationEvent, expectedVisitReference: String, expectedNotificationEventAttributes: List<VisitNotificationEventAttributeDto>?) {
-    assertThat(visitNotificationEvent.bookingReference).isEqualTo(expectedVisitReference)
+    assertThat(visitNotificationEvent.visit.reference).isEqualTo(expectedVisitReference)
     if (expectedNotificationEventAttributes != null) {
       assertThat(visitNotificationEvent.visitNotificationEventAttributes.size).isEqualTo(expectedNotificationEventAttributes.size)
       for (i in expectedNotificationEventAttributes.indices) {

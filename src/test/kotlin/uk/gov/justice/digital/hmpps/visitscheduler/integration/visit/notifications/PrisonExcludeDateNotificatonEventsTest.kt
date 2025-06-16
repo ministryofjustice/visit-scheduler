@@ -84,7 +84,7 @@ class PrisonExcludeDateNotificatonEventsTest : NotificationTestBase() {
 
     // only 1 visit for the same date with status of BOOKED will be flagged.
     assertThat(visitNotifications).hasSize(1)
-    assertThat(visitNotifications[0].bookingReference).isEqualTo(bookedVisitForSamePrison.reference)
+    assertThat(visitNotifications[0].visit.reference).isEqualTo(bookedVisitForSamePrison.reference)
 
     val auditEvents = testEventAuditRepository.getAuditByType(PRISON_VISITS_BLOCKED_FOR_DATE)
     assertThat(auditEvents).hasSize(1)
@@ -117,7 +117,7 @@ class PrisonExcludeDateNotificatonEventsTest : NotificationTestBase() {
     responseSpec.expectStatus().isOk
     verify(visitNotificationEventServiceSpy, times(1)).handleAddPrisonVisitBlockDate(PrisonDateBlockedDto(prisonXYZ.code, excludeDate))
     var visitNotifications = testVisitNotificationEventRepository.findAll()
-    assertThat(visitNotifications[0].bookingReference).isEqualTo(bookedVisitForSamePrison.reference)
+    assertThat(visitNotifications[0].visit.reference).isEqualTo(bookedVisitForSamePrison.reference)
 
     // call remove exclude dates next
     responseSpec = callRemovePrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prisonXYZ.code, excludeDate, actionedBy = "TEST_USER")
@@ -144,7 +144,7 @@ class PrisonExcludeDateNotificatonEventsTest : NotificationTestBase() {
     responseSpec.expectStatus().isOk
 
     val visitNotifications = testVisitNotificationEventRepository.findAll()
-    assertThat(visitNotifications[0].bookingReference).isEqualTo(visit.reference)
+    assertThat(visitNotifications[0].visit.reference).isEqualTo(visit.reference)
 
     // create a reserveVisitSlotDto with start and end timestamp different from current visit
     val reserveVisitSlotDto = CreateApplicationDto(
@@ -197,7 +197,7 @@ class PrisonExcludeDateNotificatonEventsTest : NotificationTestBase() {
     responseSpec.expectStatus().isOk
     verify(visitNotificationEventServiceSpy, times(1)).handleAddPrisonVisitBlockDate(PrisonDateBlockedDto(prisonXYZ.code, excludeDate))
     var visitNotifications = testVisitNotificationEventRepository.findAll()
-    assertThat(visitNotifications[0].bookingReference).isEqualTo(bookedVisit.reference)
+    assertThat(visitNotifications[0].visit.reference).isEqualTo(bookedVisit.reference)
 
     // create a reserveVisitSlotDto with sessionDAte same as current visit
     val reserveVisitSlotDto = CreateApplicationDto(

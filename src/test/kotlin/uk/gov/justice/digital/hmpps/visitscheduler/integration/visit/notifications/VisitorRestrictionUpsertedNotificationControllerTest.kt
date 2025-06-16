@@ -133,7 +133,7 @@ class VisitorRestrictionUpsertedNotificationControllerTest : NotificationTestBas
 
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(2)
-    assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
+    assertThat(visitNotifications[0].visit.reference).isEqualTo(visit1.reference)
     assertThat(visitNotifications[0].visitNotificationEventAttributes.size).isEqualTo(3)
     assertThat(visitNotifications[0].visitNotificationEventAttributes)
       .extracting({ it.attributeName }, { it.attributeValue })
@@ -143,7 +143,7 @@ class VisitorRestrictionUpsertedNotificationControllerTest : NotificationTestBas
         tuple(NotificationEventAttributeType.VISITOR_ID, visitorId),
       )
 
-    assertThat(visitNotifications[1].bookingReference).isEqualTo(visit2.reference)
+    assertThat(visitNotifications[1].visit.reference).isEqualTo(visit2.reference)
     assertThat(visitNotifications[1].visitNotificationEventAttributes.size).isEqualTo(3)
     assertThat(visitNotifications[1].visitNotificationEventAttributes)
       .extracting({ it.attributeName }, { it.attributeValue })
@@ -256,7 +256,7 @@ class VisitorRestrictionUpsertedNotificationControllerTest : NotificationTestBas
 
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(1)
-    assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
+    assertThat(visitNotifications[0].visit.reference).isEqualTo(visit1.reference)
 
     val auditEvents = testEventAuditRepository.getAuditByType(EventAuditType.VISITOR_RESTRICTION_UPSERTED_EVENT)
     assertThat(auditEvents).hasSize(1)
@@ -320,7 +320,7 @@ class VisitorRestrictionUpsertedNotificationControllerTest : NotificationTestBas
 
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(2)
-    assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
+    assertThat(visitNotifications[0].visit.reference).isEqualTo(visit1.reference)
     assertThat(visitNotifications[0].visitNotificationEventAttributes)
       .extracting({ it.attributeName }, { it.attributeValue })
       .containsExactlyInAnyOrder(
@@ -329,7 +329,7 @@ class VisitorRestrictionUpsertedNotificationControllerTest : NotificationTestBas
         tuple(NotificationEventAttributeType.VISITOR_ID, visitorId),
       )
 
-    assertThat(visitNotifications[1].bookingReference).isEqualTo(visit1.reference)
+    assertThat(visitNotifications[1].visit.reference).isEqualTo(visit1.reference)
     assertThat(visitNotifications[1].visitNotificationEventAttributes)
       .extracting({ it.attributeName }, { it.attributeValue })
       .containsExactlyInAnyOrder(

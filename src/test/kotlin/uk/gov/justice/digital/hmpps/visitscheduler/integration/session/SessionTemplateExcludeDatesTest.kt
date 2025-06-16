@@ -182,7 +182,7 @@ class SessionTemplateExcludeDatesTest : IntegrationTestBase() {
 
     // only 1 visit for the same date and session with status of BOOKED will be flagged.
     Assertions.assertThat(visitNotifications).hasSize(1)
-    Assertions.assertThat(visitNotifications[0].bookingReference).isEqualTo(bookedVisitForSameSession.reference)
+    Assertions.assertThat(visitNotifications[0].visit.reference).isEqualTo(bookedVisitForSameSession.reference)
     verify(telemetryClient, times(1)).trackEvent(eq("add-session-exclude-date"), any(), isNull())
   }
 
@@ -253,7 +253,7 @@ class SessionTemplateExcludeDatesTest : IntegrationTestBase() {
     // existing visit for excludeDate in same session template
     val bookedVisitForSamePrison = visitEntityHelper.create(sessionTemplate = sessionTemplate, visitStatus = VisitStatus.BOOKED)
 
-    visitNotificationEventHelper.create(bookedVisitForSamePrison.reference, NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE)
+    visitNotificationEventHelper.create(bookedVisitForSamePrison, NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE)
 
     // When
     val responseSpec = callRemoveSessionTemplateExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, sessionTemplateReference = sessionTemplate.reference, excludeDate, actionedBy = TEST_USER)

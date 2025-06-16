@@ -47,9 +47,9 @@ class IgnoreVisitNotificationsTest : IntegrationTestBase() {
   fun `when ignore visit notifications raised for existing visit then all existing notifications are deleted`() {
     // Given - visit with 3 notification events
     val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111", "email@example.com"))
-    visitNotificationEventHelper.create(visit.reference, NotificationEventType.NON_ASSOCIATION_EVENT)
-    visitNotificationEventHelper.create(visit.reference, NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
-    visitNotificationEventHelper.create(visit.reference, NotificationEventType.PRISONER_RELEASED_EVENT)
+    visitNotificationEventHelper.create(visit, NotificationEventType.NON_ASSOCIATION_EVENT)
+    visitNotificationEventHelper.create(visit, NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
+    visitNotificationEventHelper.create(visit, NotificationEventType.PRISONER_RELEASED_EVENT)
 
     val ignoreVisitNotification = IgnoreVisitNotificationsDto(
       "Can be ignored, to be managed by staff.",
@@ -95,8 +95,8 @@ class IgnoreVisitNotificationsTest : IntegrationTestBase() {
     val ignoredVisit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
     assertHelper.assertIgnoredVisit(ignoredVisit, ignoreVisitNotification.actionedBy, STAFF, ignoreVisitNotification.reason)
 
-    // if there are no notifications deleteByBookingReference should not be called
-    verify(visitNotificationEventRepository, times(0)).deleteByBookingReference(eq(visit.reference))
+    // if there are no notifications deleteVisitNotificationEventByVisitReference should not be called
+    verify(visitNotificationEventRepository, times(0)).deleteVisitNotificationEventByVisitReference(eq(visit.reference))
     verify(telemetryClient, times(0)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
   }
 
@@ -119,7 +119,7 @@ class IgnoreVisitNotificationsTest : IntegrationTestBase() {
 
     // And
     verify(telemetryClient, times(0)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
-    verify(visitNotificationEventRepository, times(0)).deleteByBookingReference(eq(reference))
+    verify(visitNotificationEventRepository, times(0)).deleteVisitNotificationEventByVisitReference(eq(reference))
   }
 
   @Test
@@ -140,7 +140,7 @@ class IgnoreVisitNotificationsTest : IntegrationTestBase() {
 
     // And
     verify(telemetryClient, times(0)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
-    verify(visitNotificationEventRepository, times(0)).deleteByBookingReference(eq(reference))
+    verify(visitNotificationEventRepository, times(0)).deleteVisitNotificationEventByVisitReference(eq(reference))
   }
 
   @Test
@@ -161,7 +161,7 @@ class IgnoreVisitNotificationsTest : IntegrationTestBase() {
 
     // And
     verify(telemetryClient, times(0)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
-    verify(visitNotificationEventRepository, times(0)).deleteByBookingReference(eq(reference))
+    verify(visitNotificationEventRepository, times(0)).deleteVisitNotificationEventByVisitReference(eq(reference))
   }
 
   @Test
@@ -188,7 +188,7 @@ class IgnoreVisitNotificationsTest : IntegrationTestBase() {
 
     // And
     verify(telemetryClient, times(0)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
-    verify(visitNotificationEventRepository, times(0)).deleteByBookingReference(eq(reference))
+    verify(visitNotificationEventRepository, times(0)).deleteVisitNotificationEventByVisitReference(eq(reference))
   }
 
   fun assertIgnoredVisit(visit: VisitDto, ignoreVisitNotification: IgnoreVisitNotificationsDto, userType: UserType = STAFF) {
@@ -196,10 +196,10 @@ class IgnoreVisitNotificationsTest : IntegrationTestBase() {
     Assertions.assertThat(visit.visitNotes.size).isEqualTo(0)
 
     val visitNotifications = visitNotificationEventHelper.getVisitNotifications(visit.reference)
-    verify(visitNotificationEventRepository, times(1)).deleteByBookingReference(eq(visit.reference))
+    verify(visitNotificationEventRepository, times(1)).deleteVisitNotificationEventByVisitReference(eq(visit.reference))
 
     Assertions.assertThat(visitNotifications.size).isEqualTo(0)
-    verify(visitNotificationEventRepository, times(1)).deleteByBookingReference(eq(visit.reference))
+    verify(visitNotificationEventRepository, times(1)).deleteVisitNotificationEventByVisitReference(eq(visit.reference))
     assertUnFlagEvent(visit, ignoreVisitNotification.reason)
   }
 
