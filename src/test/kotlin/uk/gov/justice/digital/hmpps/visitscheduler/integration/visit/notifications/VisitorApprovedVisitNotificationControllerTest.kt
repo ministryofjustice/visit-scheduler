@@ -25,7 +25,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.Visitor
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatVisitorApproved
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import java.time.LocalDate
 
@@ -74,7 +73,7 @@ class VisitorApprovedVisitNotificationControllerTest : NotificationTestBase() {
     val visit = visitEntityHelper.save(visit1)
     eventAuditEntityHelper.create(visit1)
 
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visit.reference, NotificationEventType.VISITOR_UNAPPROVED_EVENT))
+    visitNotificationEventHelper.create(visit = visit, notificationEventType = NotificationEventType.VISITOR_UNAPPROVED_EVENT)
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
     whenever(prisonerService.getPrisonerPrisonCodeFromPrisonId(prisonerId)).thenReturn(prisonCode)
@@ -122,7 +121,7 @@ class VisitorApprovedVisitNotificationControllerTest : NotificationTestBase() {
     val visit = visitEntityHelper.save(visit1)
     eventAuditEntityHelper.create(visit1)
 
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visit.reference, NotificationEventType.VISITOR_UNAPPROVED_EVENT))
+    visitNotificationEventHelper.create(visit = visit, notificationEventType = NotificationEventType.VISITOR_UNAPPROVED_EVENT)
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, "XYZ")
     whenever(prisonerService.getPrisonerPrisonCodeFromPrisonId(prisonerId)).thenReturn(null)
@@ -162,7 +161,7 @@ class VisitorApprovedVisitNotificationControllerTest : NotificationTestBase() {
     val visit = visitEntityHelper.save(visit1)
     eventAuditEntityHelper.create(visit1)
 
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visit.reference, NotificationEventType.VISITOR_UNAPPROVED_EVENT))
+    visitNotificationEventHelper.create(visit = visit, notificationEventType = NotificationEventType.VISITOR_UNAPPROVED_EVENT)
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
     whenever(prisonerService.getPrisonerPrisonCodeFromPrisonId(prisonerId)).thenReturn(prisonCode)
@@ -212,7 +211,7 @@ class VisitorApprovedVisitNotificationControllerTest : NotificationTestBase() {
     val visit = visitEntityHelper.save(visit1)
     eventAuditEntityHelper.create(visit1)
 
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visit.reference, NotificationEventType.VISITOR_UNAPPROVED_EVENT))
+    visitNotificationEventHelper.create(visit = visit, notificationEventType = NotificationEventType.VISITOR_UNAPPROVED_EVENT)
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
     whenever(prisonerService.getPrisonerPrisonCodeFromPrisonId(prisonerId)).thenReturn(prisonCode)
@@ -252,7 +251,7 @@ class VisitorApprovedVisitNotificationControllerTest : NotificationTestBase() {
     val visit = visitEntityHelper.save(visit1)
     eventAuditEntityHelper.create(visit1)
 
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visit.reference, NotificationEventType.VISITOR_UNAPPROVED_EVENT))
+    visitNotificationEventHelper.create(visit = visit, notificationEventType = NotificationEventType.VISITOR_UNAPPROVED_EVENT)
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
     whenever(prisonerService.getPrisonerPrisonCodeFromPrisonId(prisonerId)).thenReturn(prisonCode)
@@ -292,7 +291,7 @@ class VisitorApprovedVisitNotificationControllerTest : NotificationTestBase() {
     val visit = visitEntityHelper.save(visit1)
     eventAuditEntityHelper.create(visit1)
 
-    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visit.reference, NotificationEventType.VISITOR_UNAPPROVED_EVENT))
+    visitNotificationEventHelper.create(visit = visit, notificationEventType = NotificationEventType.VISITOR_UNAPPROVED_EVENT)
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
     whenever(prisonerService.getPrisonerPrisonCodeFromPrisonId(prisonerId)).thenReturn(prisonCode)
