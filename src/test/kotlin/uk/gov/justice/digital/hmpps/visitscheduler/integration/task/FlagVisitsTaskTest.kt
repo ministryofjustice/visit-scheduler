@@ -373,7 +373,6 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(NON_ASSOCIATION_CREATED, prisonerAId, prisonerBId)
     callNotifyVSiPThatNonAssociationHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, nonAssociationChangedNotification)
 
-    Thread.sleep(2)
     val prisonerReleasedNotification = PrisonerReleasedNotificationDto(prisonerAId, prison.code, RELEASED)
     callNotifyVSiPThatPrisonerHadBeenReleased(webTestClient, roleVisitSchedulerHttpHeaders, prisonerReleasedNotification)
 
