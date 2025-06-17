@@ -238,7 +238,9 @@ fun createUpdateSessionTemplateDto(
   locationGroupReferences: MutableList<String> = mutableListOf(),
   categoryGroupReferences: MutableList<String> = mutableListOf(),
   incentiveLevelGroupReferences: MutableList<String> = mutableListOf(),
-  includeLocationGroupType: Boolean = true,
+  includeLocationGroupType: Boolean? = true,
+  includeCategoryGroupType: Boolean? = true,
+  includeIncentiveGroupType: Boolean? = true,
   clients: List<UserClientDto>? = null,
 ): UpdateSessionTemplateDto = UpdateSessionTemplateDto(
   name = name + dayOfWeek,
@@ -250,6 +252,9 @@ fun createUpdateSessionTemplateDto(
   weeklyFrequency = weeklyFrequency,
   categoryGroupReferences = categoryGroupReferences,
   incentiveLevelGroupReferences = incentiveLevelGroupReferences,
+  includeLocationGroupType = includeLocationGroupType,
+  includeCategoryGroupType = includeCategoryGroupType,
+  includeIncentiveGroupType = includeIncentiveGroupType,
   clients = clients,
 )
 

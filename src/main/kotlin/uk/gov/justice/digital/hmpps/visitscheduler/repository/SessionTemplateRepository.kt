@@ -190,6 +190,14 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
   @Query("Update SessionTemplate s set s.includeLocationGroupType = :includeLocationGroupType WHERE s.reference = :reference")
   fun updateIncludeLocationGroupType(reference: String, includeLocationGroupType: Boolean): Int
 
+  @Modifying(clearAutomatically = true)
+  @Query("Update SessionTemplate s set s.includeCategoryGroupType = :includeCategoryGroupType WHERE s.reference = :reference")
+  fun updateIncludeCategoryGroupType(reference: String, includeCategoryGroupType: Boolean): Int
+
+  @Modifying(clearAutomatically = true)
+  @Query("Update SessionTemplate s set s.includeIncentiveGroupType = :includeIncentiveGroupType WHERE s.reference = :reference")
+  fun updateIncludeIncentiveGroupType(reference: String, includeIncentiveGroupType: Boolean): Int
+
   @Query(
     "SELECT new uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTimeSlotDto(st.startTime,st.endTime)  FROM SessionTemplate st WHERE st.reference = :reference",
   )
