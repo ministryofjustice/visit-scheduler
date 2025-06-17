@@ -30,14 +30,36 @@ class UpdateSessionTemplateValidator(
 
     val hasFutureBookedVisits = visitRepository.hasBookedVisitsForSessionTemplate(sessionTemplate.reference, LocalDate.now())
     val updateSessionDetails = sessionTemplateMapper.getSessionDetails(sessionTemplate.reference, updateSessionTemplateDto)
-    updateSessionTemplateDto.locationGroupReferences.let {
-      validateUpdateSessionLocation(sessionTemplate, updateSessionDetails, hasFutureBookedVisits)?.let { errorMessages.add(it) }
+
+    // TODO - the below block will need rewriting as it does not consider the exclude scenario
+    if (sessionTemplate.includeLocationGroupType) {
+      updateSessionTemplateDto.locationGroupReferences.let {
+        validateUpdateSessionLocation(
+          sessionTemplate,
+          updateSessionDetails,
+          hasFutureBookedVisits,
+        )?.let { errorMessages.add(it) }
+      }
     }
-    updateSessionTemplateDto.categoryGroupReferences.let {
-      validateUpdateSessionCategory(sessionTemplate, updateSessionDetails, hasFutureBookedVisits)?.let { errorMessages.add(it) }
+
+    if (sessionTemplate.includeCategoryGroupType) {
+      updateSessionTemplateDto.categoryGroupReferences.let {
+        validateUpdateSessionCategory(
+          sessionTemplate,
+          updateSessionDetails,
+          hasFutureBookedVisits,
+        )?.let { errorMessages.add(it) }
+      }
     }
-    updateSessionTemplateDto.incentiveLevelGroupReferences.let {
-      validateUpdateSessionIncentiveLevels(sessionTemplate, updateSessionDetails, hasFutureBookedVisits)?.let { errorMessages.add(it) }
+
+    if (sessionTemplate.includeIncentiveGroupType) {
+      updateSessionTemplateDto.incentiveLevelGroupReferences.let {
+        validateUpdateSessionIncentiveLevels(
+          sessionTemplate,
+          updateSessionDetails,
+          hasFutureBookedVisits,
+        )?.let { errorMessages.add(it) }
+      }
     }
     return errorMessages.toList()
   }

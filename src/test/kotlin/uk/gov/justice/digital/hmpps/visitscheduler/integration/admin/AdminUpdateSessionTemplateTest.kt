@@ -162,7 +162,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
       sessionTemplate = sessionTemplateDefault,
       slotDate = LocalDate.now(),
       visitStart = dto.sessionTimeSlot!!.startTime,
-      visitEnd = dto.sessionTimeSlot!!.endTime,
+      visitEnd = dto.sessionTimeSlot.endTime,
     )
 
     // When
@@ -189,7 +189,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
       sessionTemplate = sessionTemplateDefault,
       slotDate = LocalDate.now(),
       visitStart = dto.sessionTimeSlot!!.startTime,
-      visitEnd = dto.sessionTimeSlot!!.endTime,
+      visitEnd = dto.sessionTimeSlot.endTime,
     )
 
     // When
@@ -863,7 +863,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
       sessionTemplate = sessionTemplateDefault,
       slotDate = LocalDate.now(),
       visitStart = dto.sessionTimeSlot!!.startTime,
-      visitEnd = dto.sessionTimeSlot!!.endTime,
+      visitEnd = dto.sessionTimeSlot.endTime,
     )
 
     // When
@@ -1640,5 +1640,117 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
     Assertions.assertThat(sessionTemplateDto.clients.size).isEqualTo(1)
     Assertions.assertThat(sessionTemplateDto.clients[0]).isEqualTo(UserClientDto(STAFF, true))
+  }
+
+  @Test
+  fun `when session template include groups types are not sent the include flags are not updated`() {
+    // Given
+    val sessionTemplate = sessionTemplateEntityHelper.create(prisonCode = prison.code, isActive = true, includeLocationGroupType = false, includeCategoryGroupType = false, includeIncentiveGroupType = false)
+
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplate.name + " Updated",
+      visitRoom = "new room name",
+      includeLocationGroupType = null,
+      includeCategoryGroupType = null,
+      includeIncentiveGroupType = null,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionTemplateDto = getSessionTemplate(responseSpec)
+    Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
+    Assertions.assertThat(sessionTemplateDto.includeLocationGroupType).isFalse
+    Assertions.assertThat(sessionTemplateDto.includeLocationGroupType).isFalse
+    Assertions.assertThat(sessionTemplateDto.includeLocationGroupType).isFalse
+  }
+
+  @Test
+  fun `when session template include location groups type is included on request the include location group type is updated`() {
+    // Given
+
+    // session template has includeLocationGroupType as false
+    val sessionTemplate = sessionTemplateEntityHelper.create(
+      prisonCode = prison.code,
+      isActive = true,
+      includeLocationGroupType = false,
+    )
+    Assertions.assertThat(sessionTemplate.includeLocationGroupType).isFalse
+
+    // updating includeLocationGroupType to true
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplate.name + " Updated",
+      includeLocationGroupType = true,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionTemplateDto = getSessionTemplate(responseSpec)
+    Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
+    Assertions.assertThat(sessionTemplateDto.includeLocationGroupType).isTrue
+  }
+
+  @Test
+  fun `when session template include category groups type is included on request the include category group type is updated`() {
+    // Given
+    // session template has includeCategoryGroupType as false
+    val sessionTemplate = sessionTemplateEntityHelper.create(
+      prisonCode = prison.code,
+      isActive = true,
+      includeCategoryGroupType = false,
+    )
+    Assertions.assertThat(sessionTemplate.includeCategoryGroupType).isFalse
+
+    // updating includeCategoryGroupType to true
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplate.name + " Updated",
+      includeCategoryGroupType = true,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionTemplateDto = getSessionTemplate(responseSpec)
+    Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
+    Assertions.assertThat(sessionTemplateDto.includeCategoryGroupType).isTrue
+  }
+
+  @Test
+  fun `when session template include incentive groups type is included on request the include category group type is updated`() {
+    // Given
+    // session template has includeIncentiveGroupType as false
+
+    val sessionTemplate = sessionTemplateEntityHelper.create(
+      prisonCode = prison.code,
+      isActive = true,
+      includeIncentiveGroupType = false,
+    )
+    Assertions.assertThat(sessionTemplate.includeIncentiveGroupType).isFalse
+
+    // updating includeIncentiveGroupType from false to true
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplate.name + " Updated",
+      includeIncentiveGroupType = true,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionTemplateDto = getSessionTemplate(responseSpec)
+    Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
+    Assertions.assertThat(sessionTemplateDto.includeIncentiveGroupType).isTrue
   }
 }

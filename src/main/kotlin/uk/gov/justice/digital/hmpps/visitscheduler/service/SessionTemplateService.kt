@@ -226,6 +226,18 @@ class SessionTemplateService(
       weeklyFrequency?.let {
         sessionTemplateRepository.updateWeeklyFrequencyByReference(reference, weeklyFrequency)
       }
+
+      includeLocationGroupType?.let {
+        sessionTemplateRepository.updateIncludeLocationGroupType(reference, includeLocationGroupType = it)
+      }
+
+      includeCategoryGroupType?.let {
+        sessionTemplateRepository.updateIncludeCategoryGroupType(reference, includeCategoryGroupType = it)
+      }
+
+      includeIncentiveGroupType?.let {
+        sessionTemplateRepository.updateIncludeIncentiveGroupType(reference, includeIncentiveGroupType = it)
+      }
     }
 
     val updatedSessionTemplateEntity = getSessionTemplate(reference)
