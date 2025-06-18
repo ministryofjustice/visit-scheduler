@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_BY_REFER
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitByReference
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import java.time.LocalDate
@@ -70,7 +71,7 @@ class VisitByReferenceTest : IntegrationTestBase() {
   fun `Canceled visit by reference`() {
     // Given
     val slotDate = sessionDatesUtil.getFirstBookableSessionDay(sessionTemplateDefault)
-    val createdVisit = visitEntityHelper.create(prisonerId = "FF0000AA", visitStatus = CANCELLED, slotDate = slotDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111", "email@example.com"))
+    val createdVisit = visitEntityHelper.create(prisonerId = "FF0000AA", visitStatus = CANCELLED, visitSubStatus = VisitSubStatus.CANCELLED, slotDate = slotDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111", "email@example.com"))
 
     val reference = createdVisit.reference
 

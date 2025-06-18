@@ -25,6 +25,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.CL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
@@ -1121,6 +1122,7 @@ class GetSessionsTest : IntegrationTestBase() {
       visitEnd = endTime.toLocalTime(),
       visitType = SOCIAL,
       visitStatus = CANCELLED,
+      visitSubStatus = VisitSubStatus.CANCELLED,
       visitRestriction = OPEN,
       sessionTemplate = sessionTemplate,
     )
@@ -1263,6 +1265,7 @@ class GetSessionsTest : IntegrationTestBase() {
       visitEnd = endTime.toLocalTime(),
       visitType = SOCIAL,
       visitStatus = CANCELLED,
+      visitSubStatus = VisitSubStatus.CANCELLED,
       visitRestriction = CLOSED,
       sessionTemplate = sessionTemplate,
     )
@@ -1669,6 +1672,7 @@ class GetSessionsTest : IntegrationTestBase() {
       visitEnd = LocalTime.of(9, 30),
       visitType = SOCIAL,
       visitStatus = CANCELLED,
+      visitSubStatus = VisitSubStatus.CANCELLED,
       visitRestriction = OPEN,
       sessionTemplate = sessionTemplate,
     )

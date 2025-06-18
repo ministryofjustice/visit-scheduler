@@ -35,6 +35,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -92,6 +93,7 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
 
   protected fun createMigrateVisitRequestDto(
     visitStatus: VisitStatus = BOOKED,
+    visitSubStatus: VisitSubStatus = VisitSubStatus.AUTO_APPROVED,
     actionedBy: String? = "Aled Evans",
     visitStartTimeAndDate: LocalDateTime = VISIT_TIME,
     visitRoom: String = "A1",

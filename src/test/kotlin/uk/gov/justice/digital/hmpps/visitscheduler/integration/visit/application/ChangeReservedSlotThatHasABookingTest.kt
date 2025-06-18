@@ -26,6 +26,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitReserveSlotChange
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
@@ -59,7 +60,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
-    oldBooking = createApplicationAndVisit("test", sessionTemplateDefault, BOOKED, LocalDate.now())
+    oldBooking = createApplicationAndVisit("test", sessionTemplateDefault, BOOKED, VisitSubStatus.AUTO_APPROVED, LocalDate.now())
     oldApplication = oldBooking.getLastApplication()!!
 
     newRestriction = if (oldBooking.visitRestriction == OPEN) CLOSED else OPEN

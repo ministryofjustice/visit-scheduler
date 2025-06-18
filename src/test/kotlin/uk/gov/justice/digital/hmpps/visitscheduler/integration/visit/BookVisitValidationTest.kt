@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryTyp
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.VisitBalancesDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch.PrisonerSearchResultDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
@@ -547,6 +548,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonerId = prisonerId,
       slotDate = reservedPublicApplication.sessionSlot.slotDate,
       visitStatus = VisitStatus.CANCELLED,
+      visitSubStatus = VisitSubStatus.CANCELLED,
       prisonCode = reservedPublicApplication.prison.code,
     )
 
@@ -572,6 +574,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonerId = prisonerId,
       slotDate = reservedStaffApplication.sessionSlot.slotDate,
       visitStatus = VisitStatus.CANCELLED,
+      visitSubStatus = VisitSubStatus.CANCELLED,
       prisonCode = reservedStaffApplication.prison.code,
     )
 

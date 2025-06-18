@@ -33,6 +33,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
@@ -217,7 +218,7 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
   fun `Migrate cancelled visit`() {
     // Given
 
-    val migrateVisitRequestDto = createMigrateVisitRequestDto(visitStatus = CANCELLED, modifyDateTime = LocalDateTime.of(2022, 9, 11, 12, 30))
+    val migrateVisitRequestDto = createMigrateVisitRequestDto(visitStatus = CANCELLED, visitSubStatus = VisitSubStatus.CANCELLED, modifyDateTime = LocalDateTime.of(2022, 9, 11, 12, 30))
     createSessionTemplateFrom(migrateVisitRequestDto)
 
     // When
@@ -231,6 +232,7 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
     assertThat(visit).isNotNull
     visit?.let {
       assertThat(visit.visitStatus).isEqualTo(CANCELLED)
+      assertThat(visit.visitSubStatus).isEqualTo(VisitSubStatus.CANCELLED)
       val eventAuditList = eventAuditRepository.findAllByBookingReference(visit.reference)
       assertThat(eventAuditList[0].createTimestamp).isEqualTo(migrateVisitRequestDto.modifyDateTime)
     }

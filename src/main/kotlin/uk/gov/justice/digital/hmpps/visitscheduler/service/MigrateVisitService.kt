@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.MigrateVisitInFutureException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.LegacyData
@@ -194,6 +195,11 @@ class MigrateVisitService(
     sessionSlot: SessionSlot,
     outcomeStatus: OutcomeStatus,
   ): Visit {
+    val visitSubStatus = when (migrateVisitRequest.visitStatus) {
+      BOOKED -> VisitSubStatus.AUTO_APPROVED
+      CANCELLED -> VisitSubStatus.CANCELLED
+    }
+
     val visitEntity = visitRepository.saveAndFlush(
       Visit(
         prisonerId = migrateVisitRequest.prisonerId,
@@ -204,6 +210,7 @@ class MigrateVisitService(
         sessionSlotId = sessionSlot.id,
         visitType = migrateVisitRequest.visitType,
         visitStatus = migrateVisitRequest.visitStatus,
+        visitSubStatus = visitSubStatus,
         visitRestriction = migrateVisitRequest.visitRestriction,
         userType = STAFF,
       ),
@@ -261,6 +268,7 @@ class MigrateVisitService(
     val visitEntity = visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("Canceled migrated visit $reference not found ")
 
     visitEntity.visitStatus = CANCELLED
+    visitEntity.visitSubStatus = VisitSubStatus.CANCELLED // TODO [Request a visit feature]: Allow 'Requested' visits to have custom cancel statuses.
     visitEntity.outcomeStatus = cancelOutcome.outcomeStatus
 
     cancelOutcome.text?.let {

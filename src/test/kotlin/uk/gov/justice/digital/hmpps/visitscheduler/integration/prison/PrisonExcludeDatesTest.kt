@@ -18,6 +18,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADMIN_PRISON
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ExcludeDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonDateBlockedDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitNotificationEventHelper
@@ -163,7 +164,7 @@ class PrisonExcludeDatesTest : IntegrationTestBase() {
     createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitStatus = VisitStatus.BOOKED, slotDate = excludeDate)
 
     // cancelled visit for excludeDate in same prison
-    createApplicationAndVisit(sessionTemplate = sessionTemplateXYZ, visitStatus = VisitStatus.CANCELLED, slotDate = excludeDate)
+    createApplicationAndVisit(sessionTemplate = sessionTemplateXYZ, visitStatus = VisitStatus.CANCELLED, visitSubStatus = VisitSubStatus.CANCELLED, slotDate = excludeDate)
 
     // existing visit different excludeDate in same prison
     createApplicationAndVisit(sessionTemplate = sessionTemplateXYZ, visitStatus = VisitStatus.BOOKED, slotDate = excludeDate.plusDays(1))
