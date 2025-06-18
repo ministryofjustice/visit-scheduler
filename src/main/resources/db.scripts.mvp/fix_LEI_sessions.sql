@@ -1,27 +1,4 @@
 -- Fix to update Leeds (LEI) and Feltham B (FMI) from old session template to new session template
---| new code    | old code    | Day       |
---| ----------- | ----------- | --------- |
---| qvx.hxm.abs | wdx.fgs.spz | Monday    |
---| rvx.iow.psg | asx.ibl.omx | Monday    |
---| bvx.hwe.ors | lsx.fyd.vse | Monday    |
---| ovx.fwz.bgz | kdx.ier.nqx | Tuesday   |
---| dvx.hla.zay | ysx.imd.ozj | Tuesday   |
---| svx.ijo.nxe | xsx.ivm.adl | Tuesday   |
---| nvx.cso.erb | msx.faj.woy | Wednesday |
---| pvx.uao.abd | qsx.fdq.gjr | Wednesday |
---| evx.fjw.mvy | vsx.cjm.pjq | Wednesday |
---| gvx.hpr.eqo | wsx.cyy.bmv | Wednesday |
---| jvx.izx.oay | ksx.cab.bxs | Wednesday |
---| vvx.fnl.ene | znx.fjq.ppq | Wednesday |
---| wvx.csx.ale | rsx.hog.anq | Friday    |
---| kvx.csz.xjl | bsx.uqx.gjm | Friday    |
---| zwx.inl.dyr | osx.fne.ppy | Saturday  |
---| lwx.csl.ngs | ssx.umv.zye | Saturday  |
---| ywx.fya.nge | nsx.uwj.eel | Saturday  |
---| xwx.fsr.msr | psx.fdb.pbg | Sunday    |
---| mwx.crg.sgm | esx.uvb.sba | Sunday    |
---| qwx.iwp.peg | gsx.hmr.jzs | Sunday    |
---| rwx.isj.mrx | jsx.inp.ngn | Sunday    |
 
 BEGIN;
 SET SCHEMA 'public';
