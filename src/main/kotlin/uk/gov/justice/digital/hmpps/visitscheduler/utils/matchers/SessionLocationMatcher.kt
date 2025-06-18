@@ -60,6 +60,16 @@ class SessionLocationMatcher :
     }
   }
 
+  fun hasAllHigherOrEqualMatch(o1: Set<PermittedSessionLocationDto>, o2: Set<PermittedSessionLocationDto>): Boolean = if ((o1.isEmpty() && o2.isEmpty()) || o2.isEmpty()) {
+    true
+  } else if (o1.isEmpty()) {
+    false
+  } else {
+    o2.stream().allMatch {
+      multipleLocationEqualOrLowerMatcher.test(it, o1)
+    }
+  }
+
   override fun hasAnyMatch(o1: Set<PermittedSessionLocationDto>, o2: Set<PermittedSessionLocationDto>): Boolean {
     // if o2 is empty or any of the locations
     return o2.isEmpty() ||
