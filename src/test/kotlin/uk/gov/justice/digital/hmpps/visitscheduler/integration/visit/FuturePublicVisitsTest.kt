@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_FUTURE_BOOKED_
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitAssertHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
@@ -52,24 +53,24 @@ class FuturePublicVisitsTest : IntegrationTestBase() {
     // session template that has started 1 minute back
     sessionTemplate2 = sessionTemplateEntityHelper.create(prisonCode = "DFT", startTime = LocalTime.now().minusMinutes(1), endTime = LocalTime.now().plusHours(1))
 
-    visitFarInTheFuture = createVisit(prisonerId = "visit far away", actionedByValue = "aTestRef", visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplate1, userType = PUBLIC, slotDateWeeks = 6)
+    visitFarInTheFuture = createVisit(prisonerId = "visit far away", actionedByValue = "aTestRef", visitStatus = VisitStatus.BOOKED, visitSubStatus = VisitSubStatus.AUTO_APPROVED, sessionTemplate = sessionTemplate1, userType = PUBLIC, slotDateWeeks = 6)
 
-    visitInDifferentPrison = createVisit(prisonerId = "visit different prison", actionedByValue = "aTestRef", visitStatus = VisitStatus.BOOKED, sessionTemplate = otherSessionTemplate, userType = PUBLIC, slotDateWeeks = 4)
+    visitInDifferentPrison = createVisit(prisonerId = "visit different prison", actionedByValue = "aTestRef", visitStatus = VisitStatus.BOOKED, visitSubStatus = VisitSubStatus.AUTO_APPROVED, sessionTemplate = otherSessionTemplate, userType = PUBLIC, slotDateWeeks = 4)
 
-    nearestVisitAfterToday = createVisit(prisonerId = "nearest visit after today", actionedByValue = "aTestRef", visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplate1, userType = PUBLIC, slotDateWeeks = 1)
+    nearestVisitAfterToday = createVisit(prisonerId = "nearest visit after today", actionedByValue = "aTestRef", visitStatus = VisitStatus.BOOKED, VisitSubStatus.AUTO_APPROVED, sessionTemplate = sessionTemplate1, userType = PUBLIC, slotDateWeeks = 1)
 
     // this visit is for a session template that started 1 minute back
-    pastVisitToday = createVisit(prisonerId = "today's visit in past", actionedByValue = "aTestRef", visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplate2, userType = PUBLIC, slotDateWeeks = 0)
+    pastVisitToday = createVisit(prisonerId = "today's visit in past", actionedByValue = "aTestRef", visitStatus = VisitStatus.BOOKED, VisitSubStatus.AUTO_APPROVED, sessionTemplate = sessionTemplate2, userType = PUBLIC, slotDateWeeks = 0)
     // this visit is for a session template that started 5 minutes after
-    futureVisitToday = createVisit(prisonerId = "today's visit in future", actionedByValue = "aTestRef", visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplate1, userType = PUBLIC, slotDateWeeks = 0)
+    futureVisitToday = createVisit(prisonerId = "today's visit in future", actionedByValue = "aTestRef", visitStatus = VisitStatus.BOOKED, VisitSubStatus.AUTO_APPROVED, sessionTemplate = sessionTemplate1, userType = PUBLIC, slotDateWeeks = 0)
 
-    var visitInPast = createVisit(prisonerId = "visit", actionedByValue = "aTestRef", visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplate1, userType = PUBLIC, slotDateWeeks = -1)
+    var visitInPast = createVisit(prisonerId = "visit", actionedByValue = "aTestRef", visitStatus = VisitStatus.BOOKED, VisitSubStatus.AUTO_APPROVED, sessionTemplate = sessionTemplate1, userType = PUBLIC, slotDateWeeks = -1)
 
-    var visitBookerByStaff = createVisit(prisonerId = "visit", actionedByValue = "aTestRef", visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplate1, userType = STAFF, slotDateWeeks = 1)
+    var visitBookerByStaff = createVisit(prisonerId = "visit", actionedByValue = "aTestRef", visitStatus = VisitStatus.BOOKED, VisitSubStatus.AUTO_APPROVED, sessionTemplate = sessionTemplate1, userType = STAFF, slotDateWeeks = 1)
 
-    var visitCancelled = createVisit(prisonerId = "visit", actionedByValue = "aTestRef", visitStatus = VisitStatus.CANCELLED, sessionTemplate = sessionTemplate1, userType = PUBLIC, slotDateWeeks = 1)
+    var visitCancelled = createVisit(prisonerId = "visit", actionedByValue = "aTestRef", visitStatus = VisitStatus.CANCELLED, VisitSubStatus.CANCELLED, sessionTemplate = sessionTemplate1, userType = PUBLIC, slotDateWeeks = 1)
 
-    visitWithOtherBooker = createVisit(prisonerId = "visit with other broker", actionedByValue = "aOtherTestRef", visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplate1, userType = PUBLIC, slotDateWeeks = 2)
+    visitWithOtherBooker = createVisit(prisonerId = "visit with other broker", actionedByValue = "aOtherTestRef", visitStatus = VisitStatus.BOOKED, VisitSubStatus.AUTO_APPROVED, sessionTemplate = sessionTemplate1, userType = PUBLIC, slotDateWeeks = 2)
   }
 
   @Test

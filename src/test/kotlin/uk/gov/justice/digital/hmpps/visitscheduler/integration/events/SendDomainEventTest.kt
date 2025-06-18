@@ -30,6 +30,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCancelVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -126,7 +127,7 @@ class SendDomainEventTest : IntegrationTestBase() {
     fun `send visit cancelled event`() {
       // Given
       val applicationEntity = createApplicationAndSave(applicationStatus = ACCEPTED)
-      val visitEntity = createVisitAndSave(BOOKED, applicationEntity)
+      val visitEntity = createVisitAndSave(BOOKED, VisitSubStatus.AUTO_APPROVED, applicationEntity)
       val reference = visitEntity.reference
       val authHeader = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
       val cancelVisitDto = CancelVisitDto(

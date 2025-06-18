@@ -6,8 +6,4 @@ enum class VisitStatus(
 ) {
   BOOKED("Booked"),
   CANCELLED("Cancelled"),
-  REQUESTED("Requested"),
-  REJECTED("Rejected"),
-  AUTO_REJECTED("Auto Rejected"),
-  WITHDRAWN("Withdrawn"),
 }

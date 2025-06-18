@@ -25,6 +25,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.VISIT_CANCELLED_ON_NOMIS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitNotificationEventHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callMigrateCancelVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.getMigrateCancelVisitUrl
@@ -87,7 +88,7 @@ class MigrateCancelVisitTest : MigrationIntegrationTestBase() {
     // Given
 
     val application = createApplicationAndSave(applicationStatus = ACCEPTED, sessionTemplate = sessionTemplateDefault)
-    val visit = createVisitAndSave(visitStatus = BOOKED, application, sessionTemplateDefault)
+    val visit = createVisitAndSave(visitStatus = BOOKED, visitSubStatus = VisitSubStatus.AUTO_APPROVED, application, sessionTemplateDefault)
 
     val cancelVisitDto = MigratedCancelVisitDto(
       OutcomeDto(
@@ -126,7 +127,7 @@ class MigrateCancelVisitTest : MigrationIntegrationTestBase() {
   fun `when visit cancelled that has notification events then notification events are deleted and an unflag event is sent`() {
     // Given
     val application = createApplicationAndSave(applicationStatus = ACCEPTED, sessionTemplate = sessionTemplateDefault)
-    val visit = createVisitAndSave(visitStatus = BOOKED, application, sessionTemplateDefault)
+    val visit = createVisitAndSave(visitStatus = BOOKED, visitSubStatus = VisitSubStatus.AUTO_APPROVED, application, sessionTemplateDefault)
     visitNotificationEventHelper.create(visit, NotificationEventType.NON_ASSOCIATION_EVENT)
     visitNotificationEventHelper.create(visit, NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
     visitNotificationEventHelper.create(visit, NotificationEventType.PRISONER_RELEASED_EVENT)
@@ -178,7 +179,7 @@ class MigrateCancelVisitTest : MigrationIntegrationTestBase() {
     // Given
     // past dated visit - for yesterday
     val application = createApplicationAndSave(applicationStatus = ACCEPTED, sessionTemplate = sessionTemplateDefault, slotDate = LocalDate.now().minusDays(1))
-    val visit = createVisitAndSave(visitStatus = BOOKED, application, sessionTemplateDefault)
+    val visit = createVisitAndSave(visitStatus = BOOKED, visitSubStatus = VisitSubStatus.AUTO_APPROVED, application, sessionTemplateDefault)
     visitNotificationEventHelper.create(visit, NotificationEventType.NON_ASSOCIATION_EVENT)
     visitNotificationEventHelper.create(visit, NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
     visitNotificationEventHelper.create(visit, NotificationEventType.PRISONER_RELEASED_EVENT)

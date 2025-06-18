@@ -27,6 +27,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonDateBlockedDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionSlotEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callAddPrisonExcludeDate
@@ -187,7 +188,7 @@ class PrisonExcludeDateNotificatonEventsTest : NotificationTestBase() {
 
     // existing visit for excludeDate in same prison
     val application = createApplicationAndSave(sessionTemplate = sessionTemplateXYZ, prisonCode = prisonXYZ.code, applicationStatus = ACCEPTED, slotDate = excludeDate)
-    val bookedVisit = createVisitAndSave(VisitStatus.BOOKED, application, sessionTemplateXYZ)
+    val bookedVisit = createVisitAndSave(VisitStatus.BOOKED, visitSubStatus = VisitSubStatus.AUTO_APPROVED, application, sessionTemplateXYZ)
 
     // When
     // call add exclude dates first

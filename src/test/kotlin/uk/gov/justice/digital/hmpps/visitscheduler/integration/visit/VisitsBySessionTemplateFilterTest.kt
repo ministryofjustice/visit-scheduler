@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OP
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
@@ -49,7 +50,7 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
     // visit 1 booked for session template reference - session-1
     visit1 = createApplicationAndVisit(slotDate = LocalDate.now(), prisonerId = "FF0000AA", sessionTemplate = sessionTemplateDefault, visitStatus = BOOKED, visitRestriction = OPEN)
     // visit 2 cancelled for session template reference - session-1
-    visit2 = createApplicationAndVisit(slotDate = LocalDate.now(), prisonerId = "FF0000AA", sessionTemplate = sessionTemplateDefault, visitStatus = CANCELLED, visitRestriction = OPEN)
+    visit2 = createApplicationAndVisit(slotDate = LocalDate.now(), prisonerId = "FF0000AA", sessionTemplate = sessionTemplateDefault, visitStatus = CANCELLED, visitSubStatus = VisitSubStatus.CANCELLED, visitRestriction = OPEN)
     // visit 3 booked for session template reference - session-2
     visit3 = createApplicationAndVisit(slotDate = LocalDate.now(), prisonerId = "FF0000AA", sessionTemplate = sessionTemplate2, visitStatus = BOOKED, visitRestriction = OPEN)
     // visit 4 booked for session template reference - session-1 but on next day
@@ -59,11 +60,11 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
     // session template reference is null and status is BOOKED
     visit6 = createApplicationAndVisit(prisonerId = "FF0000BB", visitStatus = BOOKED, slotDate = LocalDate.now().plusDays(1), prisonCode = "MDI")
     // session template reference is null and status is CANCELLED
-    visit7 = createApplicationAndVisit(prisonerId = "FF0000BB", visitStatus = CANCELLED, slotDate = LocalDate.now().plusDays(1), prisonCode = "MDI")
+    visit7 = createApplicationAndVisit(prisonerId = "FF0000BB", visitStatus = CANCELLED, visitSubStatus = VisitSubStatus.CANCELLED, slotDate = LocalDate.now().plusDays(1), prisonCode = "MDI")
 
     // session template reference is null and status is BOOKED but prison is different (DFT)
     createApplicationAndVisit(prisonerId = "FF0000BB", visitStatus = BOOKED, slotDate = LocalDate.now().plusDays(1), prisonCode = prisonDFT.code)
-    createApplicationAndVisit(prisonerId = "FF0000BB", visitStatus = CANCELLED, slotDate = LocalDate.now().plusDays(1), prisonCode = prisonDFT.code)
+    createApplicationAndVisit(prisonerId = "FF0000BB", visitStatus = CANCELLED, visitSubStatus = VisitSubStatus.CANCELLED, slotDate = LocalDate.now().plusDays(1), prisonCode = prisonDFT.code)
   }
 
   @Test

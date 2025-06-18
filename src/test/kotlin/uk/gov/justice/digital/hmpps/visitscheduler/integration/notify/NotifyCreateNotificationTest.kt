@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFY_CONTR
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.NotifyHistoryDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.ACCEPTED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.notify.NotifyNotificationType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.notify.NotifyStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.notify.NotifyCreateNotificationDto
@@ -36,7 +37,7 @@ class NotifyCreateNotificationTest : IntegrationTestBase() {
   fun `when notify create notification called and no other notification for notification id exists an entry is created`() {
     // Given
     val application = createApplicationAndSave(applicationStatus = ACCEPTED)
-    val visit = createVisitAndSave(VisitStatus.BOOKED, application)
+    val visit = createVisitAndSave(VisitStatus.BOOKED, VisitSubStatus.AUTO_APPROVED, application)
     val eventAudit = eventAuditEntityHelper.create(
       reference = visit.reference,
       text = null,
@@ -68,7 +69,7 @@ class NotifyCreateNotificationTest : IntegrationTestBase() {
   fun `when notify create notification called and notification already exists for notification id exists no new entry is created`() {
     // Given
     val application = createApplicationAndSave(applicationStatus = ACCEPTED)
-    val visit = createVisitAndSave(VisitStatus.BOOKED, application)
+    val visit = createVisitAndSave(VisitStatus.BOOKED, VisitSubStatus.AUTO_APPROVED, application)
     val eventAudit = eventAuditEntityHelper.create(
       reference = visit.reference,
       text = null,

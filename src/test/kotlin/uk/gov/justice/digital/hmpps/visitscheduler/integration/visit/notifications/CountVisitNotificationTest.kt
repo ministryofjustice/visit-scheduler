@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCountVisitNotification
 import java.time.LocalDate
 import java.time.LocalTime
@@ -90,6 +91,7 @@ class CountVisitNotificationTest : NotificationTestBase() {
       prisonerId = primaryPrisonerId,
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = CANCELLED,
+      visitSubStatus = VisitSubStatus.CANCELLED,
       prisonCode = sessionTemplateDefault.prison.code,
       sessionTemplate = sessionTemplateDefault,
     )
@@ -99,6 +101,7 @@ class CountVisitNotificationTest : NotificationTestBase() {
       prisonerId = secondaryPrisonerId,
       slotDate = LocalDate.now().plusDays(2),
       visitStatus = CANCELLED,
+      visitSubStatus = VisitSubStatus.CANCELLED,
       prisonCode = sessionTemplateDefault.prison.code,
       sessionTemplate = sessionTemplateDefault,
     )
@@ -108,6 +111,7 @@ class CountVisitNotificationTest : NotificationTestBase() {
       prisonerId = secondaryPrisonerId,
       slotDate = LocalDate.now().plusDays(2),
       visitStatus = CANCELLED,
+      visitSubStatus = VisitSubStatus.CANCELLED,
       prisonCode = sessionTemplateDefault.prison.code,
       sessionTemplate = sessionTemplateDefault,
     )

@@ -25,6 +25,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.ActionedBy
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
@@ -217,11 +218,13 @@ class VisitEntityHelper(
   fun createFromApplication(
     application: Application,
     visitStatus: VisitStatus = BOOKED,
+    visitSubStatus: VisitSubStatus = VisitSubStatus.AUTO_APPROVED,
     sessionTemplate: SessionTemplate,
     outcomeStatus: OutcomeStatus? = null,
   ): Visit {
     val visit = create(
       visitStatus = visitStatus,
+      visitSubStatus = visitSubStatus,
       sessionTemplate = sessionTemplate,
       prisonerId = application.prisonerId,
       slotDate = application.sessionSlot.slotDate,
@@ -241,10 +244,12 @@ class VisitEntityHelper(
   fun createFromApplication(
     application: Application,
     visitStatus: VisitStatus = BOOKED,
+    visitSubStatus: VisitSubStatus = VisitSubStatus.AUTO_APPROVED,
     outcomeStatus: OutcomeStatus? = null,
   ): Visit {
     val visit = create(
       visitStatus = visitStatus,
+      visitSubStatus = visitSubStatus,
       prisonerId = application.prisonerId,
       slotDate = application.sessionSlot.slotDate,
       visitStart = application.sessionSlot.slotStart.toLocalTime(),
@@ -265,6 +270,7 @@ class VisitEntityHelper(
   @Transactional
   fun create(
     visitStatus: VisitStatus = BOOKED,
+    visitSubStatus: VisitSubStatus = VisitSubStatus.AUTO_APPROVED,
     sessionTemplate: SessionTemplate,
     prisonerId: String = "testPrisonerId",
     prisonCode: String = sessionTemplate.prison.code,
@@ -285,6 +291,7 @@ class VisitEntityHelper(
 
     val notSaved = Visit(
       visitStatus = visitStatus,
+      visitSubStatus = visitSubStatus,
       prisonerId = prisonerId,
       prisonId = prison.id,
       prison = prison,
@@ -314,6 +321,7 @@ class VisitEntityHelper(
   @Transactional
   fun create(
     visitStatus: VisitStatus = BOOKED,
+    visitSubStatus: VisitSubStatus = VisitSubStatus.AUTO_APPROVED,
     prisonerId: String = "testPrisonerId",
     prisonCode: String,
     visitRoom: String,
@@ -333,6 +341,7 @@ class VisitEntityHelper(
 
     val notSaved = Visit(
       visitStatus = visitStatus,
+      visitSubStatus = visitSubStatus,
       prisonerId = prisonerId,
       prisonId = prison.id,
       prison = prison,

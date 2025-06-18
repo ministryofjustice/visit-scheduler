@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitAssertHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
@@ -53,7 +54,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
     visitEntityHelper.createNote(visit = visit, text = "A visit concern", type = VISITOR_CONCERN)
     visitEntityHelper.save(visit)
 
-    visitCancelled = createApplicationAndVisit(prisonerId = "FF0000CC", slotDate = startDate.plusDays(3), sessionTemplate = sessionTemplateDefault, visitStatus = CANCELLED)
+    visitCancelled = createApplicationAndVisit(prisonerId = "FF0000CC", slotDate = startDate.plusDays(3), sessionTemplate = sessionTemplateDefault, visitStatus = CANCELLED, visitSubStatus = VisitSubStatus.CANCELLED)
     visitEntityHelper.createNote(visit = visitCancelled, text = "A visit concern", type = VISITOR_CONCERN)
     visitCancelled.outcomeStatus = OutcomeStatus.CANCELLATION
 

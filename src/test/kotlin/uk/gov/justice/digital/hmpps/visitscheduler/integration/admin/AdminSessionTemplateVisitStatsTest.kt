@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.CL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.RequestSessionTemplateVisitStatsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateVisitCountsDto
@@ -70,8 +71,8 @@ class AdminSessionTemplateVisitStatsTest(
     visitEntityHelper.create(visitStatus = BOOKED, sessionTemplate = sessionTemplate1, visitRestriction = OPEN, slotDate = tomorrow)
     visitEntityHelper.create(visitStatus = BOOKED, sessionTemplate = sessionTemplate1, visitRestriction = CLOSED, slotDate = tomorrow)
 
-    visitEntityHelper.create(visitStatus = CANCELLED, outcomeStatus = OutcomeStatus.CANCELLATION, sessionTemplate = sessionTemplate1, visitRestriction = CLOSED, slotDate = tomorrow)
-    visitEntityHelper.create(visitStatus = CANCELLED, sessionTemplate = sessionTemplate1, visitRestriction = CLOSED, slotDate = tomorrow)
+    visitEntityHelper.create(visitStatus = CANCELLED, visitSubStatus = VisitSubStatus.CANCELLED, outcomeStatus = OutcomeStatus.CANCELLATION, sessionTemplate = sessionTemplate1, visitRestriction = CLOSED, slotDate = tomorrow)
+    visitEntityHelper.create(visitStatus = CANCELLED, visitSubStatus = VisitSubStatus.CANCELLED, sessionTemplate = sessionTemplate1, visitRestriction = CLOSED, slotDate = tomorrow)
 
     // applications are not counted
     applicationEntityHelper.create(sessionTemplate = sessionTemplate1, visitRestriction = CLOSED, slotDate = tomorrow, applicationStatus = IN_PROGRESS, reservedSlot = true)

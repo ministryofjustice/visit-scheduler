@@ -138,11 +138,6 @@ class VisitCountsByDateReportService(
             it,
           )
         }
-
-        else -> {
-          LOG.error("Unsupported visit status $visitStatus encountered")
-          emptyList()
-        }
       }
     }
 

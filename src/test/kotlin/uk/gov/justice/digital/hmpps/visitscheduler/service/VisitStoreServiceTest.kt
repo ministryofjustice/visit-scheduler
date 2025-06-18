@@ -24,6 +24,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
@@ -109,6 +110,7 @@ internal class VisitStoreServiceTest {
       visitRestriction = createVisitFromExternalSystemDto.visitRestriction,
       visitRoom = createVisitFromExternalSystemDto.visitRoom,
       visitStatus = VisitStatus.BOOKED,
+      visitSubStatus = VisitSubStatus.AUTO_APPROVED,
       userType = UserType.PRISONER,
     )
 
@@ -201,6 +203,7 @@ internal class VisitStoreServiceTest {
       visitRestriction = updateVisitFromExternalSystemDto.visitRestriction,
       visitRoom = updateVisitFromExternalSystemDto.visitRoom,
       visitStatus = VisitStatus.BOOKED,
+      visitSubStatus = VisitSubStatus.AUTO_APPROVED,
       userType = UserType.PRISONER,
     )
 
