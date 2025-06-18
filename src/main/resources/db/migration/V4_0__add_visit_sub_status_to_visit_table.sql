@@ -4,8 +4,9 @@
 -- Add sub_status column
 ALTER TABLE visit ADD visit_sub_status VARCHAR(50);
 
--- Back fill existing rows with 'Auto_Approved'
-UPDATE visit SET visit_sub_status = 'AUTO_APPROVED';
+-- Back fill existing rows with 'Auto_Approved' / 'Cancelled'
+UPDATE visit SET visit_sub_status = 'AUTO_APPROVED' WHERE visit_status = 'BOOKED';
+UPDATE visit SET visit_sub_status = 'CANCELLED' WHERE visit_status = 'CANCELLED';
 
 -- Set NOT NULL
 ALTER TABLE visit ALTER COLUMN visit_sub_status SET NOT NULL;
