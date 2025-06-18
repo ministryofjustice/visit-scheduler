@@ -70,7 +70,7 @@ class PrisonExcludeDateNotificatonEventsTest : NotificationTestBase() {
     createApplicationAndVisit(sessionTemplate = sessionTemplateMSI, visitStatus = VisitStatus.BOOKED, slotDate = excludeDate)
 
     // cancelled visit for excludeDate in same prison
-    createApplicationAndVisit(sessionTemplate = sessionTemplateXYZ, visitStatus = VisitStatus.CANCELLED, slotDate = excludeDate)
+    createApplicationAndVisit(sessionTemplate = sessionTemplateXYZ, visitStatus = VisitStatus.CANCELLED, visitSubStatus = VisitSubStatus.CANCELLED, slotDate = excludeDate)
     // existing visit not for excludeDate in same prison
     createApplicationAndVisit(sessionTemplate = sessionTemplateXYZ, visitStatus = VisitStatus.BOOKED, slotDate = excludeDate.plusDays(1))
 
