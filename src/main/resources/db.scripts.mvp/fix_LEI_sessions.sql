@@ -11,5 +11,4 @@ UPDATE session_slot set session_template_reference = 'nox.iws.dwv' where session
 
 UPDATE session_slot set session_template_reference = 'gox.fnx.vrl' where session_template_reference = 'nam.ugo.eas' and prison_id = (select id from prison where code = 'FMI');
 
-
 END;
