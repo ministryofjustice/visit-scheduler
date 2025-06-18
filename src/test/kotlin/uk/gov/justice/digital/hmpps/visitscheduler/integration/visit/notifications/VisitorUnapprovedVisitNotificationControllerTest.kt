@@ -85,6 +85,7 @@ class VisitorUnapprovedVisitNotificationControllerTest : NotificationTestBase() 
     val visit2 = createApplicationAndVisit(
       slotDate = LocalDate.now().plusDays(2),
       visitStatus = CANCELLED,
+      visitSubStatus = VisitSubStatus.CANCELLED,
       sessionTemplate = sessionTemplate,
       prisonerId = prisonerId,
     )
@@ -163,6 +164,7 @@ class VisitorUnapprovedVisitNotificationControllerTest : NotificationTestBase() 
     val visit2 = createApplicationAndVisit(
       slotDate = LocalDate.now().plusDays(2),
       visitStatus = CANCELLED,
+      visitSubStatus = VisitSubStatus.CANCELLED,
       sessionTemplate = sessionTemplate,
       prisonerId = prisonerId,
     )
