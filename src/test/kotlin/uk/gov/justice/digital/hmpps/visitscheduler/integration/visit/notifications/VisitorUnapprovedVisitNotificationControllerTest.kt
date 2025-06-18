@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonercontactregistry.PrisonerContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorApprovedUnapprovedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatVisitorUnapproved
@@ -84,6 +85,7 @@ class VisitorUnapprovedVisitNotificationControllerTest : NotificationTestBase() 
     val visit2 = createApplicationAndVisit(
       slotDate = LocalDate.now().plusDays(2),
       visitStatus = CANCELLED,
+      visitSubStatus = VisitSubStatus.CANCELLED,
       sessionTemplate = sessionTemplate,
       prisonerId = prisonerId,
     )
@@ -162,6 +164,7 @@ class VisitorUnapprovedVisitNotificationControllerTest : NotificationTestBase() 
     val visit2 = createApplicationAndVisit(
       slotDate = LocalDate.now().plusDays(2),
       visitStatus = CANCELLED,
+      visitSubStatus = VisitSubStatus.CANCELLED,
       sessionTemplate = sessionTemplate,
       prisonerId = prisonerId,
     )
@@ -247,6 +250,7 @@ class VisitorUnapprovedVisitNotificationControllerTest : NotificationTestBase() 
     val visit2 = createApplicationAndVisit(
       slotDate = LocalDate.now().plusDays(2),
       visitStatus = CANCELLED,
+      visitSubStatus = VisitSubStatus.CANCELLED,
       sessionTemplate = sessionTemplate,
       prisonerId = prisonerId,
     )
@@ -324,6 +328,7 @@ class VisitorUnapprovedVisitNotificationControllerTest : NotificationTestBase() 
     val visit2 = createApplicationAndVisit(
       slotDate = LocalDate.now().plusDays(2),
       visitStatus = CANCELLED,
+      visitSubStatus = VisitSubStatus.CANCELLED,
       sessionTemplate = sessionTemplate,
       prisonerId = prisonerId,
     )

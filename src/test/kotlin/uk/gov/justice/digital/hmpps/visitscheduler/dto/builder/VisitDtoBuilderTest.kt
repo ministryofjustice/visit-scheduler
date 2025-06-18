@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTimeSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.ApplicationEntityHelper
@@ -140,6 +141,7 @@ class VisitDtoBuilderTest {
 
   private fun create(
     visitStatus: VisitStatus = BOOKED,
+    visitSubStatus: VisitSubStatus = VisitSubStatus.AUTO_APPROVED,
     prisonerId: String = "FF0000AA",
     visitRoom: String = "A1",
     slotDate: LocalDate,
@@ -159,6 +161,7 @@ class VisitDtoBuilderTest {
 
     val visit = Visit(
       visitStatus = visitStatus,
+      visitSubStatus = visitSubStatus,
       prisonerId = prisonerId,
       prisonId = prison.id,
       prison = prison,

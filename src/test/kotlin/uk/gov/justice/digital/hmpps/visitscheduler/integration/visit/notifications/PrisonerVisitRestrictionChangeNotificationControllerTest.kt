@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerRestrictionChangeNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatPrisonerRestrictionHasChanged
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
@@ -70,6 +71,7 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().minusDays(1),
       visitStatus = CANCELLED,
+      visitSubStatus = VisitSubStatus.CANCELLED,
       sessionTemplate = sessionTemplate1,
     )
 
@@ -85,6 +87,7 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = CANCELLED,
+      visitSubStatus = VisitSubStatus.CANCELLED,
       sessionTemplate = sessionTemplate1,
     )
 
@@ -149,6 +152,7 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = CANCELLED,
+      visitSubStatus = VisitSubStatus.CANCELLED,
       sessionTemplate = sessionTemplate1,
     )
 

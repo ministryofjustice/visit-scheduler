@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.base.AbstractIdEntity
@@ -60,6 +61,10 @@ class Visit(
   @Column(nullable = false)
   @Enumerated(EnumType.STRING)
   var visitStatus: VisitStatus,
+
+  @Column(nullable = false)
+  @Enumerated(EnumType.STRING)
+  var visitSubStatus: VisitSubStatus,
 
   @Column(nullable = false)
   @Enumerated(EnumType.STRING)

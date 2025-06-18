@@ -24,6 +24,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatPrisonerHadBeenReceived
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
@@ -100,6 +101,7 @@ class PrisonerReceivedVisitNotificationControllerTest : NotificationTestBase() {
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().minusDays(1),
       visitStatus = CANCELLED,
+      visitSubStatus = VisitSubStatus.CANCELLED,
       sessionTemplate = sessionTemplate1,
     )
 

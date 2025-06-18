@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFY_CONTR
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.NotifyHistoryDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.ACCEPTED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.notify.NotifyNotificationType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.notify.NotifyNotificationType.EMAIL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.notify.NotifyNotificationType.SMS
@@ -47,7 +48,7 @@ class NotifyCallbackNotificationTest : IntegrationTestBase() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = visitSchedulerRoles)
 
     val application = createApplicationAndSave(applicationStatus = ACCEPTED)
-    visit = createVisitAndSave(VisitStatus.BOOKED, application)
+    visit = createVisitAndSave(VisitStatus.BOOKED, VisitSubStatus.AUTO_APPROVED, application)
     eventAudit = eventAuditEntityHelper.create(
       reference = visit.reference,
       text = null,

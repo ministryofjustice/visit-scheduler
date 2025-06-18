@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CONTROLLER_S
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
@@ -32,9 +33,9 @@ class FutureVisitsSearchTest : IntegrationTestBase() {
     sessionTemplateFromNowTimes = sessionTemplateEntityHelper.create(validFromDate = LocalDate.now(), startTime = LocalTime.now().plusHours(1))
 
     beforeNowVisit = createApplicationAndVisit(prisonerId = "FF0000AA", sessionTemplate = sessionTemplateBeforeNowTimes, slotDate = sessionTemplateBeforeNowTimes.validFromDate, visitStatus = BOOKED, visitRestriction = VisitRestriction.OPEN)
-    vist1 = createApplicationAndVisit(prisonerId = "FF0000AA", sessionTemplate = sessionTemplateFromNowTimes, visitStatus = BOOKED, visitRestriction = VisitRestriction.OPEN)
-    vist2 = createApplicationAndVisit(prisonerId = "FF0000AA", sessionTemplate = sessionTemplateFromNowTimes, visitStatus = CANCELLED, visitRestriction = VisitRestriction.OPEN)
-    vist3 = createApplicationAndVisit(prisonerId = "GG0000BB", sessionTemplate = sessionTemplateFromNowTimes, visitStatus = BOOKED, visitRestriction = VisitRestriction.OPEN)
+    vist1 = createApplicationAndVisit(prisonerId = "FF0000AA", sessionTemplate = sessionTemplateFromNowTimes, visitStatus = BOOKED, VisitSubStatus.AUTO_APPROVED, visitRestriction = VisitRestriction.OPEN)
+    vist2 = createApplicationAndVisit(prisonerId = "FF0000AA", sessionTemplate = sessionTemplateFromNowTimes, visitStatus = CANCELLED, VisitSubStatus.CANCELLED, visitRestriction = VisitRestriction.OPEN)
+    vist3 = createApplicationAndVisit(prisonerId = "GG0000BB", sessionTemplate = sessionTemplateFromNowTimes, visitStatus = BOOKED, VisitSubStatus.AUTO_APPROVED, visitRestriction = VisitRestriction.OPEN)
   }
 
   @Test

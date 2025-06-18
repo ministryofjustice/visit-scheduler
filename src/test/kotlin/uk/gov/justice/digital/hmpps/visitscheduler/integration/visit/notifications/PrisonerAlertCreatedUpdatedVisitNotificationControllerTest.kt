@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertCreatedUpdatedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatPrisonerAlertHasBeenCreatedOrUpdated
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
@@ -78,6 +79,7 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().minusDays(1),
       visitStatus = CANCELLED,
+      visitSubStatus = VisitSubStatus.CANCELLED,
       sessionTemplate = sessionTemplate1,
     )
 
@@ -93,6 +95,7 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = CANCELLED,
+      visitSubStatus = VisitSubStatus.CANCELLED,
       sessionTemplate = sessionTemplate1,
     )
 
@@ -168,6 +171,7 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = CANCELLED,
+      visitSubStatus = VisitSubStatus.CANCELLED,
       sessionTemplate = sessionTemplate1,
     )
 
@@ -232,6 +236,7 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = CANCELLED,
+      visitSubStatus = VisitSubStatus.CANCELLED,
       sessionTemplate = sessionTemplate1,
     )
 

@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitNotificationEventAttributeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatNonAssociationHasChanged
@@ -831,6 +832,7 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
       prisonerId = primaryPrisonerId,
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = CANCELLED,
+      visitSubStatus = VisitSubStatus.CANCELLED,
       sessionTemplate = sessionTemplate1,
     )
 

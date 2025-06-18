@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_CANCELLED_PUBL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitAssertHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
@@ -43,19 +44,19 @@ class FindCancelledPublicVisitsTest : IntegrationTestBase() {
   internal fun createVisits() {
     otherSessionTemplate = sessionTemplateEntityHelper.create(prisonCode = "AWE")
 
-    visitCancelledLeastRecent = createVisit(prisonerId = "least recent", actionedByValue = "aTestRef", visitStatus = CANCELLED, sessionTemplate = sessionTemplateDefault, PUBLIC, slotDateWeeks = 4)
+    visitCancelledLeastRecent = createVisit(prisonerId = "least recent", actionedByValue = "aTestRef", visitStatus = CANCELLED, visitSubStatus = VisitSubStatus.CANCELLED, sessionTemplate = sessionTemplateDefault, PUBLIC, slotDateWeeks = 4)
 
-    visitCancelledInDifferentPrison = createVisit(prisonerId = "diff prison", actionedByValue = "aTestRef", visitStatus = CANCELLED, sessionTemplate = otherSessionTemplate, PUBLIC, slotDateWeeks = 3)
+    visitCancelledInDifferentPrison = createVisit(prisonerId = "diff prison", actionedByValue = "aTestRef", visitStatus = CANCELLED, visitSubStatus = VisitSubStatus.CANCELLED, sessionTemplate = otherSessionTemplate, PUBLIC, slotDateWeeks = 3)
 
-    visitWithOtherBooker = createVisit(prisonerId = "diff prison", actionedByValue = "aOtherTestRef", visitStatus = CANCELLED, sessionTemplate = sessionTemplateDefault, PUBLIC, slotDateWeeks = 2)
+    visitWithOtherBooker = createVisit(prisonerId = "diff prison", actionedByValue = "aOtherTestRef", visitStatus = CANCELLED, visitSubStatus = VisitSubStatus.CANCELLED, sessionTemplate = sessionTemplateDefault, PUBLIC, slotDateWeeks = 2)
 
-    visitCancelledInPast = createVisit(prisonerId = "in past", actionedByValue = "aTestRef", visitStatus = CANCELLED, sessionTemplate = sessionTemplateDefault, PUBLIC, slotDateWeeks = -1)
+    visitCancelledInPast = createVisit(prisonerId = "in past", actionedByValue = "aTestRef", visitStatus = CANCELLED, visitSubStatus = VisitSubStatus.CANCELLED, sessionTemplate = sessionTemplateDefault, PUBLIC, slotDateWeeks = -1)
 
-    createVisit(actionedByValue = "aTestRef", visitStatus = BOOKED, sessionTemplate = sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = 1)
+    createVisit(actionedByValue = "aTestRef", visitStatus = BOOKED, visitSubStatus = VisitSubStatus.AUTO_APPROVED, sessionTemplate = sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = 1)
 
-    createVisit(actionedByValue = "aTestRef", visitStatus = BOOKED, sessionTemplate = sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = -1)
+    createVisit(actionedByValue = "aTestRef", visitStatus = BOOKED, visitSubStatus = VisitSubStatus.AUTO_APPROVED, sessionTemplate = sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = -1)
 
-    visitCancelledMostRecent = createVisit(prisonerId = "most recent", actionedByValue = "aTestRef", CANCELLED, sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = 1)
+    visitCancelledMostRecent = createVisit(prisonerId = "most recent", actionedByValue = "aTestRef", CANCELLED, visitSubStatus = VisitSubStatus.CANCELLED, sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = 1)
   }
 
   @Test
