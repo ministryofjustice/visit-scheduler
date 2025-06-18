@@ -41,6 +41,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.notify.NotifyCallbackNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.notify.NotifyCreateNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
@@ -273,25 +274,27 @@ abstract class IntegrationTestBase {
     prisonerId: String? = "testPrisonerId",
     sessionTemplate: SessionTemplate,
     visitStatus: VisitStatus? = VisitStatus.BOOKED,
+    visitSubStatus: VisitSubStatus? = VisitSubStatus.AUTO_APPROVED,
     slotDate: LocalDate? = null,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
     visitContact: ContactDto = ContactDto(name = "Jane Doe", telephone = "01234 098765", email = "email@example.com"),
     userType: UserType = STAFF,
   ): Visit {
     val application = createApplicationAndSave(prisonerId = prisonerId, sessionTemplate, sessionTemplate.prison.code, slotDate, applicationStatus = ACCEPTED, visitRestriction = visitRestriction, visitContact = visitContact, userType = userType)
-    return createVisitAndSave(visitStatus = visitStatus!!, applicationEntity = application, sessionTemplateLocal = sessionTemplate)
+    return createVisitAndSave(visitStatus = visitStatus!!, visitSubStatus = visitSubStatus!!, applicationEntity = application, sessionTemplateLocal = sessionTemplate)
   }
 
   fun createApplicationAndVisit(
     prisonerId: String? = "testPrisonerId",
     visitStatus: VisitStatus? = VisitStatus.BOOKED,
+    visitSubStatus: VisitSubStatus? = VisitSubStatus.AUTO_APPROVED,
     slotDate: LocalDate,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
     prisonCode: String? = null,
     userType: UserType = STAFF,
   ): Visit {
     val application = createApplicationAndSave(prisonerId = prisonerId, slotDate = slotDate, applicationStatus = ACCEPTED, visitRestriction = visitRestriction, prisonCode = prisonCode, userType = userType)
-    return createVisitAndSave(visitStatus = visitStatus!!, applicationEntity = application)
+    return createVisitAndSave(visitStatus = visitStatus!!, visitSubStatus = visitSubStatus!!, applicationEntity = application)
   }
 
   fun createApplicationAndSave(
@@ -337,10 +340,10 @@ abstract class IntegrationTestBase {
     return applicationEntityHelper.save(applicationEntity)
   }
 
-  fun createVisitAndSave(visitStatus: VisitStatus, applicationEntity: Application, sessionTemplateLocal: SessionTemplate? = null): Visit = visitEntityHelper.createFromApplication(visitStatus = visitStatus, sessionTemplate = sessionTemplateLocal ?: sessionTemplateDefault, application = applicationEntity)
+  fun createVisitAndSave(visitStatus: VisitStatus, visitSubStatus: VisitSubStatus, applicationEntity: Application, sessionTemplateLocal: SessionTemplate? = null): Visit = visitEntityHelper.createFromApplication(visitStatus = visitStatus, visitSubStatus = visitSubStatus, sessionTemplate = sessionTemplateLocal ?: sessionTemplateDefault, application = applicationEntity)
 
   // creates a visit with a null session template reference
-  fun createVisitAndSave(visitStatus: VisitStatus, applicationEntity: Application): Visit = visitEntityHelper.createFromApplication(visitStatus = visitStatus, application = applicationEntity)
+  fun createVisitAndSave(visitStatus: VisitStatus, visitSubStatus: VisitSubStatus, applicationEntity: Application): Visit = visitEntityHelper.createFromApplication(visitStatus = visitStatus, visitSubStatus = visitSubStatus, application = applicationEntity)
 
   fun parseVisitsPageResponse(responseSpec: ResponseSpec): List<VisitDto> {
     class Page {
@@ -358,6 +361,7 @@ abstract class IntegrationTestBase {
     prisonerId: String? = "testPrisonerId",
     actionedByValue: String,
     visitStatus: VisitStatus,
+    visitSubStatus: VisitSubStatus,
     sessionTemplate: SessionTemplate,
     userType: UserType,
     slotDateWeeks: Long,
@@ -371,6 +375,7 @@ abstract class IntegrationTestBase {
       slotDate = LocalDate.now().plusWeeks(slotDateWeeks),
       sessionTemplate = sessionTemplate,
       visitStatus = visitStatus,
+      visitSubStatus = visitSubStatus,
       userType = userType,
     )
 

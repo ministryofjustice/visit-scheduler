@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VSIPReport
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting.SessionVisitCountsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
@@ -92,9 +93,9 @@ class ReportVisitCountsTaskTest : IntegrationTestBase() {
     // visit 5 against sessionTemplate6Prison1, OPEN and RESERVED - not included in counts
     applicationEntityHelper.create(prisonCode = prison1.code, sessionTemplate = sessionTemplate6Prison1, slotDate = reportDate, applicationStatus = ACCEPTED)
     // visit 6 against sessionTemplate6Prison1, OPEN and CANCELLED - included in openCancelledCount
-    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.CANCELLED, sessionTemplate = sessionTemplate6Prison1, slotDate = reportDate, outcomeStatus = OutcomeStatus.ADMINISTRATIVE_CANCELLATION)
+    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.CANCELLED, visitSubStatus = VisitSubStatus.CANCELLED, sessionTemplate = sessionTemplate6Prison1, slotDate = reportDate, outcomeStatus = OutcomeStatus.ADMINISTRATIVE_CANCELLATION)
     // visit 7 against sessionTemplate6Prison1, OPEN and CANCELLED but SUPERSEDED_CANCELLATION - included in closedBookedCount as outcomeStatus does not matter anymore
-    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.CANCELLED, sessionTemplate = sessionTemplate6Prison1, slotDate = reportDate, outcomeStatus = OutcomeStatus.SUPERSEDED_CANCELLATION)
+    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.CANCELLED, visitSubStatus = VisitSubStatus.CANCELLED, sessionTemplate = sessionTemplate6Prison1, slotDate = reportDate, outcomeStatus = OutcomeStatus.SUPERSEDED_CANCELLATION)
 
     // visit 1 against sessionTemplate7Prison1, OPEN and BOOKED
     visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplate7Prison1, slotDate = reportDate)

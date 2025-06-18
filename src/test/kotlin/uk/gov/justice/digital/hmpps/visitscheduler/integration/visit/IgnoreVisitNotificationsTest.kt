@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitNotificationEventHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callIgnoreVisitNotifications
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.getIgnoreVisitNotificationsUrl
@@ -103,7 +104,7 @@ class IgnoreVisitNotificationsTest : IntegrationTestBase() {
   @Test
   fun `when ignore visit notifications raised for cancelled visit then NOT_FOUND status is returned`() {
     // Given
-    val visit = visitEntityHelper.create(visitStatus = CANCELLED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111", "email@example.com"))
+    val visit = visitEntityHelper.create(visitStatus = CANCELLED, VisitSubStatus.CANCELLED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111", "email@example.com"))
     val reference = visit.reference
 
     val ignoreVisitNotification = IgnoreVisitNotificationsDto(

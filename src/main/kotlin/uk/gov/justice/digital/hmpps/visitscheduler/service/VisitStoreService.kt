@@ -18,6 +18,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
@@ -103,6 +104,7 @@ class VisitStoreService(
       it.visitRestriction = application.restriction
       it.visitRoom = visitRoom
       it.visitStatus = BOOKED
+      it.visitSubStatus = VisitSubStatus.AUTO_APPROVED // TODO [Request a visit feature]: Allow 'Requested' visits.
       it
     } ?: run {
       // Create new booking
@@ -116,6 +118,7 @@ class VisitStoreService(
         visitRestriction = application.restriction,
         visitRoom = visitRoom,
         visitStatus = BOOKED,
+        visitSubStatus = VisitSubStatus.AUTO_APPROVED, // TODO [Request a visit feature]: Allow 'Requested' visits.
         userType = application.userType,
       )
     }
@@ -197,6 +200,7 @@ class VisitStoreService(
     val cancelOutcome = cancelVisitDto.cancelOutcome
 
     visitEntity.visitStatus = CANCELLED
+    visitEntity.visitSubStatus = VisitSubStatus.CANCELLED // TODO [Request a visit feature]: Allow 'Requested' visits to have custom cancel statuses.
     visitEntity.outcomeStatus = cancelOutcome.outcomeStatus
 
     cancelOutcome.text?.let {
@@ -258,6 +262,7 @@ class VisitStoreService(
         visitRestriction = createVisitFromExternalSystemDto.visitRestriction,
         visitRoom = createVisitFromExternalSystemDto.visitRoom,
         visitStatus = BOOKED,
+        visitSubStatus = VisitSubStatus.AUTO_APPROVED,
         userType = UserType.PRISONER,
       ),
     )

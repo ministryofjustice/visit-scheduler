@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionDateRangeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
@@ -528,6 +529,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
       visitStart = LocalTime.of(10, 0),
       visitEnd = LocalTime.of(11, 0),
       visitStatus = VisitStatus.CANCELLED,
+      visitSubStatus = VisitSubStatus.CANCELLED,
     )
 
     // When

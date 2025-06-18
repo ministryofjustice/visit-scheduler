@@ -29,6 +29,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.CL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.UNKNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OtherPrisonerDetails
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels
@@ -334,6 +335,7 @@ class SessionServiceTest {
         prisonId = prison.id,
         prison = prison,
         visitStatus = BOOKED,
+        visitSubStatus = VisitSubStatus.AUTO_APPROVED,
         visitRestriction = OPEN,
         visitRoom = "1",
         userType = STAFF,
@@ -347,6 +349,7 @@ class SessionServiceTest {
         prisonId = prison.id,
         prison = prison,
         visitStatus = BOOKED,
+        visitSubStatus = VisitSubStatus.AUTO_APPROVED,
         visitRestriction = OPEN,
         visitRoom = "1",
         userType = STAFF,
@@ -360,6 +363,7 @@ class SessionServiceTest {
         prisonId = prison.id,
         prison = prison,
         visitStatus = BOOKED,
+        visitSubStatus = VisitSubStatus.AUTO_APPROVED,
         visitRestriction = CLOSED,
         visitRoom = "1",
         userType = STAFF,
@@ -406,6 +410,7 @@ class SessionServiceTest {
         prisonId = prison.id,
         prison = prison,
         visitStatus = BOOKED,
+        visitSubStatus = VisitSubStatus.AUTO_APPROVED,
         visitRestriction = UNKNOWN,
         visitRoom = "1",
         userType = STAFF,
