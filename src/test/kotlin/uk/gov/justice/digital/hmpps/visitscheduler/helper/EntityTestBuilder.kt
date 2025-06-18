@@ -261,8 +261,11 @@ fun createUpdateSessionTemplateDto(
 fun createUpdateSessionTemplateDto(
   sessionTemplateDto: SessionTemplateDto,
   sessionTimeSlot: SessionTimeSlotDto? = null,
+  includeLocationGroupType: Boolean? = null,
   locationGroupReferences: List<String>? = null,
+  includeCategoryGroupType: Boolean? = null,
   categoryGroupReferences: List<String>? = null,
+  includeIncentiveGroupType: Boolean? = null,
   incentiveLevelReferences: List<String>? = null,
 ): UpdateSessionTemplateDto = UpdateSessionTemplateDto(
   name = sessionTemplateDto.name,
@@ -354,8 +357,11 @@ fun getSessionDetailsDto(
   sessionCapacity = createSessionTemplateDto.sessionCapacity,
   dayOfWeek = createSessionTemplateDto.dayOfWeek,
   weeklyFrequency = createSessionTemplateDto.weeklyFrequency,
+  includeLocationGroupType = createSessionTemplateDto.includeLocationGroupType,
   permittedLocationGroups = permittedLocationGroups ?: emptyList(),
+  includeCategoryGroupType = createSessionTemplateDto.includeCategoryGroupType,
   prisonerCategoryGroups = prisonerCategoryGroups ?: emptyList(),
+  includeIncentiveGroupType = createSessionTemplateDto.includeIncentiveGroupType,
   prisonerIncentiveLevelGroups = prisonerIncentiveLevelGroups ?: emptyList(),
 )
 

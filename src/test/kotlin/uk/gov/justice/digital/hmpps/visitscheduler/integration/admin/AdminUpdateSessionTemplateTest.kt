@@ -1210,6 +1210,274 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `when session template updated with same excluded location list as existing then session template is updated`() {
+    // Given
+    val sessionTemplateWithLocations = sessionTemplateEntityHelper.create(
+      prisonCode = prison.code,
+      isActive = true,
+      permittedLocationGroups = mutableListOf(level4A123Locations),
+      includeLocationGroupType = false,
+    )
+
+    // existing locations are being removed
+    val dto = createUpdateSessionTemplateDto(
+      SessionTemplateDto(sessionTemplateWithLocations),
+      includeLocationGroupType = false,
+      locationGroupReferences = listOf(level4A123Locations.reference),
+    )
+
+    // future dated BOOKED visit exists
+    visitEntityHelper.create(
+      sessionTemplate = sessionTemplateWithLocations,
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithLocations.startTime,
+      visitEnd = sessionTemplateWithLocations.endTime,
+      visitStatus = VisitStatus.BOOKED,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+  }
+
+  @Test
+  fun `when session template updated to remove all excluded locations then session template is updated`() {
+    // Given
+    val sessionTemplateWithLocations = sessionTemplateEntityHelper.create(
+      prisonCode = prison.code,
+      isActive = true,
+      includeLocationGroupType = false,
+      permittedLocationGroups = mutableListOf(level1ALocations),
+    )
+
+    // existing locations are being removed
+    val dto = createUpdateSessionTemplateDto(
+      SessionTemplateDto(sessionTemplateWithLocations),
+      includeLocationGroupType = false,
+      locationGroupReferences = emptyList(),
+    )
+
+    // future dated BOOKED visit exists
+    visitEntityHelper.create(
+      sessionTemplate = sessionTemplateWithLocations,
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithLocations.startTime,
+      visitEnd = sessionTemplateWithLocations.endTime,
+      visitStatus = VisitStatus.BOOKED,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+  }
+
+  @Test
+  fun `when session template updated to exclude a location when no excluded locations exist on the session template then session template is not updated`() {
+    // Given
+    val sessionTemplateWithLocations = sessionTemplateEntityHelper.create(
+      prisonCode = prison.code,
+      isActive = true,
+      permittedLocationGroups = mutableListOf(),
+      includeLocationGroupType = false,
+    )
+
+    // level4A123Locations are being excluded now
+    val dto = createUpdateSessionTemplateDto(
+      SessionTemplateDto(sessionTemplateWithLocations),
+      includeLocationGroupType = false,
+      locationGroupReferences = listOf(level4A123Locations.reference),
+    )
+
+    // future dated BOOKED visit exists
+    visitEntityHelper.create(
+      sessionTemplate = sessionTemplateWithLocations,
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithLocations.startTime,
+      visitEnd = sessionTemplateWithLocations.endTime,
+      visitStatus = VisitStatus.BOOKED,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update locations to the new location list as all existing locations in session template are not catered for."))
+  }
+
+  @Test
+  fun `when session template updated to exclude a higher location than existing excluded location session template is not updated`() {
+    // Given
+    val sessionTemplateWithLocations = sessionTemplateEntityHelper.create(
+      prisonCode = prison.code,
+      isActive = true,
+      includeLocationGroupType = false,
+      permittedLocationGroups = mutableListOf(level2A1Locations),
+    )
+
+    // level2A2Locations locations are also being excluded
+    val dto = createUpdateSessionTemplateDto(
+      SessionTemplateDto(sessionTemplateWithLocations),
+      includeLocationGroupType = false,
+      locationGroupReferences = listOf(level2A1Locations.reference, level2A2Locations.reference),
+    )
+
+    // future dated BOOKED visit exists
+    visitEntityHelper.create(
+      sessionTemplate = sessionTemplateWithLocations,
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithLocations.startTime,
+      visitEnd = sessionTemplateWithLocations.endTime,
+      visitStatus = VisitStatus.BOOKED,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update locations to the new location list as all existing locations in session template are not catered for."))
+  }
+
+  @Test
+  fun `when session template updated to exclude more locations than existing excluded locations session template is not updated`() {
+    // Given
+    val sessionTemplateWithLocations = sessionTemplateEntityHelper.create(
+      prisonCode = prison.code,
+      isActive = true,
+      includeLocationGroupType = false,
+      permittedLocationGroups = mutableListOf(level3A12Locations, level4A123Locations),
+    )
+
+    // level1ALocations also being excluded
+    val dto = createUpdateSessionTemplateDto(
+      SessionTemplateDto(sessionTemplateWithLocations),
+      includeLocationGroupType = false,
+      locationGroupReferences = listOf(level1ALocations.reference, level4A123Locations.reference, level3A12Locations.reference),
+    )
+
+    // future dated BOOKED visit exists
+    visitEntityHelper.create(
+      sessionTemplate = sessionTemplateWithLocations,
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithLocations.startTime,
+      visitEnd = sessionTemplateWithLocations.endTime,
+      visitStatus = VisitStatus.BOOKED,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update locations to the new location list as all existing locations in session template are not catered for."))
+  }
+
+  @Test
+  fun `when session template updated to remove an excluded location from existing excluded locations session template is updated`() {
+    // Given
+    val sessionTemplateWithLocations = sessionTemplateEntityHelper.create(
+      prisonCode = prison.code,
+      isActive = true,
+      includeLocationGroupType = false,
+      permittedLocationGroups = mutableListOf(level3A12Locations, level4A123Locations),
+    )
+
+    // level3A12Locations is no longer being excluded
+    val dto = createUpdateSessionTemplateDto(
+      SessionTemplateDto(sessionTemplateWithLocations),
+      includeLocationGroupType = false,
+      locationGroupReferences = listOf(level4A123Locations.reference),
+    )
+
+    // future dated BOOKED visit exists
+    visitEntityHelper.create(
+      sessionTemplate = sessionTemplateWithLocations,
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithLocations.startTime,
+      visitEnd = sessionTemplateWithLocations.endTime,
+      visitStatus = VisitStatus.BOOKED,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+  }
+
+  @Test
+  fun `when session template updated with lower location than existing excluded locations session template is updated`() {
+    // Given
+    val sessionTemplateWithLocations = sessionTemplateEntityHelper.create(
+      prisonCode = prison.code,
+      isActive = true,
+      includeLocationGroupType = false,
+      permittedLocationGroups = mutableListOf(level1ALocations),
+    )
+
+    // existing locations are being replaced with lower matches - validation should fail
+    val dto = createUpdateSessionTemplateDto(
+      SessionTemplateDto(sessionTemplateWithLocations),
+      includeLocationGroupType = false,
+      locationGroupReferences = listOf(level2A1Locations.reference),
+    )
+
+    // future dated BOOKED visit exists
+    visitEntityHelper.create(
+      sessionTemplate = sessionTemplateWithLocations,
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithLocations.startTime,
+      visitEnd = sessionTemplateWithLocations.endTime,
+      visitStatus = VisitStatus.BOOKED,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+  }
+
+  @Test
+  fun `when session template updated is missing an excluded location in existing excluded location list then session template update fails validation`() {
+    // Given
+    val sessionTemplateWithLocations = sessionTemplateEntityHelper.create(
+      prisonCode = prison.code,
+      isActive = true,
+      permittedLocationGroups = mutableListOf(level2A1Locations),
+    )
+
+    // existing locations are being replaced with lower matches - validation should fail
+    val dto = createUpdateSessionTemplateDto(
+      SessionTemplateDto(sessionTemplateWithLocations),
+      locationGroupReferences = mutableListOf(level2A1Locations.reference, level3A12Locations.reference, level4A123Locations.reference, level1BLocations.reference),
+    )
+
+    // future dated BOOKED visit exists
+    visitEntityHelper.create(
+      sessionTemplate = sessionTemplateWithLocations,
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithLocations.startTime,
+      visitEnd = sessionTemplateWithLocations.endTime,
+      visitStatus = VisitStatus.BOOKED,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+  }
+
+  @Test
   fun `when session template updated with 0 categories and no categories exist session template is updated`() {
     // Given
     val sessionTemplateWithCategories = sessionTemplateEntityHelper.create(prisonCode = prison.code, isActive = true, permittedCategories = mutableListOf())
@@ -1344,6 +1612,206 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     responseSpec.expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update categories to the new category list as all existing prisoner categories in session template are not catered for."))
+  }
+
+  @Test
+  fun `when session template updated with 0 categories and no excluded categories exist session template is updated`() {
+    // Given
+    val sessionTemplateWithCategories = sessionTemplateEntityHelper.create(
+      prisonCode = prison.code,
+      isActive = true,
+      includeCategoryGroupType = false,
+      permittedCategories = mutableListOf(),
+    )
+    val dto = createUpdateSessionTemplateDto(
+      SessionTemplateDto(sessionTemplateWithCategories),
+      includeCategoryGroupType = false,
+      categoryGroupReferences = emptyList(),
+    )
+
+    // future dated BOOKED visit exists
+    visitEntityHelper.create(
+      sessionTemplate = sessionTemplateWithCategories,
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithCategories.startTime,
+      visitEnd = sessionTemplateWithCategories.endTime,
+      visitStatus = VisitStatus.BOOKED,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+  }
+
+  @Test
+  fun `when existing excluded categories removed session template is updated`() {
+    // Given
+    val sessionTemplateWithCategories = sessionTemplateEntityHelper.create(
+      prisonCode = prison.code,
+      isActive = true,
+      includeCategoryGroupType = false,
+      permittedCategories = mutableListOf(categoryAs),
+    )
+
+    // existing categories are being removed
+    val dto = createUpdateSessionTemplateDto(
+      SessionTemplateDto(sessionTemplateWithCategories),
+      includeCategoryGroupType = false,
+      categoryGroupReferences = emptyList(),
+    )
+
+    // future dated BOOKED visit exists
+    visitEntityHelper.create(
+      sessionTemplate = sessionTemplateWithCategories,
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithCategories.startTime,
+      visitEnd = sessionTemplateWithCategories.endTime,
+      visitStatus = VisitStatus.BOOKED,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+  }
+
+  @Test
+  fun `when session template updated with same excluded category as existing excluded category session template is updated`() {
+    // Given
+    val sessionTemplateWithCategories = sessionTemplateEntityHelper.create(
+      prisonCode = prison.code,
+      isActive = true,
+      includeCategoryGroupType = false,
+      permittedCategories = mutableListOf(categoryAs),
+    )
+
+    // existing categories are being removed
+    val dto = createUpdateSessionTemplateDto(
+      SessionTemplateDto(sessionTemplateWithCategories),
+      includeCategoryGroupType = false,
+      categoryGroupReferences = listOf(categoryAs.reference),
+    )
+
+    // future dated BOOKED visit exists
+    visitEntityHelper.create(
+      sessionTemplate = sessionTemplateWithCategories,
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithCategories.startTime,
+      visitEnd = sessionTemplateWithCategories.endTime,
+      visitStatus = VisitStatus.BOOKED,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+  }
+
+  @Test
+  fun `when session template updated with new excluded categories then session template is not updated`() {
+    // Given
+    val sessionTemplateWithCategories = sessionTemplateEntityHelper.create(
+      prisonCode = prison.code,
+      isActive = true,
+      permittedCategories = mutableListOf(categoryAs),
+      includeCategoryGroupType = false,
+    )
+
+    // existing B C and D category not included - validation should fail
+    val dto = createUpdateSessionTemplateDto(
+      SessionTemplateDto(sessionTemplateWithCategories),
+      categoryGroupReferences = listOf(categoryAs.reference, categoryBCandD.reference),
+      includeCategoryGroupType = false,
+    )
+
+    // future dated BOOKED visit exists
+    visitEntityHelper.create(
+      sessionTemplate = sessionTemplateWithCategories,
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithCategories.startTime,
+      visitEnd = sessionTemplateWithCategories.endTime,
+      visitStatus = VisitStatus.BOOKED,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update categories to the new category list as all existing prisoner categories in session template are not catered for."))
+  }
+
+  @Test
+  fun `when session template updated with new excluded categories when there were none then session template is not updated`() {
+    // Given
+    val sessionTemplateWithCategories = sessionTemplateEntityHelper.create(
+      prisonCode = prison.code,
+      isActive = true,
+      permittedCategories = mutableListOf(),
+      includeCategoryGroupType = false,
+    )
+
+    // existing B C and D category not included - validation should fail
+    val dto = createUpdateSessionTemplateDto(
+      SessionTemplateDto(sessionTemplateWithCategories),
+      categoryGroupReferences = listOf(categoryAs.reference, categoryBCandD.reference),
+      includeCategoryGroupType = false,
+    )
+
+    // future dated BOOKED visit exists
+    visitEntityHelper.create(
+      sessionTemplate = sessionTemplateWithCategories,
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithCategories.startTime,
+      visitEnd = sessionTemplateWithCategories.endTime,
+      visitStatus = VisitStatus.BOOKED,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update categories to the new category list as all existing prisoner categories in session template are not catered for."))
+  }
+
+  @Test
+  fun `when session template updated with new excluded categories but no visits exists then session template is updated`() {
+    // Given
+    val sessionTemplateWithCategories = sessionTemplateEntityHelper.create(
+      prisonCode = prison.code,
+      isActive = true,
+      permittedCategories = mutableListOf(),
+      includeCategoryGroupType = false,
+    )
+
+    // existing B C and D category not included - validation should fail
+    val dto = createUpdateSessionTemplateDto(
+      SessionTemplateDto(sessionTemplateWithCategories),
+      categoryGroupReferences = listOf(categoryAs.reference, categoryBCandD.reference),
+      includeCategoryGroupType = false,
+    )
+
+    // no future dated BOOKED visits exist, only past dated ones
+    visitEntityHelper.create(
+      sessionTemplate = sessionTemplateWithCategories,
+      slotDate = LocalDate.now().minusWeeks(1),
+      visitStart = sessionTemplateWithCategories.startTime,
+      visitEnd = sessionTemplateWithCategories.endTime,
+      visitStatus = VisitStatus.BOOKED,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
   }
 
   @Test
@@ -1752,5 +2220,205 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     val sessionTemplateDto = getSessionTemplate(responseSpec)
     Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
     Assertions.assertThat(sessionTemplateDto.includeIncentiveGroupType).isTrue
+  }
+
+  @Test
+  fun `when session template updated with 0 incentives and no excluded incentives exist session template is updated`() {
+    // Given
+    val sessionTemplateWithIncentives = sessionTemplateEntityHelper.create(
+      prisonCode = prison.code,
+      isActive = true,
+      includeIncentiveGroupType = false,
+      permittedIncentiveLevels = mutableListOf(),
+    )
+    val dto = createUpdateSessionTemplateDto(
+      SessionTemplateDto(sessionTemplateWithIncentives),
+      includeIncentiveGroupType = false,
+      incentiveLevelReferences = emptyList(),
+    )
+
+    // future dated BOOKED visit exists
+    visitEntityHelper.create(
+      sessionTemplate = sessionTemplateWithIncentives,
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithIncentives.startTime,
+      visitEnd = sessionTemplateWithIncentives.endTime,
+      visitStatus = VisitStatus.BOOKED,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentives.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+  }
+
+  @Test
+  fun `when existing excluded incentives removed session template is updated`() {
+    // Given
+    val sessionTemplateWithIncentives = sessionTemplateEntityHelper.create(
+      prisonCode = prison.code,
+      isActive = true,
+      includeIncentiveGroupType = false,
+      permittedIncentiveLevels = mutableListOf(incentiveLevelEnhanced),
+    )
+
+    // existing incentive levels are being removed
+    val dto = createUpdateSessionTemplateDto(
+      SessionTemplateDto(sessionTemplateWithIncentives),
+      includeIncentiveGroupType = false,
+      incentiveLevelReferences = emptyList(),
+    )
+
+    // future dated BOOKED visit exists
+    visitEntityHelper.create(
+      sessionTemplate = sessionTemplateWithIncentives,
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithIncentives.startTime,
+      visitEnd = sessionTemplateWithIncentives.endTime,
+      visitStatus = VisitStatus.BOOKED,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentives.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+  }
+
+  @Test
+  fun `when session template updated with same excluded incentives as existing excluded incentives session template is updated`() {
+    // Given
+    val sessionTemplateWithIncentives = sessionTemplateEntityHelper.create(
+      prisonCode = prison.code,
+      isActive = true,
+      includeIncentiveGroupType = false,
+      permittedIncentiveLevels = mutableListOf(incentiveLevelEnhanced),
+    )
+
+    // existing incentive levels are being kept
+    val dto = createUpdateSessionTemplateDto(
+      SessionTemplateDto(sessionTemplateWithIncentives),
+      includeIncentiveGroupType = false,
+      incentiveLevelReferences = listOf(incentiveLevelEnhanced.reference),
+    )
+
+    // future dated BOOKED visit exists
+    visitEntityHelper.create(
+      sessionTemplate = sessionTemplateWithIncentives,
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithIncentives.startTime,
+      visitEnd = sessionTemplateWithIncentives.endTime,
+      visitStatus = VisitStatus.BOOKED,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentives.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+  }
+
+  @Test
+  fun `when session template updated with new excluded incentives then session template is not updated`() {
+    // Given
+    val sessionTemplateWithIncentives = sessionTemplateEntityHelper.create(
+      prisonCode = prison.code,
+      isActive = true,
+      permittedIncentiveLevels = mutableListOf(incentiveLevelEnhanced),
+      includeIncentiveGroupType = false,
+    )
+
+    // existing B C and D category not included - validation should fail
+    val dto = createUpdateSessionTemplateDto(
+      SessionTemplateDto(sessionTemplateWithIncentives),
+      incentiveLevelReferences = listOf(incentiveLevelEnhanced.reference, incentiveLevelNonEnhanced.reference),
+      includeIncentiveGroupType = false,
+    )
+
+    // future dated BOOKED visit exists
+    visitEntityHelper.create(
+      sessionTemplate = sessionTemplateWithIncentives,
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithIncentives.startTime,
+      visitEnd = sessionTemplateWithIncentives.endTime,
+      visitStatus = VisitStatus.BOOKED,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentives.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update incentive levels to the new incentive levels list as all existing incentive levels in session template are not catered for."))
+  }
+
+  @Test
+  fun `when session template updated with new excluded incentives when there were none then session template is not updated`() {
+    // Given
+    val sessionTemplateWithIncentives = sessionTemplateEntityHelper.create(
+      prisonCode = prison.code,
+      isActive = true,
+      permittedIncentiveLevels = mutableListOf(),
+      includeIncentiveGroupType = false,
+    )
+
+    // existing B C and D category not included - validation should fail
+    val dto = createUpdateSessionTemplateDto(
+      SessionTemplateDto(sessionTemplateWithIncentives),
+      incentiveLevelReferences = listOf(incentiveLevelEnhanced.reference, incentiveLevelNonEnhanced.reference),
+      includeIncentiveGroupType = false,
+    )
+
+    // future dated BOOKED visit exists
+    visitEntityHelper.create(
+      sessionTemplate = sessionTemplateWithIncentives,
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithIncentives.startTime,
+      visitEnd = sessionTemplateWithIncentives.endTime,
+      visitStatus = VisitStatus.BOOKED,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentives.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update incentive levels to the new incentive levels list as all existing incentive levels in session template are not catered for."))
+  }
+
+  @Test
+  fun `when session template updated with new excluded incentives but no visits exists then session template is updated`() {
+    // Given
+    val sessionTemplateWithIncentives = sessionTemplateEntityHelper.create(
+      prisonCode = prison.code,
+      isActive = true,
+      permittedIncentiveLevels = mutableListOf(),
+      includeIncentiveGroupType = false,
+    )
+
+    // existing B C and D category not included - validation should fail
+    val dto = createUpdateSessionTemplateDto(
+      SessionTemplateDto(sessionTemplateWithIncentives),
+      incentiveLevelReferences = listOf(incentiveLevelEnhanced.reference, incentiveLevelNonEnhanced.reference),
+      includeIncentiveGroupType = false,
+    )
+
+    // no future-dated BOOKED visits exist, only past-dated ones
+    visitEntityHelper.create(
+      sessionTemplate = sessionTemplateWithIncentives,
+      slotDate = LocalDate.now().minusWeeks(1),
+      visitStart = sessionTemplateWithIncentives.startTime,
+      visitEnd = sessionTemplateWithIncentives.endTime,
+      visitStatus = VisitStatus.BOOKED,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentives.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
   }
 }

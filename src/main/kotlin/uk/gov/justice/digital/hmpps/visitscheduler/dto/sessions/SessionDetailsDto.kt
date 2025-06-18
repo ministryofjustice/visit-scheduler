@@ -27,11 +27,20 @@ data class SessionDetailsDto(
   @Schema(description = "day of week for visit", example = "MONDAY", required = false)
   val dayOfWeek: DayOfWeek,
 
+  @Schema(description = "Determines behaviour of location groups. True equates to these location groups being included, false equates to them being excluded.", required = true)
+  val includeLocationGroupType: Boolean,
+
   @Schema(description = "list of permitted session location groups", required = false)
   val permittedLocationGroups: List<SessionLocationGroupDto> = listOf(),
 
+  @Schema(description = "Determines behaviour of category groups. True equates to these category groups being included, false equates to them being excluded.", required = true)
+  val includeCategoryGroupType: Boolean,
+
   @Schema(description = "list of permitted prisoner category groups", required = false)
   val prisonerCategoryGroups: List<SessionCategoryGroupDto> = listOf(),
+
+  @Schema(description = "Determines behaviour of incentive groups. True equates to these incentive groups being included, false equates to them being excluded.", required = true)
+  val includeIncentiveGroupType: Boolean,
 
   @Schema(description = "list of permitted incentive level groups", required = false)
   val prisonerIncentiveLevelGroups: List<SessionIncentiveLevelGroupDto> = listOf(),
@@ -44,8 +53,11 @@ data class SessionDetailsDto(
       sessionDateRange = sessionTemplateDto.sessionDateRange,
       weeklyFrequency = sessionTemplateDto.weeklyFrequency,
       dayOfWeek = sessionTemplateDto.dayOfWeek,
+      includeLocationGroupType = sessionTemplateDto.includeLocationGroupType,
       permittedLocationGroups = sessionTemplateDto.permittedLocationGroups,
+      includeCategoryGroupType = sessionTemplateDto.includeCategoryGroupType,
       prisonerCategoryGroups = sessionTemplateDto.prisonerCategoryGroups,
+      includeIncentiveGroupType = sessionTemplateDto.includeIncentiveGroupType,
       prisonerIncentiveLevelGroups = sessionTemplateDto.prisonerIncentiveLevelGroups,
     )
 }

@@ -15,6 +15,16 @@ interface SessionGroupMatcher<T> {
     }
   }
 
+  fun hasAllHigherMatch(o1: Set<T>, o2: Set<T>): Boolean = if ((o1.isEmpty() && o2.isEmpty()) || o2.isEmpty()) {
+    true
+  } else if (o1.isEmpty()) {
+    false
+  } else {
+    o2.stream().allMatch {
+      o1.contains(it)
+    }
+  }
+
   fun hasAnyMatch(o1: Set<T>, o2: Set<T>): Boolean = o2.isEmpty() ||
     o1.stream().anyMatch {
       o2.contains(it)
