@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.Valid
 
 data class UpdateSessionTemplateDto(
-  @Schema(description = "Update session template details", example = "Monday Xmas", required = true)
+  @Schema(description = "Update session template details", required = true)
   @field:Valid
   val updateSessionTemplateDetailsDto: UpdateSessionTemplateDetailsDto,
 
