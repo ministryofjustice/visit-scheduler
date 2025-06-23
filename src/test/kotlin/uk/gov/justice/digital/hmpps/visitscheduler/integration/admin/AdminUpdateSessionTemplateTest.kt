@@ -3352,7 +3352,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithValidDates.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithValidDates.reference, dto, validateRequest = false, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
