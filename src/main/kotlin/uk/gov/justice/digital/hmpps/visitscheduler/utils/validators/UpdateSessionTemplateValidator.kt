@@ -3,7 +3,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.utils.validators
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateMapper
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateUtil
@@ -21,18 +21,23 @@ class UpdateSessionTemplateValidator(
   private val sessionTemplateUtil: SessionTemplateUtil,
   private val sessionTemplateMapper: SessionTemplateMapper,
 ) {
-  fun validate(sessionTemplate: SessionTemplateDto, updateSessionTemplateDto: UpdateSessionTemplateDto): List<String> {
+  fun validate(sessionTemplate: SessionTemplateDto, updateSessionTemplateDetailsDto: UpdateSessionTemplateDetailsDto): List<String> {
     val errorMessages = mutableListOf<String>()
     val hasVisits = visitRepository.hasVisitsForSessionTemplate(sessionTemplate.reference)
-    validateUpdateSessionTemplateTime(existingSessionTemplate = sessionTemplate, updateSessionTemplateDto = updateSessionTemplateDto, hasVisits = hasVisits)?.let { errorMessages.add(it) }
-    validateUpdateSessionTemplateDate(existingSessionTemplate = sessionTemplate, updateSessionTemplateDto = updateSessionTemplateDto, hasVisits = hasVisits).let { errorMessages.addAll(it) }
-    validateUpdateSessionTemplateWeeklyFrequency(existingSessionTemplate = sessionTemplate, updateSessionTemplateDto = updateSessionTemplateDto, hasVisits = hasVisits)?.let { errorMessages.add(it) }
+    validateUpdateSessionTemplateTime(existingSessionTemplate = sessionTemplate, updateSessionTemplateDetailsDto = updateSessionTemplateDetailsDto, hasVisits = hasVisits)?.let {
+      errorMessages.add(it)
+    }
+    validateUpdateSessionTemplateDate(existingSessionTemplate = sessionTemplate, updateSessionTemplateDetailsDto = updateSessionTemplateDetailsDto, hasVisits = hasVisits).let {
+      errorMessages.addAll(it)
+    }
+    validateUpdateSessionTemplateWeeklyFrequency(existingSessionTemplate = sessionTemplate, updateSessionTemplateDetailsDto = updateSessionTemplateDetailsDto, hasVisits = hasVisits)?.let {
+      errorMessages.add(it)
+    }
 
     val hasFutureBookedVisits = visitRepository.hasBookedVisitsForSessionTemplate(sessionTemplate.reference, LocalDate.now())
-    val updateSessionDetails = sessionTemplateMapper.getSessionDetails(sessionTemplate.reference, updateSessionTemplateDto)
+    val updateSessionDetails = sessionTemplateMapper.getSessionDetails(sessionTemplate.reference, updateSessionTemplateDetailsDto)
 
-    // TODO - the below block will need rewriting as it does not consider the exclude scenario
-    updateSessionTemplateDto.locationGroupReferences.let {
+    updateSessionTemplateDetailsDto.locationGroupReferences.let {
       validateUpdateSessionLocation(
         existingSessionTemplate = sessionTemplate,
         updateSessionDetails = updateSessionDetails,
@@ -40,7 +45,7 @@ class UpdateSessionTemplateValidator(
       )?.let { errorMessages.add(it) }
     }
 
-    updateSessionTemplateDto.categoryGroupReferences.let {
+    updateSessionTemplateDetailsDto.categoryGroupReferences.let {
       validateUpdateSessionCategory(
         existingSessionTemplate = sessionTemplate,
         updateSessionDetails = updateSessionDetails,
@@ -48,7 +53,7 @@ class UpdateSessionTemplateValidator(
       )?.let { errorMessages.add(it) }
     }
 
-    updateSessionTemplateDto.incentiveLevelGroupReferences.let {
+    updateSessionTemplateDetailsDto.incentiveLevelGroupReferences.let {
       validateUpdateSessionIncentiveLevels(
         existingSessionTemplate = sessionTemplate,
         updateSessionDetails = updateSessionDetails,
@@ -59,39 +64,39 @@ class UpdateSessionTemplateValidator(
     return errorMessages.toList()
   }
 
-  private fun validateUpdateSessionTemplateTime(existingSessionTemplate: SessionTemplateDto, updateSessionTemplateDto: UpdateSessionTemplateDto, hasVisits: Boolean): String? {
+  private fun validateUpdateSessionTemplateTime(existingSessionTemplate: SessionTemplateDto, updateSessionTemplateDetailsDto: UpdateSessionTemplateDetailsDto, hasVisits: Boolean): String? {
     // if a session has visits its time cannot be updated.
-    return if (updateSessionTemplateDto.sessionTimeSlot != null && existingSessionTemplate.sessionTimeSlot != updateSessionTemplateDto.sessionTimeSlot && hasVisits) {
+    return if (updateSessionTemplateDetailsDto.sessionTimeSlot != null && existingSessionTemplate.sessionTimeSlot != updateSessionTemplateDetailsDto.sessionTimeSlot && hasVisits) {
       "Cannot update session times for ${existingSessionTemplate.reference} as there are existing visits associated with this session template!"
     } else {
       null
     }
   }
 
-  private fun validateUpdateSessionTemplateDate(existingSessionTemplate: SessionTemplateDto, updateSessionTemplateDto: UpdateSessionTemplateDto, hasVisits: Boolean): List<String> {
+  private fun validateUpdateSessionTemplateDate(existingSessionTemplate: SessionTemplateDto, updateSessionTemplateDetailsDto: UpdateSessionTemplateDetailsDto, hasVisits: Boolean): List<String> {
     val validationErrors = mutableListOf<String>()
-    validateUpdateSessionTemplateFromDate(existingSessionTemplate, updateSessionTemplateDto, hasVisits)?.let {
+    validateUpdateSessionTemplateFromDate(existingSessionTemplate, updateSessionTemplateDetailsDto, hasVisits)?.let {
       validationErrors.add(it)
     }
 
-    validateUpdateSessionTemplateToDate(existingSessionTemplate, updateSessionTemplateDto)?.let {
+    validateUpdateSessionTemplateToDate(existingSessionTemplate, updateSessionTemplateDetailsDto)?.let {
       validationErrors.add(it)
     }
 
     return validationErrors
   }
 
-  private fun validateUpdateSessionTemplateFromDate(existingSessionTemplate: SessionTemplateDto, updateSessionTemplateDto: UpdateSessionTemplateDto, hasVisits: Boolean): String? {
+  private fun validateUpdateSessionTemplateFromDate(existingSessionTemplate: SessionTemplateDto, updateSessionTemplateDetailsDto: UpdateSessionTemplateDetailsDto, hasVisits: Boolean): String? {
     // if a session has visits from date cannot be updated.
-    return if (updateSessionTemplateDto.sessionDateRange != null && existingSessionTemplate.sessionDateRange.validFromDate != updateSessionTemplateDto.sessionDateRange.validFromDate && hasVisits) {
+    return if (updateSessionTemplateDetailsDto.sessionDateRange != null && existingSessionTemplate.sessionDateRange.validFromDate != updateSessionTemplateDetailsDto.sessionDateRange.validFromDate && hasVisits) {
       return "Cannot update session valid from date for ${existingSessionTemplate.reference} as there are existing visits associated with this session template!"
     } else {
       null
     }
   }
 
-  private fun validateUpdateSessionTemplateToDate(existingSessionTemplate: SessionTemplateDto, updateSessionTemplateDto: UpdateSessionTemplateDto): String? {
-    updateSessionTemplateDto.sessionDateRange?.let {
+  private fun validateUpdateSessionTemplateToDate(existingSessionTemplate: SessionTemplateDto, updateSessionTemplateDetailsDto: UpdateSessionTemplateDetailsDto): String? {
+    updateSessionTemplateDetailsDto.sessionDateRange?.let {
       val newValidToDate = it.validToDate
       val existingValidToDate = existingSessionTemplate.sessionDateRange.validToDate
 
@@ -109,10 +114,10 @@ class UpdateSessionTemplateValidator(
     return null
   }
 
-  private fun validateUpdateSessionTemplateWeeklyFrequency(existingSessionTemplate: SessionTemplateDto, updateSessionTemplateDto: UpdateSessionTemplateDto, hasVisits: Boolean): String? {
+  private fun validateUpdateSessionTemplateWeeklyFrequency(existingSessionTemplate: SessionTemplateDto, updateSessionTemplateDetailsDto: UpdateSessionTemplateDetailsDto, hasVisits: Boolean): String? {
     // if a session has visits weekly frequency can only be updated if the new weekly frequency is lower than current weekly frequency
     // and the new weekly frequency is a factor of the existing weekly frequency
-    val newWeeklyFrequency = updateSessionTemplateDto.weeklyFrequency
+    val newWeeklyFrequency = updateSessionTemplateDetailsDto.weeklyFrequency
 
     if (newWeeklyFrequency != null && (newWeeklyFrequency != existingSessionTemplate.weeklyFrequency)) {
       // if weekly frequency is being upped  and there are existing visits for the template

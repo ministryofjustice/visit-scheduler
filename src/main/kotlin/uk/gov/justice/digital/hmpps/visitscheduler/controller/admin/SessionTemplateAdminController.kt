@@ -32,6 +32,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.MoveVisitsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.RequestSessionTemplateVisitStatsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateVisitStatsDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionTemplateService
 
@@ -215,7 +216,7 @@ class SessionTemplateAdminController(
     reference: String,
     @RequestBody @Valid
     updateSessionTemplateDto: UpdateSessionTemplateDto,
-  ): SessionTemplateDto = sessionTemplateService.updateSessionTemplate(reference, updateSessionTemplateDto)
+  ): SessionTemplateDto = sessionTemplateService.updateSessionTemplate(reference, updateSessionTemplateDto.updateSessionTemplateDetailsDto, updateSessionTemplateDto.validateRequest)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @DeleteMapping(REFERENCE_SESSION_TEMPLATE_PATH, produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -423,8 +424,8 @@ class SessionTemplateAdminController(
     @PathVariable
     reference: String,
     @RequestBody @Valid
-    updateSessionTemplateDto: UpdateSessionTemplateDto,
-  ): List<String> = sessionTemplateService.hasMatchingSessionTemplates(reference, updateSessionTemplateDto)
+    updateSessionTemplateDetailsDto: UpdateSessionTemplateDetailsDto,
+  ): List<String> = sessionTemplateService.hasMatchingSessionTemplates(reference, updateSessionTemplateDetailsDto)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @PostMapping(MOVE_VISITS)

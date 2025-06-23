@@ -6,7 +6,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityD
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionDateRangeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTimeSlotDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.SessionCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.SessionIncentiveLevelGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.SessionLocationGroupDto
@@ -39,11 +39,11 @@ class SessionTemplateMapper(
     prisonerIncentiveLevelGroups = getSessionIncentiveLevelGroups(createSessionTemplateDto.incentiveLevelGroupReferences ?: emptyList()),
   )
 
-  fun getSessionDetails(reference: String, updateSessionTemplateDto: UpdateSessionTemplateDto): SessionDetailsDto {
+  fun getSessionDetails(reference: String, updateSessionTemplateDetailsDto: UpdateSessionTemplateDetailsDto): SessionDetailsDto {
     val sessionTemplate = sessionTemplateRepository.findByReference(reference)
 
     if (sessionTemplate != null) {
-      return with(updateSessionTemplateDto) {
+      return with(updateSessionTemplateDetailsDto) {
         SessionDetailsDto(
           prisonCode = sessionTemplate.prison.code,
           sessionTimeSlot = sessionTimeSlot ?: SessionTimeSlotDto(startTime = sessionTemplate.startTime, endTime = sessionTemplate.endTime),
@@ -51,11 +51,11 @@ class SessionTemplateMapper(
           sessionCapacity = sessionCapacity ?: SessionCapacityDto(open = sessionTemplate.openCapacity, closed = sessionTemplate.closedCapacity),
           dayOfWeek = sessionTemplate.dayOfWeek,
           weeklyFrequency = weeklyFrequency ?: sessionTemplate.weeklyFrequency,
-          includeLocationGroupType = updateSessionTemplateDto.includeLocationGroupType ?: sessionTemplate.includeLocationGroupType,
+          includeLocationGroupType = updateSessionTemplateDetailsDto.includeLocationGroupType ?: sessionTemplate.includeLocationGroupType,
           permittedLocationGroups = getSessionLocationGroups(locationGroupReferences, sessionTemplate),
-          includeCategoryGroupType = updateSessionTemplateDto.includeCategoryGroupType ?: sessionTemplate.includeCategoryGroupType,
+          includeCategoryGroupType = updateSessionTemplateDetailsDto.includeCategoryGroupType ?: sessionTemplate.includeCategoryGroupType,
           prisonerCategoryGroups = getSessionCategoryGroups(categoryGroupReferences, sessionTemplate),
-          includeIncentiveGroupType = updateSessionTemplateDto.includeIncentiveGroupType ?: sessionTemplate.includeIncentiveGroupType,
+          includeIncentiveGroupType = updateSessionTemplateDetailsDto.includeIncentiveGroupType ?: sessionTemplate.includeIncentiveGroupType,
           prisonerIncentiveLevelGroups = getSessionIncentiveLevelGroups(incentiveLevelGroupReferences, sessionTemplate),
         )
       }

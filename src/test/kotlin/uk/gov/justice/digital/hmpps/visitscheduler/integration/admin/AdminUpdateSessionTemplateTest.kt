@@ -120,7 +120,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -167,7 +167,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -194,7 +194,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -209,7 +209,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     val reference = "Ref1234"
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isNotFound
@@ -226,7 +226,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -240,7 +240,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -257,7 +257,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -276,7 +276,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -292,7 +292,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -309,7 +309,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -326,7 +326,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -345,7 +345,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -362,7 +362,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -376,7 +376,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -396,7 +396,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithValidDates.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithValidDates.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -422,7 +422,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithValidDates.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithValidDates.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -449,7 +449,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithValidDates.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithValidDates.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -491,7 +491,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
       visitEnd = LocalTime.of(11, 0),
     )
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithValidDates.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithValidDates.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -533,7 +533,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithValidDates.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithValidDates.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -573,7 +573,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithValidDates.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithValidDates.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -594,7 +594,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -616,7 +616,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithWeeklyFrequencyOf6.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithWeeklyFrequencyOf6.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -638,7 +638,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithWeeklyFrequencyOf6.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithWeeklyFrequencyOf6.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -665,7 +665,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
       sessionTemplate = sessionTemplateDefault,
     )
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -690,7 +690,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithWeeklyFrequencyOf6.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithWeeklyFrequencyOf6.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -716,7 +716,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithWeeklyFrequencyOf6.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithWeeklyFrequencyOf6.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -740,7 +740,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -763,7 +763,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
       sessionDateRange = null,
     )
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -786,7 +786,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
       sessionDateRange = null,
     )
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -809,7 +809,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
       sessionDateRange = null,
     )
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // 2 open visit exists for session template
     visitEntityHelper.create(
@@ -869,7 +869,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -889,7 +889,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -908,7 +908,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -925,7 +925,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -942,7 +942,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -959,7 +959,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -973,7 +973,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -987,7 +987,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -1012,7 +1012,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -1039,7 +1039,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -1066,7 +1066,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -1093,7 +1093,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -1120,7 +1120,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -1147,7 +1147,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -1174,7 +1174,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -1203,7 +1203,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -1238,7 +1238,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -1271,7 +1271,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -1304,7 +1304,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -1339,7 +1339,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -1374,7 +1374,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -1409,7 +1409,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -1442,7 +1442,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -1473,7 +1473,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -1506,7 +1506,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -1541,7 +1541,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -1576,7 +1576,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -1611,7 +1611,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -1646,7 +1646,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -1681,7 +1681,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -1716,7 +1716,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -1751,7 +1751,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -1778,7 +1778,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -1811,7 +1811,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -1844,7 +1844,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithLocations.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -1873,7 +1873,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -1898,7 +1898,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -1925,7 +1925,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -1952,7 +1952,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -1979,7 +1979,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -2008,7 +2008,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -2041,7 +2041,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -2074,7 +2074,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -2107,7 +2107,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -2140,7 +2140,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -2175,7 +2175,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -2210,7 +2210,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -2243,7 +2243,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -2278,7 +2278,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -2313,7 +2313,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -2348,7 +2348,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -2383,7 +2383,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -2410,7 +2410,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -2443,7 +2443,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -2476,7 +2476,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithCategories.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -2503,7 +2503,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentiveLevels.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentiveLevels.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -2530,7 +2530,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentiveLevels.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentiveLevels.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -2557,7 +2557,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentiveLevels.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentiveLevels.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -2584,7 +2584,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentiveLevels.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentiveLevels.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -2613,7 +2613,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentiveLevels.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentiveLevels.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -2642,7 +2642,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentives.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentives.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -2660,7 +2660,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -2686,7 +2686,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -2714,7 +2714,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -2739,7 +2739,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -2770,7 +2770,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -2798,7 +2798,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -2827,7 +2827,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -2862,7 +2862,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentives.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentives.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -2895,7 +2895,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentives.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentives.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -2928,7 +2928,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentives.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentives.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -2961,7 +2961,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentives.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentives.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -2996,7 +2996,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentives.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentives.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -3031,7 +3031,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentives.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentives.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -3064,7 +3064,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentiveLevels.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentiveLevels.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -3099,7 +3099,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentiveLevels.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentiveLevels.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -3134,7 +3134,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentiveLevels.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentiveLevels.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -3169,7 +3169,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentiveLevels.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentiveLevels.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -3204,7 +3204,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentiveLevels.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentiveLevels.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -3235,7 +3235,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentiveLevels.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentiveLevels.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -3268,7 +3268,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentiveLevels.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentiveLevels.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -3301,11 +3301,60 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentiveLevels.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithIncentiveLevels.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update incentive levels to the new incentive levels list as all existing incentive levels in session template are not catered for."))
+  }
+
+  @Test
+  fun `when validate request is passed as false basic validations still fail and BAD_REQUEST is returned`() {
+    // Given
+    val dto = createUpdateSessionTemplateDto(
+      sessionDateRange = SessionDateRangeDto(
+        validFromDate = LocalDate.of(2023, 1, 1),
+        validToDate = LocalDate.of(2022, 12, 31),
+      ),
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, validateRequest = false, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.developerMessage").value(Matchers.containsString("Session valid to date cannot be less than valid from date"))
+  }
+
+  @Test
+  fun `when session template updated with reduced valid to date and booked visits affected but validate flag is false update session template is successful`() {
+    // Given
+    val newValidToDate = sessionTemplateWithValidDates.validToDate!!.minusMonths(1)
+    val newSessionDateRange = SessionDateRangeDto(
+      validFromDate = sessionTemplateWithValidDates.validFromDate,
+      validToDate = newValidToDate,
+    )
+
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplateWithValidDates.name + " Updated",
+      sessionDateRange = newSessionDateRange,
+    )
+
+    // visit exists 1 day after the new valid to date
+    val visitDate = newValidToDate.plusDays(1)
+    visitEntityHelper.create(
+      sessionTemplate = sessionTemplateWithValidDates,
+      slotDate = visitDate,
+      visitStart = LocalTime.of(10, 0),
+      visitEnd = LocalTime.of(11, 0),
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithValidDates.reference, dto, validateRequest = true, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
   }
 }

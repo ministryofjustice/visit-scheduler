@@ -11,7 +11,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionDateRange
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTimeSlotDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.CreateCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.SessionCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.UpdateCategoryGroupDto
@@ -242,7 +242,7 @@ fun createUpdateSessionTemplateDto(
   includeCategoryGroupType: Boolean? = true,
   includeIncentiveGroupType: Boolean? = true,
   clients: List<UserClientDto>? = null,
-): UpdateSessionTemplateDto = UpdateSessionTemplateDto(
+): UpdateSessionTemplateDetailsDto = UpdateSessionTemplateDetailsDto(
   name = name + dayOfWeek,
   sessionDateRange = sessionDateRange,
   visitRoom = visitRoom,
@@ -267,7 +267,7 @@ fun createUpdateSessionTemplateDto(
   categoryGroupReferences: List<String>? = null,
   includeIncentiveGroupType: Boolean? = null,
   incentiveLevelReferences: List<String>? = null,
-): UpdateSessionTemplateDto = UpdateSessionTemplateDto(
+): UpdateSessionTemplateDetailsDto = UpdateSessionTemplateDetailsDto(
   name = sessionTemplateDto.name,
   sessionDateRange = sessionTemplateDto.sessionDateRange,
   sessionCapacity = sessionTemplateDto.sessionCapacity,
