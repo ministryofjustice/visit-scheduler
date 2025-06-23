@@ -132,13 +132,29 @@ class UpdateSessionTemplateValidator(
     if (hasFutureBookedVisits) {
       val existingSessionLocations = sessionTemplateUtil.getPermittedSessionLocations(existingSessionTemplate.permittedLocationGroups)
       val updatedSessionLocations = updateSessionDetails.permittedLocationGroups.flatMap { it.locations }.toSet()
+
+      // include to include
       if (existingSessionTemplate.includeLocationGroupType && updateSessionDetails.includeLocationGroupType) {
-        if (!sessionLocationMatcher.hasAllLowerOrEqualMatch(existingSessionLocations, updatedSessionLocations)) {
+        if (!sessionLocationMatcher.doesNewLocationsAccomodateOldOnes(existingSessionLocations, updatedSessionLocations)) {
           return errorMessage
         }
-      } else if (!existingSessionTemplate.includeLocationGroupType && !updateSessionDetails.includeLocationGroupType) {
-        if (!sessionLocationMatcher.hasAllHigherOrEqualMatch(existingSessionLocations, updatedSessionLocations)) {
+      } // exclude to exclude
+      else if (!existingSessionTemplate.includeLocationGroupType && !updateSessionDetails.includeLocationGroupType) {
+        if (!sessionLocationMatcher.doesNewExcludedLocationsExcludeOldOnes(existingSessionLocations, updatedSessionLocations)) {
           return errorMessage
+        }
+      } // include to exclude
+      else if (existingSessionTemplate.includeLocationGroupType && !updateSessionDetails.includeLocationGroupType) {
+        if (sessionLocationMatcher.doesNewExcludeLocationsExcludeExistingIncludedOnes(updatedSessionLocations, existingSessionLocations)) {
+          return errorMessage
+        }
+      } // exclude to include
+      else if (!existingSessionTemplate.includeLocationGroupType && updateSessionDetails.includeLocationGroupType) {
+        // if all locations are included validation will pass - will fail for all other scenarios
+        return if (updateSessionDetails.permittedLocationGroups.isEmpty() && existingSessionTemplate.permittedLocationGroups.isNotEmpty()) {
+          null
+        } else {
+          errorMessage
         }
       }
     }
@@ -159,6 +175,17 @@ class UpdateSessionTemplateValidator(
       } else if (!existingSessionTemplate.includeCategoryGroupType && !updateSessionDetails.includeCategoryGroupType) {
         if (!sessionCategoryMatcher.hasAllHigherMatch(existingCategories, updatedCategories)) {
           return errorMessage
+        }
+      } else if (existingSessionTemplate.includeCategoryGroupType && !updateSessionDetails.includeCategoryGroupType) {
+        if (sessionCategoryMatcher.hasAnyMatchForUpdate(updatedCategories, existingCategories)) {
+          return errorMessage
+        }
+      } else if (!existingSessionTemplate.includeCategoryGroupType && updateSessionDetails.includeCategoryGroupType) {
+        // if all categories are included its ok
+        return if (updateSessionDetails.prisonerCategoryGroups.isEmpty() && existingSessionTemplate.prisonerCategoryGroups.isNotEmpty()) {
+          null
+        } else {
+          errorMessage
         }
       }
     }
@@ -181,6 +208,17 @@ class UpdateSessionTemplateValidator(
       } else if (!existingSessionTemplate.includeIncentiveGroupType && !updateSessionDetails.includeIncentiveGroupType) {
         if (!sessionIncentiveLevelMatcher.hasAllHigherMatch(existingIncentiveLevels, updatedIncentiveLevels)) {
           return errorMessage
+        }
+      } else if (existingSessionTemplate.includeIncentiveGroupType && !updateSessionDetails.includeIncentiveGroupType) {
+        if (sessionIncentiveLevelMatcher.hasAnyMatchForUpdate(updatedIncentiveLevels, existingIncentiveLevels)) {
+          return errorMessage
+        }
+      } else if (!existingSessionTemplate.includeIncentiveGroupType && updateSessionDetails.includeIncentiveGroupType) {
+        // if all incentive levels are included its ok
+        return if (updateSessionDetails.prisonerIncentiveLevelGroups.isEmpty() && existingSessionTemplate.prisonerIncentiveLevelGroups.isNotEmpty()) {
+          null
+        } else {
+          errorMessage
         }
       }
     }
