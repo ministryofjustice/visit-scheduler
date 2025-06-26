@@ -217,8 +217,8 @@ class SessionTemplateAdminController(
     updateSessionTemplateDto: UpdateSessionTemplateDto,
     @RequestParam(value = "validateRequest", required = false)
     @Parameter(
-      description = "Filter results by prison id/code",
-      example = "MDI",
+      description = "Defaults to true. Pass value as false to skip validation.",
+      example = "true",
     )
     validateRequest: Boolean? = true,
   ): SessionTemplateDto = sessionTemplateService.updateSessionTemplate(reference, updateSessionTemplateDto, validateRequest ?: true)
