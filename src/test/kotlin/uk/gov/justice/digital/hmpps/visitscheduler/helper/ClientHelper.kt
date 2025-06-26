@@ -74,7 +74,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.MoveVisitsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.RequestSessionTemplateVisitStatsDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.CreateCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.UpdateCategoryGroupDto
@@ -284,15 +283,15 @@ fun callMoveVisits(
 fun callUpdateSessionTemplateByReference(
   webTestClient: WebTestClient,
   reference: String,
-  dto: UpdateSessionTemplateDetailsDto,
+  dto: UpdateSessionTemplateDto,
   validateRequest: Boolean = true,
   authHttpHeaders: (HttpHeaders) -> Unit,
 ): ResponseSpec {
-  val updateSessionTemplateDto = UpdateSessionTemplateDto(dto, validateRequest)
+  val url = getSessionTemplateByReferenceUrl(reference) + "?validateRequest=$validateRequest"
   return callPut(
-    updateSessionTemplateDto,
+    dto,
     webTestClient,
-    getSessionTemplateByReferenceUrl(reference),
+    url,
     authHttpHeaders,
   )
 }
@@ -300,7 +299,7 @@ fun callUpdateSessionTemplateByReference(
 fun callCheckingMatchingTemplatesOnUpdate(
   webTestClient: WebTestClient,
   reference: String,
-  dto: UpdateSessionTemplateDetailsDto? = null,
+  dto: UpdateSessionTemplateDto? = null,
   authHttpHeaders: (HttpHeaders) -> Unit,
 ): ResponseSpec = callPost(
   dto,

@@ -32,7 +32,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.MoveVisitsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.RequestSessionTemplateVisitStatsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateVisitStatsDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionTemplateService
 
@@ -216,7 +215,13 @@ class SessionTemplateAdminController(
     reference: String,
     @RequestBody @Valid
     updateSessionTemplateDto: UpdateSessionTemplateDto,
-  ): SessionTemplateDto = sessionTemplateService.updateSessionTemplate(reference, updateSessionTemplateDto.updateSessionTemplateDetailsDto, updateSessionTemplateDto.validateRequest)
+    @RequestParam(value = "validateRequest", required = false)
+    @Parameter(
+      description = "Filter results by prison id/code",
+      example = "MDI",
+    )
+    validateRequest: Boolean? = true,
+  ): SessionTemplateDto = sessionTemplateService.updateSessionTemplate(reference, updateSessionTemplateDto, validateRequest ?: true)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @DeleteMapping(REFERENCE_SESSION_TEMPLATE_PATH, produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -424,8 +429,8 @@ class SessionTemplateAdminController(
     @PathVariable
     reference: String,
     @RequestBody @Valid
-    updateSessionTemplateDetailsDto: UpdateSessionTemplateDetailsDto,
-  ): List<String> = sessionTemplateService.hasMatchingSessionTemplates(reference, updateSessionTemplateDetailsDto)
+    updateSessionTemplateDto: UpdateSessionTemplateDto,
+  ): List<String> = sessionTemplateService.hasMatchingSessionTemplates(reference, updateSessionTemplateDto)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @PostMapping(MOVE_VISITS)

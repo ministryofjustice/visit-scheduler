@@ -24,7 +24,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateD
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateVisitCountsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateVisitStatsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTimeSlotDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDetailsDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.CreateCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.SessionCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.UpdateCategoryGroupDto
@@ -195,22 +195,22 @@ class SessionTemplateService(
     )
   }
 
-  fun updateSessionTemplate(reference: String, updateSessionTemplateDetailsDto: UpdateSessionTemplateDetailsDto, validateRequest: Boolean): SessionTemplateDto {
+  fun updateSessionTemplate(reference: String, updateSessionTemplateDto: UpdateSessionTemplateDto, validateRequest: Boolean): SessionTemplateDto {
     val existingSessionTemplate = SessionTemplateDto(getSessionTemplate(reference))
 
     if (validateRequest) {
-      LOG.info("Validating update session template request for session template reference : $reference with update session template details : $updateSessionTemplateDetailsDto")
-      val errorMessages = updateSessionTemplateValidator.validate(existingSessionTemplate, updateSessionTemplateDetailsDto)
+      LOG.info("Validating update session template request for session template reference : $reference with update session template details : $updateSessionTemplateDto")
+      val errorMessages = updateSessionTemplateValidator.validate(existingSessionTemplate, updateSessionTemplateDto)
 
       if (errorMessages.isNotEmpty()) {
         LOG.info("Failed validation of update session template request for session template reference : $reference with following error messages : $errorMessages")
         throw VSiPValidationException(errorMessages.toTypedArray())
       }
     } else {
-      LOG.info("Skipping validation of update session template request for session template reference : $reference with update session template details : $updateSessionTemplateDetailsDto")
+      LOG.info("Skipping validation of update session template request for session template reference : $reference with update session template details : $updateSessionTemplateDto")
     }
 
-    with(updateSessionTemplateDetailsDto) {
+    with(updateSessionTemplateDto) {
       name?.let {
         sessionTemplateRepository.updateNameByReference(reference, name)
       }
@@ -250,22 +250,22 @@ class SessionTemplateService(
 
     val updatedSessionTemplateEntity = getSessionTemplate(reference)
 
-    updateSessionTemplateDetailsDto.locationGroupReferences?.let {
+    updateSessionTemplateDto.locationGroupReferences?.let {
       updatedSessionTemplateEntity.permittedSessionLocationGroups.clear()
       it.toSet().forEach { ref -> updatedSessionTemplateEntity.permittedSessionLocationGroups.add(this.getLocationGroupByReference(ref)) }
     }
 
-    updateSessionTemplateDetailsDto.categoryGroupReferences?.let {
+    updateSessionTemplateDto.categoryGroupReferences?.let {
       updatedSessionTemplateEntity.permittedSessionCategoryGroups.clear()
       it.toSet().forEach { ref -> updatedSessionTemplateEntity.permittedSessionCategoryGroups.add(this.getPrisonerCategoryGroupByReference(ref)) }
     }
 
-    updateSessionTemplateDetailsDto.incentiveLevelGroupReferences?.let {
+    updateSessionTemplateDto.incentiveLevelGroupReferences?.let {
       updatedSessionTemplateEntity.permittedSessionIncentiveLevelGroups.clear()
       it.toSet().forEach { ref -> updatedSessionTemplateEntity.permittedSessionIncentiveLevelGroups.add(this.getIncentiveLevelGroupByReference(ref)) }
     }
 
-    updateSessionTemplateDetailsDto.clients?.let {
+    updateSessionTemplateDto.clients?.let {
       updatedSessionTemplateEntity.clients.clear()
       sessionTemplateRepository.saveAndFlush(updatedSessionTemplateEntity)
       it.toSet().forEach { userClient ->
@@ -519,9 +519,9 @@ class SessionTemplateService(
 
   fun hasMatchingSessionTemplates(
     reference: String,
-    updateSessionTemplateDetailsDto: UpdateSessionTemplateDetailsDto,
+    updateSessionTemplateDto: UpdateSessionTemplateDto,
   ): List<String> {
-    val toBeUpdatedSessionDetails = sessionTemplateMapper.getSessionDetails(reference, updateSessionTemplateDetailsDto)
+    val toBeUpdatedSessionDetails = sessionTemplateMapper.getSessionDetails(reference, updateSessionTemplateDto)
     return hasMatchingSessionTemplates(toBeUpdatedSessionDetails, reference)
   }
 
