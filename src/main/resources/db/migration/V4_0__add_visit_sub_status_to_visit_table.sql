@@ -4,7 +4,7 @@
 -- Add sub_status column
 -- set DEFAULT to AUTO_APPROVED - this would ensure that we need not run a UPDATE for BOOKED visits as it is taking a long time on PROD
 
--- ALTER TABLE visit ADD visit_sub_status VARCHAR(50) DEFAULT 'AUTO_APPROVED';
+ALTER TABLE visit ADD visit_sub_status VARCHAR(50) DEFAULT 'AUTO_APPROVED';
 
 -- Back fill existing rows with 'CANCELLED' for visit_status = CANCELLED - AUTO_APPROVED for BOOKED should already be set
 -- UPDATE visit SET visit_sub_status = 'CANCELLED' WHERE visit_status = 'CANCELLED';
