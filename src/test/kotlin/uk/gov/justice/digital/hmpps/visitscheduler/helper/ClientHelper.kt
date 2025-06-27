@@ -283,14 +283,18 @@ fun callMoveVisits(
 fun callUpdateSessionTemplateByReference(
   webTestClient: WebTestClient,
   reference: String,
-  dto: UpdateSessionTemplateDto? = null,
+  dto: UpdateSessionTemplateDto,
+  validateRequest: Boolean = true,
   authHttpHeaders: (HttpHeaders) -> Unit,
-): ResponseSpec = callPut(
-  dto,
-  webTestClient,
-  getSessionTemplateByReferenceUrl(reference),
-  authHttpHeaders,
-)
+): ResponseSpec {
+  val url = getSessionTemplateByReferenceUrl(reference) + "?validateRequest=$validateRequest"
+  return callPut(
+    dto,
+    webTestClient,
+    url,
+    authHttpHeaders,
+  )
+}
 
 fun callCheckingMatchingTemplatesOnUpdate(
   webTestClient: WebTestClient,

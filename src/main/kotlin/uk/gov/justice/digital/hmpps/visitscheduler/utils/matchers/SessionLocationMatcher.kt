@@ -50,7 +50,7 @@ class SessionLocationMatcher :
       hasLocationMatch(it, o2)
     }
 
-  fun hasAllLowerOrEqualMatch(o1: Set<PermittedSessionLocationDto>, o2: Set<PermittedSessionLocationDto>): Boolean = if ((o1.isEmpty() && o2.isEmpty()) || o2.isEmpty()) {
+  fun doesNewLocationsAccomodateOldOnes(o1: Set<PermittedSessionLocationDto>, o2: Set<PermittedSessionLocationDto>): Boolean = if ((o1.isEmpty() && o2.isEmpty()) || o2.isEmpty()) {
     true
   } else if (o1.isEmpty()) {
     false
@@ -60,13 +60,25 @@ class SessionLocationMatcher :
     }
   }
 
-  fun hasAllHigherOrEqualMatch(o1: Set<PermittedSessionLocationDto>, o2: Set<PermittedSessionLocationDto>): Boolean = if ((o1.isEmpty() && o2.isEmpty()) || o2.isEmpty()) {
+  fun doesNewExcludedLocationsExcludeOldOnes(newExcludedLocations: Set<PermittedSessionLocationDto>, oldExcludedLocations: Set<PermittedSessionLocationDto>): Boolean = if ((newExcludedLocations.isEmpty() && oldExcludedLocations.isEmpty()) || oldExcludedLocations.isEmpty()) {
     true
-  } else if (o1.isEmpty()) {
+  } else if (newExcludedLocations.isEmpty()) {
     false
   } else {
-    o2.stream().allMatch {
-      multipleLocationEqualOrLowerMatcher.test(it, o1)
+    oldExcludedLocations.stream().allMatch {
+      multipleLocationEqualOrLowerMatcher.test(it, newExcludedLocations)
+    }
+  }
+
+  fun doesNewExcludeLocationsExcludeExistingIncludedOnes(o1: Set<PermittedSessionLocationDto>, oldIncludedLocations: Set<PermittedSessionLocationDto>): Boolean = if ((o1.isEmpty() && oldIncludedLocations.isEmpty())) {
+    true
+  } else if (o1.isEmpty() && !oldIncludedLocations.isEmpty()) {
+    true
+  } else if (oldIncludedLocations.isEmpty() && !o1.isEmpty()) {
+    true
+  } else {
+    oldIncludedLocations.stream().anyMatch {
+      multipleLocationMatcher.test(it, o1)
     }
   }
 

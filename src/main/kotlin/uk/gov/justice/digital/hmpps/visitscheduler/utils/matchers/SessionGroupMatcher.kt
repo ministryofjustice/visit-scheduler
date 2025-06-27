@@ -25,6 +25,16 @@ interface SessionGroupMatcher<T> {
     }
   }
 
+  fun hasAnyMatchForUpdate(o1: Set<T>, o2: Set<T>): Boolean = if ((o1.isEmpty() && o2.isEmpty())) {
+    true
+  } else if (o1.isEmpty() && !o2.isEmpty()) {
+    true
+  } else if (o2.isEmpty() && !o1.isEmpty()) {
+    true
+  } else {
+    hasAnyMatch(o1, o2)
+  }
+
   fun hasAnyMatch(o1: Set<T>, o2: Set<T>): Boolean = o2.isEmpty() ||
     o1.stream().anyMatch {
       o2.contains(it)
