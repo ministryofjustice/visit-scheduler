@@ -215,7 +215,13 @@ class SessionTemplateAdminController(
     reference: String,
     @RequestBody @Valid
     updateSessionTemplateDto: UpdateSessionTemplateDto,
-  ): SessionTemplateDto = sessionTemplateService.updateSessionTemplate(reference, updateSessionTemplateDto)
+    @RequestParam(value = "validateRequest", required = false)
+    @Parameter(
+      description = "Defaults to true. Pass value as false to skip validation.",
+      example = "true",
+    )
+    validateRequest: Boolean? = true,
+  ): SessionTemplateDto = sessionTemplateService.updateSessionTemplate(reference, updateSessionTemplateDto, validateRequest ?: true)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @DeleteMapping(REFERENCE_SESSION_TEMPLATE_PATH, produces = [MediaType.APPLICATION_JSON_VALUE])

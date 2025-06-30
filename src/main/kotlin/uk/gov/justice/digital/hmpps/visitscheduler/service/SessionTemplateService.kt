@@ -195,11 +195,19 @@ class SessionTemplateService(
     )
   }
 
-  fun updateSessionTemplate(reference: String, updateSessionTemplateDto: UpdateSessionTemplateDto): SessionTemplateDto {
+  fun updateSessionTemplate(reference: String, updateSessionTemplateDto: UpdateSessionTemplateDto, validateRequest: Boolean): SessionTemplateDto {
     val existingSessionTemplate = SessionTemplateDto(getSessionTemplate(reference))
-    val errorMessages = updateSessionTemplateValidator.validate(existingSessionTemplate, updateSessionTemplateDto)
-    if (errorMessages.isNotEmpty()) {
-      throw VSiPValidationException(errorMessages.toTypedArray())
+
+    if (validateRequest) {
+      LOG.info("Validating update session template request for session template reference : $reference with update session template details : $updateSessionTemplateDto")
+      val errorMessages = updateSessionTemplateValidator.validate(existingSessionTemplate, updateSessionTemplateDto)
+
+      if (errorMessages.isNotEmpty()) {
+        LOG.info("Failed validation of update session template request for session template reference : $reference with following error messages : $errorMessages")
+        throw VSiPValidationException(errorMessages.toTypedArray())
+      }
+    } else {
+      LOG.info("Skipping validation of update session template request for session template reference : $reference with update session template details : $updateSessionTemplateDto")
     }
 
     with(updateSessionTemplateDto) {
