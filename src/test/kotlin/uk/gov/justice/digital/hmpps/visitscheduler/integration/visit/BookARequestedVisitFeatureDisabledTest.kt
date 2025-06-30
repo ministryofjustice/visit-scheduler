@@ -39,7 +39,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepositor
 import java.time.format.DateTimeFormatter
 
 @Transactional(propagation = SUPPORTS)
-@DisplayName("PUT $VISIT_BOOK")
+@DisplayName("PUT $VISIT_BOOK requested visit feature - disabled")
 @TestPropertySource(properties = ["feature.request-booking-enabled=false"])
 class BookARequestedVisitFeatureDisabledTest : IntegrationTestBase() {
 
