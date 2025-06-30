@@ -12,11 +12,13 @@ import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
+import org.springframework.test.context.TestPropertySource
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
@@ -32,6 +34,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.VisitBalancesDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch.PrisonerSearchResultDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
@@ -47,6 +50,7 @@ import java.time.format.DateTimeFormatter
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("PUT $VISIT_BOOK")
+@TestPropertySource(properties = ["feature.request-booking-enabled=true"])
 class BookVisitTest : IntegrationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
@@ -79,6 +83,40 @@ class BookVisitTest : IntegrationTestBase() {
     applicationEntityHelper.createVisitor(application = reservedPublicApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = reservedPublicApplication, description = "Some Text")
     reservedPublicApplication = applicationEntityHelper.save(reservedPublicApplication)
+  }
+
+  @Test
+  fun `Book a requested visit feature disabled (booked via public application)`() {
+    // Given
+    val prisonerId = reservedPublicApplication.prisonerId
+    val applicationReference = reservedPublicApplication.reference
+    val prisonerDto = PrisonerSearchResultDto(prisonerNumber = prisonerId, prisonId = reservedPublicApplication.prison.code)
+    prisonOffenderSearchMockServer.stubGetPrisoner(prisonerId, prisonerDto)
+    prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
+
+    // When
+    val responseSpec = callVisitBook(
+      webTestClient,
+      roleVisitSchedulerHttpHeaders,
+      applicationReference,
+      userType = PUBLIC,
+      bookingRequestDto = BookingRequestDto("booking_guy", ApplicationMethodType.PHONE, false, PUBLIC, true),
+    )
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val visitDto = getVisitDto(responseSpec)
+
+    assertVisitMatchesApplication(visitDto, reservedPublicApplication)
+    val visitEntity = testVisitRepository.findByReference(visitDto.reference)
+    assertAuditEvent(visitDto, visitEntity, PUBLIC)
+    assertThat(visitEntity.getApplications().size).isEqualTo(1)
+    assertThat(visitEntity.getLastApplication()?.reference).isEqualTo(applicationReference)
+    assertThat(visitEntity.getLastApplication()?.applicationStatus).isEqualTo(ACCEPTED)
+    assertThat(visitEntity.visitSubStatus).isEqualTo(VisitSubStatus.REQUESTED)
+
+    assertBookedEvent(visitDto)
   }
 
   @Test

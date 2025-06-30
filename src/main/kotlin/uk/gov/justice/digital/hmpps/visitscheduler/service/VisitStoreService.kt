@@ -44,6 +44,7 @@ class VisitStoreService(
   private val applicationService: ApplicationService,
   @Autowired private val visitDtoBuilder: VisitDtoBuilder,
   @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int,
+  @Value("\${feature.request-booking-enabled:false}") private val requestBookingFeatureEnabled: Boolean,
 ) {
 
   @Lazy
@@ -104,10 +105,20 @@ class VisitStoreService(
       it.visitRestriction = application.restriction
       it.visitRoom = visitRoom
       it.visitStatus = BOOKED
-      it.visitSubStatus = VisitSubStatus.AUTO_APPROVED // TODO [Request a visit feature]: Allow 'Requested' visits.
+      // TODO [Request a visit feature]: Allow 'Requested' visits sub status to change.
       it
     } ?: run {
       // Create new booking
+      val visitSubStatus = if (requestBookingFeatureEnabled) {
+        if (bookingRequestDto.isRequestBooking == true) {
+          VisitSubStatus.REQUESTED
+        } else {
+          VisitSubStatus.AUTO_APPROVED
+        }
+      } else {
+        VisitSubStatus.AUTO_APPROVED
+      }
+
       Visit(
         prisonId = application.prisonId,
         prison = application.prison,
@@ -118,7 +129,7 @@ class VisitStoreService(
         visitRestriction = application.restriction,
         visitRoom = visitRoom,
         visitStatus = BOOKED,
-        visitSubStatus = VisitSubStatus.AUTO_APPROVED, // TODO [Request a visit feature]: Allow 'Requested' visits.
+        visitSubStatus = visitSubStatus,
         userType = application.userType,
       )
     }

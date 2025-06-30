@@ -28,6 +28,7 @@ class VisitDtoBuilder {
       prisonCode = visitEntity.prison.code,
       visitRoom = visitEntity.visitRoom,
       visitStatus = visitEntity.visitStatus,
+      visitSubStatus = visitEntity.visitSubStatus,
       outcomeStatus = visitEntity.outcomeStatus,
       visitType = visitEntity.visitType,
       visitRestriction = visitEntity.visitRestriction,
