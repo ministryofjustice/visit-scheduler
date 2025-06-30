@@ -86,7 +86,7 @@ class BookVisitTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `Book a requested visit feature disabled (booked via public application)`() {
+  fun `Book a requested visit feature enabled (booked via public application)`() {
     // Given
     val prisonerId = reservedPublicApplication.prisonerId
     val applicationReference = reservedPublicApplication.reference
@@ -444,6 +444,7 @@ class BookVisitTest : IntegrationTestBase() {
         assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
         assertThat(it["prisonId"]).isEqualTo(visit.prisonCode)
         assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
+        assertThat(it["visitSubStatus"]).isEqualTo(visit.visitSubStatus.name)
         assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
         assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
         assertThat(it["visitEnd"]).isEqualTo(visit.endTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
