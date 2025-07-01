@@ -334,6 +334,7 @@ class TelemetryClientService(
     "prisonerId" to visitDto.prisonerId,
     "prisonId" to visitDto.prisonCode,
     "visitStatus" to visitDto.visitStatus.name,
+    "visitSubStatus" to visitDto.visitSubStatus.name,
     "visitRestriction" to visitDto.visitRestriction.name,
     "visitStart" to formatDateTimeToString(visitDto.startTimestamp),
     "visitEnd" to formatDateTimeToString(visitDto.endTimestamp),

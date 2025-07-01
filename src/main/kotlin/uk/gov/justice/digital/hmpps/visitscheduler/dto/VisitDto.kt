@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import java.time.LocalDateTime
 
@@ -31,6 +32,8 @@ data class VisitDto(
   val visitType: VisitType,
   @Schema(description = "Visit Status", example = "BOOKED", required = true)
   val visitStatus: VisitStatus,
+  @Schema(description = "Visit Sub Status", example = "AUTO_APPROVED", required = true)
+  val visitSubStatus: VisitSubStatus,
   @Schema(description = "Outcome Status", example = "VISITOR_CANCELLED", required = false)
   val outcomeStatus: OutcomeStatus? = null,
   @Schema(description = "Visit Restriction", example = "OPEN", required = true)

@@ -18,4 +18,6 @@ data class BookingRequestDto(
   @Schema(description = "User type for user who actioned this request", required = true)
   @field:NotNull
   val userType: UserType,
+  @Schema(description = "flag to determine if visit should be a request or instant booking", required = false)
+  val isRequestBooking: Boolean? = false,
 )
