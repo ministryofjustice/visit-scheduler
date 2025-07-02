@@ -48,4 +48,13 @@ data class UpdateSessionTemplateDto(
 
   @Schema(description = "Session template user clients.", required = false)
   val clients: List<UserClientDto>? = null,
+
+  @Schema(description = "Determines behaviour of location groups. True equates to these location groups being included, false equates to them being excluded.", required = false)
+  val includeLocationGroupType: Boolean? = null,
+
+  @Schema(description = "Determines behaviour of category groups. True equates to these category groups being included, false equates to them being excluded.", required = false)
+  val includeCategoryGroupType: Boolean? = null,
+
+  @Schema(description = "Determines behaviour of incentive groups. True equates to these incentive groups being included, false equates to them being excluded.", required = false)
+  val includeIncentiveGroupType: Boolean? = null,
 )

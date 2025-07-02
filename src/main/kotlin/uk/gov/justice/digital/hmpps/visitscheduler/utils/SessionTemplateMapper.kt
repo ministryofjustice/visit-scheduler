@@ -31,8 +31,11 @@ class SessionTemplateMapper(
     sessionCapacity = createSessionTemplateDto.sessionCapacity,
     dayOfWeek = createSessionTemplateDto.dayOfWeek,
     weeklyFrequency = createSessionTemplateDto.weeklyFrequency,
+    includeLocationGroupType = createSessionTemplateDto.includeLocationGroupType,
     permittedLocationGroups = getSessionLocationGroups(createSessionTemplateDto.locationGroupReferences ?: emptyList()),
+    includeCategoryGroupType = createSessionTemplateDto.includeCategoryGroupType,
     prisonerCategoryGroups = getSessionCategoryGroups(createSessionTemplateDto.categoryGroupReferences ?: emptyList()),
+    includeIncentiveGroupType = createSessionTemplateDto.includeIncentiveGroupType,
     prisonerIncentiveLevelGroups = getSessionIncentiveLevelGroups(createSessionTemplateDto.incentiveLevelGroupReferences ?: emptyList()),
   )
 
@@ -48,8 +51,11 @@ class SessionTemplateMapper(
           sessionCapacity = sessionCapacity ?: SessionCapacityDto(open = sessionTemplate.openCapacity, closed = sessionTemplate.closedCapacity),
           dayOfWeek = sessionTemplate.dayOfWeek,
           weeklyFrequency = weeklyFrequency ?: sessionTemplate.weeklyFrequency,
+          includeLocationGroupType = updateSessionTemplateDto.includeLocationGroupType ?: sessionTemplate.includeLocationGroupType,
           permittedLocationGroups = getSessionLocationGroups(locationGroupReferences, sessionTemplate),
+          includeCategoryGroupType = updateSessionTemplateDto.includeCategoryGroupType ?: sessionTemplate.includeCategoryGroupType,
           prisonerCategoryGroups = getSessionCategoryGroups(categoryGroupReferences, sessionTemplate),
+          includeIncentiveGroupType = updateSessionTemplateDto.includeIncentiveGroupType ?: sessionTemplate.includeIncentiveGroupType,
           prisonerIncentiveLevelGroups = getSessionIncentiveLevelGroups(incentiveLevelGroupReferences, sessionTemplate),
         )
       }

@@ -238,7 +238,9 @@ fun createUpdateSessionTemplateDto(
   locationGroupReferences: MutableList<String> = mutableListOf(),
   categoryGroupReferences: MutableList<String> = mutableListOf(),
   incentiveLevelGroupReferences: MutableList<String> = mutableListOf(),
-  includeLocationGroupType: Boolean = true,
+  includeLocationGroupType: Boolean? = true,
+  includeCategoryGroupType: Boolean? = true,
+  includeIncentiveGroupType: Boolean? = true,
   clients: List<UserClientDto>? = null,
 ): UpdateSessionTemplateDto = UpdateSessionTemplateDto(
   name = name + dayOfWeek,
@@ -250,23 +252,32 @@ fun createUpdateSessionTemplateDto(
   weeklyFrequency = weeklyFrequency,
   categoryGroupReferences = categoryGroupReferences,
   incentiveLevelGroupReferences = incentiveLevelGroupReferences,
+  includeLocationGroupType = includeLocationGroupType,
+  includeCategoryGroupType = includeCategoryGroupType,
+  includeIncentiveGroupType = includeIncentiveGroupType,
   clients = clients,
 )
 
 fun createUpdateSessionTemplateDto(
   sessionTemplateDto: SessionTemplateDto,
   sessionTimeSlot: SessionTimeSlotDto? = null,
+  includeLocationGroupType: Boolean? = null,
   locationGroupReferences: List<String>? = null,
+  includeCategoryGroupType: Boolean? = null,
   categoryGroupReferences: List<String>? = null,
+  includeIncentiveGroupType: Boolean? = null,
   incentiveLevelReferences: List<String>? = null,
 ): UpdateSessionTemplateDto = UpdateSessionTemplateDto(
   name = sessionTemplateDto.name,
   sessionDateRange = sessionTemplateDto.sessionDateRange,
   sessionCapacity = sessionTemplateDto.sessionCapacity,
   sessionTimeSlot = sessionTimeSlot ?: sessionTemplateDto.sessionTimeSlot,
+  includeLocationGroupType = includeLocationGroupType ?: sessionTemplateDto.includeLocationGroupType,
   locationGroupReferences = locationGroupReferences ?: sessionTemplateDto.permittedLocationGroups.stream().map { it.reference }.toList(),
   weeklyFrequency = sessionTemplateDto.weeklyFrequency,
+  includeCategoryGroupType = includeCategoryGroupType ?: sessionTemplateDto.includeCategoryGroupType,
   categoryGroupReferences = categoryGroupReferences ?: sessionTemplateDto.prisonerCategoryGroups.stream().map { it.reference }.toList(),
+  includeIncentiveGroupType = includeIncentiveGroupType ?: sessionTemplateDto.includeIncentiveGroupType,
   incentiveLevelGroupReferences = incentiveLevelReferences ?: sessionTemplateDto.prisonerIncentiveLevelGroups.stream().map { it.reference }.toList(),
   visitRoom = sessionTemplateDto.visitRoom,
 )
@@ -349,8 +360,11 @@ fun getSessionDetailsDto(
   sessionCapacity = createSessionTemplateDto.sessionCapacity,
   dayOfWeek = createSessionTemplateDto.dayOfWeek,
   weeklyFrequency = createSessionTemplateDto.weeklyFrequency,
+  includeLocationGroupType = createSessionTemplateDto.includeLocationGroupType,
   permittedLocationGroups = permittedLocationGroups ?: emptyList(),
+  includeCategoryGroupType = createSessionTemplateDto.includeCategoryGroupType,
   prisonerCategoryGroups = prisonerCategoryGroups ?: emptyList(),
+  includeIncentiveGroupType = createSessionTemplateDto.includeIncentiveGroupType,
   prisonerIncentiveLevelGroups = prisonerIncentiveLevelGroups ?: emptyList(),
 )
 

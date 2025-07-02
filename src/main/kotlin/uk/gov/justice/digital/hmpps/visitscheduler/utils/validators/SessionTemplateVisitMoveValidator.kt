@@ -121,7 +121,7 @@ class SessionTemplateVisitMoveValidator(
     val toSessionLocations =
       sessionTemplateUtil.getPermittedSessionLocations(toSessionTemplate.permittedLocationGroups)
 
-    return sessionLocationMatcher.hasAllLowerOrEqualMatch(fromSessionLocations, toSessionLocations)
+    return sessionLocationMatcher.doesNewLocationsAccomodateOldOnes(fromSessionLocations, toSessionLocations)
   }
 
   private fun hasAllCategoriesMatch(fromSessionTemplate: SessionTemplateDto, toSessionTemplate: SessionTemplateDto): Boolean {

@@ -24,21 +24,43 @@ class UpdateSessionTemplateValidator(
   fun validate(sessionTemplate: SessionTemplateDto, updateSessionTemplateDto: UpdateSessionTemplateDto): List<String> {
     val errorMessages = mutableListOf<String>()
     val hasVisits = visitRepository.hasVisitsForSessionTemplate(sessionTemplate.reference)
-    validateUpdateSessionTemplateTime(sessionTemplate, updateSessionTemplateDto, hasVisits)?.let { errorMessages.add(it) }
-    validateUpdateSessionTemplateDate(sessionTemplate, updateSessionTemplateDto, hasVisits).let { errorMessages.addAll(it) }
-    validateUpdateSessionTemplateWeeklyFrequency(sessionTemplate, updateSessionTemplateDto, hasVisits)?.let { errorMessages.add(it) }
+    validateUpdateSessionTemplateTime(existingSessionTemplate = sessionTemplate, updateSessionTemplateDto = updateSessionTemplateDto, hasVisits = hasVisits)?.let {
+      errorMessages.add(it)
+    }
+    validateUpdateSessionTemplateDate(existingSessionTemplate = sessionTemplate, updateSessionTemplateDto = updateSessionTemplateDto, hasVisits = hasVisits).let {
+      errorMessages.addAll(it)
+    }
+    validateUpdateSessionTemplateWeeklyFrequency(existingSessionTemplate = sessionTemplate, updateSessionTemplateDto = updateSessionTemplateDto, hasVisits = hasVisits)?.let {
+      errorMessages.add(it)
+    }
 
     val hasFutureBookedVisits = visitRepository.hasBookedVisitsForSessionTemplate(sessionTemplate.reference, LocalDate.now())
     val updateSessionDetails = sessionTemplateMapper.getSessionDetails(sessionTemplate.reference, updateSessionTemplateDto)
+
     updateSessionTemplateDto.locationGroupReferences.let {
-      validateUpdateSessionLocation(sessionTemplate, updateSessionDetails, hasFutureBookedVisits)?.let { errorMessages.add(it) }
+      validateUpdateSessionLocation(
+        existingSessionTemplate = sessionTemplate,
+        updateSessionDetails = updateSessionDetails,
+        hasFutureBookedVisits = hasFutureBookedVisits,
+      )?.let { errorMessages.add(it) }
     }
+
     updateSessionTemplateDto.categoryGroupReferences.let {
-      validateUpdateSessionCategory(sessionTemplate, updateSessionDetails, hasFutureBookedVisits)?.let { errorMessages.add(it) }
+      validateUpdateSessionCategory(
+        existingSessionTemplate = sessionTemplate,
+        updateSessionDetails = updateSessionDetails,
+        hasFutureBookedVisits = hasFutureBookedVisits,
+      )?.let { errorMessages.add(it) }
     }
+
     updateSessionTemplateDto.incentiveLevelGroupReferences.let {
-      validateUpdateSessionIncentiveLevels(sessionTemplate, updateSessionDetails, hasFutureBookedVisits)?.let { errorMessages.add(it) }
+      validateUpdateSessionIncentiveLevels(
+        existingSessionTemplate = sessionTemplate,
+        updateSessionDetails = updateSessionDetails,
+        hasFutureBookedVisits = hasFutureBookedVisits,
+      )?.let { errorMessages.add(it) }
     }
+
     return errorMessages.toList()
   }
 
@@ -111,11 +133,34 @@ class UpdateSessionTemplateValidator(
 
   private fun validateUpdateSessionLocation(existingSessionTemplate: SessionTemplateDto, updateSessionDetails: SessionDetailsDto, hasFutureBookedVisits: Boolean): String? {
     // if a session has booked visits all locations should be accommodated post update
+    val errorMessage = "Cannot update locations to the new location list as all existing locations in session template are not catered for."
     if (hasFutureBookedVisits) {
       val existingSessionLocations = sessionTemplateUtil.getPermittedSessionLocations(existingSessionTemplate.permittedLocationGroups)
       val updatedSessionLocations = updateSessionDetails.permittedLocationGroups.flatMap { it.locations }.toSet()
-      if (!sessionLocationMatcher.hasAllLowerOrEqualMatch(existingSessionLocations, updatedSessionLocations)) {
-        return "Cannot update locations to the new location list as all existing locations in session template are not catered for."
+
+      // include to include
+      if (existingSessionTemplate.includeLocationGroupType && updateSessionDetails.includeLocationGroupType) {
+        if (!sessionLocationMatcher.doesNewLocationsAccomodateOldOnes(existingSessionLocations, updatedSessionLocations)) {
+          return errorMessage
+        }
+      } // exclude to exclude
+      else if (!existingSessionTemplate.includeLocationGroupType && !updateSessionDetails.includeLocationGroupType) {
+        if (!sessionLocationMatcher.doesNewExcludedLocationsExcludeOldOnes(existingSessionLocations, updatedSessionLocations)) {
+          return errorMessage
+        }
+      } // include to exclude
+      else if (existingSessionTemplate.includeLocationGroupType && !updateSessionDetails.includeLocationGroupType) {
+        if (sessionLocationMatcher.doesNewExcludeLocationsExcludeExistingIncludedOnes(updatedSessionLocations, existingSessionLocations)) {
+          return errorMessage
+        }
+      } // exclude to include
+      else if (!existingSessionTemplate.includeLocationGroupType && updateSessionDetails.includeLocationGroupType) {
+        // if all locations are included validation will pass - will fail for all other scenarios
+        return if (updateSessionDetails.permittedLocationGroups.isEmpty() && existingSessionTemplate.permittedLocationGroups.isNotEmpty()) {
+          null
+        } else {
+          errorMessage
+        }
       }
     }
 
@@ -123,12 +168,30 @@ class UpdateSessionTemplateValidator(
   }
 
   private fun validateUpdateSessionCategory(existingSessionTemplate: SessionTemplateDto, updateSessionDetails: SessionDetailsDto, hasFutureBookedVisits: Boolean): String? {
+    val errorMessage = "Cannot update categories to the new category list as all existing prisoner categories in session template are not catered for."
     // if a session has booked visits all categories should be accommodated post update
     if (hasFutureBookedVisits) {
       val existingCategories = sessionTemplateUtil.getPermittedPrisonerCategoryTypes(existingSessionTemplate.prisonerCategoryGroups)
       val updatedCategories = updateSessionDetails.prisonerCategoryGroups.flatMap { it.categories }.toSet()
-      if (!sessionCategoryMatcher.hasAllMatch(existingCategories, updatedCategories)) {
-        return "Cannot update categories to the new category list as all existing prisoner categories in session template are not catered for."
+      if (existingSessionTemplate.includeCategoryGroupType && updateSessionDetails.includeCategoryGroupType) {
+        if (!sessionCategoryMatcher.hasAllMatch(existingCategories, updatedCategories)) {
+          return errorMessage
+        }
+      } else if (!existingSessionTemplate.includeCategoryGroupType && !updateSessionDetails.includeCategoryGroupType) {
+        if (!sessionCategoryMatcher.hasAllHigherMatch(existingCategories, updatedCategories)) {
+          return errorMessage
+        }
+      } else if (existingSessionTemplate.includeCategoryGroupType && !updateSessionDetails.includeCategoryGroupType) {
+        if (sessionCategoryMatcher.hasAnyMatchForUpdate(updatedCategories, existingCategories)) {
+          return errorMessage
+        }
+      } else if (!existingSessionTemplate.includeCategoryGroupType && updateSessionDetails.includeCategoryGroupType) {
+        // if all categories are included its ok
+        return if (updateSessionDetails.prisonerCategoryGroups.isEmpty() && existingSessionTemplate.prisonerCategoryGroups.isNotEmpty()) {
+          null
+        } else {
+          errorMessage
+        }
       }
     }
 
@@ -136,12 +199,32 @@ class UpdateSessionTemplateValidator(
   }
 
   private fun validateUpdateSessionIncentiveLevels(existingSessionTemplate: SessionTemplateDto, updateSessionDetails: SessionDetailsDto, hasFutureBookedVisits: Boolean): String? {
+    val errorMessage = "Cannot update incentive levels to the new incentive levels list as all existing incentive levels in session template are not catered for."
+
     // if a session has booked visits all categories should be accommodated post update
     if (hasFutureBookedVisits) {
       val existingIncentiveLevels = sessionTemplateUtil.getPermittedIncentiveLevels(existingSessionTemplate.prisonerIncentiveLevelGroups)
       val updatedIncentiveLevels = updateSessionDetails.prisonerIncentiveLevelGroups.flatMap { it.incentiveLevels }.toSet()
-      if (!sessionIncentiveLevelMatcher.hasAllMatch(existingIncentiveLevels, updatedIncentiveLevels)) {
-        return "Cannot update incentive levels to the new incentive levels list as all existing incentive levels in session template are not catered for."
+
+      if (existingSessionTemplate.includeIncentiveGroupType && updateSessionDetails.includeIncentiveGroupType) {
+        if (!sessionIncentiveLevelMatcher.hasAllMatch(existingIncentiveLevels, updatedIncentiveLevels)) {
+          return errorMessage
+        }
+      } else if (!existingSessionTemplate.includeIncentiveGroupType && !updateSessionDetails.includeIncentiveGroupType) {
+        if (!sessionIncentiveLevelMatcher.hasAllHigherMatch(existingIncentiveLevels, updatedIncentiveLevels)) {
+          return errorMessage
+        }
+      } else if (existingSessionTemplate.includeIncentiveGroupType && !updateSessionDetails.includeIncentiveGroupType) {
+        if (sessionIncentiveLevelMatcher.hasAnyMatchForUpdate(updatedIncentiveLevels, existingIncentiveLevels)) {
+          return errorMessage
+        }
+      } else if (!existingSessionTemplate.includeIncentiveGroupType && updateSessionDetails.includeIncentiveGroupType) {
+        // if all incentive levels are included its ok
+        return if (updateSessionDetails.prisonerIncentiveLevelGroups.isEmpty() && existingSessionTemplate.prisonerIncentiveLevelGroups.isNotEmpty()) {
+          null
+        } else {
+          errorMessage
+        }
       }
     }
 
