@@ -80,6 +80,7 @@ hmpps.sqs:
       arn: arn:aws:sns:eu-west-2:000000000000:${random.uuid}
 
 feature:
+  request-booking-enabled: true
   events:
     sns:
       enabled: true

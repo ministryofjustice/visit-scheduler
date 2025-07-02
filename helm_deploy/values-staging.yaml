@@ -16,6 +16,7 @@ generic-service:
     PRISONER-CONTACT_REGISTRY_URL: https://prisoner-contact-registry-dev.prison.service.justice.gov.uk
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.json
     FEATURE_EVENTS_SNS_ENABLED: false
+    FEATURE_REQUEST-BOOKING-ENABLED: true
 
   scheduledDowntime:
     enabled: true

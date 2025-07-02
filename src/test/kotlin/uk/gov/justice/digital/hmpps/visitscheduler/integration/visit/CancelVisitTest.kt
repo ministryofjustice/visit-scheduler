@@ -580,6 +580,7 @@ class CancelVisitTest : IntegrationTestBase() {
         assertThat(it["prisonerId"]).isEqualTo(cancelledVisit.prisonerId)
         assertThat(it["prisonId"]).isEqualTo(cancelledVisit.prisonCode)
         assertThat(it["visitStatus"]).isEqualTo(cancelledVisit.visitStatus.name)
+        assertThat(it["visitSubStatus"]).isEqualTo(cancelledVisit.visitSubStatus.name)
         assertThat(it["visitRestriction"]).isEqualTo(cancelledVisit.visitRestriction.name)
         assertThat(it["visitStart"]).isEqualTo(cancelledVisit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
         assertThat(it["visitEnd"]).isEqualTo(cancelledVisit.endTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
@@ -607,6 +608,7 @@ class CancelVisitTest : IntegrationTestBase() {
       "prisonerId" to cancelledVisit.prisonerId,
       "prisonId" to cancelledVisit.prisonCode,
       "visitStatus" to cancelledVisit.visitStatus.name,
+      "visitSubStatus" to cancelledVisit.visitSubStatus.name,
       "visitRestriction" to cancelledVisit.visitRestriction.name,
       "visitStart" to cancelledVisit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME),
       "visitEnd" to cancelledVisit.endTimestamp.format(DateTimeFormatter.ISO_DATE_TIME),
