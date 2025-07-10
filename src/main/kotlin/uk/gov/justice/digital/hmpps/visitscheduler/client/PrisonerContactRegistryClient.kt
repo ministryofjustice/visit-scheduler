@@ -19,15 +19,15 @@ class PrisonerContactRegistryClient(
 ) {
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
+    const val GET_PRISONERS_APPROVED_SOCIAL_CONTACTS_URL = "/v2/prisoners/{prisonerId}/contacts/social/approved"
   }
 
-  fun getPrisonersSocialContacts(
+  fun getPrisonersApprovedSocialContacts(
     prisonerId: String,
     withAddress: Boolean,
-    approvedVisitorsOnly: Boolean,
   ): List<PrisonerContactDto>? {
-    val uri = "/v2/prisoners/$prisonerId/contacts/social"
-    return getPrisonersSocialContactsAsMono(prisonerId, withAddress = withAddress, approvedVisitorsOnly = approvedVisitorsOnly)
+    val uri = GET_PRISONERS_APPROVED_SOCIAL_CONTACTS_URL.replace("{prisonerId}", prisonerId)
+    return getPrisonersSocialContactsAsMono(prisonerId, withAddress = withAddress)
       .onErrorResume { e ->
         if (!isNotFoundError(e)) {
           LOG.error("getPrisonersSocialContacts Failed for get request $uri")
@@ -43,11 +43,10 @@ class PrisonerContactRegistryClient(
   private fun getPrisonersSocialContactsAsMono(
     prisonerId: String,
     withAddress: Boolean,
-    approvedVisitorsOnly: Boolean,
   ): Mono<List<PrisonerContactDto>> {
-    val uri = "/v2/prisoners/$prisonerId/contacts/social"
+    val uri = GET_PRISONERS_APPROVED_SOCIAL_CONTACTS_URL.replace("{prisonerId}", prisonerId)
     return webClient.get().uri(uri) {
-      getSocialContactsUriBuilder(withAddress = withAddress, approvedVisitorsOnly = approvedVisitorsOnly, uriBuilder = it).build()
+      getSocialContactsUriBuilder(withAddress = withAddress, uriBuilder = it).build()
     }
       .retrieve()
       .bodyToMono<List<PrisonerContactDto>>()
@@ -55,11 +54,9 @@ class PrisonerContactRegistryClient(
 
   private fun getSocialContactsUriBuilder(
     withAddress: Boolean,
-    approvedVisitorsOnly: Boolean,
     uriBuilder: UriBuilder,
   ): UriBuilder {
     uriBuilder.queryParam("withAddress", withAddress)
-    uriBuilder.queryParam("approvedVisitorsOnly", approvedVisitorsOnly)
     return uriBuilder
   }
 }
