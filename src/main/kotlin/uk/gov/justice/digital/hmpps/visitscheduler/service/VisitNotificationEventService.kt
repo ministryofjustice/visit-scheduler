@@ -276,10 +276,10 @@ class VisitNotificationEventService(
     )
 
     if (affectedVisits.isNotEmpty()) {
-      // check if the visitor that was unapproved is still a SOCIAL contact as we have instances where the
+      // check if the visitor that was unapproved is still an approved SOCIAL contact as we have instances where the
       // non-SOCIAL relationship of the visitor has been unapproved which should not affect visits.
       if (doesSocialRelationshipForVisitorStillExist(notificationDto.prisonerNumber, notificationDto.visitorId)) {
-        LOG.info("Visitor ID {} still exists as a SOCIAL contact for prisoner {}, ignoring contact unapproved event.", notificationDto.visitorId, notificationDto.prisonerNumber)
+        LOG.info("Visitor ID {} still exists as an approved SOCIAL contact for prisoner {}, ignoring contact unapproved event.", notificationDto.visitorId, notificationDto.prisonerNumber)
         return
       }
 
@@ -297,10 +297,10 @@ class VisitNotificationEventService(
 
     val prisonCode = prisonerService.getPrisonerPrisonCodeFromPrisonId(notificationDto.prisonerNumber)
     prisonCode?.let {
-      // check if the visitor that was approved is still a SOCIAL contact as we have instances where the
+      // check if the visitor that was approved is still an approved SOCIAL contact as we have instances where the
       // non-SOCIAL relationship of the visitor has been approved which should not affect visits.
       if (!doesSocialRelationshipForVisitorStillExist(notificationDto.prisonerNumber, notificationDto.visitorId)) {
-        LOG.info("Visitor ID {} does not exist as a SOCIAL contact for prisoner {}, ignoring contact approved event.", notificationDto.visitorId, notificationDto.prisonerNumber)
+        LOG.info("Visitor ID {} does not exist as an approved SOCIAL contact for prisoner {}, ignoring contact approved event.", notificationDto.visitorId, notificationDto.prisonerNumber)
         return
       }
 
@@ -594,7 +594,7 @@ class VisitNotificationEventService(
   }
 
   private fun doesSocialRelationshipForVisitorStillExist(prisonerId: String, visitorId: String): Boolean {
-    val prisonerApprovedContacts = prisonerContactRegistryClient.getPrisonersSocialContacts(prisonerId, withAddress = false, approvedVisitorsOnly = true)
+    val prisonerApprovedContacts = prisonerContactRegistryClient.getPrisonersApprovedSocialContacts(prisonerId, withAddress = false)
     return prisonerApprovedContacts?.filter { it.personId != null }?.map { it.personId.toString() }?.contains(visitorId) ?: false
   }
 
