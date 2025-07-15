@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitRequestsCountDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitRequestsCountDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitRequestsService
 
 const val VISIT_REQUEST_CONTROLLER_PATH: String = "/visits/requests"

@@ -5,18 +5,20 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpHeaders
+import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_REQUEST_COUNT_FOR_PRISON_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitRequestsCountDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCountVisitRequests
-import uk.gov.justice.digital.hmpps.visitscheduler.integration.visit.notifications.NotificationTestBase
+import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import java.time.LocalDate
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("Get $VISIT_REQUEST_COUNT_FOR_PRISON_PATH")
-class CountVisitRequestsTest : NotificationTestBase() {
+class CountVisitRequestsTest : IntegrationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
@@ -57,7 +59,7 @@ class CountVisitRequestsTest : NotificationTestBase() {
 
     // Then
     responseSpec.expectStatus().isOk
-    val visitRequestsCountDto = this.getVisitRequestsCountDto(responseSpec)
+    val visitRequestsCountDto = getVisitRequestsCountDto(responseSpec)
     Assertions.assertThat(visitRequestsCountDto.count).isEqualTo(2)
   }
 
@@ -90,7 +92,7 @@ class CountVisitRequestsTest : NotificationTestBase() {
 
     // Then
     responseSpec.expectStatus().isOk
-    val visitRequestsCountDto = this.getVisitRequestsCountDto(responseSpec)
+    val visitRequestsCountDto = getVisitRequestsCountDto(responseSpec)
     Assertions.assertThat(visitRequestsCountDto.count).isEqualTo(0)
   }
 
@@ -103,7 +105,9 @@ class CountVisitRequestsTest : NotificationTestBase() {
 
     // Then
     responseSpec.expectStatus().isOk
-    val visitRequestsCountDto = this.getVisitRequestsCountDto(responseSpec)
+    val visitRequestsCountDto = getVisitRequestsCountDto(responseSpec)
     Assertions.assertThat(visitRequestsCountDto.count).isEqualTo(0)
   }
+
+  fun getVisitRequestsCountDto(responseSpec: ResponseSpec): VisitRequestsCountDto = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, VisitRequestsCountDto::class.java)
 }

@@ -19,7 +19,6 @@ import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NotificationCountDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitNotificationEventDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitRequestsCountDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitNotificationEventHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.HmppsAuthExtension
@@ -100,8 +99,6 @@ abstract class NotificationTestBase : IntegrationTestBase() {
   }
 
   fun getNotificationCountDto(responseSpec: ResponseSpec): NotificationCountDto = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, NotificationCountDto::class.java)
-
-  fun getVisitRequestsCountDto(responseSpec: ResponseSpec): VisitRequestsCountDto = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, VisitRequestsCountDto::class.java)
 
   fun getVisitNotificationEvents(responseSpec: ResponseSpec): Array<VisitNotificationEventDto> = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<VisitNotificationEventDto>::class.java)
 }
