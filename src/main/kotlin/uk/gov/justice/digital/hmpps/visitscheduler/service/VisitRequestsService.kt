@@ -46,7 +46,7 @@ class VisitRequestsService(
         visitReference = visit.reference,
         visitDate = visit.sessionSlot.slotDate,
         requestedOnDate = requestedOnDate,
-        prisonerName = (prisoner.firstName + prisoner.lastName),
+        prisonerName = (prisoner.firstName + " " + prisoner.lastName),
         prisonNumber = visit.prisonerId,
         mainContact = visit.visitContact?.name,
       )
