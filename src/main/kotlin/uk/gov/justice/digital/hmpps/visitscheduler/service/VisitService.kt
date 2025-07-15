@@ -44,7 +44,7 @@ class VisitService(
   private val eventAuditService: VisitEventAuditService,
   private val snsService: SnsService,
   @Value("\${feature.request-booking-enabled:false}") private val requestBookingFeatureEnabled: Boolean,
-  ) {
+) {
 
   @Lazy
   @Autowired
@@ -182,7 +182,6 @@ class VisitService(
     bookedVisitDto: VisitDto,
     bookingRequestDto: BookingRequestDto,
   ): VisitDto {
-
     val eventType = if (requestBookingFeatureEnabled) {
       if (bookingRequestDto.isRequestBooking == true) {
         EventAuditType.REQUESTED_VISIT
