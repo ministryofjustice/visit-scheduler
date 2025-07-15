@@ -9,6 +9,12 @@ data class PrisonerDto(
   @Schema(description = "Prisoner Id", example = "AF34567G", required = true)
   val prisonerId: String,
 
+  @Schema(required = true, description = "First Name", example = "Robert")
+  val firstName: String,
+
+  @Schema(required = true, description = "Last name", example = "Larsen")
+  val lastName: String,
+
   @Schema(description = "Prisoner Category", example = "C")
   val category: String? = null,
 

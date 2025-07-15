@@ -375,4 +375,17 @@ interface VisitRepository :
     nativeQuery = true,
   )
   fun getCountOfRequestedVisitsForPrison(prisonCode: String): Long
+
+  @Query(
+    "SELECT * " +
+      "FROM visit v " +
+      "INNER JOIN prison p ON p.id = v.prison_id " +
+      "INNER JOIN session_slot sl ON sl.id = v.session_slot_id " +
+      "WHERE p.code = :prisonCode AND " +
+      "sl.slot_start >= NOW() AND " +
+      "v.visit_status = 'BOOKED' AND " +
+      "v.visit_sub_status = 'REQUESTED' ",
+    nativeQuery = true,
+  )
+  fun getRequestedVisitsForPrison(prisonCode: String): List<Visit>
 }
