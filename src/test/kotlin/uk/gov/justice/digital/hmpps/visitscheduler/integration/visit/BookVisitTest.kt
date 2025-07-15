@@ -50,7 +50,7 @@ import java.time.format.DateTimeFormatter
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("PUT $VISIT_BOOK")
-@TestPropertySource(properties = ["feature.request-booking-enabled=true"])
+@TestPropertySource(properties = ["feature.request-booking-enabled=false"])
 class BookVisitTest : IntegrationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
@@ -114,7 +114,7 @@ class BookVisitTest : IntegrationTestBase() {
     assertThat(visitEntity.getApplications().size).isEqualTo(1)
     assertThat(visitEntity.getLastApplication()?.reference).isEqualTo(applicationReference)
     assertThat(visitEntity.getLastApplication()?.applicationStatus).isEqualTo(ACCEPTED)
-    assertThat(visitEntity.visitSubStatus).isEqualTo(VisitSubStatus.REQUESTED)
+    assertThat(visitEntity.visitSubStatus).isEqualTo(VisitSubStatus.AUTO_APPROVED)
 
     assertBookedEvent(visitDto)
   }

@@ -39,9 +39,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepositor
 import java.time.format.DateTimeFormatter
 
 @Transactional(propagation = SUPPORTS)
-@DisplayName("PUT $VISIT_BOOK requested visit feature - disabled")
-@TestPropertySource(properties = ["feature.request-booking-enabled=false"])
-class BookARequestedVisitFeatureDisabledTest : IntegrationTestBase() {
+@DisplayName("PUT $VISIT_BOOK requested visit feature - enabled")
+@TestPropertySource(properties = ["feature.request-booking-enabled=true"])
+class BookARequestedVisitFeatureEnabledTest : IntegrationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
@@ -79,7 +79,7 @@ class BookARequestedVisitFeatureDisabledTest : IntegrationTestBase() {
       roleVisitSchedulerHttpHeaders,
       applicationReference,
       userType = PUBLIC,
-      bookingRequestDto = BookingRequestDto("booking_guy", ApplicationMethodType.PHONE, false, PUBLIC, true),
+      bookingRequestDto = BookingRequestDto("booking_guy", ApplicationMethodType.WEBSITE, false, PUBLIC, true),
     )
 
     // Then
@@ -99,12 +99,12 @@ class BookARequestedVisitFeatureDisabledTest : IntegrationTestBase() {
 
   private fun assertAuditEvent(visitDto: VisitDto, visitEntity: Visit, userType: UserType = STAFF) {
     val eventAudit = this.eventAuditRepository.findLastEventByBookingReference(visitDto.reference)
-    assertThat(eventAudit.type).isEqualTo(EventAuditType.BOOKED_VISIT)
+    assertThat(eventAudit.type).isEqualTo(EventAuditType.REQUESTED_VISIT)
     assertThat(eventAudit.actionedBy).isNotNull()
     assertThat(eventAudit.actionedBy.userType).isEqualTo(userType)
     assertThat(eventAudit.actionedBy.userName).isNull()
     assertThat(eventAudit.actionedBy.bookerReference).isEqualTo("booking_guy")
-    assertThat(eventAudit.applicationMethodType).isEqualTo(ApplicationMethodType.PHONE)
+    assertThat(eventAudit.applicationMethodType).isEqualTo(ApplicationMethodType.WEBSITE)
     assertThat(eventAudit.bookingReference).isEqualTo(visitEntity.reference)
     assertThat(eventAudit.sessionTemplateReference).isEqualTo(visitEntity.sessionSlot.sessionTemplateReference)
     assertThat(eventAudit.applicationReference).isEqualTo(visitEntity.getLastApplication()!!.reference)
@@ -124,7 +124,7 @@ class BookARequestedVisitFeatureDisabledTest : IntegrationTestBase() {
     assertThat(visitDto.visitStatus).isEqualTo(BOOKED)
     assertThat(visitDto.visitRestriction).isEqualTo(application.restriction)
     assertThat(visitDto.visitStatus).isEqualTo(BOOKED)
-    assertThat(visitDto.visitSubStatus).isEqualTo(VisitSubStatus.AUTO_APPROVED)
+    assertThat(visitDto.visitSubStatus).isEqualTo(VisitSubStatus.REQUESTED)
     if (application.visitContact != null) {
       assertThat(visitDto.visitContact.name).isEqualTo(application.visitContact!!.name)
       assertThat(visitDto.visitContact.telephone).isEqualTo(application.visitContact!!.telephone)

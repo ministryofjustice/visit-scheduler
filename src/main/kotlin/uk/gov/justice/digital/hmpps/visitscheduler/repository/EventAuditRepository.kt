@@ -16,7 +16,7 @@ interface EventAuditRepository : JpaRepository<EventAudit, Long> {
 
   @Query(
     "SELECT * FROM event_audit " +
-      "WHERE booking_reference = :bookingReference AND type = 'BOOKED_VISIT'  " +
+      "WHERE booking_reference = :bookingReference AND (type = 'BOOKED_VISIT' or type = 'REQUESTED_VISIT') " +
       "ORDER BY id DESC LIMIT 1 ",
     nativeQuery = true,
   )
@@ -24,7 +24,7 @@ interface EventAuditRepository : JpaRepository<EventAudit, Long> {
 
   @Query(
     "SELECT * FROM event_audit " +
-      "WHERE booking_reference = :bookingReference AND (type = 'BOOKED_VISIT' or type = 'MIGRATED_VISIT') " +
+      "WHERE booking_reference = :bookingReference AND (type = 'BOOKED_VISIT' or type = 'MIGRATED_VISIT' or type = 'REQUESTED_VISIT') " +
       "ORDER BY create_timestamp DESC LIMIT 1 ",
     nativeQuery = true,
   )
@@ -32,14 +32,14 @@ interface EventAuditRepository : JpaRepository<EventAudit, Long> {
 
   @Query(
     "SELECT ea.actionedBy FROM EventAudit ea " +
-      " WHERE ea.bookingReference = :bookingReference AND ea.type in (uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.UPDATED_VISIT,uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.BOOKED_VISIT, uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.MIGRATED_VISIT) " +
+      " WHERE ea.bookingReference = :bookingReference AND ea.type in (uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.UPDATED_VISIT,uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.BOOKED_VISIT, uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.MIGRATED_VISIT, uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.REQUESTED_VISIT) " +
       "ORDER BY ea.id DESC LIMIT 1 ",
   )
   fun getLastUserToUpdateBookingByReference(bookingReference: String): ActionedBy
 
   @Query(
     "SELECT ea.actionedBy FROM EventAudit ea " +
-      " WHERE ea.bookingReference = :bookingReference AND ea.type in (uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.BOOKED_VISIT, uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.MIGRATED_VISIT) " +
+      " WHERE ea.bookingReference = :bookingReference AND ea.type in (uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.BOOKED_VISIT, uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.MIGRATED_VISIT, uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.REQUESTED_VISIT) " +
       "ORDER BY ea.id DESC LIMIT 1 ",
   )
   fun getLastBookedOrMigratedUser(bookingReference: String): ActionedBy?
