@@ -362,4 +362,14 @@ interface VisitRepository :
     nativeQuery = true,
   )
   fun getVisitReferenceByExternalSystemClientReference(clientReference: String): List<String>
+
+  @Query(
+    "SELECT COUNT(*) AS count FROM visit v " +
+      "JOIN prison p ON p.id = v.prison_id " +
+      "WHERE p.code = :prisonCode AND " +
+      "v.visit_status = 'BOOKED' AND " +
+      "v.visit_sub_status = 'REQUESTED' ",
+    nativeQuery = true,
+  )
+  fun getCountOfRequestedVisitsForPrison(prisonCode: String): Long
 }
