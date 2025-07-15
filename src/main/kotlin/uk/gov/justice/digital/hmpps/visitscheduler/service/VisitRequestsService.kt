@@ -43,6 +43,7 @@ class VisitRequestsService(
         .toLocalDate()
 
       val visitRequestSummaryDto = VisitRequestSummaryDto(
+        visitReference = visit.reference,
         visitDate = visit.sessionSlot.slotDate,
         requestedOnDate = requestedOnDate,
         prisonerName = (prisoner.firstName + prisoner.lastName),

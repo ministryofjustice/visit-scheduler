@@ -4,6 +4,9 @@ import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDate
 
 class VisitRequestSummaryDto(
+  @field:Schema(description = "Visit reference", required = true)
+  val visitReference: String,
+
   @field:Schema(description = "Visit date", required = true)
   val visitDate: LocalDate,
 
