@@ -75,7 +75,8 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
       " JOIN session_slot ss ON ss.id = v.session_slot_id " +
       " JOIN prison p ON p.id = v.prison_id AND p.code = :prisonCode " +
       "WHERE v.visit_status = 'BOOKED' " +
-      "  AND ss.slot_start  >= NOW()",
+      "AND v.visit_sub_status IN ('APPROVED', 'AUTO_APPROVED') " +
+      "AND ss.slot_start  >= NOW()",
     nativeQuery = true,
   )
   fun getNotificationGroupsCountByPrisonCode(prisonCode: String): Int?
@@ -87,6 +88,7 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
       " JOIN session_slot ss ON ss.id = v.session_slot_id " +
       " JOIN prison p ON p.id = v.prison_id AND p.code = :prisonCode " +
       "WHERE v.visit_status = 'BOOKED' " +
+      "AND v.visit_sub_status IN ('APPROVED', 'AUTO_APPROVED') " +
       "  AND ss.slot_start >= NOW() " +
       "  AND vne.type IN (:notificationEventTypes)",
     nativeQuery = true,
@@ -98,7 +100,9 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
       " JOIN visit v ON v.id  = vne.visit_id " +
       " JOIN prison p on p.id  = v.prison_id  AND p.code= :prisonCode " +
       " JOIN session_slot ss on ss.id  = v.session_slot_id " +
-      " WHERE v.visit_status = 'BOOKED' AND ss.slot_start >= NOW()  " +
+      "WHERE v.visit_status = 'BOOKED' " +
+      "AND v.visit_sub_status IN ('APPROVED', 'AUTO_APPROVED') " +
+      "AND ss.slot_start >= NOW()  " +
       " ORDER BY ss.slot_start, v.id",
     nativeQuery = true,
   )
@@ -110,6 +114,7 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
       " JOIN prison p on p.id  = v.prison_id  AND p.code= :prisonCode " +
       " JOIN session_slot ss on ss.id  = v.session_slot_id " +
       " WHERE v.visit_status = 'BOOKED' AND ss.slot_start >= NOW()  " +
+      "AND v.visit_sub_status IN ('APPROVED', 'AUTO_APPROVED') " +
       "  AND vne.type IN (:notificationEventTypes) " +
       " ORDER BY ss.slot_start, v.id",
     nativeQuery = true,
