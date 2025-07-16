@@ -58,6 +58,16 @@ class CountVisitNotificationTest : NotificationTestBase() {
     )
     eventAuditEntityHelper.create(visitSecondary)
 
+    val requestedVisit = visitEntityHelper.create(
+      prisonerId = primaryPrisonerId,
+      slotDate = LocalDate.now().plusDays(2),
+      visitStatus = BOOKED,
+      visitSubStatus = VisitSubStatus.REQUESTED,
+      prisonCode = sessionTemplateDefault.prison.code,
+      sessionTemplate = sessionTemplateDefault,
+    )
+    eventAuditEntityHelper.create(requestedVisit)
+
     val sessionTemplateTst = sessionTemplateEntityHelper.create(prisonCode = "TST")
 
     val visitOther = visitEntityHelper.create(
