@@ -58,6 +58,7 @@ class CountVisitNotificationTest : NotificationTestBase() {
     )
     eventAuditEntityHelper.create(visitSecondary)
 
+    // Will not be included in count, as it's sub status is REQUESTED.
     val requestedVisit = visitEntityHelper.create(
       prisonerId = primaryPrisonerId,
       slotDate = LocalDate.now().plusDays(2),

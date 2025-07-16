@@ -62,6 +62,7 @@ class FutureNotificationVisitsTest : NotificationTestBase() {
       notificationEventType = NON_ASSOCIATION_EVENT,
     )
 
+    // Will not be included in returned list, as it's sub status is REQUESTED.
     val requestedVisitWithNotification = createApplicationAndVisit(
       prisonerId = primaryPrisonerId,
       slotDate = LocalDate.now().plusDays(5),
@@ -160,6 +161,7 @@ class FutureNotificationVisitsTest : NotificationTestBase() {
       notificationEventType = NON_ASSOCIATION_EVENT,
     )
 
+    // Will not be included in returned list, as it's sub status is REQUESTED.
     val requestedVisitWithNotification = createApplicationAndVisit(
       prisonerId = primaryPrisonerId,
       slotDate = LocalDate.now().plusDays(5),
