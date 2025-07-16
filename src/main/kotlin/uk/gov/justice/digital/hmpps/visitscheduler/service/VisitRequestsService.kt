@@ -31,14 +31,11 @@ class VisitRequestsService(
 
     val visitRequestSummaryList = mutableListOf<VisitRequestSummaryDto>()
 
+    val prisonerInfos = prisonerService.getPrisoners(visitRequests.distinctBy { it.prisonerId }.map { it.prisonerId })
+
     for (visit in visitRequests) {
       // To avoid failing the entire call, if we cannot get the prisoner details, swallow the exception and use placeholder values instead of name.
-      val prisoner = try {
-        prisonerService.getPrisoner(visit.prisonerId)
-      } catch (e: Exception) {
-        LOG.error("Unable to find prisoner ${visit.prisonerId}, using placeholder for visit request summary prisoner name", e)
-        null
-      }
+      val prisoner = prisonerInfos[visit.prisonerId]
 
       val requestedOnDate = visitEventAuditService.findByBookingReferenceOrderById(visit.reference)
         .first { event -> event.type == EventAuditType.REQUESTED_VISIT }

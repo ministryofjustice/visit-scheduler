@@ -120,6 +120,21 @@ class PrisonerService(
     }
   }
 
+  fun getPrisoners(prisonerIds: List<String>): Map<String, PrisonerDto?> {
+    val prisonerInfoMap = mutableMapOf<String, PrisonerDto?>()
+    prisonerIds.forEach { prisonerId ->
+      val prisoner = try {
+        getPrisoner(prisonerId)
+      } catch (e: Exception) {
+        LOG.info("No prisoner found for prisoner id - $prisonerId")
+        null
+      }
+      prisonerInfoMap[prisonerId] = prisoner
+    }
+
+    return prisonerInfoMap
+  }
+
   fun isPrisonerInTemporaryLocation(levels: List<PrisonerHousingLevelDto>): Boolean = (levels.isNotEmpty() && TransitionalLocationTypes.contains(levels[0].code))
 
   fun hasPrisonGotSessionsWithPrisonersTransitionalLocation(sessionTemplates: List<SessionTemplate>, prisonersTransitionalLocation: String): Boolean = sessionTemplates.asSequence().filter { it.includeLocationGroupType }.map { it.permittedSessionLocationGroups }.flatten().map { it.sessionLocations }.flatten().any { it.levelOneCode == prisonersTransitionalLocation }
