@@ -13,8 +13,11 @@ class VisitRequestSummaryDto(
   @field:Schema(description = "Date the visit request was made", required = true)
   val requestedOnDate: LocalDate,
 
-  @field:Schema(description = "Name of the prisoner who is being visited", required = true)
-  val prisonerName: String,
+  @field:Schema(description = "First name of the prisoner who is being visited", required = true)
+  val prisonerFirstName: String,
+
+  @field:Schema(description = "Last name of the prisoner who is being visited", required = true)
+  val prisonerLastName: String,
 
   @field:Schema(description = "ID of the prisoner who is being visited", required = true)
   val prisonNumber: String,

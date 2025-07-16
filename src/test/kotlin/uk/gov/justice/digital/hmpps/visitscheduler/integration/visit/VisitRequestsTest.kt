@@ -79,6 +79,8 @@ class VisitRequestsTest : IntegrationTestBase() {
     responseSpec.expectStatus().isOk
     val requestVisitsSummaryList = getVisitRequestsForPrisonResult(responseSpec)
     Assertions.assertThat(requestVisitsSummaryList).hasSize(2)
+
+    Assertions.assertThat(requestVisitsSummaryList.first().visitDate).isEqualTo(requestVisit2.sessionSlot.slotDate)
   }
 
   @Test
@@ -112,7 +114,8 @@ class VisitRequestsTest : IntegrationTestBase() {
     val requestVisitsSummaryList = getVisitRequestsForPrisonResult(responseSpec)
     Assertions.assertThat(requestVisitsSummaryList).hasSize(1)
 
-    Assertions.assertThat(requestVisitsSummaryList.first().prisonerName).isEqualTo(requestVisit1.prisonerId)
+    Assertions.assertThat(requestVisitsSummaryList.first().prisonerFirstName).isEqualTo(requestVisit1.prisonerId)
+    Assertions.assertThat(requestVisitsSummaryList.first().prisonerLastName).isEqualTo(requestVisit1.prisonerId)
   }
 
   @Test

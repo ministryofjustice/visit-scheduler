@@ -49,11 +49,8 @@ class VisitRequestsService(
         visitReference = visit.reference,
         visitDate = visit.sessionSlot.slotDate,
         requestedOnDate = requestedOnDate,
-        prisonerName = if (prisoner != null) {
-          (prisoner.firstName + " " + prisoner.lastName)
-        } else {
-          visit.prisonerId
-        },
+        prisonerFirstName = prisoner?.firstName ?: visit.prisonerId,
+        prisonerLastName = prisoner?.lastName ?: visit.prisonerId,
         prisonNumber = visit.prisonerId,
         mainContact = visit.visitContact?.name,
       )
@@ -61,6 +58,6 @@ class VisitRequestsService(
       visitRequestSummaryList.add(visitRequestSummaryDto)
     }
 
-    return visitRequestSummaryList
+    return visitRequestSummaryList.sortedBy { it.visitDate }
   }
 }
