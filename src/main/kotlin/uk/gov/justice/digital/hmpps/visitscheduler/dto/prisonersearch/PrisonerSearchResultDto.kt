@@ -7,6 +7,12 @@ data class PrisonerSearchResultDto(
   @Schema(description = "Prisoner Number", example = "A1234AA", required = true)
   val prisonerNumber: String? = null,
 
+  @Schema(required = true, description = "First Name", example = "Robert")
+  val firstName: String,
+
+  @Schema(required = true, description = "Last name", example = "Larsen")
+  val lastName: String,
+
   @Schema(description = "Incentive level", required = false)
   val currentIncentive: CurrentIncentiveDto? = null,
 

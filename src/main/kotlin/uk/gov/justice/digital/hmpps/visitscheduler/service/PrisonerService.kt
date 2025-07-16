@@ -116,8 +116,23 @@ class PrisonerService(
         }
       }
 
-      PrisonerDto(prisonerId, prisonerSearchResultDto.category, incentiveLevel, prisonCode = prisonerSearchResultDto.prisonId, prisonerSearchResultDto.convictedStatus)
+      PrisonerDto(prisonerId, prisonerSearchResultDto.firstName, prisonerSearchResultDto.lastName, prisonerSearchResultDto.category, incentiveLevel, prisonCode = prisonerSearchResultDto.prisonId, prisonerSearchResultDto.convictedStatus)
     }
+  }
+
+  fun getPrisoners(prisonerIds: List<String>): Map<String, PrisonerDto?> {
+    val prisonerInfoMap = mutableMapOf<String, PrisonerDto?>()
+    prisonerIds.forEach { prisonerId ->
+      val prisoner = try {
+        getPrisoner(prisonerId)
+      } catch (e: Exception) {
+        LOG.info("No prisoner found for prisoner id - $prisonerId")
+        null
+      }
+      prisonerInfoMap[prisonerId] = prisoner
+    }
+
+    return prisonerInfoMap
   }
 
   fun isPrisonerInTemporaryLocation(levels: List<PrisonerHousingLevelDto>): Boolean = (levels.isNotEmpty() && TransitionalLocationTypes.contains(levels[0].code))

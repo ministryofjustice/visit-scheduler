@@ -83,7 +83,7 @@ class SessionServiceTest {
 
   @BeforeEach
   fun beforeEachTestSetup() {
-    whenever(prisonerService.getPrisoner(any())).thenReturn(PrisonerDto(prisonerId, "C", IncentiveLevel.STANDARD, prisonCode))
+    whenever(prisonerService.getPrisoner(any())).thenReturn(PrisonerDto(prisonerId, "john", "smith", "C", IncentiveLevel.STANDARD, prisonCode))
     whenever(prisonsService.findPrisonByCode(prisonCode)).thenReturn(PrisonEntityHelper.createPrison(prisonCode, policyNoticeDaysMin = noticeDaysMin, policyNoticeDaysMax = noticeDaysMax))
 
     whenever(prisonerService.getPrisonerHousingLocation(any(), any())).thenReturn(
@@ -99,7 +99,7 @@ class SessionServiceTest {
   private fun mockSessionTemplateRepositoryResponse(response: List<SessionTemplate>, incentiveLevel: IncentiveLevel? = null, category: String? = null) {
     whenever(
       prisonerService.getPrisoner(any()),
-    ).thenReturn(PrisonerDto(prisonerId = prisonerId, category = category, incentiveLevel = incentiveLevel))
+    ).thenReturn(PrisonerDto(prisonerId = prisonerId, firstName = "john", lastName = "smith", category = category, incentiveLevel = incentiveLevel))
 
     whenever(
       sessionTemplateRepository.findSessionTemplateMinCapacityBy(
@@ -681,7 +681,7 @@ class SessionServiceTest {
       // Given
       val prisonerId = "A1234AA"
       val incorrectPrisonCode = "ABC"
-      val prisonerDto = PrisonerDto(prisonerId = prisonerId, prisonCode = incorrectPrisonCode)
+      val prisonerDto = PrisonerDto(prisonerId = prisonerId, firstName = "john", lastName = "smith", prisonCode = incorrectPrisonCode)
 
       whenever(
         prisonerService.getPrisoner(prisonerId),

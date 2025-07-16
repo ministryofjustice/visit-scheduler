@@ -22,7 +22,7 @@ class SessionIncentiveLevelValidatorTest {
   fun `when prisoner's incentive level is null sessions available to all prisoners will be available to this prisoner`() {
     // Given
     val sessionTemplate = createSessionTemplate()
-    val prisonerDto = PrisonerDto(prisonerId = "AA1122", incentiveLevel = null)
+    val prisonerDto = PrisonerDto(prisonerId = "AA1122", firstName = "john", lastName = "smith", incentiveLevel = null)
 
     // When
     val result = sessionIncentiveValidator.isValid(prisoner = prisonerDto, sessionTemplate = sessionTemplate)
@@ -34,7 +34,7 @@ class SessionIncentiveLevelValidatorTest {
   fun `when prisoner's incentive level is available sessions available to all prisoners will be available to this prisoner`() {
     // Given
     val sessionTemplate = createSessionTemplate()
-    val prisonerDto = PrisonerDto(prisonerId = "AA1122", incentiveLevel = IncentiveLevel.BASIC)
+    val prisonerDto = PrisonerDto(prisonerId = "AA1122", firstName = "john", lastName = "smith", incentiveLevel = IncentiveLevel.BASIC)
 
     // When
     val result = sessionIncentiveValidator.isValid(prisoner = prisonerDto, sessionTemplate = sessionTemplate)
@@ -54,7 +54,7 @@ class SessionIncentiveLevelValidatorTest {
 
     sessionTemplate.permittedSessionIncentiveLevelGroups.add(sessionIncentiveLevelGroup)
 
-    val prisonerDto = PrisonerDto(prisonerId = "AA1122", incentiveLevel = IncentiveLevel.ENHANCED)
+    val prisonerDto = PrisonerDto(prisonerId = "AA1122", firstName = "john", lastName = "smith", incentiveLevel = IncentiveLevel.ENHANCED)
 
     // When
     val result = sessionIncentiveValidator.isValid(prisoner = prisonerDto, sessionTemplate = sessionTemplate)
@@ -74,7 +74,7 @@ class SessionIncentiveLevelValidatorTest {
 
     sessionTemplate.permittedSessionIncentiveLevelGroups.add(sessionIncentiveLevelGroup)
 
-    val prisonerDto = PrisonerDto(prisonerId = "AA1122", incentiveLevel = IncentiveLevel.ENHANCED)
+    val prisonerDto = PrisonerDto(prisonerId = "AA1122", firstName = "john", lastName = "smith", incentiveLevel = IncentiveLevel.ENHANCED)
 
     // When
     val result = sessionIncentiveValidator.isValid(prisoner = prisonerDto, sessionTemplate = sessionTemplate)
@@ -95,7 +95,7 @@ class SessionIncentiveLevelValidatorTest {
     sessionTemplate.permittedSessionIncentiveLevelGroups.add(sessionIncentiveLevelGroup)
 
     // prisoner incentive level is STANDARD - so not allowed on the session
-    val prisonerDto = PrisonerDto(prisonerId = "AA1122", incentiveLevel = IncentiveLevel.STANDARD)
+    val prisonerDto = PrisonerDto(prisonerId = "AA1122", firstName = "john", lastName = "smith", incentiveLevel = IncentiveLevel.STANDARD)
 
     // When
     val result = sessionIncentiveValidator.isValid(prisoner = prisonerDto, sessionTemplate = sessionTemplate)

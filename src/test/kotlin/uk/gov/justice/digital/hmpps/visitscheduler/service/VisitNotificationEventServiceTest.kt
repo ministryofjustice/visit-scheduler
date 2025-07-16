@@ -44,6 +44,8 @@ class VisitNotificationEventServiceTest {
       PrisonerDto(
         prisonerId = primaryNonAssociationNumber,
         prisonCode = prisonCode,
+        firstName = "john",
+        lastName = "smith",
       ),
     )
   }

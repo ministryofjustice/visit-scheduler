@@ -79,7 +79,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
     // Given
     val applicationReference = reservedPublicApplication.reference
     // application's prison code is different to prisoner's prison code
-    val prisonerDto = PrisonerSearchResultDto(prisonerNumber = prisonerId, prisonId = "SWI")
+    val prisonerDto = PrisonerSearchResultDto(prisonerNumber = prisonerId, "john", "smith", prisonId = "SWI")
     prisonOffenderSearchMockServer.stubGetPrisoner(prisonerId, prisonerDto)
 
     // When
@@ -100,7 +100,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
     // Given
     val applicationReference = reservedPublicApplication.reference
     // application's prison code is different to prisoner's prison code
-    val prisonerDto = PrisonerSearchResultDto(prisonerNumber = prisonerId, prisonId = reservedPublicApplication.prison.code)
+    val prisonerDto = PrisonerSearchResultDto(prisonerNumber = prisonerId, "john", "smith", prisonId = reservedPublicApplication.prison.code)
     prisonOffenderSearchMockServer.stubGetPrisoner(prisonerId, prisonerDto)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")

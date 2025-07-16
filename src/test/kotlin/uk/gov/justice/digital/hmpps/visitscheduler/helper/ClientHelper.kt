@@ -28,7 +28,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_VISITOR_APPROVED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_VISITOR_RESTRICTION_UPSERTED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_VISITOR_UNAPPROVED_PATH
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_REQUEST_COUNT_FOR_PRISON_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_REQUESTS_COUNT_FOR_PRISON_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ACTIVATE_SESSION_TEMPLATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ACTIVATE_SESSION_TEMPLATE_CLIENT
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADD_PRISON_EXCLUDE_DATE
@@ -720,7 +720,7 @@ fun callCountVisitRequests(
   prisonCode: String,
   authHttpHeaders: (HttpHeaders) -> Unit,
 ): ResponseSpec {
-  val url = VISIT_REQUEST_COUNT_FOR_PRISON_PATH.replace("{prisonCode}", prisonCode)
+  val url = VISIT_REQUESTS_COUNT_FOR_PRISON_PATH.replace("{prisonCode}", prisonCode)
 
   return callGet(
     webTestClient,
