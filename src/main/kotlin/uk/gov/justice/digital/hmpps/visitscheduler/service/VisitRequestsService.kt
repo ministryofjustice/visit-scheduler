@@ -4,6 +4,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApproveVisitRequestResponseDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitRequestSummaryDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
@@ -58,13 +59,28 @@ class VisitRequestsService(
     return visitRequestSummaryList.sortedBy { it.visitDate }
   }
 
-  fun approveVisitRequestByReference(visitReference: String) {
+  fun approveVisitRequestByReference(visitReference: String): ApproveVisitRequestResponseDto {
     visitRepository.approveVisitRequestForPrisonByReference(visitReference)
+
+    val updatedVisit = visitRepository.findByReference(visitReference)!!
 
     // TODO: VB-4953 (Staff approves visit request):
     //  - Add new event for staff approving visit to Event Audit table (VB-5780)
     //  - Add logic to find the visit in the visit_notification_events table and un-flag any entries (VB-5787)
     //  - Add logic to raise to application insights
     //  - Add new domain event and raise it (after of transaction completion) for notification service to consume and send comms (VB-5791)
+
+    val prisoner = try {
+      prisonerService.getPrisoner(updatedVisit.prisonerId)
+    } catch (e: Exception) {
+      LOG.error("Failed to get prisoner info while approving visit - $visitReference, continuing with placeholder info, exception - $e")
+      null
+    }
+
+    return ApproveVisitRequestResponseDto(
+      visitReference = visitReference,
+      prisonerFirstName = prisoner?.firstName ?: updatedVisit.prisonerId,
+      prisonerLastName = prisoner?.lastName ?: updatedVisit.prisonerId,
+    )
   }
 }
