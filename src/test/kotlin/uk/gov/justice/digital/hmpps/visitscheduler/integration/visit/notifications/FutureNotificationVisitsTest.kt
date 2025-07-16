@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitNotificationEventDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
@@ -59,6 +60,19 @@ class FutureNotificationVisitsTest : NotificationTestBase() {
     visitNotificationEventHelper.create(
       visit = pastVisitWithNotification,
       notificationEventType = NON_ASSOCIATION_EVENT,
+    )
+
+    // Will not be included in returned list, as it's sub status is REQUESTED.
+    val requestedVisitWithNotification = createApplicationAndVisit(
+      prisonerId = primaryPrisonerId,
+      slotDate = LocalDate.now().plusDays(5),
+      visitStatus = BOOKED,
+      visitSubStatus = VisitSubStatus.REQUESTED,
+      sessionTemplate = sessionTemplate1,
+    )
+    visitNotificationEventHelper.create(
+      visit = requestedVisitWithNotification,
+      notificationEventType = NotificationEventType.PRISONER_RELEASED_EVENT,
     )
 
     val futureVisitWithNotification1 = createApplicationAndVisit(
@@ -145,6 +159,19 @@ class FutureNotificationVisitsTest : NotificationTestBase() {
     visitNotificationEventHelper.create(
       visit = pastVisitWithNotification,
       notificationEventType = NON_ASSOCIATION_EVENT,
+    )
+
+    // Will not be included in returned list, as it's sub status is REQUESTED.
+    val requestedVisitWithNotification = createApplicationAndVisit(
+      prisonerId = primaryPrisonerId,
+      slotDate = LocalDate.now().plusDays(5),
+      visitStatus = BOOKED,
+      visitSubStatus = VisitSubStatus.REQUESTED,
+      sessionTemplate = sessionTemplate1,
+    )
+    visitNotificationEventHelper.create(
+      visit = requestedVisitWithNotification,
+      notificationEventType = NotificationEventType.PRISONER_RELEASED_EVENT,
     )
 
     val futureVisitWithNotification1 = createApplicationAndVisit(
