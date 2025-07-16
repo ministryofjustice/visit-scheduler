@@ -22,7 +22,7 @@ class SessionCategoryValidatorTest {
   fun `when prisoner's category is null sessions available to all prisoners will be available to this prisoner`() {
     // Given
     val sessionTemplate = createSessionTemplate()
-    val prisonerDto = PrisonerDto(prisonerId = "AA1122", category = null)
+    val prisonerDto = PrisonerDto(prisonerId = "AA1122", firstName = "john", lastName = "smith", category = null)
 
     // When
     val result = sessionCategoryValidator.isValid(prisoner = prisonerDto, sessionTemplate = sessionTemplate)
@@ -34,7 +34,7 @@ class SessionCategoryValidatorTest {
   fun `when prisoner's category is available sessions available to all prisoners will be available to this prisoner`() {
     // Given
     val sessionTemplate = createSessionTemplate()
-    val prisonerDto = PrisonerDto(prisonerId = "AA1122", category = "C")
+    val prisonerDto = PrisonerDto(prisonerId = "AA1122", firstName = "john", lastName = "smith", category = "C")
 
     // When
     val result = sessionCategoryValidator.isValid(prisoner = prisonerDto, sessionTemplate = sessionTemplate)
@@ -54,7 +54,7 @@ class SessionCategoryValidatorTest {
 
     sessionTemplate.permittedSessionCategoryGroups.add(sessionCategoryGroup)
 
-    val prisonerDto = PrisonerDto(prisonerId = "AA1122", category = "C")
+    val prisonerDto = PrisonerDto(prisonerId = "AA1122", firstName = "john", lastName = "smith", category = "C")
 
     // When
     val result = sessionCategoryValidator.isValid(prisoner = prisonerDto, sessionTemplate = sessionTemplate)
@@ -74,7 +74,7 @@ class SessionCategoryValidatorTest {
 
     sessionTemplate.permittedSessionCategoryGroups.add(sessionCategoryGroup)
 
-    val prisonerDto = PrisonerDto(prisonerId = "AA1122", category = PrisonerCategoryType.A_HIGH.code)
+    val prisonerDto = PrisonerDto(prisonerId = "AA1122", firstName = "john", lastName = "smith", category = PrisonerCategoryType.A_HIGH.code)
 
     // When
     val result = sessionCategoryValidator.isValid(prisoner = prisonerDto, sessionTemplate = sessionTemplate)
@@ -95,7 +95,7 @@ class SessionCategoryValidatorTest {
     sessionTemplate.permittedSessionCategoryGroups.add(sessionCategoryGroup)
 
     // prisoner category is A_PROVISIONAL - so not allowed on the session
-    val prisonerDto = PrisonerDto(prisonerId = "AA1122", category = PrisonerCategoryType.A_PROVISIONAL.code)
+    val prisonerDto = PrisonerDto(prisonerId = "AA1122", firstName = "john", lastName = "smith", category = PrisonerCategoryType.A_PROVISIONAL.code)
 
     // When
     val result = sessionCategoryValidator.isValid(prisoner = prisonerDto, sessionTemplate = sessionTemplate)

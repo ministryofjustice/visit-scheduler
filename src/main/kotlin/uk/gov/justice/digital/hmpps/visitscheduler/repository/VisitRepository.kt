@@ -377,7 +377,7 @@ interface VisitRepository :
   fun getCountOfRequestedVisitsForPrison(prisonCode: String): Long
 
   @Query(
-    "SELECT * " +
+    "SELECT v.* " +
       "FROM visit v " +
       "INNER JOIN prison p ON p.id = v.prison_id " +
       "INNER JOIN session_slot sl ON sl.id = v.session_slot_id " +

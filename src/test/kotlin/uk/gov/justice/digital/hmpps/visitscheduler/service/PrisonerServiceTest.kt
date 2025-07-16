@@ -323,7 +323,7 @@ class PrisonerServiceTest {
   fun `when valid prisoner then prisoner details are returned`() {
     val prisonerId = "AA1234BB"
     val prisonCode = "MDI"
-    val prisonerDetailsDto = PrisonerSearchResultDto(prisonerId, null, prisonCode, null)
+    val prisonerDetailsDto = PrisonerSearchResultDto(prisonerId, "john", "smith", null, prisonCode, null)
 
     whenever(
       prisonerOffenderSearchClient.getPrisoner(prisonerId),
@@ -380,7 +380,7 @@ class PrisonerServiceTest {
     val prisonerId = "AA1234BB"
     val category = "category test"
 
-    val prisonerSearchResultDto = PrisonerSearchResultDto(category = category)
+    val prisonerSearchResultDto = PrisonerSearchResultDto(firstName = "john", lastName = "smith", category = category)
 
     whenever(
       prisonerOffenderSearchClient.getPrisoner(prisonerId),
@@ -402,7 +402,7 @@ class PrisonerServiceTest {
     val enhancedIncentiveDto = IncentiveLevelDto("ENH", "Enhanced")
 
     val currentIncentive = CurrentIncentiveDto(level = enhancedIncentiveDto, dateTime = LocalDateTime.now().minusMonths(2))
-    val prisonerSearchResultDto = PrisonerSearchResultDto(prisonerId, currentIncentive, prisonId)
+    val prisonerSearchResultDto = PrisonerSearchResultDto(prisonerId, "john", "smith", currentIncentive, prisonId)
 
     whenever(
       prisonerOffenderSearchClient.getPrisoner(prisonerId),
@@ -424,7 +424,7 @@ class PrisonerServiceTest {
     val standardIncentiveDto = IncentiveLevelDto("STD", "Standard")
 
     val currentIncentive = CurrentIncentiveDto(level = standardIncentiveDto, dateTime = LocalDateTime.now().minusMonths(2))
-    val prisonerSearchResultDto = PrisonerSearchResultDto(prisonerId, currentIncentive, prisonId)
+    val prisonerSearchResultDto = PrisonerSearchResultDto(prisonerId, "john", "smith", currentIncentive, prisonId)
 
     whenever(
       prisonerOffenderSearchClient.getPrisoner(prisonerId),
@@ -446,7 +446,7 @@ class PrisonerServiceTest {
     val otherIncentiveDto = IncentiveLevelDto("OTH", "OTHER")
 
     val currentIncentive = CurrentIncentiveDto(level = otherIncentiveDto, dateTime = LocalDateTime.now().minusMonths(2))
-    val prisonerSearchResultDto = PrisonerSearchResultDto(prisonerId, currentIncentive, prisonId)
+    val prisonerSearchResultDto = PrisonerSearchResultDto(prisonerId, "john", "smith", currentIncentive, prisonId)
 
     whenever(
       prisonerOffenderSearchClient.getPrisoner(prisonerId),
@@ -470,7 +470,7 @@ class PrisonerServiceTest {
     val nullIncentiveDto = IncentiveLevelDto(null, "NULL")
 
     val currentIncentive = CurrentIncentiveDto(level = nullIncentiveDto, dateTime = LocalDateTime.now().minusMonths(2))
-    val prisonerSearchResultDto = PrisonerSearchResultDto(prisonerId, currentIncentive, prisonId)
+    val prisonerSearchResultDto = PrisonerSearchResultDto(prisonerId, "john", "smith", currentIncentive, prisonId)
 
     whenever(
       prisonerOffenderSearchClient.getPrisoner(prisonerId),
@@ -491,7 +491,7 @@ class PrisonerServiceTest {
     val prisonId = "MDI"
 
     val currentIncentive = null
-    val prisonerSearchResultDto = PrisonerSearchResultDto(prisonerId, currentIncentive, prisonId)
+    val prisonerSearchResultDto = PrisonerSearchResultDto(prisonerId, "john", "smith", currentIncentive, prisonId)
 
     whenever(
       prisonerOffenderSearchClient.getPrisoner(prisonerId),

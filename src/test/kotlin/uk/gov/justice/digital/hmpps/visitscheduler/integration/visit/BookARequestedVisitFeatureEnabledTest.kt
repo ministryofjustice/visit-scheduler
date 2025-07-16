@@ -69,7 +69,7 @@ class BookARequestedVisitFeatureEnabledTest : IntegrationTestBase() {
     // Given
     val prisonerId = reservedPublicApplication.prisonerId
     val applicationReference = reservedPublicApplication.reference
-    val prisonerDto = PrisonerSearchResultDto(prisonerNumber = prisonerId, prisonId = reservedPublicApplication.prison.code)
+    val prisonerDto = PrisonerSearchResultDto(prisonerNumber = prisonerId, "john", "smith", prisonId = reservedPublicApplication.prison.code)
     prisonOffenderSearchMockServer.stubGetPrisoner(prisonerId, prisonerDto)
     prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
 

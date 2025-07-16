@@ -17,7 +17,7 @@ class PrisonerValidationServiceTest {
   fun `when prison code passed matches prisoners establishment code no exceptions are thrown`() {
     val prisonerId = "AA1234BB"
     val prisonCode = "MDI"
-    val prisonerDetails = PrisonerDto(prisonerId = prisonerId, prisonCode = prisonCode)
+    val prisonerDetails = PrisonerDto(prisonerId = prisonerId, "john", "smith", prisonCode = prisonCode)
 
     // When
     assertThatCode {
@@ -29,7 +29,7 @@ class PrisonerValidationServiceTest {
   fun `when prison code does not match prisoners establishment code an exception is thrown`() {
     val prisonerId = "AA1234BB"
     val prisonCode = "MDI"
-    val prisonerDetails = PrisonerDto(prisonerId = prisonerId, category = null, incentiveLevel = null, prisonCode = prisonCode)
+    val prisonerDetails = PrisonerDto(prisonerId = prisonerId, firstName = "john", lastName = "smith", category = null, incentiveLevel = null, prisonCode = prisonCode)
 
     assertThrows<PrisonerNotInSuppliedPrisonException> {
       prisonerValidationService.validatePrisonerIsFromPrison(prisonerDetails, "ABC")
