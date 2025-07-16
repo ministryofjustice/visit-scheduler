@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.HttpHeaders
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_REQUEST_VISITS_FOR_PRISON_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_REQUESTS_VISITS_FOR_PRISON_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitRequestSummaryDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.BOOKED_VISIT
@@ -20,7 +20,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import java.time.LocalDate
 
-@DisplayName("GET $VISIT_REQUEST_VISITS_FOR_PRISON_PATH")
+@DisplayName("GET $VISIT_REQUESTS_VISITS_FOR_PRISON_PATH")
 class VisitRequestsTest : IntegrationTestBase() {
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
@@ -137,7 +137,7 @@ class VisitRequestsTest : IntegrationTestBase() {
     prisonCode: String,
     authHttpHeaders: (HttpHeaders) -> Unit,
   ): ResponseSpec {
-    val url = VISIT_REQUEST_VISITS_FOR_PRISON_PATH.replace("{prisonCode}", prisonCode)
+    val url = VISIT_REQUESTS_VISITS_FOR_PRISON_PATH.replace("{prisonCode}", prisonCode)
 
     return webTestClient.get().uri(url)
       .headers(authHttpHeaders)

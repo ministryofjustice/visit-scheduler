@@ -17,18 +17,18 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitRequestSummaryDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitRequestsCountDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitRequestsService
 
-const val VISIT_REQUEST_CONTROLLER_PATH: String = "/visits/requests"
+const val VISIT_REQUESTS_CONTROLLER_PATH: String = "/visits/requests"
 
-const val VISIT_REQUEST_VISITS_FOR_PRISON_PATH: String = "$VISIT_REQUEST_CONTROLLER_PATH/{prisonCode}"
-const val VISIT_REQUEST_COUNT_FOR_PRISON_PATH: String = "$VISIT_REQUEST_CONTROLLER_PATH/{prisonCode}/count"
+const val VISIT_REQUESTS_VISITS_FOR_PRISON_PATH: String = "$VISIT_REQUESTS_CONTROLLER_PATH/{prisonCode}"
+const val VISIT_REQUESTS_COUNT_FOR_PRISON_PATH: String = "$VISIT_REQUESTS_CONTROLLER_PATH/{prisonCode}/count"
 
 @RestController
 @Validated
-@Tag(name = "Visit request controller $VISIT_REQUEST_CONTROLLER_PATH")
+@Tag(name = "Visit request controller $VISIT_REQUESTS_CONTROLLER_PATH")
 @RequestMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
 class VisitRequestsController(private val visitRequestsService: VisitRequestsService) {
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @GetMapping(VISIT_REQUEST_COUNT_FOR_PRISON_PATH)
+  @GetMapping(VISIT_REQUESTS_COUNT_FOR_PRISON_PATH)
   @Operation(
     summary = "Get count for how many visit requests are open for a prison",
     description = "Returns an Int count for how many visit requests are open for a prison",
@@ -56,7 +56,7 @@ class VisitRequestsController(private val visitRequestsService: VisitRequestsSer
   ): VisitRequestsCountDto = VisitRequestsCountDto(visitRequestsService.getVisitRequestsCountForPrison(prisonCode))
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @GetMapping(VISIT_REQUEST_VISITS_FOR_PRISON_PATH)
+  @GetMapping(VISIT_REQUESTS_VISITS_FOR_PRISON_PATH)
   @Operation(
     summary = "Get all visit requests for a prison",
     description = "Retrieve a list of visit requests for a prison",
