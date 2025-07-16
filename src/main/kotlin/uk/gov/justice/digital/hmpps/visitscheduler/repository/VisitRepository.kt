@@ -388,4 +388,12 @@ interface VisitRepository :
     nativeQuery = true,
   )
   fun getRequestedVisitsForPrison(prisonCode: String): List<Visit>
+
+  @Transactional
+  @Modifying
+  @Query(
+    "Update visit SET visit_sub_status = 'APPROVED' WHERE reference =:visitReference",
+    nativeQuery = true,
+  )
+  fun approveVisitRequestForPrisonByReference(visitReference: String): Int
 }

@@ -57,4 +57,13 @@ class VisitRequestsService(
 
     return visitRequestSummaryList.sortedBy { it.visitDate }
   }
+
+  fun approveVisitRequestByReference(visitReference: String) {
+    visitRepository.approveVisitRequestForPrisonByReference(visitReference)
+
+    // TODO: VB-4953 (Staff approves visit request):
+    //  - Add new event for staff approving visit to Event Audit table (VB-5780)
+    //  - Add logic to find the visit in the visit_notification_events table and un-flag any entries (VB-5787)
+    //  - Add new domain event and raise it (after of transaction completion) for notification service to consume and send comms (VB-5791)
+  }
 }

@@ -5,11 +5,14 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
@@ -21,6 +24,8 @@ const val VISIT_REQUESTS_CONTROLLER_PATH: String = "/visits/requests"
 
 const val VISIT_REQUESTS_VISITS_FOR_PRISON_PATH: String = "$VISIT_REQUESTS_CONTROLLER_PATH/{prisonCode}"
 const val VISIT_REQUESTS_COUNT_FOR_PRISON_PATH: String = "$VISIT_REQUESTS_CONTROLLER_PATH/{prisonCode}/count"
+
+const val VISIT_REQUESTS_APPROVE_VISIT_BY_REFERENCE_PATH: String = "$VISIT_REQUESTS_CONTROLLER_PATH/{reference}/approve"
 
 @RestController
 @Validated
@@ -82,4 +87,35 @@ class VisitRequestsController(private val visitRequestsService: VisitRequestsSer
     @PathVariable
     prisonCode: String,
   ): List<VisitRequestSummaryDto> = visitRequestsService.getVisitRequestsForPrison(prisonCode)
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PutMapping(VISIT_REQUESTS_APPROVE_VISIT_BY_REFERENCE_PATH)
+  @Operation(
+    summary = "Approve a visit request",
+    description = "Endpoint to approve a visit request by visit reference",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Successfully approved visit request",
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun approveVisitRequestByReference(
+    @Schema(description = "visit reference", required = true)
+    @PathVariable
+    reference: String,
+  ): ResponseEntity<HttpStatus> {
+    visitRequestsService.approveVisitRequestByReference(visitReference = reference)
+    return ResponseEntity.status(HttpStatus.OK).build()
+  }
 }
