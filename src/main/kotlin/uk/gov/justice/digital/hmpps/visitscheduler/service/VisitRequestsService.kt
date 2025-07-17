@@ -65,6 +65,7 @@ class VisitRequestsService(
     val updatedVisit = visitRepository.findByReference(visitReference)!!
 
     // TODO: VB-4953 (Staff approves visit request):
+    //  - Add validation check for double approval / rejection (if subStatus != REQUESTED -> 400 exception) (VB-5793)
     //  - Add new event for staff approving visit to Event Audit table (VB-5780)
     //  - Add logic to find the visit in the visit_notification_events table and un-flag any entries (VB-5787)
     //  - Add logic to raise to application insights (VB-5792)
