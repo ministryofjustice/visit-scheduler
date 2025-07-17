@@ -58,7 +58,7 @@ class ApproveVisitRequestTest : IntegrationTestBase() {
       val types = it.map { event -> event.type }
       assertThat(types).containsExactlyInAnyOrder(
         EventAuditType.REQUESTED_VISIT,
-        EventAuditType.REQUESTED_VISIT_APPROVED
+        EventAuditType.REQUESTED_VISIT_APPROVED,
       )
     }
   }
