@@ -74,3 +74,7 @@ tasks {
 allOpen {
   annotation("javax.persistence.Entity")
 }
+
+tasks.test {
+  jvmArgs = listOf("-Xmx2g", "-XX:MaxMetaspaceSize=512m")
+}
