@@ -28,6 +28,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_VISITOR_APPROVED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_VISITOR_RESTRICTION_UPSERTED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_VISITOR_UNAPPROVED_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_REQUESTS_APPROVE_VISIT_BY_REFERENCE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_REQUESTS_COUNT_FOR_PRISON_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ACTIVATE_SESSION_TEMPLATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ACTIVATE_SESSION_TEMPLATE_CLIENT
@@ -723,6 +724,21 @@ fun callCountVisitRequests(
   val url = VISIT_REQUESTS_COUNT_FOR_PRISON_PATH.replace("{prisonCode}", prisonCode)
 
   return callGet(
+    webTestClient,
+    url,
+    authHttpHeaders,
+  )
+}
+
+fun callApproveVisitRequest(
+  webTestClient: WebTestClient,
+  visitReference: String,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+): ResponseSpec {
+  val url = VISIT_REQUESTS_APPROVE_VISIT_BY_REFERENCE_PATH.replace("{reference}", visitReference)
+
+  return callPut(
+    null,
     webTestClient,
     url,
     authHttpHeaders,
