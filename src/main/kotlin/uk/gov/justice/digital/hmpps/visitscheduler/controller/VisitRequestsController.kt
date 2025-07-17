@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApproveVisitRequestResponseDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitRequestSummaryDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitRequestsCountDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitRequestsService
@@ -113,5 +113,5 @@ class VisitRequestsController(private val visitRequestsService: VisitRequestsSer
     @Schema(description = "visit reference", required = true)
     @PathVariable
     reference: String,
-  ): ApproveVisitRequestResponseDto = visitRequestsService.approveVisitRequestByReference(visitReference = reference)
+  ): VisitDto = visitRequestsService.approveVisitRequestByReference(visitReference = reference)
 }
