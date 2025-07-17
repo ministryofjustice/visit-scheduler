@@ -58,6 +58,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REMOVE_SESSI
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMPLATE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMPLATE_VISIT_STATS
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.migration.MIGRATE_CANCEL
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApproveVisitRequestBodyDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitFromExternalSystemDto
@@ -733,12 +734,13 @@ fun callCountVisitRequests(
 fun callApproveVisitRequest(
   webTestClient: WebTestClient,
   visitReference: String,
+  dto: ApproveVisitRequestBodyDto? = null,
   authHttpHeaders: (HttpHeaders) -> Unit,
 ): ResponseSpec {
   val url = VISIT_REQUESTS_APPROVE_VISIT_BY_REFERENCE_PATH.replace("{reference}", visitReference)
 
   return callPut(
-    null,
+    dto,
     webTestClient,
     url,
     authHttpHeaders,
