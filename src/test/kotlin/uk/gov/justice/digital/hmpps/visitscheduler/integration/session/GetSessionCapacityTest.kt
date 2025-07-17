@@ -226,7 +226,10 @@ class GetSessionCapacityTest : IntegrationTestBase() {
 
   private fun getNextAllowedDay(): LocalDate {
     // The two days is based on the default SessionService.policyNoticeDaysMin
-    return LocalDate.now().plusDays(2)
+    // VB-5790 - adding 1 day after adding policyNoticeDaysMin as there is a change wherein
+    // fix sessions are returned after n whole days and not and not today + n so adding a day
+    // e.g if today is WED and policyNoticeDaysMin is 2 sessions need to be returned from SATURDAY and not FRIDAY
+    return LocalDate.now().plusDays(2).plusDays(1)
   }
 
   private fun getResults(returnResult: BodyContentSpec): SessionCapacityDto = objectMapper.readValue(returnResult.returnResult().responseBody, SessionCapacityDto::class.java)

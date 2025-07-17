@@ -144,7 +144,12 @@ class GetSessionsDoubleBookingTest : IntegrationTestBase() {
     assertThat(visitSessionResults[0].sessionConflicts.isEmpty())
   }
 
-  private fun getNextAllowedDay(): LocalDate = LocalDate.now().plusDays(3)
+  private fun getNextAllowedDay(): LocalDate {
+    // VB-5790 - adding 1 day after adding policyNoticeDaysMin as there is a change wherein
+    // fix sessions are returned after n whole days and not and not today + n so adding a day
+    // e.g if today is WED and policyNoticeDaysMin is 2 sessions need to be returned from SATURDAY and not FRIDAY
+    return LocalDate.now().plusDays(1).plusDays(3)
+  }
 
   private fun getResults(returnResult: BodyContentSpec): Array<VisitSessionDto> = objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)
 }

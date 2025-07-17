@@ -77,7 +77,7 @@ class SessionServiceTest {
   private val currentDate = LocalDate.now()
 
   private val prisonCode = "MDI"
-  private val noticeDaysMin = 1
+  private val noticeDaysMin = 0
   private val noticeDaysMax = 100
   private val prisonerId = "AA1234BB"
 
@@ -104,7 +104,7 @@ class SessionServiceTest {
     whenever(
       sessionTemplateRepository.findSessionTemplateMinCapacityBy(
         prisonCode = prisonCode,
-        rangeStartDate = currentDate.plusDays(noticeDaysMin.toLong()),
+        rangeStartDate = currentDate.plusDays(noticeDaysMin.toLong().plus(1)),
         rangeEndDate = currentDate.plusDays(noticeDaysMax.toLong()),
       ),
     ).thenReturn(response)
