@@ -27,7 +27,7 @@ dependencies {
 
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8")
-  implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.17.1")
+  implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.18.0")
 
   implementation("org.springframework.data:spring-data-commons:3.5.1")
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:2.8.9")
