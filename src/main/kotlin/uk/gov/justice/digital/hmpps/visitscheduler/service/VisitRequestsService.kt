@@ -4,6 +4,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApproveVisitRequestBodyDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitRequestSummaryDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
@@ -12,7 +13,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundExcepti
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 
 @Service
-@Transactional
 class VisitRequestsService(
   private val visitRepository: VisitRepository,
   private val prisonerService: PrisonerService,
@@ -30,6 +30,7 @@ class VisitRequestsService(
     return visitRepository.getCountOfRequestedVisitsForPrison(prisonCode).toInt()
   }
 
+  @Transactional(readOnly = true)
   fun getVisitRequestsForPrison(prisonCode: String): List<VisitRequestSummaryDto> {
     val visitRequests = visitRepository.getRequestedVisitsForPrison(prisonCode)
 
@@ -62,12 +63,22 @@ class VisitRequestsService(
     return visitRequestSummaryList.sortedBy { it.visitDate }
   }
 
-  fun approveVisitRequestByReference(visitReference: String): VisitDto {
+  // TODO: VB-4953 (APPROVE REQUEST) / VB-5791 (New event raised for booking approved):
+  //  The @Transactional annotation should be removed from here, and all transactional logic moved into a sub-service to be called.
+  @Transactional
+  fun approveVisitRequestByReference(approveVisitRequestBodyDto: ApproveVisitRequestBodyDto): VisitDto {
+    val visitReference = approveVisitRequestBodyDto.visitReference
+
+    LOG.info("approveVisitRequestByReference - called for visit - ${approveVisitRequestBodyDto.visitReference}")
     val success = visitRepository.approveVisitRequestForPrisonByReference(visitReference) > 0
     if (!success) {
       throw ItemNotFoundException("No visit request found for reference $visitReference")
     }
 
-    return visitDtoBuilder.build(visitRepository.findByReference(visitReference)!!)
+    val approvedVisitDto = visitDtoBuilder.build(visitRepository.findByReference(visitReference)!!)
+
+    visitEventAuditService.saveVisitRequestApprovedEventAudit(approveVisitRequestBodyDto.actionedBy, approvedVisitDto)
+
+    return approvedVisitDto
   }
 }

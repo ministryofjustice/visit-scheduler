@@ -289,4 +289,26 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
         ),
       )
   }
+
+  fun saveVisitRequestApprovedEventAudit(
+    actionedByValue: String,
+    visit: VisitDto,
+  ): EventAuditDto {
+    val actionedBy = createOrGetActionBy(actionedByValue, STAFF)
+
+    return EventAuditDto(
+      eventAuditRepository.saveAndFlush(
+        EventAudit(
+          actionedBy = actionedBy,
+          bookingReference = visit.reference,
+          applicationReference = visit.applicationReference,
+          sessionTemplateReference = visit.sessionTemplateReference,
+          EventAuditType.REQUESTED_VISIT_APPROVED,
+          applicationMethodType = ApplicationMethodType.WEBSITE,
+          text = null,
+        ),
+      ),
+      notifyHistoryDtoBuilder,
+    )
+  }
 }
