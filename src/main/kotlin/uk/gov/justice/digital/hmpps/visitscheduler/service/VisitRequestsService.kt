@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitRequestSummaryDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 
@@ -18,6 +19,7 @@ class VisitRequestsService(
   private val prisonerService: PrisonerService,
   private val visitEventAuditService: VisitEventAuditService,
   private val visitDtoBuilder: VisitDtoBuilder,
+  private val visitNotificationEventService: VisitNotificationEventService,
 ) {
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
@@ -78,6 +80,8 @@ class VisitRequestsService(
     val approvedVisitDto = visitDtoBuilder.build(visitRepository.findByReference(visitReference)!!)
 
     visitEventAuditService.saveVisitRequestApprovedEventAudit(approveVisitRequestBodyDto.actionedBy, approvedVisitDto)
+
+    visitNotificationEventService.deleteVisitNotificationEvents(approvedVisitDto.reference, UnFlagEventReason.VISIT_REQUEST_APPROVED)
 
     return approvedVisitDto
   }

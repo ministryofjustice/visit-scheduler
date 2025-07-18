@@ -4,6 +4,7 @@ enum class UnFlagEventReason(val desc: String) {
   VISIT_CANCELLED("visit-cancelled"),
   VISIT_CANCELLED_ON_NOMIS("visit-cancelled-on-nomis"),
   VISIT_UPDATED("visit-updated"),
+  VISIT_REQUEST_APPROVED("visit-request-approved"),
   PRISON_EXCLUDE_DATE_REMOVED("prison-exclude-date-removed"),
   SESSION_EXCLUDE_DATE_REMOVED("session-exclude-date-removed"),
   NON_ASSOCIATION_REMOVED("non-association-removed"),
