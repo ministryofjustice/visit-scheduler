@@ -31,6 +31,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
+import java.time.DayOfWeek.FRIDAY
 import java.time.DayOfWeek.MONDAY
 import java.time.DayOfWeek.SATURDAY
 import java.time.DayOfWeek.SUNDAY
@@ -742,7 +743,8 @@ class GetSessionsTest : IntegrationTestBase() {
   @Test
   fun `bi weekly schedule - test for sunday change boundary`() {
     val today = LocalDate.now()
-    val todayIsTheWeekEnd = today.dayOfWeek in listOf(SUNDAY, SATURDAY)
+    // as there is a day added now before returning the sessions this test needs to move back a day
+    val todayIsFridayOrSaturday = today.dayOfWeek in listOf(FRIDAY, SATURDAY)
 
     // Given
     val startFromWeek1 = today.with(TemporalAdjusters.next(MONDAY)).minusWeeks(1)
@@ -773,7 +775,7 @@ class GetSessionsTest : IntegrationTestBase() {
 
     val visitSessionResults = getResults(returnResult)
     assertThat(visitSessionResults.size).isGreaterThan(2)
-    if (todayIsTheWeekEnd) {
+    if (todayIsFridayOrSaturday) {
       // On the weekend it skips to the other session template / schedule because we cannot book with in 24 hrs
       assertThat(visitSessionResults[0].visitRoom).isEqualTo("Alternate 2")
       assertThat(visitSessionResults[1].visitRoom).isEqualTo("Alternate 1")
