@@ -38,6 +38,8 @@ class SnsService(
     const val EVENT_PRISON_CHANGED_VISIT_DESC = "Prison Visit Changed"
     const val EVENT_PRISON_VISIT_CANCELLED = "prison-visit.cancelled"
     const val EVENT_PRISON_VISIT_CANCELLED_DESC = "Prison Visit Cancelled"
+    const val EVENT_PRISON_VISIT_REQUEST_ACTIONED = "prison-visit-request.actioned"
+    const val EVENT_PRISON_VISIT_REQUEST_DESC = "Prison visit request approved or denied"
     val log: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
@@ -114,6 +116,22 @@ class SnsService(
         additionalInformation = AdditionalInformation(
           reference = visit.reference,
           eventAuditId = visit.eventAuditId,
+        ),
+      ),
+    )
+  }
+
+  fun sendVisitRequestActionedEvent(details: SnsDomainEventPublishDto) {
+    publishToDomainEventsTopic(
+      HMPPSDomainEvent(
+        eventType = EVENT_PRISON_VISIT_REQUEST_ACTIONED,
+        version = EVENT_PRISON_VISIT_VERSION,
+        description = EVENT_PRISON_VISIT_REQUEST_DESC,
+        occurredAt = details.createdTimestamp.toOffsetDateFormat(),
+        prisonerId = details.prisonerId,
+        additionalInformation = AdditionalInformation(
+          reference = details.reference,
+          eventAuditId = details.eventAuditId,
         ),
       ),
     )
