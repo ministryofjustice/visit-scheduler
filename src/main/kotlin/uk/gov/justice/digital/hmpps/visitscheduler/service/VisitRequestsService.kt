@@ -30,7 +30,7 @@ class VisitRequestsService(
     return visitRepository.getCountOfRequestedVisitsForPrison(prisonCode).toInt()
   }
 
-  @Transactional
+  @Transactional(readOnly = true)
   fun getVisitRequestsForPrison(prisonCode: String): List<VisitRequestSummaryDto> {
     val visitRequests = visitRepository.getRequestedVisitsForPrison(prisonCode)
 
