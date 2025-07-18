@@ -5,21 +5,20 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApproveVisitRequestBodyDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.SnsDomainEventPublishDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitRequestSummaryDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
-import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import java.time.LocalDateTime
 
 @Service
 class VisitRequestsService(
   private val visitRepository: VisitRepository,
   private val prisonerService: PrisonerService,
   private val visitEventAuditService: VisitEventAuditService,
-  private val visitDtoBuilder: VisitDtoBuilder,
-  private val visitNotificationEventService: VisitNotificationEventService,
+  private val visitRequestsApprovalService: VisitRequestsApprovalService,
+  private val snsService: SnsService,
 ) {
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
@@ -65,24 +64,19 @@ class VisitRequestsService(
     return visitRequestSummaryList.sortedBy { it.visitDate }
   }
 
-  // TODO: VB-4953 (APPROVE REQUEST) / VB-5791 (New event raised for booking approved):
-  //  The @Transactional annotation should be removed from here, and all transactional logic moved into a sub-service to be called.
-  @Transactional
   fun approveVisitRequestByReference(approveVisitRequestBodyDto: ApproveVisitRequestBodyDto): VisitDto {
-    val visitReference = approveVisitRequestBodyDto.visitReference
+    val approvalResponseDto = visitRequestsApprovalService.approveVisitRequestByReference(approveVisitRequestBodyDto)
 
-    LOG.info("approveVisitRequestByReference - called for visit - ${approveVisitRequestBodyDto.visitReference}")
-    val success = visitRepository.approveVisitRequestForPrisonByReference(visitReference) > 0
-    if (!success) {
-      throw ItemNotFoundException("No visit request found for reference $visitReference")
-    }
+    val snsDomainEventPublishDto = SnsDomainEventPublishDto(
+      reference = approvalResponseDto.visitDto.reference,
+      createdTimestamp = LocalDateTime.now(),
+      modifiedTimestamp = approvalResponseDto.visitDto.modifiedTimestamp, // Not used.
+      prisonerId = approvalResponseDto.visitDto.prisonerId,
+      eventAuditId = approvalResponseDto.eventAuditDto.id,
+    )
 
-    val approvedVisitDto = visitDtoBuilder.build(visitRepository.findByReference(visitReference)!!)
+    snsService.sendVisitRequestActionedEvent(snsDomainEventPublishDto)
 
-    visitEventAuditService.saveVisitRequestApprovedEventAudit(approveVisitRequestBodyDto.actionedBy, approvedVisitDto)
-
-    visitNotificationEventService.deleteVisitNotificationEvents(approvedVisitDto.reference, UnFlagEventReason.VISIT_REQUEST_APPROVED)
-
-    return approvedVisitDto
+    return approvalResponseDto.visitDto
   }
 }

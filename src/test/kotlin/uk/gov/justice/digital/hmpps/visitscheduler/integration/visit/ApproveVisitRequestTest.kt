@@ -58,7 +58,7 @@ class ApproveVisitRequestTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when approve visit requests endpoint is called, then visit is successfully approved`() {
+  fun `when approve visit requests endpoint is called, then visit is successfully approved and domain event is raised`() {
     // Given
     val visitPrimary = createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitRestriction = VisitRestriction.OPEN, visitStatus = BOOKED, visitSubStatus = VisitSubStatus.REQUESTED)
     eventAuditEntityHelper.create(visitPrimary, type = EventAuditType.REQUESTED_VISIT)
@@ -74,13 +74,15 @@ class ApproveVisitRequestTest : IntegrationTestBase() {
     assertThat(approvedVisit.reference).isEqualTo(visitPrimary.reference)
     assertThat(approvedVisit.visitSubStatus).isEqualTo(VisitSubStatus.APPROVED)
 
-    testEventAuditRepository.findAllByBookingReference(visitPrimary.reference).let {
+    val allEventAudits = testEventAuditRepository.findAllByBookingReference(visitPrimary.reference).let {
       val types = it.map { event -> event.type }
       assertThat(types).containsExactlyInAnyOrder(
         EventAuditType.REQUESTED_VISIT,
         EventAuditType.REQUESTED_VISIT_APPROVED,
       )
     }
+
+    assertVisitRequestActionedDomainEvent(visitPrimary.reference)
   }
 
   @Test
@@ -122,6 +124,8 @@ class ApproveVisitRequestTest : IntegrationTestBase() {
       isNull(),
     )
     verify(telemetryClient, times(1)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
+
+    assertVisitRequestActionedDomainEvent(visitPrimary.reference)
   }
 
   @Test
@@ -150,4 +154,15 @@ class ApproveVisitRequestTest : IntegrationTestBase() {
   }
 
   private fun getApproveVisitRequestResponse(responseSpec: WebTestClient.ResponseSpec): VisitDto = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, VisitDto::class.java)
+
+  private fun assertVisitRequestActionedDomainEvent(visitReference: String) {
+    verify(telemetryClient).trackEvent(
+      eq("prison-visit-request.actioned-domain-event"),
+      org.mockito.kotlin.check {
+        assertThat(it["reference"]).isEqualTo(visitReference)
+      },
+      isNull(),
+    )
+    verify(telemetryClient, times(1)).trackEvent(eq("prison-visit-request.actioned-domain-event"), any(), isNull())
+  }
 }
