@@ -402,5 +402,5 @@ interface VisitRepository :
     "SELECT count(*) > 0 FROM visit WHERE visit_sub_status = 'REQUESTED' AND reference = :visitReference",
     nativeQuery = true,
   )
-  fun isVisitRequestInCorrectStateForApprovalOrRejection(visitReference: String): Boolean
+  fun isVisitRequestInCorrectStatusForApprovalOrRejection(visitReference: String): Boolean
 }

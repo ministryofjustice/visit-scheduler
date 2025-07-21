@@ -28,7 +28,7 @@ class VisitRequestsApprovalService(
   fun approveVisitRequestByReference(approveVisitRequestBodyDto: ApproveVisitRequestBodyDto): VisitRequestApprovalResponseDto {
     val visitReference = approveVisitRequestBodyDto.visitReference
 
-    val requestVisitInValidState = visitRepository.isVisitRequestInCorrectStateForApprovalOrRejection(visitReference)
+    val requestVisitInValidState = visitRepository.isVisitRequestInCorrectStatusForApprovalOrRejection(visitReference)
     if (!requestVisitInValidState) {
       throw ValidationException(messageService.getMessage("validation.visitrequests.invalidstatus", visitReference))
     }
