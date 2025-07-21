@@ -165,6 +165,22 @@ class ApproveVisitRequestTest : IntegrationTestBase() {
     responseSpec.expectStatus().isBadRequest
   }
 
+  @Test
+  fun `when approve visit requests endpoint is called, but requested visit is not in correct sub status, then bad request is returned`() {
+    // Given
+    val visitPrimary = createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitRestriction = VisitRestriction.OPEN, visitStatus = BOOKED, visitSubStatus = VisitSubStatus.APPROVED)
+    eventAuditEntityHelper.create(visitPrimary, type = EventAuditType.REQUESTED_VISIT)
+    eventAuditEntityHelper.create(visitPrimary, type = EventAuditType.REQUESTED_VISIT_APPROVED)
+
+    val approveVisitRequestBodyDto = ApproveVisitRequestBodyDto(visitReference = visitPrimary.reference, actionedBy = "user1")
+
+    // When
+    val responseSpec = callApproveVisitRequest(webTestClient, visitPrimary.reference, approveVisitRequestBodyDto, roleVisitSchedulerHttpHeaders)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+  }
+
   private fun getApproveVisitRequestResponse(responseSpec: WebTestClient.ResponseSpec): VisitDto = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, VisitDto::class.java)
 
   private fun assertVisitRequestActionedDomainEvent(visitReference: String) {

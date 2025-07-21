@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
+import jakarta.validation.ValidationException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -18,6 +19,7 @@ class VisitRequestsApprovalService(
   private val visitEventAuditService: VisitEventAuditService,
   private val visitDtoBuilder: VisitDtoBuilder,
   private val visitNotificationEventService: VisitNotificationEventService,
+  private val messageService: MessageService,
 ) {
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
@@ -25,6 +27,11 @@ class VisitRequestsApprovalService(
 
   fun approveVisitRequestByReference(approveVisitRequestBodyDto: ApproveVisitRequestBodyDto): VisitRequestApprovalResponseDto {
     val visitReference = approveVisitRequestBodyDto.visitReference
+
+    val requestVisitInValidState = visitRepository.isVisitRequestInCorrectStateForApprovalOrRejection(visitReference)
+    if (!requestVisitInValidState) {
+      throw ValidationException(messageService.getMessage("validation.visitrequests.invalidstatus", visitReference))
+    }
 
     LOG.info("approveVisitRequestByReference - called for visit - ${approveVisitRequestBodyDto.visitReference}")
     val success = visitRepository.approveVisitRequestForPrisonByReference(visitReference) > 0

@@ -396,4 +396,11 @@ interface VisitRepository :
     nativeQuery = true,
   )
   fun approveVisitRequestForPrisonByReference(visitReference: String): Int
+
+  @Transactional
+  @Query(
+    "SELECT count(*) > 0 FROM visit WHERE visit_sub_status = 'REQUESTED' AND reference = :visitReference",
+    nativeQuery = true,
+  )
+  fun isVisitRequestInCorrectStateForApprovalOrRejection(visitReference: String): Boolean
 }
