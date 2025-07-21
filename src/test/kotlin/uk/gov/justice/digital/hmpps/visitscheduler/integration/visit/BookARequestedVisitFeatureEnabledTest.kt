@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
+import org.mockito.kotlin.argThat
 import org.mockito.kotlin.check
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.isNull
@@ -94,7 +95,16 @@ class BookARequestedVisitFeatureEnabledTest : IntegrationTestBase() {
     assertThat(visitEntity.getLastApplication()?.reference).isEqualTo(applicationReference)
     assertThat(visitEntity.getLastApplication()?.applicationStatus).isEqualTo(ACCEPTED)
 
-    assertBookedEvent(visitDto)
+    verify(telemetryClient).trackEvent(
+      eq("visit-requested"),
+      argThat { map ->
+        assertThat(map["reference"]).isEqualTo(visitEntity.reference)
+        assertThat(map["visitStatus"]).isEqualTo(BOOKED.name)
+        assertThat(map["visitSubStatus"]).isEqualTo(VisitSubStatus.REQUESTED.name)
+        true
+      },
+      isNull(),
+    )
   }
 
   private fun assertAuditEvent(visitDto: VisitDto, visitEntity: Visit, userType: UserType = STAFF) {

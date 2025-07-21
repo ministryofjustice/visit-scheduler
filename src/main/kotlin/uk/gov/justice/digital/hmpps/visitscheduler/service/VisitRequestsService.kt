@@ -19,6 +19,7 @@ class VisitRequestsService(
   private val visitEventAuditService: VisitEventAuditService,
   private val visitRequestsApprovalService: VisitRequestsApprovalService,
   private val snsService: SnsService,
+  private val telemetryClientService: TelemetryClientService,
 ) {
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
@@ -76,6 +77,8 @@ class VisitRequestsService(
     )
 
     snsService.sendVisitRequestActionedEvent(snsDomainEventPublishDto)
+
+    telemetryClientService.trackVisitRequestApprovedEvent(approvalResponseDto.visitDto, approvalResponseDto.eventAuditDto)
 
     return approvalResponseDto.visitDto
   }

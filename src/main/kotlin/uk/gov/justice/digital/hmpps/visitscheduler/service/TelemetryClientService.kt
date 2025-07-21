@@ -4,6 +4,7 @@ import com.microsoft.applicationinsights.TelemetryClient
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
@@ -25,6 +26,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_BOOKED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_CANCELLED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_CHANGED_EVENT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_REQUESTED_EVENT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_REQUEST_APPROVED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_SLOT_RESERVED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting.OverbookedSessionsDto
@@ -38,6 +41,7 @@ import java.time.temporal.ChronoUnit
 @Service
 class TelemetryClientService(
   private val telemetryClient: TelemetryClient,
+  @Value("\${feature.request-booking-enabled:false}") private val requestBookingFeatureEnabled: Boolean,
 ) {
 
   companion object {
@@ -62,9 +66,20 @@ class TelemetryClientService(
   fun trackBookingEvent(
     bookedVisitDto: VisitDto,
     eventAuditDto: EventAuditDto,
+    isRequestBooking: Boolean,
   ) {
+    val eventType = if (requestBookingFeatureEnabled) {
+      if (isRequestBooking) {
+        VISIT_REQUESTED_EVENT
+      } else {
+        VISIT_BOOKED_EVENT
+      }
+    } else {
+      VISIT_BOOKED_EVENT
+    }
+
     trackEvent(
-      VISIT_BOOKED_EVENT,
+      eventType,
       createBookedVisitTrackData(null, bookedVisitDto, eventAuditDto, false),
     )
   }
@@ -175,6 +190,16 @@ class TelemetryClientService(
     trackEvent(REMOVE_SESSION_EXCLUDE_DATE_EVENT, visitTrackEvent)
   }
 
+  fun trackVisitRequestApprovedEvent(
+    bookedVisitDto: VisitDto,
+    eventAuditDto: EventAuditDto,
+  ) {
+    trackEvent(
+      VISIT_REQUEST_APPROVED_EVENT,
+      createVisitRequestApprovedTrackData(bookedVisitDto, eventAuditDto),
+    )
+  }
+
   private fun trackEvent(visitEvent: TelemetryVisitEvents, properties: Map<String, String>) {
     try {
       telemetryClient.trackEvent(visitEvent.eventName, properties, null)
@@ -263,6 +288,17 @@ class TelemetryClientService(
     if (visitDtoBeforeUpdate != null) {
       data.putAll(getAdditionalDataForUpdate(visitDtoBeforeUpdate, visitDto))
     }
+
+    createEventAuditData(eventAudit, data)
+
+    return data
+  }
+
+  private fun createVisitRequestApprovedTrackData(
+    visitDto: VisitDto,
+    eventAudit: EventAuditDto,
+  ): MutableMap<String, String> {
+    val data = createDefaultVisitData(visitDto)
 
     createEventAuditData(eventAudit, data)
 

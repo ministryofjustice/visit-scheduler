@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
+import org.mockito.kotlin.argThat
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.isNull
 import org.mockito.kotlin.times
@@ -74,13 +75,24 @@ class ApproveVisitRequestTest : IntegrationTestBase() {
     assertThat(approvedVisit.reference).isEqualTo(visitPrimary.reference)
     assertThat(approvedVisit.visitSubStatus).isEqualTo(VisitSubStatus.APPROVED)
 
-    val allEventAudits = testEventAuditRepository.findAllByBookingReference(visitPrimary.reference).let {
+    testEventAuditRepository.findAllByBookingReference(visitPrimary.reference).let {
       val types = it.map { event -> event.type }
       assertThat(types).containsExactlyInAnyOrder(
         EventAuditType.REQUESTED_VISIT,
         EventAuditType.REQUESTED_VISIT_APPROVED,
       )
     }
+
+    verify(telemetryClient).trackEvent(
+      eq("visit-request-approved"),
+      argThat { map ->
+        assertThat(map["reference"]).isEqualTo(visitPrimary.reference)
+        assertThat(map["visitStatus"]).isEqualTo(BOOKED.name)
+        assertThat(map["visitSubStatus"]).isEqualTo(VisitSubStatus.APPROVED.name)
+        true
+      },
+      isNull(),
+    )
 
     assertVisitRequestActionedDomainEvent(visitPrimary.reference)
   }
