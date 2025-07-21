@@ -141,18 +141,6 @@ class ApproveVisitRequestTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when approve visit requests endpoint is called, but no visit exists then 404 is thrown`() {
-    // Given no visit exists on the visit-scheduler
-    val approveVisitRequestBodyDto = ApproveVisitRequestBodyDto(visitReference = "no_visit", actionedBy = "user1")
-
-    // When
-    val responseSpec = callApproveVisitRequest(webTestClient, "no_visit", approveVisitRequestBodyDto, roleVisitSchedulerHttpHeaders)
-
-    // Then
-    responseSpec.expectStatus().isNotFound
-  }
-
-  @Test
   fun `when approve visit requests endpoint is called with bad request body, then bad request is returned`() {
     // Given
     val visitPrimary = createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitRestriction = VisitRestriction.OPEN, visitStatus = BOOKED, visitSubStatus = VisitSubStatus.REQUESTED)
@@ -160,6 +148,22 @@ class ApproveVisitRequestTest : IntegrationTestBase() {
 
     // When
     val responseSpec = callApproveVisitRequest(webTestClient, visitPrimary.reference, null, roleVisitSchedulerHttpHeaders)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+  }
+
+  @Test
+  fun `when approve visit requests endpoint is called, but requested visit is not in correct sub status, then bad request is returned`() {
+    // Given
+    val visitPrimary = createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitRestriction = VisitRestriction.OPEN, visitStatus = BOOKED, visitSubStatus = VisitSubStatus.APPROVED)
+    eventAuditEntityHelper.create(visitPrimary, type = EventAuditType.REQUESTED_VISIT)
+    eventAuditEntityHelper.create(visitPrimary, type = EventAuditType.REQUESTED_VISIT_APPROVED)
+
+    val approveVisitRequestBodyDto = ApproveVisitRequestBodyDto(visitReference = visitPrimary.reference, actionedBy = "user1")
+
+    // When
+    val responseSpec = callApproveVisitRequest(webTestClient, visitPrimary.reference, approveVisitRequestBodyDto, roleVisitSchedulerHttpHeaders)
 
     // Then
     responseSpec.expectStatus().isBadRequest

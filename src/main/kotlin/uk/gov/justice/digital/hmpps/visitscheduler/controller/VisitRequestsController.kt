@@ -101,6 +101,11 @@ class VisitRequestsController(private val visitRequestsService: VisitRequestsSer
         description = "Successfully approved visit request",
       ),
       ApiResponse(
+        responseCode = "400",
+        description = "Incorrect request to approve visit request by reference (not found or not in correct sub status)",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
         responseCode = "401",
         description = "Unauthorized to access this endpoint",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],

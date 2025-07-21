@@ -392,7 +392,7 @@ interface VisitRepository :
   @Transactional
   @Modifying
   @Query(
-    "Update visit SET visit_sub_status = 'APPROVED' WHERE reference =:visitReference",
+    "Update visit SET visit_sub_status = 'APPROVED' WHERE reference =:visitReference AND visit_sub_status = 'REQUESTED'",
     nativeQuery = true,
   )
   fun approveVisitRequestForPrisonByReference(visitReference: String): Int
