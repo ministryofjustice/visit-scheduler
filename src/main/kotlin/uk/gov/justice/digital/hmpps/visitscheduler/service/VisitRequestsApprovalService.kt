@@ -9,7 +9,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApproveVisitRequestBodyDt
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitRequestApprovalResponseDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
-import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 
 @Transactional
@@ -28,15 +27,10 @@ class VisitRequestsApprovalService(
   fun approveVisitRequestByReference(approveVisitRequestBodyDto: ApproveVisitRequestBodyDto): VisitRequestApprovalResponseDto {
     val visitReference = approveVisitRequestBodyDto.visitReference
 
-    val requestVisitInValidState = visitRepository.isVisitRequestInCorrectStatusForApprovalOrRejection(visitReference)
-    if (!requestVisitInValidState) {
-      throw ValidationException(messageService.getMessage("validation.visitrequests.invalidstatus", visitReference))
-    }
-
     LOG.info("approveVisitRequestByReference - called for visit - ${approveVisitRequestBodyDto.visitReference}")
     val success = visitRepository.approveVisitRequestForPrisonByReference(visitReference) > 0
     if (!success) {
-      throw ItemNotFoundException("No visit request found for reference $visitReference")
+      throw ValidationException(messageService.getMessage("validation.visitrequests.invalidstatus", visitReference))
     }
 
     val approvedVisitDto = visitDtoBuilder.build(visitRepository.findByReference(visitReference)!!)

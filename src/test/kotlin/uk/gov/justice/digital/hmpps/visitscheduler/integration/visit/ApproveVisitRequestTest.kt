@@ -141,18 +141,6 @@ class ApproveVisitRequestTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when approve visit requests endpoint is called, but no visit exists then 404 is thrown`() {
-    // Given no visit exists on the visit-scheduler
-    val approveVisitRequestBodyDto = ApproveVisitRequestBodyDto(visitReference = "no_visit", actionedBy = "user1")
-
-    // When
-    val responseSpec = callApproveVisitRequest(webTestClient, "no_visit", approveVisitRequestBodyDto, roleVisitSchedulerHttpHeaders)
-
-    // Then
-    responseSpec.expectStatus().isNotFound
-  }
-
-  @Test
   fun `when approve visit requests endpoint is called with bad request body, then bad request is returned`() {
     // Given
     val visitPrimary = createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitRestriction = VisitRestriction.OPEN, visitStatus = BOOKED, visitSubStatus = VisitSubStatus.REQUESTED)
