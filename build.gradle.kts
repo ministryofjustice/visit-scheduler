@@ -78,3 +78,11 @@ allOpen {
 tasks.test {
   jvmArgs = listOf("-Xmx2g", "-XX:MaxMetaspaceSize=512m")
 }
+
+tasks {
+  withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    compilerOptions {
+      jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
+    }
+  }
+}
