@@ -30,6 +30,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_VISITOR_UNAPPROVED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_REQUESTS_APPROVE_VISIT_BY_REFERENCE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_REQUESTS_COUNT_FOR_PRISON_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_REQUESTS_REJECT_VISIT_BY_REFERENCE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ACTIVATE_SESSION_TEMPLATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ACTIVATE_SESSION_TEMPLATE_CLIENT
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADD_PRISON_EXCLUDE_DATE
@@ -58,7 +59,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REMOVE_SESSI
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMPLATE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMPLATE_VISIT_STATS
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.migration.MIGRATE_CANCEL
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApproveVisitRequestBodyDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApproveRejectionVisitRequestBodyDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitFromExternalSystemDto
@@ -734,10 +735,26 @@ fun callCountVisitRequests(
 fun callApproveVisitRequest(
   webTestClient: WebTestClient,
   visitReference: String,
-  dto: ApproveVisitRequestBodyDto? = null,
+  dto: ApproveRejectionVisitRequestBodyDto? = null,
   authHttpHeaders: (HttpHeaders) -> Unit,
 ): ResponseSpec {
   val url = VISIT_REQUESTS_APPROVE_VISIT_BY_REFERENCE_PATH.replace("{reference}", visitReference)
+
+  return callPut(
+    dto,
+    webTestClient,
+    url,
+    authHttpHeaders,
+  )
+}
+
+fun callRejectVisitRequest(
+  webTestClient: WebTestClient,
+  visitReference: String,
+  dto: ApproveRejectionVisitRequestBodyDto? = null,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+): ResponseSpec {
+  val url = VISIT_REQUESTS_REJECT_VISIT_BY_REFERENCE_PATH.replace("{reference}", visitReference)
 
   return callPut(
     dto,

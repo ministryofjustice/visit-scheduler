@@ -211,7 +211,7 @@ class VisitStoreService(
     val cancelOutcome = cancelVisitDto.cancelOutcome
 
     visitEntity.visitStatus = CANCELLED
-    visitEntity.visitSubStatus = VisitSubStatus.CANCELLED // TODO [Request a visit feature]: Allow 'Requested' visits to have custom cancel statuses.
+    visitEntity.visitSubStatus = VisitSubStatus.CANCELLED
     visitEntity.outcomeStatus = cancelOutcome.outcomeStatus
 
     cancelOutcome.text?.let {

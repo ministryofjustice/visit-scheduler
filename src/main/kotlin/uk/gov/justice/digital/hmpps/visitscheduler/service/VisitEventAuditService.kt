@@ -290,11 +290,18 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
       )
   }
 
-  fun saveVisitRequestApprovedEventAudit(
+  fun saveVisitRequestApprovedOrRejectedEventAudit(
     actionedByValue: String,
     visit: VisitDto,
+    isApproved: Boolean,
   ): EventAuditDto {
     val actionedBy = createOrGetActionBy(actionedByValue, STAFF)
+
+    val eventType = if (isApproved) {
+      EventAuditType.REQUESTED_VISIT_APPROVED
+    } else {
+      EventAuditType.REQUESTED_VISIT_REJECTED
+    }
 
     return EventAuditDto(
       eventAuditRepository.saveAndFlush(
@@ -303,7 +310,7 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
           bookingReference = visit.reference,
           applicationReference = visit.applicationReference,
           sessionTemplateReference = visit.sessionTemplateReference,
-          EventAuditType.REQUESTED_VISIT_APPROVED,
+          eventType,
           applicationMethodType = ApplicationMethodType.WEBSITE,
           text = null,
         ),

@@ -4,7 +4,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApproveVisitRequestBodyDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApproveRejectionVisitRequestBodyDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.SnsDomainEventPublishDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitRequestSummaryDto
@@ -17,7 +17,7 @@ class VisitRequestsService(
   private val visitRepository: VisitRepository,
   private val prisonerService: PrisonerService,
   private val visitEventAuditService: VisitEventAuditService,
-  private val visitRequestsApprovalService: VisitRequestsApprovalService,
+  private val visitRequestsApprovalRejectionService: VisitRequestsApprovalRejectionService,
   private val snsService: SnsService,
   private val telemetryClientService: TelemetryClientService,
 ) {
@@ -65,21 +65,25 @@ class VisitRequestsService(
     return visitRequestSummaryList.sortedBy { it.visitDate }
   }
 
-  fun approveVisitRequestByReference(approveVisitRequestBodyDto: ApproveVisitRequestBodyDto): VisitDto {
-    val approvalResponseDto = visitRequestsApprovalService.approveVisitRequestByReference(approveVisitRequestBodyDto)
+  fun approveOrRejectVisitRequestByReference(approveRejectionVisitRequestBodyDto: ApproveRejectionVisitRequestBodyDto, isApproved: Boolean): VisitDto {
+    val approveRejectResponseDto = visitRequestsApprovalRejectionService.approveOrRejectVisitRequestByReference(approveRejectionVisitRequestBodyDto, isApproved)
 
     val snsDomainEventPublishDto = SnsDomainEventPublishDto(
-      reference = approvalResponseDto.visitDto.reference,
+      reference = approveRejectResponseDto.visitDto.reference,
       createdTimestamp = LocalDateTime.now(),
-      modifiedTimestamp = approvalResponseDto.visitDto.modifiedTimestamp, // Not used.
-      prisonerId = approvalResponseDto.visitDto.prisonerId,
-      eventAuditId = approvalResponseDto.eventAuditDto.id,
+      modifiedTimestamp = approveRejectResponseDto.visitDto.modifiedTimestamp, // Not used.
+      prisonerId = approveRejectResponseDto.visitDto.prisonerId,
+      eventAuditId = approveRejectResponseDto.eventAuditDto.id,
     )
 
-    snsService.sendVisitRequestActionedEvent(snsDomainEventPublishDto)
+    telemetryClientService.trackVisitRequestApprovedOrRejectedEvent(approveRejectResponseDto.visitDto, approveRejectResponseDto.eventAuditDto, isApproved)
 
-    telemetryClientService.trackVisitRequestApprovedEvent(approvalResponseDto.visitDto, approvalResponseDto.eventAuditDto)
+    if (isApproved) {
+      snsService.sendVisitRequestActionedEvent(snsDomainEventPublishDto)
+    } else {
+      snsService.sendVisitCancelledEvent(snsDomainEventPublishDto)
+    }
 
-    return approvalResponseDto.visitDto
+    return approveRejectResponseDto.visitDto
   }
 }

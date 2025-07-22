@@ -564,8 +564,7 @@ class VisitNotificationEventService(
     }
   }
 
-  @Transactional
-  fun deleteVisitNotificationEvents(visitReference: String, reason: UnFlagEventReason, text: String? = null) {
+  private fun deleteVisitNotificationEvents(visitReference: String, reason: UnFlagEventReason, text: String? = null) {
     val visitNotificationEvents = visitNotificationEventRepository.findVisitNotificationEventByVisitReference(visitReference)
 
     if (visitNotificationEvents.isNotEmpty()) {
