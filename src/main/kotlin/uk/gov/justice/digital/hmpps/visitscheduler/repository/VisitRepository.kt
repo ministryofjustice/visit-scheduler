@@ -396,4 +396,12 @@ interface VisitRepository :
     nativeQuery = true,
   )
   fun approveVisitRequestForPrisonByReference(visitReference: String): Int
+
+  @Transactional
+  @Modifying
+  @Query(
+    "Update visit SET visit_status = 'CANCELLED', visit_sub_status = 'REJECTED' WHERE reference =:visitReference AND visit_sub_status = 'REQUESTED'",
+    nativeQuery = true,
+  )
+  fun rejectVisitRequestForPrisonByReference(visitReference: String): Int
 }

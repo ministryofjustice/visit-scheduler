@@ -28,6 +28,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_CHANGED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_REQUESTED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_REQUEST_APPROVED_EVENT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_REQUEST_REJECTED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_SLOT_RESERVED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting.OverbookedSessionsDto
@@ -190,13 +191,20 @@ class TelemetryClientService(
     trackEvent(REMOVE_SESSION_EXCLUDE_DATE_EVENT, visitTrackEvent)
   }
 
-  fun trackVisitRequestApprovedEvent(
+  fun trackVisitRequestApprovedOrRejectedEvent(
     bookedVisitDto: VisitDto,
     eventAuditDto: EventAuditDto,
+    visitApproved: Boolean,
   ) {
+    val eventName = if (visitApproved) {
+      VISIT_REQUEST_APPROVED_EVENT
+    } else {
+      VISIT_REQUEST_REJECTED_EVENT
+    }
+
     trackEvent(
-      VISIT_REQUEST_APPROVED_EVENT,
-      createVisitRequestApprovedTrackData(bookedVisitDto, eventAuditDto),
+      eventName,
+      createVisitRequestApprovedOrRejectedTrackData(bookedVisitDto, eventAuditDto),
     )
   }
 
@@ -294,7 +302,7 @@ class TelemetryClientService(
     return data
   }
 
-  private fun createVisitRequestApprovedTrackData(
+  private fun createVisitRequestApprovedOrRejectedTrackData(
     visitDto: VisitDto,
     eventAudit: EventAuditDto,
   ): MutableMap<String, String> {
