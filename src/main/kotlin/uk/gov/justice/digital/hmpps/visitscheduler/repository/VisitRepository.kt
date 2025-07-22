@@ -400,7 +400,7 @@ interface VisitRepository :
   @Transactional
   @Modifying
   @Query(
-    "Update visit SET visit_status = 'CANCELLED', visit_sub_status = 'REJECTED' WHERE reference =:visitReference AND visit_sub_status = 'REQUESTED'",
+    "Update visit SET visit_status = 'CANCELLED', visit_sub_status = 'REJECTED', outcome_status = 'ESTABLISHMENT_CANCELLED' WHERE reference =:visitReference AND visit_sub_status = 'REQUESTED'",
     nativeQuery = true,
   )
   fun rejectVisitRequestForPrisonByReference(visitReference: String): Int
