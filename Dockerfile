@@ -1,14 +1,13 @@
-# FROM --platform=$BUILDPLATFORM eclipse-temurin:19-jre-jammy AS builder
-FROM eclipse-temurin:21-jre-jammy AS builder
+FROM --platform=$BUILDPLATFORM eclipse-temurin:21.0.1_12-jdk-jammy AS builder
 
 ARG BUILD_NUMBER
 ENV BUILD_NUMBER ${BUILD_NUMBER:-1_0_0}
 
 WORKDIR /app
 ADD . .
-RUN ./gradlew clean assemble -Dorg.gradle.daemon=false
+RUN ./gradlew --no-daemon assemble
 
-FROM eclipse-temurin:21-jre-jammy
+FROM eclipse-temurin:21.0.1_12-jre-jammy
 LABEL maintainer="HMPPS Digital Studio <info@digital.justice.gov.uk>"
 
 ARG BUILD_NUMBER
