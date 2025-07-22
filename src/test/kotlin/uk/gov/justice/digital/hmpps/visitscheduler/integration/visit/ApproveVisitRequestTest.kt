@@ -94,7 +94,7 @@ class ApproveVisitRequestTest : IntegrationTestBase() {
       isNull(),
     )
 
-    assertVisitRequestActionedDomainEvent(visitPrimary.reference)
+    assertVisitRequestApprovedDomainEvent(visitPrimary.reference)
   }
 
   @Test
@@ -137,7 +137,7 @@ class ApproveVisitRequestTest : IntegrationTestBase() {
     )
     verify(telemetryClient, times(1)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
 
-    assertVisitRequestActionedDomainEvent(visitPrimary.reference)
+    assertVisitRequestApprovedDomainEvent(visitPrimary.reference)
   }
 
   @Test
@@ -171,14 +171,14 @@ class ApproveVisitRequestTest : IntegrationTestBase() {
 
   private fun getApproveVisitRequestResponse(responseSpec: WebTestClient.ResponseSpec): VisitDto = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, VisitDto::class.java)
 
-  private fun assertVisitRequestActionedDomainEvent(visitReference: String) {
+  private fun assertVisitRequestApprovedDomainEvent(visitReference: String) {
     verify(telemetryClient).trackEvent(
-      eq("prison-visit-request.actioned-domain-event"),
+      eq("prison-visit-request.approved-domain-event"),
       org.mockito.kotlin.check {
         assertThat(it["reference"]).isEqualTo(visitReference)
       },
       isNull(),
     )
-    verify(telemetryClient, times(1)).trackEvent(eq("prison-visit-request.actioned-domain-event"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("prison-visit-request.approved-domain-event"), any(), isNull())
   }
 }
