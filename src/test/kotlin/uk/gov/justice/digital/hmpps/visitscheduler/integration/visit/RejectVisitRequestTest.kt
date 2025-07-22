@@ -97,7 +97,7 @@ class RejectVisitRequestTest : IntegrationTestBase() {
       isNull(),
     )
 
-    assertVisitRequestActionedDomainEvent(visitPrimary.reference)
+    assertVisitRequestRejectedDomainEvent(visitPrimary.reference)
   }
 
   @Test
@@ -141,7 +141,7 @@ class RejectVisitRequestTest : IntegrationTestBase() {
     )
     verify(telemetryClient, times(1)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
 
-    assertVisitRequestActionedDomainEvent(visitPrimary.reference)
+    assertVisitRequestRejectedDomainEvent(visitPrimary.reference)
   }
 
   @Test
@@ -175,14 +175,14 @@ class RejectVisitRequestTest : IntegrationTestBase() {
 
   private fun getRejectVisitRequestResponse(responseSpec: WebTestClient.ResponseSpec): VisitDto = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, VisitDto::class.java)
 
-  private fun assertVisitRequestActionedDomainEvent(visitReference: String) {
+  private fun assertVisitRequestRejectedDomainEvent(visitReference: String) {
     verify(telemetryClient).trackEvent(
-      eq("prison-visit-request.actioned-domain-event"),
+      eq("prison-visit.cancelled-domain-event"),
       check {
         assertThat(it["reference"]).isEqualTo(visitReference)
       },
       isNull(),
     )
-    verify(telemetryClient, times(1)).trackEvent(eq("prison-visit-request.actioned-domain-event"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("prison-visit.cancelled-domain-event"), any(), isNull())
   }
 }

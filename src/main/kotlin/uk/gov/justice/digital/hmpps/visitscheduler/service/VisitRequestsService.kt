@@ -76,9 +76,13 @@ class VisitRequestsService(
       eventAuditId = approveRejectResponseDto.eventAuditDto.id,
     )
 
-    snsService.sendVisitRequestActionedEvent(snsDomainEventPublishDto)
-
     telemetryClientService.trackVisitRequestApprovedOrRejectedEvent(approveRejectResponseDto.visitDto, approveRejectResponseDto.eventAuditDto, isApproved)
+
+    if (isApproved) {
+      snsService.sendVisitRequestActionedEvent(snsDomainEventPublishDto)
+    } else {
+      snsService.sendVisitCancelledEvent(snsDomainEventPublishDto)
+    }
 
     return approveRejectResponseDto.visitDto
   }
