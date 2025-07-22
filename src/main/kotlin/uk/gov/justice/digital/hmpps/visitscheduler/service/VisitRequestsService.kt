@@ -79,7 +79,7 @@ class VisitRequestsService(
     telemetryClientService.trackVisitRequestApprovedOrRejectedEvent(approveRejectResponseDto.visitDto, approveRejectResponseDto.eventAuditDto, isApproved)
 
     if (isApproved) {
-      snsService.sendVisitRequestActionedEvent(snsDomainEventPublishDto)
+      snsService.sendVisitRequestApprovedEvent(snsDomainEventPublishDto)
     } else {
       snsService.sendVisitCancelledEvent(snsDomainEventPublishDto)
     }

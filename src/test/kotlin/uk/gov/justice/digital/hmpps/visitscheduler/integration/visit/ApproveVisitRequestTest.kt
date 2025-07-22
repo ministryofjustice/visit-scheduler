@@ -173,12 +173,12 @@ class ApproveVisitRequestTest : IntegrationTestBase() {
 
   private fun assertVisitRequestActionedDomainEvent(visitReference: String) {
     verify(telemetryClient).trackEvent(
-      eq("prison-visit-request.actioned-domain-event"),
+      eq("prison-visit-request.approved-domain-event"),
       org.mockito.kotlin.check {
         assertThat(it["reference"]).isEqualTo(visitReference)
       },
       isNull(),
     )
-    verify(telemetryClient, times(1)).trackEvent(eq("prison-visit-request.actioned-domain-event"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("prison-visit-request.approved-domain-event"), any(), isNull())
   }
 }
