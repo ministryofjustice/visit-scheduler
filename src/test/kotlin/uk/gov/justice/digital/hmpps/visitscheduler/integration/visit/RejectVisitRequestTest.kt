@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApproveRejectionVisitRequ
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
@@ -77,6 +78,7 @@ class RejectVisitRequestTest : IntegrationTestBase() {
     assertThat(rejectedVisit.reference).isEqualTo(visitPrimary.reference)
     assertThat(rejectedVisit.visitStatus).isEqualTo(VisitStatus.CANCELLED)
     assertThat(rejectedVisit.visitSubStatus).isEqualTo(VisitSubStatus.REJECTED)
+    assertThat(rejectedVisit.outcomeStatus).isEqualTo(OutcomeStatus.ESTABLISHMENT_CANCELLED)
 
     testEventAuditRepository.findAllByBookingReference(visitPrimary.reference).let {
       val types = it.map { event -> event.type }
@@ -119,6 +121,7 @@ class RejectVisitRequestTest : IntegrationTestBase() {
     assertThat(rejectedVisit.reference).isEqualTo(visitPrimary.reference)
     assertThat(rejectedVisit.visitStatus).isEqualTo(VisitStatus.CANCELLED)
     assertThat(rejectedVisit.visitSubStatus).isEqualTo(VisitSubStatus.REJECTED)
+    assertThat(rejectedVisit.outcomeStatus).isEqualTo(OutcomeStatus.ESTABLISHMENT_CANCELLED)
 
     testEventAuditRepository.findAllByBookingReference(visitPrimary.reference).let {
       val types = it.map { event -> event.type }
