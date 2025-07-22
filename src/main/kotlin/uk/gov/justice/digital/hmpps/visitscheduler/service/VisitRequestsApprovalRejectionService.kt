@@ -47,7 +47,7 @@ class VisitRequestsApprovalRejectionService(
     } else {
       UnFlagEventReason.VISIT_REQUEST_REJECTED
     }
-    visitNotificationEventService.deleteVisitNotificationEvents(actionedVisitDto.reference, unflagEventReason)
+    visitNotificationEventService.deleteVisitAndPairedNotificationEvents(actionedVisitDto.reference, unflagEventReason)
 
     return VisitRequestApprovalRejectionResponseDto(actionedVisitDto, eventAuditDto)
   }
