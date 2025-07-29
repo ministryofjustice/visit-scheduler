@@ -38,6 +38,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.LegacyDataReposito
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.CapitaliseUtil
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.MigrationSessionTemplateMatcher
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionDatesUtil
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -54,6 +55,7 @@ class MigrateVisitService(
   private val visitNotificationEventService: VisitNotificationEventService,
   private val migrationSessionTemplateMatcher: MigrationSessionTemplateMatcher,
   private val telemetryClient: TelemetryClient,
+  private val sessionDatesUtil: SessionDatesUtil,
   @Value("\${migrate.sessiontemplate.mapping.offset.days:0}")
   private val migrateSessionTemplateMappingOffsetDays: Long,
   @Value("\${migrate.max.months.in.future:6}")
@@ -313,7 +315,7 @@ class MigrateVisitService(
     "visitRoom" to visitEntity.visitRoom,
     "sessionTemplateReference" to (visitEntity.sessionSlot.sessionTemplateReference ?: ""),
     "visitRestriction" to visitEntity.visitRestriction.name,
-    "visitStart" to sessionSlotService.getSessionTimeAndDateString(visitEntity.sessionSlot.slotStart),
+    "visitStart" to sessionDatesUtil.getSessionTimeAndDateString(visitEntity.sessionSlot.slotStart),
     "visitStatus" to visitEntity.visitStatus.name,
     "applicationReference" to (visitEntity.getLastCompletedApplication()?.reference ?: ""),
   )

@@ -33,6 +33,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundExcept
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.diff.UpdateVisitDifferentiator
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -43,6 +44,7 @@ class VisitService(
   private val telemetryClientService: TelemetryClientService,
   private val eventAuditService: VisitEventAuditService,
   private val snsService: SnsService,
+  private val updateVisitDifferentiator: UpdateVisitDifferentiator,
   @Value("\${feature.request-booking-enabled:false}") private val requestBookingFeatureEnabled: Boolean,
 ) {
 
@@ -192,7 +194,7 @@ class VisitService(
       EventAuditType.BOOKED_VISIT
     }
 
-    val bookingEventAuditDto = visitEventAuditService.updateVisitApplicationAndSaveEvent(bookedVisitDto, bookingRequestDto, eventType)
+    val bookingEventAuditDto = visitEventAuditService.updateVisitApplicationAndSaveEvent(bookedVisitDto, bookingRequestDto, eventType, text = null)
 
     telemetryClientService.trackBookingEvent(bookedVisitDto, bookingEventAuditDto, isRequestBooking = bookingRequestDto.isRequestBooking == true)
 
@@ -253,7 +255,10 @@ class VisitService(
     bookedVisitDto: VisitDto,
     bookingRequestDto: BookingRequestDto,
   ): VisitDto {
-    val updatedEventAuditDto = visitEventAuditService.updateVisitApplicationAndSaveEvent(bookedVisitDto, bookingRequestDto, EventAuditType.UPDATED_VISIT)
+    val updateText = visitDtoBeforeUpdate?.let {
+      updateVisitDifferentiator.getDiff(bookedVisitDto, visitDtoBeforeUpdate)
+    }
+    val updatedEventAuditDto = visitEventAuditService.updateVisitApplicationAndSaveEvent(bookedVisitDto, bookingRequestDto, EventAuditType.UPDATED_VISIT, text = updateText)
 
     telemetryClientService.trackUpdateBookingEvent(visitDtoBeforeUpdate, bookedVisitDto, updatedEventAuditDto)
 

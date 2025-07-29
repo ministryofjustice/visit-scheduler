@@ -5,7 +5,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateD
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import java.time.DayOfWeek.MONDAY
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.Period
+import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit.WEEKS
 import java.time.temporal.TemporalAdjusters
 import java.util.stream.Stream
@@ -70,4 +72,6 @@ class SessionDatesUtil {
     val validFromMonday = getValidFromMonday(validFromDate)
     return WEEKS.between(validFromMonday, sessionDate).toInt() % weeklyFrequency != 0
   }
+
+  fun getSessionTimeAndDateString(slotDateTime: LocalDateTime): String = slotDateTime.format(DateTimeFormatter.ISO_DATE_TIME)
 }
