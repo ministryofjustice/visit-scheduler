@@ -338,6 +338,19 @@ class UpdateVisitSummaryUtilTest {
     assertThat(updateText).isEqualTo("Visit restriction changed from OPEN to CLOSED, Added 1 visitor(s), Moved session from Fri 01-08-2025 (11:00 - 12:00) to (12:00 - 13:00), Updated additional support, Updated contact information")
   }
 
+  @Test
+  fun `when no changes are made in update then updated text is null`() {
+    val visitBeforeUpdate = createVisitDto(
+      startTimestamp = LocalDateTime.now(),
+      endTimestamp = LocalDateTime.now().plusHours(1),
+    )
+
+    val visitAfterUpdate = visitBeforeUpdate.copy()
+
+    val updateText = updateVisitSummaryUtil.getDiff(visitDtoAfterUpdate = visitAfterUpdate, visitDtoBeforeUpdate = visitBeforeUpdate)
+    assertThat(updateText).isNull()
+  }
+
   private fun createVisitDto(
     applicationReference: String? = null,
     sessionTemplateReference: String = "ss-aa-bb-cc",
