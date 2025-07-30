@@ -33,7 +33,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundExcept
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.utils.diff.UpdateVisitDifferentiator
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.diff.UpdateVisitSummaryUtil
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -44,7 +44,7 @@ class VisitService(
   private val telemetryClientService: TelemetryClientService,
   private val eventAuditService: VisitEventAuditService,
   private val snsService: SnsService,
-  private val updateVisitDifferentiator: UpdateVisitDifferentiator,
+  private val updateVisitSummaryUtil: UpdateVisitSummaryUtil,
   @Value("\${feature.request-booking-enabled:false}") private val requestBookingFeatureEnabled: Boolean,
 ) {
 
@@ -256,7 +256,7 @@ class VisitService(
     bookingRequestDto: BookingRequestDto,
   ): VisitDto {
     val updateText = visitDtoBeforeUpdate?.let {
-      updateVisitDifferentiator.getDiff(bookedVisitDto, visitDtoBeforeUpdate)
+      updateVisitSummaryUtil.getDiff(visitDtoAfterUpdate = bookedVisitDto, visitDtoBeforeUpdate = visitDtoBeforeUpdate)
     }
     val updatedEventAuditDto = visitEventAuditService.updateVisitApplicationAndSaveEvent(bookedVisitDto, bookingRequestDto, EventAuditType.UPDATED_VISIT, text = updateText)
 
