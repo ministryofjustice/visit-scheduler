@@ -85,6 +85,7 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
     type: EventAuditType,
     applicationMethodType: ApplicationMethodType,
     userType: UserType,
+    text: String? = null,
   ): EventAuditDto {
     val actionedBy = createOrGetActionBy(actionedByValue, userType)
 
@@ -97,7 +98,7 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
           sessionTemplateReference = visit.sessionTemplateReference,
           type = type,
           applicationMethodType = applicationMethodType,
-          text = null,
+          text = text,
         ),
       ),
       notifyHistoryDtoBuilder,
@@ -195,6 +196,7 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
     bookedVisitDto: VisitDto,
     bookingRequestDto: BookingRequestDto,
     eventType: EventAuditType,
+    text: String?,
   ): EventAuditDto {
     if (bookedVisitDto.applicationReference == null) {
       // This should not happen as application reference should always be set here
@@ -212,6 +214,7 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
       eventType,
       bookingRequestDto.applicationMethodType,
       userType = bookingRequestDto.userType,
+      text = text,
     )
   }
 

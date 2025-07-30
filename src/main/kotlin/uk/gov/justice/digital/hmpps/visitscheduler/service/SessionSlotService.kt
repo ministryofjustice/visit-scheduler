@@ -12,7 +12,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionSlotReposit
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 
 @Service
 class SessionSlotService {
@@ -47,8 +46,6 @@ class SessionSlotService {
 
     return getSessionSlot(sessionTemplateReference, slotDate, slotTime, slotEndTime, prison)
   }
-
-  fun getSessionTimeAndDateString(slotDateTime: LocalDateTime): String = slotDateTime.format(DateTimeFormatter.ISO_DATE_TIME)
 
   fun getSessionSlot(
     startTimeDate: LocalDateTime,
