@@ -322,32 +322,36 @@ interface VisitRepository :
 
   @Query(
     "SELECT v.* FROM visit v " +
-      " INNER JOIN event_audit ea on ea.booking_reference = v.reference AND ea.type = 'BOOKED_VISIT' " +
+      " INNER JOIN event_audit ea on ea.booking_reference = v.reference AND ea.type in ('BOOKED_VISIT', 'REQUESTED_VISIT') " +
       " INNER JOIN actioned_by ab on ab.id = ea.actioned_by_id" +
       " INNER JOIN session_slot ss on ss.id = v.session_slot_id " +
       " WHERE ab.booker_reference = :bookerReference " +
-      " AND v.visit_status = 'BOOKED' AND ss.slot_start >= CURRENT_TIMESTAMP AND v.user_type = 'PUBLIC'",
+      " AND v.visit_status = 'BOOKED' " +
+      " AND ss.slot_start >= CURRENT_TIMESTAMP " +
+      " AND v.user_type = 'PUBLIC'",
     nativeQuery = true,
   )
   fun getPublicFutureBookingsByBookerReference(bookerReference: String): List<Visit>
 
   @Query(
     "SELECT v.* FROM visit v " +
-      " INNER JOIN event_audit ea on ea.booking_reference = v.reference AND ea.type = 'BOOKED_VISIT' " +
+      " INNER JOIN event_audit ea on ea.booking_reference = v.reference AND  ea.type in ('BOOKED_VISIT', 'REQUESTED_VISIT') " +
       " INNER JOIN actioned_by ab on ab.id = ea.actioned_by_id" +
       " INNER JOIN session_slot ss on ss.id = v.session_slot_id " +
       " WHERE ab.booker_reference = :bookerReference " +
-      " AND v.visit_status = 'BOOKED' AND ss.slot_start < CURRENT_TIMESTAMP AND v.user_type = 'PUBLIC'",
+      " AND v.visit_status = 'BOOKED' " +
+      " AND ss.slot_start < CURRENT_TIMESTAMP " +
+      "AND v.user_type = 'PUBLIC'",
     nativeQuery = true,
   )
   fun getPublicPastBookingsByBookerReference(bookerReference: String): List<Visit>
 
   @Query(
     "Select v.* FROM visit v " +
-      " INNER JOIN event_audit ea on ea.booking_reference = v.reference and ea.type = 'BOOKED_VISIT' " +
+      " INNER JOIN event_audit ea on ea.booking_reference = v.reference and ea.type in ('BOOKED_VISIT', 'REQUESTED_VISIT') " +
       " INNER JOIN actioned_by ab on ab.id = ea.actioned_by_id" +
       " WHERE ab.booker_reference = :bookerReference AND v.visit_status = 'CANCELLED' " +
-      " AND v.user_type = 'PUBLIC'",
+      " AND v.user_type = 'PUBLIC' ",
     nativeQuery = true,
   )
   fun getPublicCanceledVisitsByBookerReference(bookerReference: String): List<Visit>
