@@ -350,8 +350,9 @@ interface VisitRepository :
     "Select v.* FROM visit v " +
       " INNER JOIN event_audit ea on ea.booking_reference = v.reference and ea.type in ('BOOKED_VISIT', 'REQUESTED_VISIT') " +
       " INNER JOIN actioned_by ab on ab.id = ea.actioned_by_id" +
-      " WHERE ab.booker_reference = :bookerReference AND v.visit_status = 'CANCELLED' " +
-      " AND v.user_type = 'PUBLIC' ",
+      " WHERE ab.booker_reference = :bookerReference " +
+      " AND v.visit_status = 'CANCELLED' " +
+      " AND v.user_type = 'PUBLIC'",
     nativeQuery = true,
   )
   fun getPublicCanceledVisitsByBookerReference(bookerReference: String): List<Visit>
