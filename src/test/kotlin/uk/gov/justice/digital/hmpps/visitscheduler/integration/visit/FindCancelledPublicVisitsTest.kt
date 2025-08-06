@@ -18,6 +18,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus.APPROVED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus.REJECTED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus.REQUESTED
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitAssertHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
@@ -40,6 +43,11 @@ class FindCancelledPublicVisitsTest : IntegrationTestBase() {
   private lateinit var visitWithOtherBooker: Visit
   private lateinit var visitCancelledLeastRecent: Visit
 
+  private lateinit var futureRequestedVisitRejected: Visit
+  private lateinit var pastRequestedVisitRejected: Visit
+  private lateinit var futureRequestedVisitAutoRejected: Visit
+  private lateinit var pastRequestedVisitAutoRejected: Visit
+
   @BeforeEach
   internal fun createVisits() {
     otherSessionTemplate = sessionTemplateEntityHelper.create(prisonCode = "AWE")
@@ -57,6 +65,24 @@ class FindCancelledPublicVisitsTest : IntegrationTestBase() {
     createVisit(actionedByValue = "aTestRef", visitStatus = BOOKED, visitSubStatus = VisitSubStatus.AUTO_APPROVED, sessionTemplate = sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = -1)
 
     visitCancelledMostRecent = createVisit(prisonerId = "most recent", actionedByValue = "aTestRef", CANCELLED, visitSubStatus = VisitSubStatus.CANCELLED, sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = 1)
+
+    // visit requested and approved
+    val futureRequestedVisitApproved = createRequestedVisit(prisonerId = "requested-and-approved", actionedByValue = "aOtherTestRef", visitStatus = BOOKED, APPROVED, sessionTemplate = sessionTemplateDefault, slotDateWeeks = 2)
+    // approved but in the past
+    val pastRequestedVisitApproved = createRequestedVisit(prisonerId = "requested-and-approved-in-past", actionedByValue = "aOtherTestRef", visitStatus = BOOKED, APPROVED, sessionTemplate = sessionTemplateDefault, slotDateWeeks = -1)
+
+    // visit requested but not actioned
+    val futureRequestedVisit = createRequestedVisit(prisonerId = "requested-not-actioned", actionedByValue = "aOtherTestRef", visitStatus = BOOKED, REQUESTED, sessionTemplate = sessionTemplateDefault, slotDateWeeks = 3)
+    // requested but in the past
+    val pastRequestedVisit = createRequestedVisit(prisonerId = "requested-and-approved-in-past", actionedByValue = "aOtherTestRef", visitStatus = BOOKED, APPROVED, sessionTemplate = sessionTemplateDefault, slotDateWeeks = -1)
+    // visit requested and rejected
+
+    futureRequestedVisitRejected = createRequestedVisit(prisonerId = "requested-and-rejected", actionedByValue = "aOtherTestRef", visitStatus = CANCELLED, REJECTED, sessionTemplate = sessionTemplateDefault, slotDateWeeks = 3)
+    // rejected in the past
+    pastRequestedVisitRejected = createRequestedVisit(prisonerId = "requested-and-rejected-in-past", actionedByValue = "aOtherTestRef", visitStatus = CANCELLED, REJECTED, sessionTemplate = sessionTemplateDefault, slotDateWeeks = -2)
+    futureRequestedVisitAutoRejected = createRequestedVisit(prisonerId = "requested-and-rejected", actionedByValue = "aOtherTestRef", visitStatus = CANCELLED, REJECTED, sessionTemplate = sessionTemplateDefault, slotDateWeeks = 3)
+    // auto rejected in the past
+    pastRequestedVisitAutoRejected = createRequestedVisit(prisonerId = "requested-and-rejected-in-past", actionedByValue = "aOtherTestRef", visitStatus = CANCELLED, REJECTED, sessionTemplate = sessionTemplateDefault, slotDateWeeks = -3)
   }
 
   @Test
@@ -90,8 +116,12 @@ class FindCancelledPublicVisitsTest : IntegrationTestBase() {
     responseSpec.expectStatus().isOk
     val visitList = parseVisitsResponse(responseSpec)
 
-    Assertions.assertThat(visitList.size).isEqualTo(1)
-    visitAssertHelper.assertVisitDto(visitList[0], visitWithOtherBooker)
+    Assertions.assertThat(visitList.size).isEqualTo(5)
+    visitAssertHelper.assertVisitDto(visitList[0], pastRequestedVisitAutoRejected)
+    visitAssertHelper.assertVisitDto(visitList[1], futureRequestedVisitAutoRejected)
+    visitAssertHelper.assertVisitDto(visitList[2], pastRequestedVisitRejected)
+    visitAssertHelper.assertVisitDto(visitList[3], futureRequestedVisitRejected)
+    visitAssertHelper.assertVisitDto(visitList[4], visitWithOtherBooker)
   }
 
   @Test
@@ -110,7 +140,7 @@ class FindCancelledPublicVisitsTest : IntegrationTestBase() {
   @Test
   fun `access forbidden when unknown role`() {
     // Given
-    val noRoles = listOf<String>("SOME_OTHER_ROLE_VISIT_SCHEDULER")
+    val noRoles = listOf("SOME_OTHER_ROLE_VISIT_SCHEDULER")
 
     // When
     val responseSpec = callPublicCancelledVisitsEndPoint(bookerReference = "aTestRole", roles = noRoles)

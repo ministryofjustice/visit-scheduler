@@ -31,8 +31,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplica
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.ACCEPTED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.BOOKED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CANCELLED_VISIT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.REQUESTED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.RESERVED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus.CANCELLATION
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
@@ -381,6 +383,46 @@ abstract class IntegrationTestBase {
 
     if (CANCELLED == visitStatus) {
       eventJourney.add(CANCELLED_VISIT)
+      visit.outcomeStatus = CANCELLATION
+      actionedByValues.add(actionedByValue + "_staff")
+      userTypes.add(STAFF)
+    }
+
+    visit = visitEntityHelper.save(visit)
+
+    eventAuditEntityHelper.createForVisitAndApplication(
+      visit,
+      actionedByValues = actionedByValues,
+      types = eventJourney,
+      userTypes = userTypes,
+    )
+    return visit
+  }
+
+  fun createRequestedVisit(
+    prisonerId: String? = "testPrisonerId",
+    actionedByValue: String,
+    visitStatus: VisitStatus,
+    visitSubStatus: VisitSubStatus,
+    sessionTemplate: SessionTemplate,
+    userType: UserType = UserType.PUBLIC,
+    slotDateWeeks: Long,
+  ): Visit {
+    val eventJourney = mutableListOf(RESERVED_VISIT, REQUESTED_VISIT)
+    val actionedByValues = mutableListOf(actionedByValue, actionedByValue)
+    val userTypes = mutableListOf(userType, userType)
+
+    var visit = createApplicationAndVisit(
+      prisonerId = prisonerId,
+      slotDate = LocalDate.now().plusWeeks(slotDateWeeks),
+      sessionTemplate = sessionTemplate,
+      visitStatus = visitStatus,
+      visitSubStatus = visitSubStatus,
+      userType = userType,
+    )
+
+    if (VisitSubStatus.REJECTED == visitSubStatus) {
+      eventJourney.add(EventAuditType.REQUESTED_VISIT_REJECTED)
       visit.outcomeStatus = CANCELLATION
       actionedByValues.add(actionedByValue + "_staff")
       userTypes.add(STAFF)
