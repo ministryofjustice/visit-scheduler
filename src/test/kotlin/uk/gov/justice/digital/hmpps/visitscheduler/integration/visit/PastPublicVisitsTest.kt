@@ -17,8 +17,12 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_FUTURE_BOOKED_
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_PAST_BOOKED_PUBLIC_VISITS_BY_BOOKER_REFERENCE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus.APPROVED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus.REJECTED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus.REQUESTED
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitAssertHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
@@ -46,6 +50,8 @@ class PastPublicVisitsTest : IntegrationTestBase() {
   private lateinit var visitWithOtherBooker: Visit
   private lateinit var pastVisitToday: Visit
   private lateinit var futureVisitToday: Visit
+  private lateinit var pastRequestedVisitApproved: Visit
+  private lateinit var pastRequestedVisit: Visit
 
   private val defaultBookerReference: String = "aTestRef"
 
@@ -59,24 +65,39 @@ class PastPublicVisitsTest : IntegrationTestBase() {
     // session template that has a start time 5 minutes in the future
     otherSessionTemplate = sessionTemplateEntityHelper.create(prisonCode = "AWE")
 
-    visitFarInThePast = createVisit(prisonerId = "visit far in past", actionedByValue = defaultBookerReference, visitStatus = VisitStatus.BOOKED, VisitSubStatus.AUTO_APPROVED, sessionTemplate = sessionTemplate1, userType = PUBLIC, slotDateWeeks = -6)
+    visitFarInThePast = createVisit(prisonerId = "visit far in past", actionedByValue = defaultBookerReference, visitStatus = BOOKED, VisitSubStatus.AUTO_APPROVED, sessionTemplate = sessionTemplate1, userType = PUBLIC, slotDateWeeks = -6)
 
-    visitInDifferentPrison = createVisit(prisonerId = "visit different prison", actionedByValue = defaultBookerReference, visitStatus = VisitStatus.BOOKED, VisitSubStatus.AUTO_APPROVED, sessionTemplate = sessionTemplate1, userType = PUBLIC, slotDateWeeks = -4)
+    visitInDifferentPrison = createVisit(prisonerId = "visit different prison", actionedByValue = defaultBookerReference, visitStatus = BOOKED, VisitSubStatus.AUTO_APPROVED, sessionTemplate = sessionTemplate1, userType = PUBLIC, slotDateWeeks = -4)
 
-    nearestPastVisitBeforeToday = createVisit(prisonerId = "nearest visit in past before today", actionedByValue = defaultBookerReference, visitStatus = VisitStatus.BOOKED, VisitSubStatus.AUTO_APPROVED, sessionTemplate = sessionTemplate1, userType = PUBLIC, slotDateWeeks = -1)
+    nearestPastVisitBeforeToday = createVisit(prisonerId = "nearest visit in past before today", actionedByValue = defaultBookerReference, visitStatus = BOOKED, VisitSubStatus.AUTO_APPROVED, sessionTemplate = sessionTemplate1, userType = PUBLIC, slotDateWeeks = -1)
 
     // this visit is for a session template that started 1 minute back
-    pastVisitToday = createVisit(prisonerId = "today's visit in past", actionedByValue = defaultBookerReference, visitStatus = VisitStatus.BOOKED, VisitSubStatus.AUTO_APPROVED, sessionTemplate = sessionTemplate2, userType = PUBLIC, slotDateWeeks = 0)
+    pastVisitToday = createVisit(prisonerId = "today's visit in past", actionedByValue = defaultBookerReference, visitStatus = BOOKED, VisitSubStatus.AUTO_APPROVED, sessionTemplate = sessionTemplate2, userType = PUBLIC, slotDateWeeks = 0)
     // this visit is for a session template that started 5 minutes after
-    futureVisitToday = createVisit(prisonerId = "today's visit in future", actionedByValue = defaultBookerReference, visitStatus = VisitStatus.BOOKED, VisitSubStatus.AUTO_APPROVED, sessionTemplate = sessionTemplate1, userType = PUBLIC, slotDateWeeks = 0)
+    futureVisitToday = createVisit(prisonerId = "today's visit in future", actionedByValue = defaultBookerReference, visitStatus = BOOKED, VisitSubStatus.AUTO_APPROVED, sessionTemplate = sessionTemplate1, userType = PUBLIC, slotDateWeeks = 0)
 
-    var visitInFuture = createVisit(prisonerId = "visit", actionedByValue = defaultBookerReference, visitStatus = VisitStatus.BOOKED, VisitSubStatus.AUTO_APPROVED, sessionTemplate = sessionTemplate1, userType = PUBLIC, slotDateWeeks = 1)
+    val visitInFuture = createVisit(prisonerId = "visit", actionedByValue = defaultBookerReference, visitStatus = BOOKED, VisitSubStatus.AUTO_APPROVED, sessionTemplate = sessionTemplate1, userType = PUBLIC, slotDateWeeks = 1)
 
-    var visitBookerByStaff = createVisit(prisonerId = "visit", actionedByValue = defaultBookerReference, visitStatus = VisitStatus.BOOKED, VisitSubStatus.AUTO_APPROVED, sessionTemplate = sessionTemplate1, userType = STAFF, slotDateWeeks = -1)
+    val visitBookerByStaff = createVisit(prisonerId = "visit", actionedByValue = defaultBookerReference, visitStatus = BOOKED, VisitSubStatus.AUTO_APPROVED, sessionTemplate = sessionTemplate1, userType = STAFF, slotDateWeeks = -1)
 
-    var visitCancelled = createVisit(prisonerId = "visit", actionedByValue = defaultBookerReference, visitStatus = VisitStatus.CANCELLED, VisitSubStatus.CANCELLED, sessionTemplate = sessionTemplate1, userType = PUBLIC, slotDateWeeks = -1)
+    val visitCancelled = createVisit(prisonerId = "visit", actionedByValue = defaultBookerReference, visitStatus = CANCELLED, VisitSubStatus.CANCELLED, sessionTemplate = sessionTemplate1, userType = PUBLIC, slotDateWeeks = -1)
 
-    visitWithOtherBooker = createVisit(prisonerId = "visit with other broker", actionedByValue = "aOtherTestRef", visitStatus = VisitStatus.BOOKED, VisitSubStatus.AUTO_APPROVED, sessionTemplate = sessionTemplate1, userType = PUBLIC, slotDateWeeks = -2)
+    visitWithOtherBooker = createVisit(prisonerId = "visit with other broker", actionedByValue = "aOtherTestRef", visitStatus = BOOKED, VisitSubStatus.AUTO_APPROVED, sessionTemplate = sessionTemplate1, userType = PUBLIC, slotDateWeeks = -2)
+
+    // approved visit in the past
+    pastRequestedVisitApproved = createRequestedVisit(prisonerId = "requested-and-approved-in-past", actionedByValue = "aOtherTestRef", visitStatus = BOOKED, APPROVED, sessionTemplate = sessionTemplateDefault, slotDateWeeks = -2)
+    // approved but in future
+    val futureRequestedVisitApproved = createRequestedVisit(prisonerId = "requested-and-approved", actionedByValue = "aOtherTestRef", visitStatus = BOOKED, APPROVED, sessionTemplate = sessionTemplateDefault, slotDateWeeks = 2)
+
+    // requested visit in the past that was not actioned
+    pastRequestedVisit = createRequestedVisit(prisonerId = "requested-and-approved-in-past", actionedByValue = "aOtherTestRef", visitStatus = BOOKED, APPROVED, sessionTemplate = sessionTemplateDefault, slotDateWeeks = -3)
+    // visit not actioned in the future
+    val futureRequestedVisit = createRequestedVisit(prisonerId = "requested-not-actioned", actionedByValue = "aOtherTestRef", visitStatus = BOOKED, REQUESTED, sessionTemplate = sessionTemplateDefault, slotDateWeeks = 3)
+
+    // rejected visit in the past
+    val pastRequestedVisitRejected = createRequestedVisit(prisonerId = "requested-and-rejected-in-past", actionedByValue = "aOtherTestRef", visitStatus = CANCELLED, REJECTED, sessionTemplate = sessionTemplateDefault, slotDateWeeks = -3)
+    // rejected visit in the future
+    val futureRequestedVisitRejected = createRequestedVisit(prisonerId = "requested-and-rejected", actionedByValue = "aOtherTestRef", visitStatus = CANCELLED, REJECTED, sessionTemplate = sessionTemplateDefault, slotDateWeeks = 3)
   }
 
   @Test
@@ -110,8 +131,10 @@ class PastPublicVisitsTest : IntegrationTestBase() {
     responseSpec.expectStatus().isOk
     val visitList = parseVisitsResponse(responseSpec)
 
-    Assertions.assertThat(visitList.size).isEqualTo(1)
+    Assertions.assertThat(visitList.size).isEqualTo(3)
     visitAssertHelper.assertVisitDto(visitList[0], visitWithOtherBooker)
+    visitAssertHelper.assertVisitDto(visitList[1], pastRequestedVisitApproved)
+    visitAssertHelper.assertVisitDto(visitList[2], pastRequestedVisit)
   }
 
   @Test
