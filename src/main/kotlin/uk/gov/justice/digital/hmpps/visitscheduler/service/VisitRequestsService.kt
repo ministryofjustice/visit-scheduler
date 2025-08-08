@@ -66,7 +66,7 @@ class VisitRequestsService(
   }
 
   fun approveOrRejectVisitRequestByReference(approveRejectionVisitRequestBodyDto: ApproveRejectionVisitRequestBodyDto, isApproved: Boolean): VisitDto {
-    val approveRejectResponseDto = visitRequestsApprovalRejectionService.approveOrRejectVisitRequestByReference(approveRejectionVisitRequestBodyDto, isApproved)
+    val approveRejectResponseDto = visitRequestsApprovalRejectionService.manuallyApproveOrRejectVisitRequestByReference(approveRejectionVisitRequestBodyDto, isApproved)
 
     val snsDomainEventPublishDto = SnsDomainEventPublishDto(
       reference = approveRejectResponseDto.visitDto.reference,
@@ -85,5 +85,37 @@ class VisitRequestsService(
     }
 
     return approveRejectResponseDto.visitDto
+  }
+
+  fun autoRejectRequestVisitsAtMinimumBookingWindow(): Int {
+    LOG.info("Entered VisitRequestsService - autoRejectRequestVisitsAtMinimumBookingWindow")
+
+    // 1. Find all visit requests due for rejection
+    val requestVisitsDueForAutoRejection = visitRepository.findAllVisitRequestsDueForAutoRejection()
+
+    LOG.info("Found ${requestVisitsDueForAutoRejection.size} request visits due for auto rejection")
+
+    // 2. Process the visit request auto rejection
+    requestVisitsDueForAutoRejection.forEach { visitRequest ->
+      // 2a. For each visit request, call to process it's rejection inside a transaction in sub service.
+      val autoRejectResponseDto = visitRequestsApprovalRejectionService.autoRejectRequestVisitsAtMinimumBookingWindow(visitRequest)
+
+      // 2b. Raise in application insights the auto rejected details
+      telemetryClientService.trackVisitRequestAutoRejectedEvent(autoRejectResponseDto.visitDto, autoRejectResponseDto.eventAuditDto)
+
+      // 2b. Raise an SNS canceled event for visit request
+      val snsDomainEventPublishDto = SnsDomainEventPublishDto(
+        reference = autoRejectResponseDto.visitDto.reference,
+        createdTimestamp = LocalDateTime.now(),
+        modifiedTimestamp = autoRejectResponseDto.visitDto.modifiedTimestamp, // Not used.
+        prisonerId = autoRejectResponseDto.visitDto.prisonerId,
+        eventAuditId = autoRejectResponseDto.eventAuditDto.id,
+      )
+
+      snsService.sendVisitCancelledEvent(snsDomainEventPublishDto)
+    }
+
+    // 3. Return the size of the list found, for logging purposes
+    return requestVisitsDueForAutoRejection.size
   }
 }

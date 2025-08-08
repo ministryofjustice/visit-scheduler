@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApproveRejectionVisitRequ
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitRequestApprovalRejectionResponseDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 
 @Transactional
@@ -24,7 +25,7 @@ class VisitRequestsApprovalRejectionService(
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
-  fun approveOrRejectVisitRequestByReference(approvalVisitRequestBodyDto: ApproveRejectionVisitRequestBodyDto, isApproved: Boolean): VisitRequestApprovalRejectionResponseDto {
+  fun manuallyApproveOrRejectVisitRequestByReference(approvalVisitRequestBodyDto: ApproveRejectionVisitRequestBodyDto, isApproved: Boolean): VisitRequestApprovalRejectionResponseDto {
     val visitReference = approvalVisitRequestBodyDto.visitReference
 
     LOG.info("approveOrRejectVisitRequestByReference - called for visit - ${approvalVisitRequestBodyDto.visitReference}, isApproved - $isApproved")
@@ -50,5 +51,22 @@ class VisitRequestsApprovalRejectionService(
     visitNotificationEventService.deleteVisitAndPairedNotificationEvents(actionedVisitDto.reference, unflagEventReason)
 
     return VisitRequestApprovalRejectionResponseDto(actionedVisitDto, eventAuditDto)
+  }
+
+  fun autoRejectRequestVisitsAtMinimumBookingWindow(visitRequest: Visit): VisitRequestApprovalRejectionResponseDto {
+    LOG.info("Entered VisitRequestsApprovalRejectionService - autoRejectRequestVisitsAtMinimumBookingWindow")
+
+    // 1. Mark as CANCELLED && AUTO_REJECTED
+    visitRepository.autoRejectVisitRequestByReference(visitRequest.reference)
+
+    // 2. Save event audit for the auto rejection event
+    val actionedVisitDto = visitDtoBuilder.build(visitRepository.findByReference(visitRequest.reference)!!)
+    val eventAuditDto = visitEventAuditService.saveVisitRequestAutoRejectedEventAudit(actionedVisitDto)
+
+    // 3. Unflag from any notification event flags
+    visitNotificationEventService.deleteVisitAndPairedNotificationEvents(actionedVisitDto.reference, UnFlagEventReason.VISIT_REQUEST_AUTO_REJECTED)
+
+    // 4. Return the updated / actioned visit as a VisitDto
+    return VisitRequestApprovalRejectionResponseDto(visitDto = actionedVisitDto, eventAuditDto = eventAuditDto)
   }
 }
