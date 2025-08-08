@@ -56,17 +56,13 @@ class VisitRequestsApprovalRejectionService(
   fun autoRejectRequestVisitsAtMinimumBookingWindow(visitRequest: Visit): VisitRequestApprovalRejectionResponseDto {
     LOG.info("Entered VisitRequestsApprovalRejectionService - autoRejectRequestVisitsAtMinimumBookingWindow")
 
-    // 1. Mark as CANCELLED && AUTO_REJECTED
     visitRepository.autoRejectVisitRequestByReference(visitRequest.reference)
 
-    // 2. Save event audit for the auto rejection event
     val actionedVisitDto = visitDtoBuilder.build(visitRepository.findByReference(visitRequest.reference)!!)
     val eventAuditDto = visitEventAuditService.saveVisitRequestAutoRejectedEventAudit(actionedVisitDto)
 
-    // 3. Unflag from any notification event flags
     visitNotificationEventService.deleteVisitAndPairedNotificationEvents(actionedVisitDto.reference, UnFlagEventReason.VISIT_REQUEST_AUTO_REJECTED)
 
-    // 4. Return the updated / actioned visit as a VisitDto
     return VisitRequestApprovalRejectionResponseDto(visitDto = actionedVisitDto, eventAuditDto = eventAuditDto)
   }
 }
