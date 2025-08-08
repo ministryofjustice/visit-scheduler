@@ -6,6 +6,7 @@ enum class UnFlagEventReason(val desc: String) {
   VISIT_UPDATED("visit-updated"),
   VISIT_REQUEST_APPROVED("visit-request-approved"),
   VISIT_REQUEST_REJECTED("visit-request-rejected"),
+  VISIT_REQUEST_AUTO_REJECTED("visit-request-auto-rejected"),
   PRISON_EXCLUDE_DATE_REMOVED("prison-exclude-date-removed"),
   SESSION_EXCLUDE_DATE_REMOVED("session-exclude-date-removed"),
   NON_ASSOCIATION_REMOVED("non-association-removed"),

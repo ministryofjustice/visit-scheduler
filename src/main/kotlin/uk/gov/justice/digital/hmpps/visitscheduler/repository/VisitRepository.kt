@@ -409,4 +409,26 @@ interface VisitRepository :
     nativeQuery = true,
   )
   fun rejectVisitRequestForPrisonByReference(visitReference: String): Int
+
+  @Transactional
+  @Query(
+    "SELECT v.* " +
+      "FROM visit v " +
+      "INNER JOIN prison p ON p.id = v.prison_id " +
+      "INNER JOIN session_slot sl ON sl.id = v.session_slot_id " +
+      "WHERE v.visit_status = 'BOOKED' " +
+      "AND v.visit_sub_status = 'REQUESTED' " +
+      "AND sl.slot_start >= NOW() AND " +
+      "sl.slot_date <= (CURRENT_DATE + p.policy_notice_days_min + 1)", // +1 here to handle 0 day booking window (E.g. Monday rejects Sunday, NOT Monday).
+    nativeQuery = true,
+  )
+  fun findAllVisitRequestsDueForAutoRejection(): List<Visit>
+
+  @Transactional
+  @Modifying
+  @Query(
+    "Update visit SET visit_status = 'CANCELLED', visit_sub_status = 'AUTO_REJECTED', outcome_status = 'BATCH_CANCELLATION' WHERE reference =:visitReference AND visit_sub_status = 'REQUESTED'",
+    nativeQuery = true,
+  )
+  fun autoRejectVisitRequestByReference(visitReference: String): Int
 }
