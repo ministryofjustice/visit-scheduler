@@ -24,10 +24,10 @@ class AutoRejectVisitRequestsTask(private val visitRequestsService: VisitRequest
     lockAtMostFor = LOCK_AT_MOST_FOR,
   )
   fun autoRejectRequestVisits() {
-    LOG.info("Starting auto reject request visits task - Time: ${java.time.LocalTime.now()}")
+    LOG.info("Starting auto reject request visits task")
 
     val requestsRejectedCount = visitRequestsService.autoRejectRequestVisitsAtMinimumBookingWindow()
 
-    LOG.info("Finished auto reject request visits task, rejected $requestsRejectedCount requests - Time: ${java.time.LocalTime.now()}")
+    LOG.info("Finished auto reject request visits task, rejected $requestsRejectedCount requests")
   }
 }
