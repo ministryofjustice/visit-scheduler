@@ -210,8 +210,12 @@ class VisitStoreService(
 
     val cancelOutcome = cancelVisitDto.cancelOutcome
 
+    if (visitEntity.visitSubStatus == VisitSubStatus.REQUESTED && cancelVisitDto.userType == UserType.PUBLIC) {
+      visitEntity.visitSubStatus = VisitSubStatus.WITHDRAWN
+    } else {
+      visitEntity.visitSubStatus = VisitSubStatus.CANCELLED
+    }
     visitEntity.visitStatus = CANCELLED
-    visitEntity.visitSubStatus = VisitSubStatus.CANCELLED
     visitEntity.outcomeStatus = cancelOutcome.outcomeStatus
 
     cancelOutcome.text?.let {
@@ -222,6 +226,12 @@ class VisitStoreService(
   }
 
   private fun validateCancelRequest(cancelVisitDto: CancelVisitDto, visitEntity: Visit) {
+    // do not check the visit date if it was a requested visit
+    // as requested visits should be allowed to be withdrawn if auto rejection fails
+    if (visitEntity.visitSubStatus == VisitSubStatus.REQUESTED) {
+      return
+    }
+
     // STAFF is allowed to cancel older visits but not PUBLIC
     val allowedCancellationDate = if (cancelVisitDto.userType == UserType.STAFF) {
       getAllowedCancellationDate(visitCancellationDayLimit = visitCancellationDayLimit)
