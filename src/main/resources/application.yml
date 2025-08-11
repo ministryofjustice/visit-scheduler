@@ -139,6 +139,9 @@ task:
       enabled: true
       futureDays: 7
       cron: "0 30 1 * * ?" #every day at 1:30 AM
+  requests:
+    auto-reject:
+      cron: "0 0 20 * * *"
 
 feature:
   events:

@@ -18,6 +18,7 @@ generic-service:
     BOOKING_NOTICE_PERIOD_MAXIMUM_DAYS: 50
     TASK_VISIT_COUNTS_REPORT_CRON: "0 0 0/1 * * ?" #every hour on dev
     TASK_FLAG_VISITS_CRON: "0 0 0/4 * * ?" #every 4 hours on dev
+    TASK_REQUESTS_AUTO-REJECT_CRON: "0 0 0/4 * * ?" #every 4 hours on dev
     FEATURE_REQUEST-BOOKING-ENABLED: true
 
   scheduledDowntime:

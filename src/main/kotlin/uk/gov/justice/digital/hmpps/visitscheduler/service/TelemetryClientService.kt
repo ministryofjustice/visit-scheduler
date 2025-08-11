@@ -208,6 +208,16 @@ class TelemetryClientService(
     )
   }
 
+  fun trackVisitRequestAutoRejectedEvent(
+    bookedVisitDto: VisitDto,
+    eventAuditDto: EventAuditDto,
+  ) {
+    trackEvent(
+      TelemetryVisitEvents.VISIT_REQUEST_AUTO_REJECTED_EVENT,
+      createVisitRequestApprovedOrRejectedTrackData(bookedVisitDto, eventAuditDto),
+    )
+  }
+
   private fun trackEvent(visitEvent: TelemetryVisitEvents, properties: Map<String, String>) {
     try {
       telemetryClient.trackEvent(visitEvent.eventName, properties, null)

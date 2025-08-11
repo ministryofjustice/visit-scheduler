@@ -66,7 +66,7 @@ class VisitRequestsService(
   }
 
   fun approveOrRejectVisitRequestByReference(approveRejectionVisitRequestBodyDto: ApproveRejectionVisitRequestBodyDto, isApproved: Boolean): VisitDto {
-    val approveRejectResponseDto = visitRequestsApprovalRejectionService.approveOrRejectVisitRequestByReference(approveRejectionVisitRequestBodyDto, isApproved)
+    val approveRejectResponseDto = visitRequestsApprovalRejectionService.manuallyApproveOrRejectVisitRequestByReference(approveRejectionVisitRequestBodyDto, isApproved)
 
     val snsDomainEventPublishDto = SnsDomainEventPublishDto(
       reference = approveRejectResponseDto.visitDto.reference,
@@ -85,5 +85,30 @@ class VisitRequestsService(
     }
 
     return approveRejectResponseDto.visitDto
+  }
+
+  fun autoRejectRequestVisitsAtMinimumBookingWindow(): Int {
+    LOG.info("Entered VisitRequestsService - autoRejectRequestVisitsAtMinimumBookingWindow")
+
+    val requestVisitsDueForAutoRejection = visitRepository.findAllVisitRequestsDueForAutoRejection()
+
+    LOG.info("Found ${requestVisitsDueForAutoRejection.size} request visits due for auto rejection")
+
+    requestVisitsDueForAutoRejection.forEach { visitRequest ->
+      val autoRejectResponseDto = visitRequestsApprovalRejectionService.autoRejectRequestVisitsAtMinimumBookingWindow(visitRequest)
+
+      telemetryClientService.trackVisitRequestAutoRejectedEvent(autoRejectResponseDto.visitDto, autoRejectResponseDto.eventAuditDto)
+
+      val snsDomainEventPublishDto = SnsDomainEventPublishDto(
+        reference = autoRejectResponseDto.visitDto.reference,
+        createdTimestamp = LocalDateTime.now(),
+        modifiedTimestamp = autoRejectResponseDto.visitDto.modifiedTimestamp, // Not used.
+        prisonerId = autoRejectResponseDto.visitDto.prisonerId,
+        eventAuditId = autoRejectResponseDto.eventAuditDto.id,
+      )
+      snsService.sendVisitCancelledEvent(snsDomainEventPublishDto)
+    }
+
+    return requestVisitsDueForAutoRejection.size
   }
 }
