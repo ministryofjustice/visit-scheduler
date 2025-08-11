@@ -410,7 +410,7 @@ interface VisitRepository :
   )
   fun rejectVisitRequestForPrisonByReference(visitReference: String): Int
 
-  @Transactional
+  @Transactional(readOnly = true)
   @Query(
     "SELECT v.* " +
       "FROM visit v " +
