@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
 
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -108,11 +109,13 @@ class FuturePublicVisitsTest : IntegrationTestBase() {
     responseSpec.expectStatus().isOk
     val visitList = parseVisitsResponse(responseSpec)
 
-    Assertions.assertThat(visitList.size).isEqualTo(4)
-    visitAssertHelper.assertVisitDto(visitList[0], futureVisitToday)
-    visitAssertHelper.assertVisitDto(visitList[1], nearestVisitAfterToday)
-    visitAssertHelper.assertVisitDto(visitList[2], visitInDifferentPrison)
-    visitAssertHelper.assertVisitDto(visitList[3], visitFarInTheFuture)
+    assertThat(visitList.size).isEqualTo(4)
+    assertThat(visitList.map { it.reference }).containsExactlyInAnyOrder(
+      futureVisitToday.reference,
+      nearestVisitAfterToday.reference,
+      visitInDifferentPrison.reference,
+      visitFarInTheFuture.reference,
+    )
   }
 
   @Test

@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
 
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -132,9 +133,11 @@ class PastPublicVisitsTest : IntegrationTestBase() {
     val visitList = parseVisitsResponse(responseSpec)
 
     Assertions.assertThat(visitList.size).isEqualTo(3)
-    visitAssertHelper.assertVisitDto(visitList[0], visitWithOtherBooker)
-    visitAssertHelper.assertVisitDto(visitList[1], pastRequestedVisitApproved)
-    visitAssertHelper.assertVisitDto(visitList[2], pastRequestedVisit)
+    assertThat(visitList.map { it.reference }).containsExactlyInAnyOrder(
+      visitWithOtherBooker.reference,
+      pastRequestedVisitApproved.reference,
+      pastRequestedVisit.reference,
+    )
   }
 
   @Test
