@@ -210,7 +210,7 @@ class VisitStoreService(
 
     val cancelOutcome = cancelVisitDto.cancelOutcome
 
-    if (visitEntity.visitSubStatus == VisitSubStatus.REQUESTED && cancelVisitDto.userType == UserType.PUBLIC) {
+    if (requestBookingFeatureEnabled && (visitEntity.visitSubStatus == VisitSubStatus.REQUESTED && cancelVisitDto.userType == UserType.PUBLIC)) {
       visitEntity.visitSubStatus = VisitSubStatus.WITHDRAWN
     } else {
       visitEntity.visitSubStatus = VisitSubStatus.CANCELLED
