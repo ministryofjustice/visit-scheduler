@@ -17,7 +17,7 @@ class AutoRejectVisitRequestsTask(private val visitRequestsService: VisitRequest
   }
 
   // Every day at 8:00 PM
-  @Scheduled(cron = "0 0 20 * * *")
+  @Scheduled(cron = "\${task.requests.auto-reject.cron:0 0 20 * * *}")
   @SchedulerLock(
     name = "autoRejectRequestedVisitsTask",
     lockAtLeastFor = LOCK_AT_LEAST_FOR,
