@@ -23,4 +23,5 @@ enum class OutcomeStatus {
   SUPERSEDED_CANCELLATION, // TODO This is no longer needed and needs to be removed after application release
   DETAILS_CHANGED_AFTER_BOOKING,
   BOOKER_CANCELLED,
+  REQUESTED_VISIT_WITHDRAWN,
 }

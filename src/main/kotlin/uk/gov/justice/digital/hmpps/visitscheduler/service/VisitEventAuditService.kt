@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CANC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CHANGING_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.IGNORE_VISIT_NOTIFICATIONS_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.MIGRATED_VISIT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.REQUESTED_VISIT_WITHDRAWN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.RESERVED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
@@ -29,6 +30,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PRISONER
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.ActionedBy
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
@@ -222,6 +224,11 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
 
   private fun saveCancelledEventAudit(actionedByValue: String, userType: UserType, applicationMethodType: ApplicationMethodType, visit: VisitDto): EventAuditDto {
     val actionedBy = createOrGetActionBy(actionedByValue, userType)
+    val eventAuditType = if (visit.visitSubStatus == VisitSubStatus.WITHDRAWN) {
+      REQUESTED_VISIT_WITHDRAWN
+    } else {
+      CANCELLED_VISIT
+    }
 
     return EventAuditDto(
       eventAuditRepository.saveAndFlush(
@@ -230,7 +237,7 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
           bookingReference = visit.reference,
           applicationReference = visit.applicationReference,
           sessionTemplateReference = visit.sessionTemplateReference,
-          type = CANCELLED_VISIT,
+          type = eventAuditType,
           applicationMethodType = applicationMethodType,
           text = null,
         ),

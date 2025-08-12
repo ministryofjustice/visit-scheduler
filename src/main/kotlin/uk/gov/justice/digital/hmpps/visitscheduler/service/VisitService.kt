@@ -29,6 +29,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.CL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.UNKNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
@@ -292,7 +293,12 @@ class VisitService(
     snsService.sendVisitCancelledEvent(snsDomainEventPublishDto)
 
     // delete all visit notifications and any paired notifications for the cancelled visit from the visit notifications table
-    visitNotificationEventService.deleteVisitAndPairedNotificationEvents(visitDto.reference, UnFlagEventReason.VISIT_CANCELLED)
+    val unFlagEventReason = if (visitDto.visitSubStatus == VisitSubStatus.WITHDRAWN) {
+      UnFlagEventReason.REQUESTED_VISIT_WITHDRAWN
+    } else {
+      UnFlagEventReason.VISIT_CANCELLED
+    }
+    visitNotificationEventService.deleteVisitAndPairedNotificationEvents(visitDto.reference, reason = unFlagEventReason)
 
     return visitDto
   }
