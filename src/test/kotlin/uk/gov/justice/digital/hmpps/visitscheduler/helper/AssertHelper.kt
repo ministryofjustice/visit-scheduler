@@ -43,7 +43,11 @@ class AssertHelper {
       Assertions.assertThat(eventAudit.actionedBy.bookerReference).isEqualTo(cancelledBy)
     }
 
-    Assertions.assertThat(eventAudit.type).isEqualTo(EventAuditType.CANCELLED_VISIT)
+    if (visitSubStatus == VisitSubStatus.WITHDRAWN) {
+      Assertions.assertThat(eventAudit.type).isEqualTo(EventAuditType.REQUESTED_VISIT_WITHDRAWN)
+    } else {
+      Assertions.assertThat(eventAudit.type).isEqualTo(EventAuditType.CANCELLED_VISIT)
+    }
     Assertions.assertThat(eventAudit.actionedBy.userType).isEqualTo(userType)
     Assertions.assertThat(eventAudit.applicationMethodType).isEqualTo(applicationMethodType)
     Assertions.assertThat(eventAudit.bookingReference).isEqualTo(cancelledVisit.reference)

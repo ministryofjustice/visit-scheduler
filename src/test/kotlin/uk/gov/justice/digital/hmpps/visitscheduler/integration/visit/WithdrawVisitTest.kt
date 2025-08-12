@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus.REQUESTED_VISIT_WITHDRAWN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_CANCELLED_EVENT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.VISIT_CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
@@ -84,7 +85,7 @@ class WithdrawVisitTest : IntegrationTestBase() {
 
     assertTelemetryClientEvents(visitCancelled, VISIT_CANCELLED_EVENT)
     assertCancelledDomainEvent(visitCancelled)
-    verify(visitNotificationEventServiceSpy, times(1)).deleteVisitAndPairedNotificationEvents(eq(requestedVisit.reference), eq(VISIT_CANCELLED), eq(null))
+    verify(visitNotificationEventServiceSpy, times(1)).deleteVisitAndPairedNotificationEvents(eq(requestedVisit.reference), eq(UnFlagEventReason.REQUESTED_VISIT_WITHDRAWN), eq(null))
   }
 
   @Test
@@ -127,7 +128,7 @@ class WithdrawVisitTest : IntegrationTestBase() {
     // just one event thrown
     assertTelemetryClientEvents(visit1, VISIT_CANCELLED_EVENT)
     assertCancelledDomainEvent(visit1)
-    verify(visitNotificationEventServiceSpy, times(1)).deleteVisitAndPairedNotificationEvents(eq(requestedVisit.reference), eq(VISIT_CANCELLED), eq(null))
+    verify(visitNotificationEventServiceSpy, times(1)).deleteVisitAndPairedNotificationEvents(eq(requestedVisit.reference), eq(UnFlagEventReason.REQUESTED_VISIT_WITHDRAWN), eq(null))
   }
 
   @Test
@@ -168,7 +169,7 @@ class WithdrawVisitTest : IntegrationTestBase() {
 
     assertTelemetryClientEvents(visitCancelled, VISIT_CANCELLED_EVENT)
     assertCancelledDomainEvent(visitCancelled)
-    verify(visitNotificationEventServiceSpy, times(1)).deleteVisitAndPairedNotificationEvents(eq(requestedVisit.reference), eq(VISIT_CANCELLED), eq(null))
+    verify(visitNotificationEventServiceSpy, times(1)).deleteVisitAndPairedNotificationEvents(eq(requestedVisit.reference), eq(UnFlagEventReason.REQUESTED_VISIT_WITHDRAWN), eq(null))
   }
 
   @Test
