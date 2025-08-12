@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestEventAuditRepository
 
 @Component
@@ -32,6 +33,7 @@ class AssertHelper {
     cancelledBy: String,
     applicationMethodType: ApplicationMethodType? = ApplicationMethodType.PHONE,
     userType: UserType = STAFF,
+    visitSubStatus: VisitSubStatus? = VisitSubStatus.CANCELLED,
   ) {
     val eventAudit = this.eventAuditRepository.findLastEventByBookingReference(cancelledVisit.reference)
 
@@ -41,14 +43,18 @@ class AssertHelper {
       Assertions.assertThat(eventAudit.actionedBy.bookerReference).isEqualTo(cancelledBy)
     }
 
-    Assertions.assertThat(eventAudit.type).isEqualTo(EventAuditType.CANCELLED_VISIT)
+    if (visitSubStatus == VisitSubStatus.WITHDRAWN) {
+      Assertions.assertThat(eventAudit.type).isEqualTo(EventAuditType.REQUESTED_VISIT_WITHDRAWN)
+    } else {
+      Assertions.assertThat(eventAudit.type).isEqualTo(EventAuditType.CANCELLED_VISIT)
+    }
     Assertions.assertThat(eventAudit.actionedBy.userType).isEqualTo(userType)
     Assertions.assertThat(eventAudit.applicationMethodType).isEqualTo(applicationMethodType)
     Assertions.assertThat(eventAudit.bookingReference).isEqualTo(cancelledVisit.reference)
     Assertions.assertThat(eventAudit.sessionTemplateReference).isEqualTo(cancelledVisit.sessionTemplateReference)
     Assertions.assertThat(eventAudit.applicationReference).isEqualTo(cancelledVisit.applicationReference)
-
     Assertions.assertThat(cancelledVisit.visitStatus).isEqualTo(VisitStatus.CANCELLED)
+    Assertions.assertThat(cancelledVisit.visitSubStatus).isEqualTo(visitSubStatus)
     Assertions.assertThat(cancelledVisit.outcomeStatus).isEqualTo(expectedOutcomeStatus)
   }
 

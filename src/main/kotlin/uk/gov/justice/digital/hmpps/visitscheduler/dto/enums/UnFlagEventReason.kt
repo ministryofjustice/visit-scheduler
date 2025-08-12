@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.dto.enums
 enum class UnFlagEventReason(val desc: String) {
   VISIT_CANCELLED("visit-cancelled"),
   VISIT_CANCELLED_ON_NOMIS("visit-cancelled-on-nomis"),
+  REQUESTED_VISIT_WITHDRAWN("requested-visit-withdrawn"),
   VISIT_UPDATED("visit-updated"),
   VISIT_REQUEST_APPROVED("visit-request-approved"),
   VISIT_REQUEST_REJECTED("visit-request-rejected"),
