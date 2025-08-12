@@ -321,4 +321,23 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
       notifyHistoryDtoBuilder,
     )
   }
+
+  fun saveVisitRequestAutoRejectedEventAudit(visit: VisitDto): EventAuditDto {
+    val actionedBy = createOrGetActionBy(null, SYSTEM)
+
+    return EventAuditDto(
+      eventAuditRepository.saveAndFlush(
+        EventAudit(
+          actionedBy = actionedBy,
+          bookingReference = visit.reference,
+          applicationReference = visit.applicationReference,
+          sessionTemplateReference = visit.sessionTemplateReference,
+          EventAuditType.REQUESTED_VISIT_AUTO_REJECTED,
+          applicationMethodType = NOT_APPLICABLE,
+          text = "Auto rejected by system cron",
+        ),
+      ),
+      notifyHistoryDtoBuilder,
+    )
+  }
 }
