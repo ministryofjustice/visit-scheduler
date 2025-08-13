@@ -153,11 +153,6 @@ visit:
   cancel:
     day-limit: 28
 
-cache:
-  evict:
-    support-types:
-      cron: "0 0 */12 * * ?" #every 12 hours
-
 migrate:
   sessiontemplate:
     mapping:

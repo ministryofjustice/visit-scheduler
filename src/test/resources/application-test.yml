@@ -88,8 +88,3 @@ feature:
 visit:
   cancel:
     day-limit: 28
-
-cache:
-  evict:
-    support-types:
-      cron: "0 0 */23 * * ?" #every 23 hours
