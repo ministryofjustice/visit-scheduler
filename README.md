@@ -137,7 +137,7 @@ https://user-guide.cloud-platform.service.justice.gov.uk/documentation/other-top
 ## Periodic Tasks 
 There are a few tasks that are run daily as Spring Cron jobs in package `uk.gov.justice.digital.hmpps.visitscheduler.task`. They are as listed below - 
 1. ApplicationTask - Deletes any expired applications after 24 hours of non-use. Run daily as a scheduled cron job.  
-2. FlagVisitsTask - flags visits across all onboarded prisons with notifications (e.g. non-associations, session not suitable etc.) and writes to AppInsights for further reporting. Run daily as a scheduled cron job. 
+2. FlagVisitsTask - Flags visits across all onboarded prisons with notifications (e.g. non-associations, session not suitable etc.) and writes to AppInsights for further reporting. Run daily as a scheduled cron job. 
 3. ReportingTask(VisitCountsReport) - Reports on visit counts by prison and session and writes to AppInsights for further reporting. Run daily as a scheduled cron job. 
 4. ReportingTask(OverbookedSessionsReport) - Reports on sessions across all onboarded prisons with visit counts above configured capacity and writes to AppInsights for further reporting. Run daily as a scheduled cron job. 
 5. AutoRejectVisitRequestsTask - Rejects any requested visits that have not been manually actioned (approved / rejected) by Staff before the prison's stipulated time. Run daily as a scheduled cron job.
