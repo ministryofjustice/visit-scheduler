@@ -49,11 +49,6 @@ task:
       enabled: true
       validity-minutes: 1440
 
-cache:
-  evict:
-    support-types:
-      cron: "0 */15 * * * ?"
-
 hmpps.sqs:
   provider: localstack
   queues:
