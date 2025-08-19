@@ -5,4 +5,5 @@ enum class NotificationEventAttributeType {
   VISITOR_RESTRICTION_ID,
   VISITOR_ID,
   PAIRED_VISIT,
+  APPOINTMENT_INSTANCE_ID,
 }

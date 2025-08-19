@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.client.ActivitiesApiClient
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonerContactRegistryClient
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.IgnoreVisitNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
@@ -62,6 +63,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.utils.PairedNotificationEvent
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 @Service
 class VisitNotificationEventService(
@@ -71,6 +73,7 @@ class VisitNotificationEventService(
   private val visitNotificationFlaggingService: VisitNotificationFlaggingService,
   private val pairedNotificationEventsUtil: PairedNotificationEventsUtil,
   private val prisonerContactRegistryClient: PrisonerContactRegistryClient,
+  private val activitiesApiClient: ActivitiesApiClient,
 ) {
 
   @Autowired
@@ -296,29 +299,33 @@ class VisitNotificationEventService(
   fun handleCourtVideoAppointmentCreatedNotification(notificationDto: CourtVideoAppointmentCreatedNotificationDto) {
     LOG.info("handleCourtVideoAppointmentCreatedNotification notification received : {}", notificationDto)
 
-    // TODO: VB-5754 - Implement:
-    //  1. Using the new ActivitiesApiClient, get and filter via categoryCode to only process events we monitor. (Temp until category code is added to additional info on event and it's filtered at orchestration level)
-    //  2. Using the appointmentDate, startTime and endTime, convert the strings to times, adding a 30minute buffer to either side of the window and flag all visits which fall inside that window
+    val appointmentInstanceDetails = activitiesApiClient.getAppointmentInstanceDetails(notificationDto.appointmentInstanceId)
+    if (appointmentInstanceDetails == null) {
+      LOG.warn("Appointment instance details not found for appointment instance ID ${notificationDto.appointmentInstanceId}, skipping processing / flagging of visits")
+      return
+    }
 
-//    val affectedVisits = visitService.getFutureVisitsByVisitorId(
-//      visitorId = notificationDto.visitorId,
-//      prisonerId = notificationDto.prisonerNumber,
-//    )
-//
-//    if (affectedVisits.isNotEmpty()) {
-//      // check if the visitor that was unapproved is still an approved SOCIAL contact as we have instances where the
-//      // non-SOCIAL relationship of the visitor has been unapproved which should not affect visits.
-//      if (doesSocialRelationshipForVisitorStillExist(notificationDto.prisonerNumber, notificationDto.visitorId)) {
-//        LOG.info("Visitor ID {} still exists as an approved SOCIAL contact for prisoner {}, ignoring contact unapproved event.", notificationDto.visitorId, notificationDto.prisonerNumber)
-//        return
-//      }
-//
-//      val notificationAttributes = hashMapOf(
-//        NotificationEventAttributeType.VISITOR_ID to notificationDto.visitorId,
-//      )
-//      val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, VISITOR_UNAPPROVED_EVENT, notificationAttributes)
-//      processVisitsWithNotifications(processVisitNotificationDto)
-//    }
+    // Start / End window is the appointment date start and end times with a 30-minute buffer applied to either side
+    val startWindow = appointmentInstanceDetails.appointmentDate.atTime(LocalTime.parse(appointmentInstanceDetails.startTime.trim(), DateTimeFormatter.ofPattern("HH:mm"))).minusMinutes(30)
+    val endWindow = appointmentInstanceDetails.appointmentDate.atTime(LocalTime.parse(appointmentInstanceDetails.endTime.trim(), DateTimeFormatter.ofPattern("HH:mm"))).plusMinutes(30)
+
+
+    val affectedVisits = visitService.getFutureVisitsBy(
+      prisonerNumber = appointmentInstanceDetails.prisonerNumber,
+      prisonCode = appointmentInstanceDetails.prisonCode,
+      startDateTime = startWindow,
+      endDateTime = endWindow,
+    )
+
+    if (affectedVisits.isNotEmpty()) {
+      LOG.info("Flagging ${affectedVisits.size} visits for appointment instance ID ${notificationDto.appointmentInstanceId}")
+
+      val notificationAttributes = hashMapOf(
+        NotificationEventAttributeType.APPOINTMENT_INSTANCE_ID to notificationDto.appointmentInstanceId,
+      )
+      val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, NotificationEventType.COURT_VIDEO_APPOINTMENT_CREATED_EVENT, notificationAttributes)
+      processVisitsWithNotifications(processVisitNotificationDto)
+    }
   }
 
   @Transactional
