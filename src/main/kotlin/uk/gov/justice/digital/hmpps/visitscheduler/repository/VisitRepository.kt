@@ -210,7 +210,7 @@ interface VisitRepository :
       "v.prison.code = :prisonCode AND " +
       "v.sessionSlot.slotEnd >= :startDateTime AND " +
       "v.sessionSlot.slotStart <= :endDateTime " +
-      "ORDER BY v.sessionSlot.slotStart, v.id"
+      "ORDER BY v.sessionSlot.slotStart, v.id",
   )
   fun getVisitsThatOverlapProvidedTimeWindow(
     @Param("prisonerId") prisonerId: String,
@@ -218,7 +218,6 @@ interface VisitRepository :
     @Param("startDateTime") startDateTime: LocalDateTime,
     @Param("endDateTime") endDateTime: LocalDateTime,
   ): List<Visit>
-
 
   @Query(
     "SELECT v  FROM Visit v " +

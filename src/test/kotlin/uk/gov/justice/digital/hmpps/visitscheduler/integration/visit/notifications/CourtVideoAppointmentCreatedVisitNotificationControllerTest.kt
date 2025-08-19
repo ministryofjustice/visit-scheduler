@@ -149,7 +149,6 @@ class CourtVideoAppointmentCreatedVisitNotificationControllerTest : Notification
     visitEntityHelper.save(visit1)
     eventAuditEntityHelper.create(visit1)
 
-
     // When
     val responseSpec = callNotifyVSiPThatCourtVideoAppointmentCreated(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
 
