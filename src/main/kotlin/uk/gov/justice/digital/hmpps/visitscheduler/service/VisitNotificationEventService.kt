@@ -312,7 +312,7 @@ class VisitNotificationEventService(
     val startWindow = appointmentInstanceDetails.appointmentDate.atTime(LocalTime.parse(appointmentInstanceDetails.startTime.trim(), DateTimeFormatter.ofPattern("HH:mm"))).minusMinutes(30)
     val endWindow = appointmentInstanceDetails.appointmentDate.atTime(LocalTime.parse(appointmentInstanceDetails.endTime.trim(), DateTimeFormatter.ofPattern("HH:mm"))).plusMinutes(30)
 
-    val affectedVisits = visitService.getFutureVisitsBy(
+    val affectedVisits = visitService.getVisitsThatOverlapProvidedTimeWindow(
       prisonerNumber = appointmentInstanceDetails.prisonerNumber,
       prisonCode = appointmentInstanceDetails.prisonCode,
       startDateTime = startWindow,

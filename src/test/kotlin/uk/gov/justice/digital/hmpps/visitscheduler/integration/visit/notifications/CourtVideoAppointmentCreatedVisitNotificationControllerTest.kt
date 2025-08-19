@@ -43,11 +43,13 @@ class CourtVideoAppointmentCreatedVisitNotificationControllerTest : Notification
 
   lateinit var prison1: Prison
   lateinit var sessionTemplate: SessionTemplate
+  lateinit var sessionTemplateWindowBuffer: SessionTemplate
 
   @BeforeEach
   internal fun setUp() {
     prison1 = prisonEntityHelper.create(prisonCode = prisonCode)
     sessionTemplate = sessionTemplateEntityHelper.create(prison = prison1, startTime = LocalTime.parse("13:00"), endTime = LocalTime.parse("14:00"))
+    sessionTemplateWindowBuffer = sessionTemplateEntityHelper.create(prison = prison1, startTime = LocalTime.parse("16:15"), endTime = LocalTime.parse("18:15"))
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
   }
 
@@ -88,6 +90,65 @@ class CourtVideoAppointmentCreatedVisitNotificationControllerTest : Notification
 
     visitEntityHelper.save(visit2)
     eventAuditEntityHelper.create(visit2)
+
+    // When
+    val responseSpec = callNotifyVSiPThatCourtVideoAppointmentCreated(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
+
+    // Then
+    responseSpec.expectStatus().isOk
+    assertFlaggedVisitEvent(listOf(visit1), NotificationEventType.COURT_VIDEO_APPOINTMENT_CREATED_EVENT)
+
+    verify(activitiesApiClientSpy, times(1)).getAppointmentInstanceDetails(appointmentInstanceId = appointmentInstanceId)
+    verify(visitNotificationEventRepository, times(1)).saveAndFlush(any<VisitNotificationEvent>())
+
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
+    assertThat(visitNotifications).hasSize(1)
+    assertThat(visitNotifications[0].visit.reference).isEqualTo(visit1.reference)
+    assertThat(visitNotifications[0].visitNotificationEventAttributes.size).isEqualTo(1)
+    assertThat(visitNotifications[0].visitNotificationEventAttributes[0].attributeName).isEqualTo(NotificationEventAttributeType.APPOINTMENT_INSTANCE_ID)
+
+    val auditEvents = testEventAuditRepository.getAuditByType(EventAuditType.COURT_VIDEO_APPOINTMENT_CREATED_EVENT)
+    assertThat(auditEvents).hasSize(1)
+    with(auditEvents[0]) {
+      assertThat(bookingReference).isEqualTo(visit1.reference)
+      assertThat(applicationReference).isEqualTo(visit1.getLastApplication()?.reference)
+      assertThat(sessionTemplateReference).isEqualTo(visit1.sessionSlot.sessionTemplateReference)
+      assertThat(type).isEqualTo(EventAuditType.COURT_VIDEO_APPOINTMENT_CREATED_EVENT)
+      assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
+      assertThat(actionedBy.userType).isEqualTo(SYSTEM)
+      assertThat(actionedBy.bookerReference).isNull()
+      assertThat(actionedBy.userName).isNull()
+    }
+  }
+
+  @Test
+  fun `when court video appointment is created then future booked visits inside the 30 minute window buffer are flagged and saved`() {
+    // Given
+    val activitiesApiResponse = ActivitiesAppointmentInstanceDetailsDto(
+      categoryCode = SupportedCourtVideoAppointmentCategoryCode.VLPM.toString(),
+      appointmentDate = LocalDate.now().plusDays(1),
+      startTime = "12:00",
+      endTime = "16:00",
+      prisonerNumber = prisonerId,
+      prisonCode = prisonCode,
+    )
+
+    activitiesApiMockServer.stubGetAppointmentInstanceDetails(appointmentInstanceId = appointmentInstanceId, result = activitiesApiResponse)
+
+    val notificationDto = CourtVideoAppointmentCreatedNotificationDto(
+      appointmentInstanceId = appointmentInstanceId,
+    )
+
+    val visit1 = createApplicationAndVisit(
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplateWindowBuffer,
+      prisonerId = prisonerId,
+    )
+
+    visitEntityHelper.save(visit1)
+    eventAuditEntityHelper.create(visit1)
+
 
     // When
     val responseSpec = callNotifyVSiPThatCourtVideoAppointmentCreated(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)

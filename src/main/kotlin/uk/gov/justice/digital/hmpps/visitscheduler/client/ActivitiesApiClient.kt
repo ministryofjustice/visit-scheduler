@@ -14,7 +14,7 @@ import java.time.Duration
 @Component
 class ActivitiesApiClient(
   @Qualifier("activitiesApiWebClient") private val webClient: WebClient,
-  @Value("\${prison.api.timeout:60s}") private val apiTimeout: Duration,
+  @Value("\${activities.api.timeout:10s}") private val apiTimeout: Duration,
 ) {
 
   companion object {
@@ -31,7 +31,7 @@ class ActivitiesApiClient(
       .bodyToMono(TYPE_FOR_APPOINTMENT_INSTANCE)
       .onErrorResume { e ->
         if (!isNotFoundError(e)) {
-          LOG.error("getPrisonerNonAssociation Failed get request for appointment instance id $appointmentInstanceId")
+          LOG.error("getAppointmentInstanceDetails Failed get request for appointment instance id $appointmentInstanceId")
           Mono.error(e)
         } else {
           LOG.debug("getAppointmentInstanceDetails Not Found for appointment instance id $appointmentInstanceId")

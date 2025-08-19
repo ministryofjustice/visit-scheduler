@@ -344,6 +344,16 @@ class VisitService(
   ): List<VisitDto> = visitRepository.getVisits(prisonerNumber, prisonCode, startDateTime, endDateTime).map { visitDtoBuilder.build(it) }
 
   @Transactional(readOnly = true)
+  fun getVisitsThatOverlapProvidedTimeWindow(
+    prisonerNumber: String,
+    prisonCode: String,
+    startDateTime: LocalDateTime,
+    endDateTime: LocalDateTime,
+  ): List<VisitDto> = visitRepository.getVisitsThatOverlapProvidedTimeWindow(prisonerNumber, prisonCode, startDateTime, endDateTime).map { visitDtoBuilder.build(it) }
+
+
+
+  @Transactional(readOnly = true)
   fun getFutureBookedVisits(
     prisonerNumber: String,
     prisonCode: String? = null,
