@@ -34,7 +34,7 @@ class PublicVisitService(
   fun getPublicPastVisitsByBookerReference(bookerReference: String): List<VisitDto> = visitRepository.getPublicPastBookingsByBookerReference(bookerReference).map { visitDtoBuilder.build(it) }.sortedByDescending { it.startTimestamp }
 
   fun getRelevantVisitEventsByBookerReference(bookerReference: String): List<EventAuditDto> {
-    // ignore event types e.g. RESERVED_VISIT
+    // need to ignore some visit event types e.g., RESERVED_VISIT as they are associated with a visit's application
     val ignoreEventTypes = listOf(
       EventAuditType.RESERVED_VISIT,
     )
