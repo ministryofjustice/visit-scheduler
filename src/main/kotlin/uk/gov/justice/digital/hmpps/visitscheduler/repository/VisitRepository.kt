@@ -208,11 +208,12 @@ interface VisitRepository :
     "SELECT v FROM Visit v " +
       "WHERE v.prisonerId = :prisonerId AND " +
       "v.prison.code = :prisonCode AND " +
+      "v.visitStatus = 'BOOKED' AND " +
       "v.sessionSlot.slotEnd >= :startDateTime AND " +
       "v.sessionSlot.slotStart <= :endDateTime " +
       "ORDER BY v.sessionSlot.slotStart, v.id",
   )
-  fun getVisitsThatOverlapProvidedTimeWindow(
+  fun getVisitsInTimeWindow(
     @Param("prisonerId") prisonerId: String,
     @Param("prisonCode") prisonCode: String,
     @Param("startDateTime") startDateTime: LocalDateTime,
