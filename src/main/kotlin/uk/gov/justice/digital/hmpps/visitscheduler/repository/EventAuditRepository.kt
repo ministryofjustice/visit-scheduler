@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.ActionedBy
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import java.time.LocalDateTime
@@ -61,4 +62,10 @@ interface EventAuditRepository : JpaRepository<EventAudit, Long> {
     nativeQuery = true,
   )
   fun updateCreateTimestamp(createTimestamp: LocalDateTime, id: Long): Int
+
+  @Query(
+    "Select ea from EventAudit ea where ea.actionedBy.bookerReference = :bookerReference" +
+      " and ea.type NOT IN (:ignoreEventTypes)",
+  )
+  fun getVisitEventsByBookingReference(bookerReference: String, ignoreEventTypes: List<EventAuditType>): List<EventAudit>
 }
