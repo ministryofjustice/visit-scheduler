@@ -30,7 +30,7 @@ generic-service:
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.dev.json
     FEATURE_EVENTS_SNS_ENABLED: true
     MIGRATE_SESSIONTEMPLATE_MAPPING_OFFSET_DAYS: 0
-    FEATURE_REQUEST-BOOKING-ENABLED: false
+    FEATURE_REQUEST-BOOKING-ENABLED: true
 
 # CloudPlatform AlertManager receiver to route promethues alerts to slack
 # See https://user-guide.cloud-platform.service.justice.gov.uk/documentation/monitoring-an-app/how-to-create-alarms.html#creating-your-own-custom-alerts
