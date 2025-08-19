@@ -28,6 +28,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.VISITOR_UNAPPROVED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerReceivedReasonType.TRANSFERRED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerReleaseReasonType.RELEASED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SupportedCourtVideoAppointmentCategoryCode
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.IGNORE_VISIT_NOTIFICATIONS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.NON_ASSOCIATION_REMOVED
@@ -299,16 +300,17 @@ class VisitNotificationEventService(
   fun handleCourtVideoAppointmentCreatedNotification(notificationDto: CourtVideoAppointmentCreatedNotificationDto) {
     LOG.info("handleCourtVideoAppointmentCreatedNotification notification received : {}", notificationDto)
 
+    val supportedCourtVideoAppointmentCategoryCodes = SupportedCourtVideoAppointmentCategoryCode.entries.map { it.name }.toSet()
+
     val appointmentInstanceDetails = activitiesApiClient.getAppointmentInstanceDetails(notificationDto.appointmentInstanceId)
-    if (appointmentInstanceDetails == null) {
-      LOG.warn("Appointment instance details not found for appointment instance ID ${notificationDto.appointmentInstanceId}, skipping processing / flagging of visits")
+    if (appointmentInstanceDetails == null || !supportedCourtVideoAppointmentCategoryCodes.contains(appointmentInstanceDetails.categoryCode)) {
+      LOG.warn("Appointment instance details not found or not processable for appointment instance ID ${notificationDto.appointmentInstanceId}, skipping processing / flagging of visits")
       return
     }
 
     // Start / End window is the appointment date start and end times with a 30-minute buffer applied to either side
     val startWindow = appointmentInstanceDetails.appointmentDate.atTime(LocalTime.parse(appointmentInstanceDetails.startTime.trim(), DateTimeFormatter.ofPattern("HH:mm"))).minusMinutes(30)
     val endWindow = appointmentInstanceDetails.appointmentDate.atTime(LocalTime.parse(appointmentInstanceDetails.endTime.trim(), DateTimeFormatter.ofPattern("HH:mm"))).plusMinutes(30)
-
 
     val affectedVisits = visitService.getFutureVisitsBy(
       prisonerNumber = appointmentInstanceDetails.prisonerNumber,
