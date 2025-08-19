@@ -48,6 +48,11 @@ prisoner-contact:
     url: http://localhost:8095
     timeout: 5s
 
+activities:
+  api:
+    url: http://localhost:8096
+    timeout: 5s
+
 policy:
   session:
     non-association:

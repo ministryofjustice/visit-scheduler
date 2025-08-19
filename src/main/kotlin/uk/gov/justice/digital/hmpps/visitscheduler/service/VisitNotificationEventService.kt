@@ -37,6 +37,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.S
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.VISITOR_APPROVED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitorSupportedRestrictionType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.CourtVideoAppointmentCreatedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PersonRestrictionUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonDateBlockedDto
@@ -289,6 +290,35 @@ class VisitNotificationEventService(
       val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, VISITOR_UNAPPROVED_EVENT, notificationAttributes)
       processVisitsWithNotifications(processVisitNotificationDto)
     }
+  }
+
+  @Transactional
+  fun handleCourtVideoAppointmentCreatedNotification(notificationDto: CourtVideoAppointmentCreatedNotificationDto) {
+    LOG.info("handleCourtVideoAppointmentCreatedNotification notification received : {}", notificationDto)
+
+    // TODO: VB-5754 - Implement:
+    //  1. Using the new ActivitiesApiClient, get and filter via categoryCode to only process events we monitor. (Temp until category code is added to additional info on event and it's filtered at orchestration level)
+    //  2. Using the appointmentDate, startTime and endTime, convert the strings to times, adding a 30minute buffer to either side of the window and flag all visits which fall inside that window
+
+//    val affectedVisits = visitService.getFutureVisitsByVisitorId(
+//      visitorId = notificationDto.visitorId,
+//      prisonerId = notificationDto.prisonerNumber,
+//    )
+//
+//    if (affectedVisits.isNotEmpty()) {
+//      // check if the visitor that was unapproved is still an approved SOCIAL contact as we have instances where the
+//      // non-SOCIAL relationship of the visitor has been unapproved which should not affect visits.
+//      if (doesSocialRelationshipForVisitorStillExist(notificationDto.prisonerNumber, notificationDto.visitorId)) {
+//        LOG.info("Visitor ID {} still exists as an approved SOCIAL contact for prisoner {}, ignoring contact unapproved event.", notificationDto.visitorId, notificationDto.prisonerNumber)
+//        return
+//      }
+//
+//      val notificationAttributes = hashMapOf(
+//        NotificationEventAttributeType.VISITOR_ID to notificationDto.visitorId,
+//      )
+//      val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, VISITOR_UNAPPROVED_EVENT, notificationAttributes)
+//      processVisitsWithNotifications(processVisitNotificationDto)
+//    }
   }
 
   @Transactional
