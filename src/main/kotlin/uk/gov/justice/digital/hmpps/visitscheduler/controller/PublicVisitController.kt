@@ -14,11 +14,13 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PublicVisitService
 
 const val GET_FUTURE_BOOKED_PUBLIC_VISITS_BY_BOOKER_REFERENCE: String = "/public/booker/{bookerReference}/visits/booked/future"
 const val GET_CANCELLED_PUBLIC_VISITS_BY_BOOKER_REFERENCE: String = "/public/booker/{bookerReference}/visits/cancelled"
 const val GET_PAST_BOOKED_PUBLIC_VISITS_BY_BOOKER_REFERENCE: String = "/public/booker/{bookerReference}/visits/booked/past"
+const val GET_VISIT_EVENTS_BY_BOOKER_REFERENCE: String = "/public/booker/{bookerReference}/visits/events"
 
 @RestController
 @Validated
@@ -126,4 +128,37 @@ class PublicVisitController(
     @PathVariable
     bookerReference: String,
   ): List<VisitDto> = publicVisitService.getPublicPastVisitsByBookerReference(bookerReference)
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @GetMapping(GET_VISIT_EVENTS_BY_BOOKER_REFERENCE)
+  @Operation(
+    summary = "Get relevant visit events by booker reference",
+    description = "Get relevant visit events by booker reference",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "relevant visit events returned for a booker",
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Incorrect request to get visit events by booker reference",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun getVisitEventsByBookerReference(
+    @Schema(description = "bookerReference", example = "asd-aed-vhj", required = true)
+    @PathVariable
+    bookerReference: String,
+  ): List<EventAuditDto> = publicVisitService.getRelevantVisitEventsByBookerReference(bookerReference)
 }

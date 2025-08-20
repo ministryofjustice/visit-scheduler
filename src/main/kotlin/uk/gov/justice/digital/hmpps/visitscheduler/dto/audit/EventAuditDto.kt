@@ -30,6 +30,9 @@ class EventAuditDto(
   @field:Valid
   val actionedBy: ActionedByDto,
 
+  @Schema(description = "Visit reference", required = false)
+  val bookingReference: String? = null,
+
   @Schema(description = "Session template used for this event", required = false)
   var sessionTemplateReference: String? = null,
 
@@ -50,6 +53,7 @@ class EventAuditDto(
     type = eventAuditEntity.type,
     applicationMethodType = eventAuditEntity.applicationMethodType,
     actionedBy = ActionedByDto(eventAuditEntity.actionedBy),
+    bookingReference = eventAuditEntity.bookingReference,
     sessionTemplateReference = eventAuditEntity.sessionTemplateReference,
     createTimestamp = eventAuditEntity.createTimestamp,
     text = eventAuditEntity.text,
