@@ -37,6 +37,11 @@ prisoner-contact.registry:
   url: https://prisoner-contact-registry-dev.prison.service.justice.gov.uk
   timeout: 10s
 
+activities:
+  api:
+    url: https://activities-api-dev.prison.service.justice.gov.uk
+    timeout: 10s
+
 policy:
   session:
     booking-notice-period:

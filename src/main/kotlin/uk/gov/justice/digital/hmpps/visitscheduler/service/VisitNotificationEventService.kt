@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.client.ActivitiesApiClient
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonerContactRegistryClient
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.IgnoreVisitNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
@@ -27,6 +28,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.VISITOR_UNAPPROVED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerReceivedReasonType.TRANSFERRED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerReleaseReasonType.RELEASED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SupportedCourtVideoAppointmentCategoryCode
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.IGNORE_VISIT_NOTIFICATIONS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.NON_ASSOCIATION_REMOVED
@@ -37,6 +39,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.S
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.VISITOR_APPROVED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitorSupportedRestrictionType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.CourtVideoAppointmentCreatedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PersonRestrictionUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonDateBlockedDto
@@ -61,6 +64,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.utils.PairedNotificationEvent
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 @Service
 class VisitNotificationEventService(
@@ -70,6 +74,7 @@ class VisitNotificationEventService(
   private val visitNotificationFlaggingService: VisitNotificationFlaggingService,
   private val pairedNotificationEventsUtil: PairedNotificationEventsUtil,
   private val prisonerContactRegistryClient: PrisonerContactRegistryClient,
+  private val activitiesApiClient: ActivitiesApiClient,
 ) {
 
   @Autowired
@@ -287,6 +292,40 @@ class VisitNotificationEventService(
         NotificationEventAttributeType.VISITOR_ID to notificationDto.visitorId,
       )
       val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, VISITOR_UNAPPROVED_EVENT, notificationAttributes)
+      processVisitsWithNotifications(processVisitNotificationDto)
+    }
+  }
+
+  @Transactional
+  fun handleCourtVideoAppointmentCreatedNotification(notificationDto: CourtVideoAppointmentCreatedNotificationDto) {
+    LOG.info("handleCourtVideoAppointmentCreatedNotification notification received : {}", notificationDto)
+
+    val supportedCourtVideoAppointmentCategoryCodes = SupportedCourtVideoAppointmentCategoryCode.entries.map { it.name }.toSet()
+
+    val appointmentInstanceDetails = activitiesApiClient.getAppointmentInstanceDetails(notificationDto.appointmentInstanceId)
+    if (appointmentInstanceDetails == null || !supportedCourtVideoAppointmentCategoryCodes.contains(appointmentInstanceDetails.categoryCode)) {
+      LOG.warn("Appointment instance details not found or not processable for appointment instance ID ${notificationDto.appointmentInstanceId}, skipping processing / flagging of visits")
+      return
+    }
+
+    // Start / End window is the appointment date start and end times with a 30-minute buffer applied to either side
+    val startWindow = appointmentInstanceDetails.appointmentDate.atTime(LocalTime.parse(appointmentInstanceDetails.startTime.trim(), DateTimeFormatter.ofPattern("HH:mm"))).minusMinutes(30)
+    val endWindow = appointmentInstanceDetails.appointmentDate.atTime(LocalTime.parse(appointmentInstanceDetails.endTime.trim(), DateTimeFormatter.ofPattern("HH:mm"))).plusMinutes(30)
+
+    val affectedVisits = visitService.getVisitsThatOverlapProvidedTimeWindow(
+      prisonerNumber = appointmentInstanceDetails.prisonerNumber,
+      prisonCode = appointmentInstanceDetails.prisonCode,
+      startDateTime = startWindow,
+      endDateTime = endWindow,
+    )
+
+    if (affectedVisits.isNotEmpty()) {
+      LOG.info("Flagging ${affectedVisits.size} visits for appointment instance ID ${notificationDto.appointmentInstanceId}")
+
+      val notificationAttributes = hashMapOf(
+        NotificationEventAttributeType.APPOINTMENT_INSTANCE_ID to notificationDto.appointmentInstanceId,
+      )
+      val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, NotificationEventType.COURT_VIDEO_APPOINTMENT_CREATED_EVENT, notificationAttributes)
       processVisitsWithNotifications(processVisitNotificationDto)
     }
   }

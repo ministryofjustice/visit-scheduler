@@ -24,6 +24,7 @@ class WebClientConfiguration(
   @Value("\${non-associations.api.url}") private val nonAssociationsApiBaseUrl: String,
   @Value("\${prisoner.offender.search.url}") private val prisonOffenderSearchBaseUrl: String,
   @Value("\${prisoner-contact.registry.url}") private val prisonContactRegistryUrl: String,
+  @Value("\${activities.api.url}") private val activitiesApiBaseUrl: String,
 ) {
   companion object {
     const val CLIENT_REGISTRATION_ID = "hmpps-apis"
@@ -39,6 +40,12 @@ class WebClientConfiguration(
   fun nonAssociationsApiWebClient(authorizedClientManager: OAuth2AuthorizedClientManager): WebClient {
     val oauth2Client = getOauth2Client(authorizedClientManager, CLIENT_REGISTRATION_ID)
     return getWebClient(nonAssociationsApiBaseUrl, oauth2Client)
+  }
+
+  @Bean
+  fun activitiesApiWebClient(authorizedClientManager: OAuth2AuthorizedClientManager): WebClient {
+    val oauth2Client = getOauth2Client(authorizedClientManager, CLIENT_REGISTRATION_ID)
+    return getWebClient(activitiesApiBaseUrl, oauth2Client)
   }
 
   @Bean
