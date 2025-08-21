@@ -3,6 +3,7 @@ plugins {
   kotlin("plugin.spring") version "2.2.10"
   kotlin("plugin.jpa") version "2.2.10"
   idea
+  id("org.owasp.dependencycheck") version "12.1.3"
 }
 
 springBoot {
@@ -84,4 +85,8 @@ tasks {
       jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
     }
   }
+}
+
+dependencyCheck {
+  nvd.datafeedUrl = "file:///opt/vulnz/cache"
 }
