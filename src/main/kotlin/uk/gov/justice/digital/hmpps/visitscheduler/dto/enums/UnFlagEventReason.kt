@@ -19,4 +19,5 @@ enum class UnFlagEventReason(val desc: String) {
   NON_ASSOCIATION_VISIT_UPDATED("non-association-visit-updated"),
   NON_ASSOCIATION_VISIT_IGNORED("non-association-visit-ignored"),
   PAIRED_VISIT_CANCELLED_IGNORED_OR_UPDATED("paired-visit-cancelled-or-ignored-or-updated"),
+  COURT_VIDEO_APPOINTMENT_CANCELLED_OR_DELETED("court-video-appointment-cancelled-or-deleted"),
 }

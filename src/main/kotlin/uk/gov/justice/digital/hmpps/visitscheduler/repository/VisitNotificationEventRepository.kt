@@ -138,6 +138,15 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
   )
   fun getNotificationsTypesForBookingReference(@Param("bookingReference") bookingReference: String): List<NotificationEventType>
 
+  @Query(
+    "select vne.* FROM visit_notification_event vne " +
+      "JOIN visit_notification_event_attribute vnea on vne.id = vnea.visit_notification_event_id " +
+      "WHERE vnea.attribute_name = 'APPOINTMENT_INSTANCE_ID' " +
+      "AND vnea.attribute_value = :appointmentInstanceId",
+    nativeQuery = true,
+  )
+  fun getCourtAppointmentCreatedVisitNotificationEvents(appointmentInstanceId: String): List<VisitNotificationEvent>
+
   fun findVisitNotificationEventByVisitReference(
     reference: String,
   ): List<VisitNotificationEvent>

@@ -21,7 +21,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SupportedCourtVideoAppointmentCategoryCode
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.CourtVideoAppointmentCreatedNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.CourtVideoAppointmentNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatCourtVideoAppointmentCreated
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
@@ -67,7 +67,7 @@ class CourtVideoAppointmentCreatedVisitNotificationControllerTest : Notification
 
     activitiesApiMockServer.stubGetAppointmentInstanceDetails(appointmentInstanceId = appointmentInstanceId, result = activitiesApiResponse)
 
-    val notificationDto = CourtVideoAppointmentCreatedNotificationDto(
+    val notificationDto = CourtVideoAppointmentNotificationDto(
       appointmentInstanceId = appointmentInstanceId,
     )
 
@@ -135,7 +135,7 @@ class CourtVideoAppointmentCreatedVisitNotificationControllerTest : Notification
 
     activitiesApiMockServer.stubGetAppointmentInstanceDetails(appointmentInstanceId = appointmentInstanceId, result = activitiesApiResponse)
 
-    val notificationDto = CourtVideoAppointmentCreatedNotificationDto(
+    val notificationDto = CourtVideoAppointmentNotificationDto(
       appointmentInstanceId = appointmentInstanceId,
     )
 
@@ -193,7 +193,7 @@ class CourtVideoAppointmentCreatedVisitNotificationControllerTest : Notification
 
     activitiesApiMockServer.stubGetAppointmentInstanceDetails(appointmentInstanceId = appointmentInstanceId, result = activitiesApiResponse)
 
-    val notificationDto = CourtVideoAppointmentCreatedNotificationDto(
+    val notificationDto = CourtVideoAppointmentNotificationDto(
       appointmentInstanceId = appointmentInstanceId,
     )
 
@@ -213,7 +213,7 @@ class CourtVideoAppointmentCreatedVisitNotificationControllerTest : Notification
     // Given
     activitiesApiMockServer.stubGetAppointmentInstanceDetails(appointmentInstanceId = appointmentInstanceId, result = null)
 
-    val notificationDto = CourtVideoAppointmentCreatedNotificationDto(
+    val notificationDto = CourtVideoAppointmentNotificationDto(
       appointmentInstanceId = appointmentInstanceId,
     )
 

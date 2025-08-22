@@ -39,7 +39,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.S
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.VISITOR_APPROVED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitorSupportedRestrictionType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.CourtVideoAppointmentCreatedNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.CourtVideoAppointmentNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PersonRestrictionUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonDateBlockedDto
@@ -297,7 +297,7 @@ class VisitNotificationEventService(
   }
 
   @Transactional
-  fun handleCourtVideoAppointmentCreatedNotification(notificationDto: CourtVideoAppointmentCreatedNotificationDto) {
+  fun handleCourtVideoAppointmentCreatedNotification(notificationDto: CourtVideoAppointmentNotificationDto) {
     LOG.info("handleCourtVideoAppointmentCreatedNotification notification received : {}", notificationDto)
 
     val supportedCourtVideoAppointmentCategoryCodes = SupportedCourtVideoAppointmentCategoryCode.entries.map { it.name }.toSet()
@@ -328,6 +328,19 @@ class VisitNotificationEventService(
       val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, NotificationEventType.COURT_VIDEO_APPOINTMENT_CREATED_EVENT, notificationAttributes)
       processVisitsWithNotifications(processVisitNotificationDto)
     }
+  }
+
+  @Transactional
+  fun handleCourtVideoAppointmentCancelledDeletedNotification(notificationDto: CourtVideoAppointmentNotificationDto) {
+    LOG.info("handleCourtVideoAppointmentCancelledDeletedNotification notification received : {}", notificationDto)
+
+    val currentVisitNotificationsForCreatedAppointment = visitNotificationEventRepository.getCourtAppointmentCreatedVisitNotificationEvents(appointmentInstanceId = notificationDto.appointmentInstanceId)
+
+    deleteNotificationsThatAreNoLongerValid(
+      currentVisitNotificationsForCreatedAppointment,
+      NotificationEventType.COURT_VIDEO_APPOINTMENT_CANCELLED_DELETED_EVENT,
+      UnFlagEventReason.COURT_VIDEO_APPOINTMENT_CANCELLED_OR_DELETED,
+    )
   }
 
   @Transactional
