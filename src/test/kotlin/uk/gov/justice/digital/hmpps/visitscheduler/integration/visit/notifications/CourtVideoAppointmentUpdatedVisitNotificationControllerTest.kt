@@ -26,7 +26,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.CourtVideoAppointmentNotificationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatCourtVideoAppointmentCreated
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatCourtVideoAppointmentUpdated
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
