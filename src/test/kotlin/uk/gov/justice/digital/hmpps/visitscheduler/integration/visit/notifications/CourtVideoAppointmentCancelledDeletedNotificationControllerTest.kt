@@ -59,7 +59,7 @@ class CourtVideoAppointmentCancelledDeletedNotificationControllerTest : Notifica
     )
     val visit = visitEntityHelper.save(visit1)
     eventAuditEntityHelper.create(visit1)
-    visitNotificationEventHelper.create(visit = visit, notificationEventType = NotificationEventType.COURT_VIDEO_APPOINTMENT_CREATED_EVENT, notificationAttributes = mapOf(Pair(NotificationEventAttributeType.APPOINTMENT_INSTANCE_ID, appointmentInstanceId)))
+    visitNotificationEventHelper.create(visit = visit, notificationEventType = NotificationEventType.COURT_VIDEO_APPOINTMENT_CREATED_OR_UPDATED_EVENT, notificationAttributes = mapOf(Pair(NotificationEventAttributeType.APPOINTMENT_INSTANCE_ID, appointmentInstanceId)))
 
     val visit2NotToBeUnflagged = createApplicationAndVisit(
       slotDate = LocalDate.now().plusDays(5),
