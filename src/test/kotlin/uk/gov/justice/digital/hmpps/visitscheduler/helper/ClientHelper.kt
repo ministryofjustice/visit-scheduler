@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CONTROLLER_P
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_COUNT_FOR_PRISON_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_COURT_VIDEO_APPOINTMENT_CANCELLED_DELETED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_COURT_VIDEO_APPOINTMENT_CREATED_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_COURT_VIDEO_APPOINTMENT_UPDATED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_EVENTS
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_IGNORE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_NON_ASSOCIATION_CHANGE_PATH
@@ -840,6 +841,17 @@ fun callNotifyVSiPThatCourtVideoAppointmentCreated(
   webTestClient,
   authHttpHeaders,
   VISIT_NOTIFICATION_COURT_VIDEO_APPOINTMENT_CREATED_PATH,
+  dto,
+)
+
+fun callNotifyVSiPThatCourtVideoAppointmentUpdated(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  dto: CourtVideoAppointmentNotificationDto? = null,
+): ResponseSpec = callNotifyVSiPOfAEvent(
+  webTestClient,
+  authHttpHeaders,
+  VISIT_NOTIFICATION_COURT_VIDEO_APPOINTMENT_UPDATED_PATH,
   dto,
 )
 

@@ -11,6 +11,6 @@ enum class NotificationEventType(val reviewType: String, val description: String
   PERSON_RESTRICTION_UPSERTED_EVENT("Person-restriction-upserted", "visitor restriction changed"),
   VISITOR_RESTRICTION_UPSERTED_EVENT("Visitor-restriction-upserted", "visitor restriction changed"),
   VISITOR_UNAPPROVED_EVENT("Visitor-unapproved", "visitor unapproved"),
-  COURT_VIDEO_APPOINTMENT_CREATED_EVENT("Court-video-appointment-created", "Court video appointment created"),
+  COURT_VIDEO_APPOINTMENT_CREATED_OR_UPDATED_EVENT("Court-video-appointment-created-or-updated", "Court video appointment created or updated"),
   COURT_VIDEO_APPOINTMENT_CANCELLED_DELETED_EVENT("Court-video-appointment-cancelled-or-deleted", "Court video appointment cancelled or deleted"),
 }
