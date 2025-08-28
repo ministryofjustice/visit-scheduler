@@ -24,6 +24,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_SESSIONS_AVA
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_SESSION_CONTROLLER_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitPreviewDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationSupportDto
@@ -355,6 +356,16 @@ abstract class IntegrationTestBase {
     class Page {
       @JsonProperty("content")
       lateinit var content: List<VisitDto>
+    }
+
+    val content = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Page::class.java)
+    return content.content
+  }
+
+  fun parseVisitsByDatePageResponse(responseSpec: ResponseSpec): List<VisitPreviewDto> {
+    class Page {
+      @JsonProperty("content")
+      lateinit var content: List<VisitPreviewDto>
     }
 
     val content = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Page::class.java)

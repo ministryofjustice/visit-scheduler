@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.notify
 
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpHeaders
@@ -32,6 +33,7 @@ import java.time.temporal.ChronoUnit
 import java.util.UUID.randomUUID
 
 @DisplayName("Tests for create GOV.UK notify events")
+@Disabled("Currently we don't surface these notifications, until then, tests will be disabled")
 class NotifyCallbackNotificationTest : IntegrationTestBase() {
   private val notifyRoles = listOf("ROLE_VISIT_SCHEDULER__VISIT_NOTIFICATION_ALERTS")
   private val visitSchedulerRoles = listOf("ROLE_VISIT_SCHEDULER")

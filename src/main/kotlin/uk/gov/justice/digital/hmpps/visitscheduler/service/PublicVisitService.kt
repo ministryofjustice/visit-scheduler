@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.NotifyHistoryDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.EventAuditRepository
@@ -18,7 +17,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 class PublicVisitService(
   private val visitRepository: VisitRepository,
   private val eventAuditRepository: EventAuditRepository,
-  private val notifyHistoryDtoBuilder: NotifyHistoryDtoBuilder,
 ) {
   @Autowired
   private lateinit var visitDtoBuilder: VisitDtoBuilder
@@ -40,7 +38,7 @@ class PublicVisitService(
     )
 
     return eventAuditRepository.getVisitEventsByBookingReference(bookerReference, ignoreEventTypes)
-      .map { EventAuditDto(it, notifyHistoryDtoBuilder) }
+      .map { EventAuditDto(it) }
       .sortedByDescending { it.createTimestamp }
   }
 }

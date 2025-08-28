@@ -33,6 +33,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitPreviewDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
@@ -463,7 +464,7 @@ class VisitController(
       example = "50",
     )
     size: Int,
-  ): Page<VisitDto> = visitService.findVisitsBySessionTemplateFilterPageableDescending(
+  ): Page<VisitPreviewDto> = visitService.findVisitsBySessionTemplateFilterPageableDescending(
     sessionTemplateReference = sessionTemplateReference,
     fromDate = fromDate,
     toDate = toDate,
