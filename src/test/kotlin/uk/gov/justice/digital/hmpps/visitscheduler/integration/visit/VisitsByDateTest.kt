@@ -62,15 +62,15 @@ class VisitsByDateTest : IntegrationTestBase() {
 
     // Then
     responseSpecVisitsBySession.expectStatus().isOk
-    val visits = parseVisitsPageResponse(responseSpecVisitsBySession)
+    val visits = parseVisitsByDatePageResponse(responseSpecVisitsBySession)
     Assertions.assertThat(visits.size).isEqualTo(5)
 
     // ensure the results are sorted by audit event records
-    Assertions.assertThat(visits[0].reference).isEqualTo(visit1.reference)
-    Assertions.assertThat(visits[1].reference).isEqualTo(visit3.reference)
-    Assertions.assertThat(visits[2].reference).isEqualTo(visit2.reference)
-    Assertions.assertThat(visits[3].reference).isEqualTo(visit4.reference)
-    Assertions.assertThat(visits[4].reference).isEqualTo(visit5.reference)
+    Assertions.assertThat(visits[0].visitReference).isEqualTo(visit1.reference)
+    Assertions.assertThat(visits[1].visitReference).isEqualTo(visit3.reference)
+    Assertions.assertThat(visits[2].visitReference).isEqualTo(visit2.reference)
+    Assertions.assertThat(visits[3].visitReference).isEqualTo(visit4.reference)
+    Assertions.assertThat(visits[4].visitReference).isEqualTo(visit5.reference)
   }
 
   private fun createApplication(sessionTemplate: SessionTemplate, prisonerId: String, slotDate: LocalDate): Application {

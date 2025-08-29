@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
 
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -80,9 +81,9 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isOk
-    val visits = parseVisitsPageResponse(responseSpec)
+    val visits = parseVisitsByDatePageResponse(responseSpec)
     Assertions.assertThat(visits.size).isEqualTo(1)
-    Assertions.assertThat(visits[0].reference).isEqualTo(visit1.reference)
+    Assertions.assertThat(visits[0].visitReference).isEqualTo(visit1.reference)
   }
 
   @Test
@@ -98,10 +99,12 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isOk
-    val visits = parseVisitsPageResponse(responseSpec)
+    val visits = parseVisitsByDatePageResponse(responseSpec)
     Assertions.assertThat(visits.size).isEqualTo(2)
-    Assertions.assertThat(visits[0].reference).isEqualTo(visit1.reference)
-    Assertions.assertThat(visits[1].reference).isEqualTo(visit2.reference)
+    assertThat(visits.map { it.visitReference }).containsExactlyInAnyOrder(
+      visit1.reference,
+      visit2.reference,
+    )
   }
 
   @Test
@@ -118,11 +121,13 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isOk
-    val visits = parseVisitsPageResponse(responseSpec)
+    val visits = parseVisitsByDatePageResponse(responseSpec)
     Assertions.assertThat(visits.size).isEqualTo(3)
-    Assertions.assertThat(visits[0].reference).isEqualTo(visit1.reference)
-    Assertions.assertThat(visits[1].reference).isEqualTo(visit4.reference)
-    Assertions.assertThat(visits[2].reference).isEqualTo(visit5.reference)
+    assertThat(visits.map { it.visitReference }).containsExactlyInAnyOrder(
+      visit1.reference,
+      visit4.reference,
+      visit5.reference,
+    )
   }
 
   @Test
@@ -139,11 +144,13 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isOk
-    val visits = parseVisitsPageResponse(responseSpec)
+    val visits = parseVisitsByDatePageResponse(responseSpec)
     Assertions.assertThat(visits.size).isEqualTo(3)
-    Assertions.assertThat(visits[0].reference).isEqualTo(visit1.reference)
-    Assertions.assertThat(visits[1].reference).isEqualTo(visit2.reference)
-    Assertions.assertThat(visits[2].reference).isEqualTo(visit4.reference)
+    assertThat(visits.map { it.visitReference }).containsExactlyInAnyOrder(
+      visit1.reference,
+      visit2.reference,
+      visit4.reference,
+    )
   }
 
   @Test
@@ -160,12 +167,14 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isOk
-    val visits = parseVisitsPageResponse(responseSpec)
+    val visits = parseVisitsByDatePageResponse(responseSpec)
     Assertions.assertThat(visits.size).isEqualTo(4)
-    Assertions.assertThat(visits[0].reference).isEqualTo(visit1.reference)
-    Assertions.assertThat(visits[1].reference).isEqualTo(visit2.reference)
-    Assertions.assertThat(visits[2].reference).isEqualTo(visit4.reference)
-    Assertions.assertThat(visits[3].reference).isEqualTo(visit5.reference)
+    assertThat(visits.map { it.visitReference }).containsExactlyInAnyOrder(
+      visit1.reference,
+      visit2.reference,
+      visit4.reference,
+      visit5.reference,
+    )
   }
 
   @Test
@@ -182,9 +191,9 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isOk
-    val visits = parseVisitsPageResponse(responseSpec)
+    val visits = parseVisitsByDatePageResponse(responseSpec)
     Assertions.assertThat(visits.size).isEqualTo(1)
-    Assertions.assertThat(visits[0].reference).isEqualTo(visit5.reference)
+    Assertions.assertThat(visits[0].visitReference).isEqualTo(visit5.reference)
     Assertions.assertThat(visits[0].visitRestriction).isEqualTo(CLOSED)
   }
 
@@ -200,10 +209,12 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
     val responseSpec = callVisitsBySessionEndPoint(params)
 
     // Then
-    val visits = parseVisitsPageResponse(responseSpec)
+    val visits = parseVisitsByDatePageResponse(responseSpec)
     Assertions.assertThat(visits.size).isEqualTo(2)
-    Assertions.assertThat(visits[0].reference).isEqualTo(visit6.reference)
-    Assertions.assertThat(visits[1].reference).isEqualTo(visit7.reference)
+    assertThat(visits.map { it.visitReference }).containsExactlyInAnyOrder(
+      visit6.reference,
+      visit7.reference,
+    )
   }
 
   @Test
@@ -218,9 +229,9 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
     val responseSpec = callVisitsBySessionEndPoint(params)
 
     // Then
-    val visits = parseVisitsPageResponse(responseSpec)
+    val visits = parseVisitsByDatePageResponse(responseSpec)
     Assertions.assertThat(visits.size).isEqualTo(1)
-    Assertions.assertThat(visits[0].reference).isEqualTo(visit7.reference)
+    Assertions.assertThat(visits[0].visitReference).isEqualTo(visit7.reference)
   }
 
   @Test

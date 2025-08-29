@@ -59,4 +59,15 @@ class EventAuditDto(
     text = eventAuditEntity.text,
     notifyHistory = notifyHistoryDtoBuilder.build(eventAuditEntity.notifyHistory),
   )
+
+  constructor(eventAuditEntity: EventAudit) : this(
+    id = eventAuditEntity.id,
+    type = eventAuditEntity.type,
+    applicationMethodType = eventAuditEntity.applicationMethodType,
+    actionedBy = ActionedByDto(eventAuditEntity.actionedBy),
+    bookingReference = eventAuditEntity.bookingReference,
+    sessionTemplateReference = eventAuditEntity.sessionTemplateReference,
+    createTimestamp = eventAuditEntity.createTimestamp,
+    text = eventAuditEntity.text,
+  )
 }

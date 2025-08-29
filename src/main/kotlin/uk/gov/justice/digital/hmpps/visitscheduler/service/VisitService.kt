@@ -18,6 +18,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitFromExternalSy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.SnsDomainEventPublishDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitPreviewDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
@@ -146,7 +147,7 @@ class VisitService(
     prisonCode: String,
     pageablePage: Int? = null,
     pageableSize: Int? = null,
-  ): Page<VisitDto> {
+  ): Page<VisitPreviewDto> {
     val page: Pageable = PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS)
 
     val results = if (sessionTemplateReference != null) {
@@ -168,17 +169,16 @@ class VisitService(
       )
     }
 
-    val visits = results.map {
-      visitDtoBuilder.build(it).also { visitDto ->
-        setFirstBookedDateTime(visitDto)
+    val visits = results
+      .map { visit ->
+        VisitPreviewDto(
+          visit,
+          eventAuditService.getLastEventForBookingOrMigration(visit.reference)?.createTimestamp,
+        )
       }
-    }.sortedWith(compareByDescending(nullsFirst()) { it.firstBookedDateTime })
+      .sortedWith(compareByDescending(nullsFirst()) { it.firstBookedDateTime })
 
     return PageImpl(visits, page, visits.size.toLong())
-  }
-
-  private fun setFirstBookedDateTime(visitDto: VisitDto) {
-    visitDto.firstBookedDateTime = eventAuditService.getLastEventForBookingOrMigration(visitDto.reference)?.createTimestamp
   }
 
   private fun processBookingEvents(
