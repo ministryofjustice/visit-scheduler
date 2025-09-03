@@ -93,21 +93,21 @@ class VisitRequestsService(
     LOG.info("Entered VisitRequestsService - autoRejectRequestVisitsAtMinimumBookingWindow")
 
     val requestVisitsDueForAutoRejection = visitRepository.findAllVisitRequestsDueForAutoRejection()
-    return processAutoRejectRequestVisits(requestVisitsDueForAutoRejection)
+    return processAutoRejectRequestVisits(requestVisitsDueForAutoRejection, rejectionText = "Auto rejected by minimum booking window system cron")
   }
 
   fun handlePrisonerReleasedEventAutoRejectRequestVisits(notificationDto: PrisonerReleasedNotificationDto): Int {
     LOG.info("Entered VisitRequestsService - handlePrisonerReleasedEventAutoRejectRequestVisits")
 
     val requestVisitsDueForAutoRejection = visitRepository.findAllVisitRequestsForPrisoner(notificationDto.prisonerNumber)
-    return processAutoRejectRequestVisits(requestVisitsDueForAutoRejection)
+    return processAutoRejectRequestVisits(requestVisitsDueForAutoRejection, rejectionText = "Auto rejected by prisoner released event")
   }
 
-  private fun processAutoRejectRequestVisits(requestVisitsDueForAutoRejection: List<Visit>): Int {
+  private fun processAutoRejectRequestVisits(requestVisitsDueForAutoRejection: List<Visit>, rejectionText: String): Int {
     LOG.info("Found ${requestVisitsDueForAutoRejection.size} request visits due for auto rejection")
 
     requestVisitsDueForAutoRejection.forEach { visitRequest ->
-      val autoRejectResponseDto = visitRequestsApprovalRejectionService.autoRejectRequestByVisitReference(visitRequest.reference)
+      val autoRejectResponseDto = visitRequestsApprovalRejectionService.autoRejectRequestByVisitReference(visitRequest.reference, rejectionText)
 
       telemetryClientService.trackVisitRequestAutoRejectedEvent(
         autoRejectResponseDto.visitDto,

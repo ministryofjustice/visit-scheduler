@@ -52,13 +52,13 @@ class VisitRequestsApprovalRejectionService(
     return VisitRequestApprovalRejectionResponseDto(actionedVisitDto, eventAuditDto)
   }
 
-  fun autoRejectRequestByVisitReference(visitReference: String): VisitRequestApprovalRejectionResponseDto {
+  fun autoRejectRequestByVisitReference(visitReference: String, rejectionText: String): VisitRequestApprovalRejectionResponseDto {
     LOG.info("Entered VisitRequestsApprovalRejectionService - autoRejectRequestVisitsAtMinimumBookingWindow")
 
     visitRepository.autoRejectVisitRequestByReference(visitReference)
 
     val actionedVisitDto = visitDtoBuilder.build(visitRepository.findByReference(visitReference)!!)
-    val eventAuditDto = visitEventAuditService.saveVisitRequestAutoRejectedEventAudit(actionedVisitDto)
+    val eventAuditDto = visitEventAuditService.saveVisitRequestAutoRejectedEventAudit(actionedVisitDto, rejectionText)
 
     visitNotificationEventService.deleteVisitAndPairedNotificationEvents(actionedVisitDto.reference, UnFlagEventReason.VISIT_REQUEST_AUTO_REJECTED)
 

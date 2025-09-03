@@ -324,7 +324,7 @@ class VisitEventAuditService {
     )
   }
 
-  fun saveVisitRequestAutoRejectedEventAudit(visit: VisitDto): EventAuditDto {
+  fun saveVisitRequestAutoRejectedEventAudit(visit: VisitDto, rejectionText: String): EventAuditDto {
     val actionedBy = createOrGetActionBy(null, SYSTEM)
 
     return EventAuditDto(
@@ -336,7 +336,7 @@ class VisitEventAuditService {
           sessionTemplateReference = visit.sessionTemplateReference,
           EventAuditType.REQUESTED_VISIT_AUTO_REJECTED,
           applicationMethodType = NOT_APPLICABLE,
-          text = "Auto rejected by system cron",
+          text = rejectionText,
         ),
       ),
     )
