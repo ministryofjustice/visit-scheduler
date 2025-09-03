@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApproveRejectionVisitRequ
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.SnsDomainEventPublishDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitRequestSummaryDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.AutoRejectionReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
@@ -93,25 +94,26 @@ class VisitRequestsService(
     LOG.info("Entered VisitRequestsService - autoRejectRequestVisitsAtMinimumBookingWindow")
 
     val requestVisitsDueForAutoRejection = visitRepository.findAllVisitRequestsDueForAutoRejection()
-    return processAutoRejectRequestVisits(requestVisitsDueForAutoRejection, rejectionText = "Auto rejected by minimum booking window system cron")
+    return processAutoRejectRequestVisits(requestVisitsDueForAutoRejection, AutoRejectionReason.MINIMUM_BOOKING_WINDOW_REACHED)
   }
 
   fun handlePrisonerReleasedEventAutoRejectRequestVisits(notificationDto: PrisonerReleasedNotificationDto): Int {
     LOG.info("Entered VisitRequestsService - handlePrisonerReleasedEventAutoRejectRequestVisits")
 
     val requestVisitsDueForAutoRejection = visitRepository.findAllVisitRequestsForPrisoner(notificationDto.prisonerNumber)
-    return processAutoRejectRequestVisits(requestVisitsDueForAutoRejection, rejectionText = "Auto rejected by prisoner released event")
+    return processAutoRejectRequestVisits(requestVisitsDueForAutoRejection, AutoRejectionReason.PRISONER_RELEASED)
   }
 
-  private fun processAutoRejectRequestVisits(requestVisitsDueForAutoRejection: List<Visit>, rejectionText: String): Int {
+  private fun processAutoRejectRequestVisits(requestVisitsDueForAutoRejection: List<Visit>, autoRejectionReason: AutoRejectionReason): Int {
     LOG.info("Found ${requestVisitsDueForAutoRejection.size} request visits due for auto rejection")
 
     requestVisitsDueForAutoRejection.forEach { visitRequest ->
-      val autoRejectResponseDto = visitRequestsApprovalRejectionService.autoRejectRequestByVisitReference(visitRequest.reference, rejectionText)
+      val autoRejectResponseDto = visitRequestsApprovalRejectionService.autoRejectRequestByVisitReference(visitRequest.reference, autoRejectionReason.description)
 
       telemetryClientService.trackVisitRequestAutoRejectedEvent(
         autoRejectResponseDto.visitDto,
         autoRejectResponseDto.eventAuditDto,
+        autoRejectionReason,
       )
 
       val snsDomainEventPublishDto = SnsDomainEventPublishDto(
