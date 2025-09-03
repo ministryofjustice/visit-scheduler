@@ -9,6 +9,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.SnsDomainEventPublishDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitRequestSummaryDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDateTime
 
@@ -91,13 +93,26 @@ class VisitRequestsService(
     LOG.info("Entered VisitRequestsService - autoRejectRequestVisitsAtMinimumBookingWindow")
 
     val requestVisitsDueForAutoRejection = visitRepository.findAllVisitRequestsDueForAutoRejection()
+    return processAutoRejectRequestVisits(requestVisitsDueForAutoRejection)
+  }
 
+  fun handlePrisonerReleasedEventAutoRejectRequestVisits(notificationDto: PrisonerReleasedNotificationDto): Int {
+    LOG.info("Entered VisitRequestsService - handlePrisonerReleasedEventAutoRejectRequestVisits")
+
+    val requestVisitsDueForAutoRejection = visitRepository.findAllVisitRequestsForPrisoner(notificationDto.prisonerNumber)
+    return processAutoRejectRequestVisits(requestVisitsDueForAutoRejection)
+  }
+
+  private fun processAutoRejectRequestVisits(requestVisitsDueForAutoRejection: List<Visit>): Int {
     LOG.info("Found ${requestVisitsDueForAutoRejection.size} request visits due for auto rejection")
 
     requestVisitsDueForAutoRejection.forEach { visitRequest ->
-      val autoRejectResponseDto = visitRequestsApprovalRejectionService.autoRejectRequestVisitsAtMinimumBookingWindow(visitRequest)
+      val autoRejectResponseDto = visitRequestsApprovalRejectionService.autoRejectRequestByVisitReference(visitRequest.reference)
 
-      telemetryClientService.trackVisitRequestAutoRejectedEvent(autoRejectResponseDto.visitDto, autoRejectResponseDto.eventAuditDto)
+      telemetryClientService.trackVisitRequestAutoRejectedEvent(
+        autoRejectResponseDto.visitDto,
+        autoRejectResponseDto.eventAuditDto,
+      )
 
       val snsDomainEventPublishDto = SnsDomainEventPublishDto(
         reference = autoRejectResponseDto.visitDto.reference,

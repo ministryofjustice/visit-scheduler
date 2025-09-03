@@ -9,7 +9,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApproveRejectionVisitRequ
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitRequestApprovalRejectionResponseDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 
 @Transactional
@@ -53,12 +52,12 @@ class VisitRequestsApprovalRejectionService(
     return VisitRequestApprovalRejectionResponseDto(actionedVisitDto, eventAuditDto)
   }
 
-  fun autoRejectRequestVisitsAtMinimumBookingWindow(visitRequest: Visit): VisitRequestApprovalRejectionResponseDto {
+  fun autoRejectRequestByVisitReference(visitReference: String): VisitRequestApprovalRejectionResponseDto {
     LOG.info("Entered VisitRequestsApprovalRejectionService - autoRejectRequestVisitsAtMinimumBookingWindow")
 
-    visitRepository.autoRejectVisitRequestByReference(visitRequest.reference)
+    visitRepository.autoRejectVisitRequestByReference(visitReference)
 
-    val actionedVisitDto = visitDtoBuilder.build(visitRepository.findByReference(visitRequest.reference)!!)
+    val actionedVisitDto = visitDtoBuilder.build(visitRepository.findByReference(visitReference)!!)
     val eventAuditDto = visitEventAuditService.saveVisitRequestAutoRejectedEventAudit(actionedVisitDto)
 
     visitNotificationEventService.deleteVisitAndPairedNotificationEvents(actionedVisitDto.reference, UnFlagEventReason.VISIT_REQUEST_AUTO_REJECTED)
