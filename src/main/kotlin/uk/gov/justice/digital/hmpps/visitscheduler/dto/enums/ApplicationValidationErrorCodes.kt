@@ -11,5 +11,6 @@ enum class ApplicationValidationErrorCodes(
   APPLICATION_INVALID_VISIT_ALREADY_BOOKED("Visit already booked for prisoner."),
   APPLICATION_INVALID_NO_VO_BALANCE("No VO balance to book visit."),
   APPLICATION_INVALID_NO_SLOT_CAPACITY("Not enough slots available."),
+  APPLICATION_INVALID_VISIT_DATE_BLOCKED("Visit date has been blocked by prison."),
   APPLICATION_INVALID_USER_TYPE("User type not valid for this operation."),
 }

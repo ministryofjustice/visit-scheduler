@@ -26,6 +26,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonExcludeDateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDate
@@ -39,6 +40,7 @@ class ApplicationValidationService(
   private val applicationService: ApplicationService,
   private val visitRepository: VisitRepository,
   private val sessionTemplateRepository: SessionTemplateRepository,
+  private val prisonExcludeDateRepository: PrisonExcludeDateRepository,
 ) {
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
@@ -79,6 +81,12 @@ class ApplicationValidationService(
     }
 
     checkPrison(prison.code, prisoner.prisonCode)
+
+    // check if the prison has blocked the application's date for visits
+    checkIfPrisonDateBlocked(application)?.also {
+      errorCodes.add(it)
+    }
+
     checkSessionSlot(application, prisoner, prison)?.also {
       errorCodes.add(it)
     }
@@ -116,6 +124,12 @@ class ApplicationValidationService(
     existingBooking: Visit?,
   ): List<ApplicationValidationErrorCodes> {
     val errorCodes = mutableListOf<ApplicationValidationErrorCodes>()
+
+    // check if the prison has blocked the application's date for visits
+    checkIfPrisonDateBlocked(application)?.also {
+      errorCodes.add(it)
+    }
+
     // check capacity for slot
     checkSlotCapacity(bookingRequestDto, application, existingBooking)?.also {
       errorCodes.add(it)
@@ -221,7 +235,7 @@ class ApplicationValidationService(
     return null
   }
 
-  fun checkSlotCapacity(
+  private fun checkSlotCapacity(
     bookingRequestDto: BookingRequestDto?,
     application: Application,
     existingBooking: Visit?,
@@ -242,6 +256,16 @@ class ApplicationValidationService(
     }
 
     return null
+  }
+
+  private fun checkIfPrisonDateBlocked(application: Application): ApplicationValidationErrorCodes? {
+    val prisonCode = application.prison.code
+    val sessionDate = application.sessionSlot.slotDate
+    return if (prisonExcludeDateRepository.isDateExcludedByPrison(prisonCode, sessionDate)) {
+      ApplicationValidationErrorCodes.APPLICATION_INVALID_VISIT_DATE_BLOCKED
+    } else {
+      null
+    }
   }
 
   private fun hasSlotChangedSinceLastBooking(
