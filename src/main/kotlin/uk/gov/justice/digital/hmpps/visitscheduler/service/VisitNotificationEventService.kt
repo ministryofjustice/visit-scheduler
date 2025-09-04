@@ -153,7 +153,7 @@ class VisitNotificationEventService(
   fun handlePrisonerReleasedNotification(notificationDto: PrisonerReleasedNotificationDto) {
     LOG.info("PrisonerReleasedNotification notification received : {}", notificationDto)
     if (RELEASED == notificationDto.reasonType) {
-      val affectedVisits = visitService.getFutureBookedVisits(notificationDto.prisonerNumber, notificationDto.prisonCode)
+      val affectedVisits = visitService.getFutureBookedVisitsExcludingRequestVisits(notificationDto.prisonerNumber, notificationDto.prisonCode)
       val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, PRISONER_RELEASED_EVENT, null)
       processVisitsWithNotifications(processVisitNotificationDto)
     }

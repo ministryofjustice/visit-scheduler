@@ -359,6 +359,14 @@ class VisitService(
     endDateTime: LocalDateTime? = null,
   ): List<VisitDto> = visitRepository.getBookedVisits(prisonerNumber, prisonCode, startDateTime, endDateTime).map { visitDtoBuilder.build(it) }
 
+  @Transactional(readOnly = true)
+  fun getFutureBookedVisitsExcludingRequestVisits(
+    prisonerNumber: String,
+    prisonCode: String? = null,
+    startDateTime: LocalDateTime = LocalDateTime.now(),
+    endDateTime: LocalDateTime? = null,
+  ): List<VisitDto> = visitRepository.getBookedVisitsExcludingRequestVisits(prisonerNumber, prisonCode, startDateTime, endDateTime).map { visitDtoBuilder.build(it) }
+
   @Transactional
   fun getFutureVisitsByVisitorId(
     visitorId: String,

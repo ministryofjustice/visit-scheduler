@@ -13,7 +13,9 @@ import org.springframework.http.HttpHeaders
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RELEASED_CHANGE_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.PRISONER_RELEASED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerReleaseReasonType.RELEASED
@@ -51,7 +53,7 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
   }
 
   @Test
-  fun `when prisoner has been released from prison then only valid booked visits are flagged and saved`() {
+  fun `when prisoner has been released from prison then booked visits are flagged and request visits are auto rejected`() {
     // Given
     val notificationDto = PrisonerReleasedNotificationDto(prisonerId, prisonCode, RELEASED)
 
@@ -63,12 +65,14 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
     )
     eventAuditEntityHelper.create(visit1)
 
-    createApplicationAndVisit(
+    val visit2 = createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
-      slotDate = LocalDate.now().minusDays(1),
+      slotDate = LocalDate.now().plusDays(3),
       visitStatus = BOOKED,
+      visitSubStatus = VisitSubStatus.REQUESTED,
       sessionTemplate = sessionTemplate1,
     )
+    eventAuditEntityHelper.create(visit2)
 
     createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
@@ -107,15 +111,27 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
     assertThat(visitNotifications).hasSize(1)
     assertThat(visitNotifications[0].visit.reference).isEqualTo(visit1.reference)
 
-    val auditEvents = testEventAuditRepository.getAuditByType(PRISONER_RELEASED_EVENT)
-    assertThat(auditEvents).hasSize(1)
-    with(auditEvents[0]) {
+    val bookedAuditEvents = testEventAuditRepository.getAuditByType(PRISONER_RELEASED_EVENT)
+    assertThat(bookedAuditEvents).hasSize(1)
+    with(bookedAuditEvents[0]) {
       assertThat(actionedBy.userName).isNull()
       assertThat(bookingReference).isEqualTo(visit1.reference)
       assertThat(applicationReference).isEqualTo(visit1.getLastApplication()?.reference)
       assertThat(sessionTemplateReference).isEqualTo(visit1.sessionSlot.sessionTemplateReference)
       assertThat(type).isEqualTo(PRISONER_RELEASED_EVENT)
       assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
+      assertThat(actionedBy.userType).isEqualTo(SYSTEM)
+    }
+
+    val requestAuditEvents = testEventAuditRepository.getAuditByType(EventAuditType.REQUESTED_VISIT_AUTO_REJECTED)
+    assertThat(requestAuditEvents).hasSize(1)
+    with(requestAuditEvents[0]) {
+      assertThat(actionedBy.userName).isNull()
+      assertThat(bookingReference).isEqualTo(visit2.reference)
+      assertThat(applicationReference).isEqualTo(visit2.getLastApplication()?.reference)
+      assertThat(sessionTemplateReference).isEqualTo(visit2.sessionSlot.sessionTemplateReference)
+      assertThat(type).isEqualTo(EventAuditType.REQUESTED_VISIT_AUTO_REJECTED)
+      assertThat(applicationMethodType).isEqualTo(ApplicationMethodType.NOT_APPLICABLE)
       assertThat(actionedBy.userType).isEqualTo(SYSTEM)
     }
   }
@@ -250,5 +266,6 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
     verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
     assertThat(testEventAuditRepository.getAuditCount(PRISONER_RELEASED_EVENT)).isEqualTo(0)
+    assertThat(testEventAuditRepository.getAuditCount(EventAuditType.REQUESTED_VISIT_AUTO_REJECTED)).isEqualTo(0)
   }
 }

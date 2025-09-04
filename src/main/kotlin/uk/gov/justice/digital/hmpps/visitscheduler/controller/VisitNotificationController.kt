@@ -38,6 +38,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitNo
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorApprovedUnapprovedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorRestrictionUpsertedNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.service.ProactiveBookingService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitNotificationEventService
 
 const val VISIT_NOTIFICATION_CONTROLLER_PATH: String = "/visits/notification"
@@ -64,6 +65,7 @@ const val VISIT_NOTIFICATION_IGNORE: String = "$VISIT_NOTIFICATION_CONTROLLER_PA
 @RequestMapping(name = "Visit notification Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
 class VisitNotificationController(
   private val visitNotificationEventService: VisitNotificationEventService,
+  private val proactiveBookingService: ProactiveBookingService,
 ) {
   private companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
@@ -209,7 +211,7 @@ class VisitNotificationController(
     dto: PrisonerReleasedNotificationDto,
   ): ResponseEntity<HttpStatus> {
     LOG.debug("Entered notifyVSiPThatPrisonerReleasedChanged {}", dto)
-    visitNotificationEventService.handlePrisonerReleasedNotification(dto)
+    proactiveBookingService.processPrisonerReleasedEvent(dto)
     return ResponseEntity(HttpStatus.OK)
   }
 

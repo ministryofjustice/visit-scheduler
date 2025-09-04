@@ -237,6 +237,23 @@ interface VisitRepository :
   ): List<Visit>
 
   @Query(
+    "SELECT v  FROM Visit v " +
+      "WHERE v.sessionSlot.slotStart >= :startDateTime AND " +
+      "v.prisonerId = :prisonerId AND " +
+      "(:#{#prisonCode} is null OR v.prison.code = :prisonCode) AND " +
+      "v.visitStatus = 'BOOKED' AND " +
+      "v.visitSubStatus IN ('AUTO_APPROVED', 'APPROVED') AND " +
+      "(cast(:endDateTime as date) is null OR v.sessionSlot.slotEnd < :endDateTime) " +
+      "ORDER BY v.sessionSlot.slotStart,v.id",
+  )
+  fun getBookedVisitsExcludingRequestVisits(
+    @Param("prisonerId") prisonerId: String,
+    @Param("prisonCode") prisonCode: String?,
+    @Param("startDateTime") startDateTime: LocalDateTime,
+    @Param("endDateTime") endDateTime: LocalDateTime? = null,
+  ): List<Visit>
+
+  @Query(
     "SELECT v FROM Visit v " +
       "LEFT JOIN VisitVisitor vv ON v.id = vv.visitId " +
       "WHERE v.sessionSlot.slotStart >= :startDateTime AND " +
@@ -439,6 +456,20 @@ interface VisitRepository :
     nativeQuery = true,
   )
   fun findAllVisitRequestsDueForAutoRejection(): List<Visit>
+
+  @Transactional(readOnly = true)
+  @Query(
+    "SELECT v.* " +
+      "FROM visit v " +
+      "INNER JOIN prison p ON p.id = v.prison_id " +
+      "INNER JOIN session_slot sl ON sl.id = v.session_slot_id " +
+      "WHERE v.prisoner_id = :prisonerId " +
+      "AND v.visit_status = 'BOOKED' " +
+      "AND v.visit_sub_status = 'REQUESTED' " +
+      "AND sl.slot_start >= NOW() ",
+    nativeQuery = true,
+  )
+  fun findAllVisitRequestsForPrisoner(prisonerId: String): List<Visit>
 
   @Transactional
   @Modifying
