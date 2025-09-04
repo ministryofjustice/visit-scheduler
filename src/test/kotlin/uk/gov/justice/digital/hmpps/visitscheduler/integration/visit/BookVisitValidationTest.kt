@@ -5,6 +5,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
@@ -18,6 +19,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidati
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_PRISON_PRISONER_MISMATCH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_SESSION_NOT_AVAILABLE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_VISIT_ALREADY_BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_VISIT_DATE_BLOCKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
@@ -27,6 +29,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.VisitBalancesDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch.PrisonerSearchResultDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionSlotEntityHelper
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.callAddPrisonExcludeDate
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
@@ -42,6 +46,9 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
   private final val prisonerId = "ABC123QQ"
   private final val prisonCode = "ABC"
+
+  @Autowired
+  private lateinit var sessionSlotEntityHelper: SessionSlotEntityHelper
 
   @BeforeEach
   internal fun setUp() {
@@ -978,6 +985,310 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isOk
+  }
+
+  @Test
+  fun `when visit date for staff application has been blocked after application created then validation fails`() {
+    // Given
+    val applicationReference = reservedStaffApplication.reference
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
+    prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
+
+    // add application date to the list of blocked dates for prison
+    callAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prisonCode, reservedStaffApplication.sessionSlot.slotDate, actionedBy = "STAFF_USER")
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
+
+    // Then
+    responseSpec.expectStatus().isEqualTo(UNPROCESSABLE_ENTITY.code())
+
+    val validationErrorResponse = getValidationErrorResponse(responseSpec)
+    assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
+    assertThat(validationErrorResponse.validationErrors).contains(APPLICATION_INVALID_VISIT_DATE_BLOCKED)
+  }
+
+  @Test
+  fun `when visit date for public application has been blocked after application created then validation fails`() {
+    // Given
+    val applicationReference = reservedPublicApplication.reference
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
+    prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
+
+    // add application date to the list of blocked dates for prison
+    callAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prisonCode, reservedStaffApplication.sessionSlot.slotDate, actionedBy = "STAFF_USER")
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
+
+    // Then
+    responseSpec.expectStatus().isEqualTo(UNPROCESSABLE_ENTITY.code())
+
+    val validationErrorResponse = getValidationErrorResponse(responseSpec)
+    assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
+    assertThat(validationErrorResponse.validationErrors).contains(APPLICATION_INVALID_VISIT_DATE_BLOCKED)
+  }
+
+  @Test
+  fun `when a different date for staff application has been blocked after application created then booking is successful`() {
+    // Given
+    val applicationReference = reservedStaffApplication.reference
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
+    prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
+
+    // a different date, not application date to the list of blocked dates for prison
+    callAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prisonCode, reservedStaffApplication.sessionSlot.slotDate.plusDays(1), actionedBy = "STAFF_USER")
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
+
+    // Then
+    responseSpec.expectStatus().isOk
+  }
+
+  @Test
+  fun `when a different date for public application has been blocked after application created then booking is successful`() {
+    // Given
+    val applicationReference = reservedPublicApplication.reference
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
+    prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
+
+    // a different date, not application date to the list of blocked dates for prison
+    callAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prisonCode, reservedStaffApplication.sessionSlot.slotDate.plusDays(1), actionedBy = "STAFF_USER")
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
+
+    // Then
+    responseSpec.expectStatus().isOk
+  }
+
+  @Test
+  fun `when date blocked for a different prison after staff application created then booking is successful`() {
+    // Given
+    val otherPrisonCode = "XYZ"
+    val applicationReference = reservedStaffApplication.reference
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
+    prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
+
+    // date blocked at a different prison
+    callAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, otherPrisonCode, reservedStaffApplication.sessionSlot.slotDate, actionedBy = "STAFF_USER")
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
+
+    // Then
+    responseSpec.expectStatus().isOk
+  }
+
+  @Test
+  fun `when date blocked for a different prison after public application created then booking is successful`() {
+    // Given
+    val otherPrisonCode = "XYZ"
+    val applicationReference = reservedPublicApplication.reference
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
+    prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
+
+    // date blocked at a different prison
+    callAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, otherPrisonCode, reservedStaffApplication.sessionSlot.slotDate, actionedBy = "STAFF_USER")
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
+
+    // Then
+    responseSpec.expectStatus().isOk
+  }
+
+  @Test
+  fun `when staff application is being updated to a date which is blocked then validation fails`() {
+    // Given
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
+    prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
+
+    var visit1 = visitEntityHelper.create(
+      sessionTemplate = sessionTemplateDefault,
+      prisonerId = prisonerId,
+      slotDate = startDate,
+      visitStatus = VisitStatus.BOOKED,
+      userType = UserType.STAFF,
+      prisonCode = prisonCode,
+    )
+    visitEntityHelper.createContact(visit = visit1, name = "Jane Doe", phone = "01234 098765")
+    visit1 = visitEntityHelper.save(visit1)
+
+    val newSessionSlot = sessionSlotEntityHelper.create(
+      sessionTemplateReference = sessionTemplateDefault.reference,
+      prisonId = visit1.prisonId,
+      slotDate = visit1.sessionSlot.slotDate.plusDays(7),
+    )
+
+    // create application to update visit 1
+    var updateVisitApplication = applicationEntityHelper.create(visit1)
+    updateVisitApplication.visitId = visit1.id
+    updateVisitApplication.sessionSlot = newSessionSlot
+    updateVisitApplication.sessionSlotId = newSessionSlot.id
+    updateVisitApplication.applicationStatus = IN_PROGRESS
+    updateVisitApplication = applicationEntityHelper.save(updateVisitApplication)
+
+    // add new application date to the list of blocked dates for prison
+    callAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prisonCode, updateVisitApplication.sessionSlot.slotDate, actionedBy = "STAFF_USER")
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, updateVisitApplication.reference)
+
+    // Then
+    responseSpec.expectStatus().isEqualTo(UNPROCESSABLE_ENTITY.code())
+
+    val validationErrorResponse = getValidationErrorResponse(responseSpec)
+    assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
+    assertThat(validationErrorResponse.validationErrors).contains(APPLICATION_INVALID_VISIT_DATE_BLOCKED)
+  }
+
+  @Test
+  fun `when public application is being updated but the original visit date is blocked booking then booking is successful`() {
+    // Given
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
+    prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
+
+    var visit1 = visitEntityHelper.create(
+      sessionTemplate = sessionTemplateDefault,
+      prisonerId = prisonerId,
+      slotDate = startDate,
+      visitStatus = VisitStatus.BOOKED,
+      userType = UserType.PUBLIC,
+      prisonCode = prisonCode,
+    )
+    visitEntityHelper.createContact(visit = visit1, name = "Jane Doe", phone = "01234 098765")
+    visit1 = visitEntityHelper.save(visit1)
+
+    val newSessionSlot = sessionSlotEntityHelper.create(
+      sessionTemplateReference = sessionTemplateDefault.reference,
+      prisonId = visit1.prisonId,
+      slotDate = visit1.sessionSlot.slotDate.plusDays(7),
+    )
+
+    // create application to update visit 1
+    var updateVisitApplication = applicationEntityHelper.create(visit1, UserType.PUBLIC)
+    updateVisitApplication.visitId = visit1.id
+    updateVisitApplication.sessionSlot = newSessionSlot
+    updateVisitApplication.sessionSlotId = newSessionSlot.id
+    updateVisitApplication.applicationStatus = IN_PROGRESS
+    updateVisitApplication = applicationEntityHelper.save(updateVisitApplication)
+
+    // add original visit date (not the new application date) to the list of blocked dates for prison
+    callAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prisonCode, visit1.sessionSlot.slotDate, actionedBy = "STAFF_USER")
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, updateVisitApplication.reference)
+
+    // Then
+    responseSpec.expectStatus().isOk
+  }
+
+  @Test
+  fun `when staff application is being updated but the original visit date is blocked booking then booking is successful`() {
+    // Given
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
+    prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
+
+    var visit1 = visitEntityHelper.create(
+      sessionTemplate = sessionTemplateDefault,
+      prisonerId = prisonerId,
+      slotDate = startDate,
+      visitStatus = VisitStatus.BOOKED,
+      userType = UserType.STAFF,
+      prisonCode = prisonCode,
+    )
+    visitEntityHelper.createContact(visit = visit1, name = "Jane Doe", phone = "01234 098765")
+    visit1 = visitEntityHelper.save(visit1)
+
+    val newSessionSlot = sessionSlotEntityHelper.create(
+      sessionTemplateReference = sessionTemplateDefault.reference,
+      prisonId = visit1.prisonId,
+      slotDate = visit1.sessionSlot.slotDate.plusDays(7),
+    )
+
+    // create application to update visit 1
+    var updateVisitApplication = applicationEntityHelper.create(visit1)
+    updateVisitApplication.visitId = visit1.id
+    updateVisitApplication.sessionSlot = newSessionSlot
+    updateVisitApplication.sessionSlotId = newSessionSlot.id
+    updateVisitApplication.applicationStatus = IN_PROGRESS
+    updateVisitApplication = applicationEntityHelper.save(updateVisitApplication)
+
+    // add original visit date (not the new application date) to the list of blocked dates for prison
+    callAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prisonCode, visit1.sessionSlot.slotDate, actionedBy = "STAFF_USER")
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, updateVisitApplication.reference)
+
+    // Then
+    responseSpec.expectStatus().isOk
+  }
+
+  @Test
+  fun `when public application is being updated to a date which is blocked then validation fails`() {
+    // Given
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
+    prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
+
+    var visit1 = visitEntityHelper.create(
+      sessionTemplate = sessionTemplateDefault,
+      prisonerId = prisonerId,
+      slotDate = startDate,
+      visitStatus = VisitStatus.BOOKED,
+      userType = UserType.PUBLIC,
+      prisonCode = prisonCode,
+    )
+    visitEntityHelper.createContact(visit = visit1, name = "Jane Doe", phone = "01234 098765")
+    visit1 = visitEntityHelper.save(visit1)
+
+    val newSessionSlot = sessionSlotEntityHelper.create(
+      sessionTemplateReference = sessionTemplateDefault.reference,
+      prisonId = visit1.prisonId,
+      slotDate = visit1.sessionSlot.slotDate.plusDays(7),
+    )
+
+    // create application to update visit 1
+    var updateVisitApplication = applicationEntityHelper.create(visit1, UserType.PUBLIC)
+    updateVisitApplication.visitId = visit1.id
+    updateVisitApplication.sessionSlot = newSessionSlot
+    updateVisitApplication.sessionSlotId = newSessionSlot.id
+    updateVisitApplication.applicationStatus = IN_PROGRESS
+    updateVisitApplication = applicationEntityHelper.save(updateVisitApplication)
+
+    // add new application date to the list of blocked dates for prison
+    callAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prisonCode, updateVisitApplication.sessionSlot.slotDate, actionedBy = "STAFF_USER")
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, updateVisitApplication.reference)
+
+    // Then
+    responseSpec.expectStatus().isEqualTo(UNPROCESSABLE_ENTITY.code())
+
+    val validationErrorResponse = getValidationErrorResponse(responseSpec)
+    assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
+    assertThat(validationErrorResponse.validationErrors).contains(APPLICATION_INVALID_VISIT_DATE_BLOCKED)
   }
 
   fun getValidationErrorResponse(responseSpec: WebTestClient.ResponseSpec): ApplicationValidationErrorResponse = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, ApplicationValidationErrorResponse::class.java)

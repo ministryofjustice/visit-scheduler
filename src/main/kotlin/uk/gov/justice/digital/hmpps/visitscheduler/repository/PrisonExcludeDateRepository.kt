@@ -23,4 +23,11 @@ interface PrisonExcludeDateRepository : JpaRepository<PrisonExcludeDate, Long> {
       " ORDER BY ped.excludeDate desc ",
   )
   fun getExcludeDatesByPrisonCode(prisonCode: String): List<PrisonExcludeDate>
+
+  @Query(
+    "select COUNT(ped) > 0 FROM PrisonExcludeDate ped " +
+      "WHERE ped.prison.code = :prisonCode " +
+      " AND ped.excludeDate = :date ",
+  )
+  fun isDateExcludedByPrison(prisonCode: String, date: LocalDate): Boolean
 }

@@ -32,7 +32,7 @@ class ApplicationEntityHelper(
 
   companion object {
 
-    fun createApplication(visit: Visit): Application = Application(
+    fun createApplication(visit: Visit, userType: UserType = STAFF): Application = Application(
       prisonerId = visit.prisonerId,
       prisonId = visit.prisonId,
       prison = visit.prison,
@@ -42,7 +42,7 @@ class ApplicationEntityHelper(
       restriction = visit.visitRestriction,
       createdBy = "",
       reservedSlot = true,
-      userType = STAFF,
+      userType = userType,
       applicationStatus = ACCEPTED,
     )
 
@@ -64,8 +64,8 @@ class ApplicationEntityHelper(
     }
   }
 
-  fun create(visit: Visit): Application = applicationRepo.saveAndFlush(
-    createApplication(visit),
+  fun create(visit: Visit, userType: UserType = STAFF): Application = applicationRepo.saveAndFlush(
+    createApplication(visit, userType),
   )
 
   fun create(visit: Visit, sessionTemplate: SessionTemplate, newSlotDate: LocalDate): Application {
