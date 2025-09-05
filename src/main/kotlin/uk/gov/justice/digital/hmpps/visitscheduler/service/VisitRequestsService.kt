@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitRequestSummaryDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.AutoRejectionReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
@@ -102,6 +103,13 @@ class VisitRequestsService(
 
     val requestVisitsDueForAutoRejection = visitRepository.findAllVisitRequestsForPrisoner(notificationDto.prisonerNumber)
     return processAutoRejectRequestVisits(requestVisitsDueForAutoRejection, AutoRejectionReason.PRISONER_RELEASED)
+  }
+
+  fun handlePrisonerReceivedEventAutoRejectRequestVisits(notificationDto: PrisonerReceivedNotificationDto): Int {
+    LOG.info("Entered VisitRequestsService - handlePrisonerReceivedEventAutoRejectRequestVisits")
+
+    val requestVisitsDueForAutoRejection = visitRepository.findAllVisitRequestsForPrisonerExcludingCurrentPrison(notificationDto.prisonerNumber, notificationDto.prisonCode)
+    return processAutoRejectRequestVisits(requestVisitsDueForAutoRejection, AutoRejectionReason.PRISONER_TRANSFERRED)
   }
 
   private fun processAutoRejectRequestVisits(requestVisitsDueForAutoRejection: List<Visit>, autoRejectionReason: AutoRejectionReason): Int {

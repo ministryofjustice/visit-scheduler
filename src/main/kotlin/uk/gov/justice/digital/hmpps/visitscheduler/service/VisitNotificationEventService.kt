@@ -26,7 +26,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.SESSION_VISITS_BLOCKED_FOR_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.VISITOR_RESTRICTION_UPSERTED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.VISITOR_UNAPPROVED_EVENT
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerReceivedReasonType.TRANSFERRED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerReleaseReasonType.RELEASED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SupportedCourtVideoAppointmentCategoryCode
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
@@ -418,18 +417,17 @@ class VisitNotificationEventService(
   @Transactional
   fun handlePrisonerReceivedNotification(notificationDto: PrisonerReceivedNotificationDto) {
     LOG.info("PrisonerReceivedNotification notification received : {}", notificationDto)
-    if (TRANSFERRED == notificationDto.reason) {
-      // First flag visits from all prisons excluding the one the prisoner has moved to.
-      val affectedVisits = visitService.getFutureBookedVisitsExcludingPrison(notificationDto.prisonerNumber, notificationDto.prisonCode)
-      if (affectedVisits.isNotEmpty()) {
-        val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, PRISONER_RECEIVED_EVENT, null)
-        processVisitsWithNotifications(processVisitNotificationDto)
-      }
 
-      // Second un-flag visits from current prison if any are flagged, as they are now at this prison.
-      val currentPrisonNotifications = visitNotificationEventRepository.getEventsBy(notificationDto.prisonerNumber, notificationDto.prisonCode, PRISONER_RECEIVED_EVENT)
-      deleteNotificationsThatAreNoLongerValid(currentPrisonNotifications, PRISONER_RECEIVED_EVENT, PRISONER_RETURNED_TO_PRISON)
+    // First flag visits from all prisons excluding the one the prisoner has moved to.
+    val affectedVisits = visitService.getFutureBookedVisitsExcludingPrisonAndExcludingRequestVisits(notificationDto.prisonerNumber, notificationDto.prisonCode)
+    if (affectedVisits.isNotEmpty()) {
+      val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, PRISONER_RECEIVED_EVENT, null)
+      processVisitsWithNotifications(processVisitNotificationDto)
     }
+
+    // Second un-flag visits from current prison if any are flagged, as they are now at this prison.
+    val currentPrisonNotifications = visitNotificationEventRepository.getEventsBy(notificationDto.prisonerNumber, notificationDto.prisonCode, PRISONER_RECEIVED_EVENT)
+    deleteNotificationsThatAreNoLongerValid(currentPrisonNotifications, PRISONER_RECEIVED_EVENT, PRISONER_RETURNED_TO_PRISON)
   }
 
   private fun processVisitsWithNotifications(processVisitNotificationDto: ProcessVisitNotificationDto) {
