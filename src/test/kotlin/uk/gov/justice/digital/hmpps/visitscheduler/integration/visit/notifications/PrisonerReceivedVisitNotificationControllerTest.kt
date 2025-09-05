@@ -195,6 +195,7 @@ class PrisonerReceivedVisitNotificationControllerTest : NotificationTestBase() {
       assertThat(applicationMethodType).isEqualTo(ApplicationMethodType.NOT_APPLICABLE)
       assertThat(actionedBy.userType).isEqualTo(SYSTEM)
     }
+    verify(telemetryClient, times(1)).trackEvent(eq("prison-visit.cancelled-domain-event"), any(), isNull())
   }
 
   @Test
