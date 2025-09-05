@@ -13,7 +13,9 @@ import org.springframework.http.HttpHeaders
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RECEIVED_CHANGE_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.PRISONER_RECEIVED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerReceivedReasonType.ADMISSION
@@ -153,18 +155,54 @@ class PrisonerReceivedVisitNotificationControllerTest : NotificationTestBase() {
   }
 
   @Test
+  fun `when prisoner has received with reason transfer then all request visits, excluding current prison, are auto rejected`() {
+    // Given
+    val notificationDto = PrisonerReceivedNotificationDto(prisonerId, prisonCode, TRANSFERRED)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = prisonerId, prisonCode = prisonCode)
+
+    val visit1 = createApplicationAndVisit(
+      prisonerId = notificationDto.prisonerNumber,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      visitSubStatus = VisitSubStatus.REQUESTED,
+      sessionTemplate = sessionTemplate1,
+    )
+    eventAuditEntityHelper.create(visit = visit1, type = EventAuditType.REQUESTED_VISIT)
+
+    val visit2 = createApplicationAndVisit(
+      prisonerId = notificationDto.prisonerNumber,
+      slotDate = LocalDate.now().plusDays(2),
+      visitStatus = BOOKED,
+      visitSubStatus = VisitSubStatus.REQUESTED,
+      sessionTemplate = otherPrisonSessionTemplate,
+    )
+    eventAuditEntityHelper.create(visit = visit2, type = EventAuditType.REQUESTED_VISIT)
+
+    // When
+    val responseSpec = callNotifyVSiPThatPrisonerHadBeenReceived(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val requestAuditEvents = testEventAuditRepository.getAuditByType(EventAuditType.REQUESTED_VISIT_AUTO_REJECTED)
+    assertThat(requestAuditEvents).hasSize(1)
+    with(requestAuditEvents[0]) {
+      assertThat(actionedBy.userName).isNull()
+      assertThat(bookingReference).isEqualTo(visit2.reference)
+      assertThat(applicationReference).isEqualTo(visit2.getLastApplication()?.reference)
+      assertThat(sessionTemplateReference).isEqualTo(visit2.sessionSlot.sessionTemplateReference)
+      assertThat(type).isEqualTo(EventAuditType.REQUESTED_VISIT_AUTO_REJECTED)
+      assertThat(applicationMethodType).isEqualTo(ApplicationMethodType.NOT_APPLICABLE)
+      assertThat(actionedBy.userType).isEqualTo(SYSTEM)
+    }
+  }
+
+  @Test
   fun `when prisoner has received with reason transfer back to a prison they came from then flagged visits are un-flagged`() {
     // Given
     val notificationDto = PrisonerReceivedNotificationDto(prisonerId, prisonCode, TRANSFERRED)
 
-    val visit = visitEntityHelper.create(
-      prisonerId = prisonerId,
-      slotDate = LocalDate.now().plusDays(1),
-      visitStatus = BOOKED,
-      prisonCode = prisonCode,
-      sessionTemplate = sessionTemplateDefault,
-    )
-    eventAuditEntityHelper.create(visit)
+    val visit = createApplicationAndVisit(prisonerId, sessionTemplate1, BOOKED, VisitSubStatus.AUTO_APPROVED, LocalDate.now().plusDays(1))
 
     visitNotificationEventHelper.create(visit = visit, notificationEventType = NotificationEventType.PRISONER_RECEIVED_EVENT)
 
