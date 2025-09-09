@@ -137,7 +137,7 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
   }
 
   @Test
-  fun `when prisoner has been released from prison then only visits are flagged with there own notification references`() {
+  fun `when prisoner has been released from prison then only visits are flagged and requested visits auto rejected with there own notification references`() {
     // Given
     val notificationDto = PrisonerReleasedNotificationDto(prisonerId, prisonCode, RELEASED)
 
@@ -174,6 +174,16 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
       sessionTemplate = sessionTemplate1,
     )
 
+    // requested visit should be auto rejected
+    val visit4 = createApplicationAndVisit(
+      prisonerId = notificationDto.prisonerNumber,
+      slotDate = LocalDate.now().plusDays(3),
+      visitStatus = BOOKED,
+      visitSubStatus = VisitSubStatus.REQUESTED,
+      sessionTemplate = sessionTemplate1,
+    )
+    eventAuditEntityHelper.create(visit2)
+
     // When
     val responseSpec = callNotifyVSiPThatPrisonerHadBeenReleased(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
 
@@ -195,10 +205,22 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
     assertThat(visitNotifications[2].reference).doesNotContain(visitNotifications[0].reference, visitNotifications[1].reference)
     assertThat(visitNotifications[2].visitNotificationEventAttributes.size).isEqualTo(0)
     assertThat(testEventAuditRepository.getAuditCount(PRISONER_RELEASED_EVENT)).isEqualTo(3)
+
+    val requestAuditEvents = testEventAuditRepository.getAuditByType(EventAuditType.REQUESTED_VISIT_AUTO_REJECTED)
+    assertThat(requestAuditEvents).hasSize(1)
+    with(requestAuditEvents[0]) {
+      assertThat(actionedBy.userName).isNull()
+      assertThat(bookingReference).isEqualTo(visit4.reference)
+      assertThat(applicationReference).isEqualTo(visit4.getLastApplication()?.reference)
+      assertThat(sessionTemplateReference).isEqualTo(visit4.sessionSlot.sessionTemplateReference)
+      assertThat(type).isEqualTo(EventAuditType.REQUESTED_VISIT_AUTO_REJECTED)
+      assertThat(applicationMethodType).isEqualTo(ApplicationMethodType.NOT_APPLICABLE)
+      assertThat(actionedBy.userType).isEqualTo(SYSTEM)
+    }
   }
 
   @Test
-  fun `when prisoner has been released to hospital then no visits are flagged or saved`() {
+  fun `when prisoner has been released to hospital then no visits are flagged or saved and requested visits are not auto rejected`() {
     // Given
     val notificationDto = PrisonerReleasedNotificationDto(prisonerId, prisonCode, RELEASED_TO_HOSPITAL)
 
@@ -211,7 +233,7 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
   }
 
   @Test
-  fun `when prisoner has been temporary released then no visits are flagged or saved`() {
+  fun `when prisoner has been temporary released then no visits are flagged or saved and requested visits are not auto rejected`() {
     // Given
     val notificationDto = PrisonerReleasedNotificationDto(prisonerId, prisonCode, TEMPORARY_ABSENCE_RELEASE)
 
@@ -224,7 +246,7 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
   }
 
   @Test
-  fun `when prisoner has been sent to cort then no visits are flagged or saved`() {
+  fun `when prisoner has been sent to cort then no visits are flagged or saved and requested visits are not auto rejected`() {
     // Given
     val notificationDto = PrisonerReleasedNotificationDto(prisonerId, prisonCode, SENT_TO_COURT)
 
@@ -237,7 +259,7 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
   }
 
   @Test
-  fun `when prisoner has transferred then no visits are flagged or saved`() {
+  fun `when prisoner has transferred then no visits are flagged or saved and requested visits are not auto rejected`() {
     // Given
     val notificationDto = PrisonerReleasedNotificationDto(prisonerId, prisonCode, TRANSFERRED)
 
@@ -250,7 +272,7 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
   }
 
   @Test
-  fun `when prisoner has been released but we dont know why then no visits are flagged or saved`() {
+  fun `when prisoner has been released but we dont know why then no visits are flagged or saved and requested visits are not auto rejected`() {
     // Given
     val notificationDto = PrisonerReleasedNotificationDto(prisonerId, prisonCode, UNKNOWN)
 
@@ -265,6 +287,9 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
   private fun assertNotHandled() {
     verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
+    verify(visitRepository, times(0)).findAllVisitRequestsForPrisoner(any())
+    verify(visitRepository, times(0)).autoRejectVisitRequestByReference(any())
+    verify(visitRequestsApprovalRejectionService, times(0)).autoRejectRequestByVisitReference(any(), any())
     assertThat(testEventAuditRepository.getAuditCount(PRISONER_RELEASED_EVENT)).isEqualTo(0)
     assertThat(testEventAuditRepository.getAuditCount(EventAuditType.REQUESTED_VISIT_AUTO_REJECTED)).isEqualTo(0)
   }
