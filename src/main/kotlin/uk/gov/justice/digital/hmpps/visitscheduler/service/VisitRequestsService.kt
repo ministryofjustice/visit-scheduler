@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitRequestSummaryDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.AutoRejectionReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerReleaseReasonType.RELEASED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
@@ -97,11 +98,15 @@ class VisitRequestsService(
     return processAutoRejectRequestVisits(requestVisitsDueForAutoRejection, AutoRejectionReason.MINIMUM_BOOKING_WINDOW_REACHED)
   }
 
-  fun handlePrisonerReleasedEventAutoRejectRequestVisits(notificationDto: PrisonerReleasedNotificationDto): Int {
-    LOG.info("Entered VisitRequestsService - handlePrisonerReleasedEventAutoRejectRequestVisits")
+  fun handlePrisonerReleasedEventAutoRejectRequestVisits(notificationDto: PrisonerReleasedNotificationDto) {
+    LOG.info("Entered VisitRequestsService - handlePrisonerReleasedEventAutoRejectRequestVisits for notification - {}", notificationDto)
+    if (RELEASED == notificationDto.reasonType) {
+      val requestVisitsDueForAutoRejection =
+        visitRepository.findAllVisitRequestsForPrisoner(notificationDto.prisonerNumber)
+      val total = processAutoRejectRequestVisits(requestVisitsDueForAutoRejection, AutoRejectionReason.PRISONER_RELEASED)
 
-    val requestVisitsDueForAutoRejection = visitRepository.findAllVisitRequestsForPrisoner(notificationDto.prisonerNumber)
-    return processAutoRejectRequestVisits(requestVisitsDueForAutoRejection, AutoRejectionReason.PRISONER_RELEASED)
+      LOG.info("{} requests auto rejected for notification - {}", total, notificationDto)
+    }
   }
 
   private fun processAutoRejectRequestVisits(requestVisitsDueForAutoRejection: List<Visit>, autoRejectionReason: AutoRejectionReason): Int {

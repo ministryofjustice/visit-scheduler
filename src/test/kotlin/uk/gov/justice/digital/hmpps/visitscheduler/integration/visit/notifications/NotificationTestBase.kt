@@ -26,7 +26,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestEventAuditRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonerService
+import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitRequestsApprovalRejectionService
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit.MINUTES
@@ -41,6 +43,12 @@ abstract class NotificationTestBase : IntegrationTestBase() {
 
   @MockitoSpyBean
   lateinit var prisonerService: PrisonerService
+
+  @MockitoSpyBean
+  lateinit var visitRequestsApprovalRejectionService: VisitRequestsApprovalRejectionService
+
+  @MockitoSpyBean
+  lateinit var visitRepository: VisitRepository
 
   @MockitoSpyBean
   lateinit var visitNotificationEventRepository: VisitNotificationEventRepository
