@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.visitscheduler.config.FlagVisitTaskConfiguration
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonsService
@@ -16,6 +17,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryClientServic
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitNotificationEventService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
 import java.time.LocalDate
+import java.util.function.Predicate
 
 @Component
 class FlagVisitsTask(
@@ -87,7 +89,9 @@ class FlagVisitsTask(
       reason = notifications.joinToString(", ") { it.description }
     } else {
       try {
-        sessions = sessionService.getAllVisitSessions(prisonCode = visit.prisonCode, prisonerId = visit.prisonerId, minOverride = noticeDays, maxOverride = noticeDays, userType = UserType.STAFF).filter { it.sessionTemplateReference == visit.sessionTemplateReference }
+        sessions = sessionService.getAllVisitSessions(prisonCode = visit.prisonCode, prisonerId = visit.prisonerId, minOverride = noticeDays, maxOverride = noticeDays, userType = UserType.STAFF)
+          .filter { it.sessionTemplateReference == visit.sessionTemplateReference }
+          .filterNot { sessionsWithVisitRenderConflicts.test(it) }
       } catch (e: Exception) {
         if (isRetry) {
           // only log this if the visit is being retried
@@ -125,4 +129,11 @@ class FlagVisitsTask(
   }
 
   private fun getVisitNotifications(visitReference: String): List<NotificationEventType> = visitNotificationEventService.getNotificationsTypesForBookingReference(visitReference)
+
+  // filters out sessions that will not be returned to the front end
+  private val sessionsWithVisitRenderConflicts: Predicate<VisitSessionDto> = Predicate { session: VisitSessionDto ->
+    (session.sessionConflicts.contains(SessionConflict.SESSION_DATE_BLOCKED)) ||
+      (session.sessionConflicts.contains(SessionConflict.PRISON_DATE_BLOCKED)) ||
+      (session.sessionConflicts.contains(SessionConflict.NON_ASSOCIATION))
+  }
 }

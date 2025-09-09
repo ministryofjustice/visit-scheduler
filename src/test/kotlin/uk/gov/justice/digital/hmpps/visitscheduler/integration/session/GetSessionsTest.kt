@@ -113,7 +113,7 @@ class GetSessionsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `visit sessions are returned for a prison without excluded dates`() {
+  fun `visit sessions are returned for a prison with sessions with excluded dates flagged with session conflicts`() {
     // Given
 
     val nextAllowedDay = getNextAllowedDay()
@@ -135,15 +135,16 @@ class GetSessionsTest : IntegrationTestBase() {
     val responseSpec = callGetSessions(prisonCode = "AWE", prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
-    val returnResult = responseSpec.expectStatus().isOk
-      .expectBody()
+    val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
-    assertThat(visitSessionResults.size).isEqualTo(1)
+    assertThat(visitSessionResults.size).isEqualTo(2)
     assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate)
+    assertSession(visitSessionResults[1], nextWeek, sessionTemplate)
+    assertThat(visitSessionResults[1].sessionConflicts).contains(SessionConflict.PRISON_DATE_BLOCKED)
   }
 
   @Test
-  fun `when session is excluded for date visit sessions then visit session is not returned for that day`() {
+  fun `when session is excluded for date then visit session is returned with appropriate flags`() {
     // Given
 
     val nextAllowedDay = getNextAllowedDay()
@@ -169,14 +170,19 @@ class GetSessionsTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk
       .expectBody()
     val visitSessionResults = getResults(returnResult)
-    assertThat(visitSessionResults.size).isEqualTo(1)
-    assertThat(visitSessionResults[0].startTimestamp.toLocalDate()).isNotEqualTo(nextAllowedDay)
-    assertThat(visitSessionResults[0].startTimestamp).isEqualTo(nextWeek.atTime(sessionTemplate.startTime))
-    assertSession(visitSessionResults[0], nextWeek, sessionTemplate)
+    assertThat(visitSessionResults.size).isEqualTo(2)
+    assertThat(visitSessionResults[0].startTimestamp.toLocalDate()).isEqualTo(nextAllowedDay)
+    assertThat(visitSessionResults[0].sessionConflicts.size).isEqualTo(1)
+    assertThat(visitSessionResults[0].sessionConflicts).contains(SessionConflict.SESSION_DATE_BLOCKED)
+
+    assertThat(visitSessionResults[1].startTimestamp).isEqualTo(nextWeek.atTime(sessionTemplate.startTime))
+    assertThat(visitSessionResults[1].sessionConflicts.size).isEqualTo(0)
+    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate)
+    assertSession(visitSessionResults[1], nextWeek, sessionTemplate)
   }
 
   @Test
-  fun `when multiple sessions in a day and one session is excluded for date visit sessions are returned for a session with excluded dates`() {
+  fun `when multiple sessions in a day and one session is excluded for date visit sessions are returned with appropriate flags`() {
     // Given
 
     val nextAllowedDay = getNextAllowedDay()
@@ -216,10 +222,19 @@ class GetSessionsTest : IntegrationTestBase() {
     val visitSessionResults = getResults(returnResult)
 
     // assert that only the non excluded session is returned
-    assertThat(visitSessionResults.size).isEqualTo(3)
-    assertSession(visitSessionResults[0], nextAllowedDay, notExcludedSessionTemplate)
-    assertSession(visitSessionResults[1], nextWeek, sessionTemplateWithExcludedDates)
-    assertSession(visitSessionResults[2], nextWeek, notExcludedSessionTemplate)
+    assertThat(visitSessionResults.size).isEqualTo(4)
+    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplateWithExcludedDates)
+    assertThat(visitSessionResults[0].sessionConflicts.size).isEqualTo(1)
+    assertThat(visitSessionResults[0].sessionConflicts).contains(SessionConflict.SESSION_DATE_BLOCKED)
+
+    assertSession(visitSessionResults[1], nextAllowedDay, notExcludedSessionTemplate)
+    assertThat(visitSessionResults[1].sessionConflicts.size).isEqualTo(0)
+
+    assertSession(visitSessionResults[2], nextWeek, sessionTemplateWithExcludedDates)
+    assertThat(visitSessionResults[2].sessionConflicts.size).isEqualTo(0)
+
+    assertSession(visitSessionResults[3], nextWeek, notExcludedSessionTemplate)
+    assertThat(visitSessionResults[3].sessionConflicts.size).isEqualTo(0)
   }
 
   @Test
@@ -271,7 +286,7 @@ class GetSessionsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when prison date excluded then no visit sessions are returned for blocked date`() {
+  fun `when prison date excluded then visit sessions are returned with appropriate flags`() {
     // Given
 
     val nextAllowedDay = getNextAllowedDay()
@@ -311,9 +326,19 @@ class GetSessionsTest : IntegrationTestBase() {
     val visitSessionResults = getResults(returnResult)
 
     // assert that only the non excluded session is returned
-    assertThat(visitSessionResults.size).isEqualTo(2)
-    assertSession(visitSessionResults[0], nextWeek, sessionTemplate1)
-    assertSession(visitSessionResults[1], nextWeek, sessionTemplate2)
+    assertThat(visitSessionResults.size).isEqualTo(4)
+    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate1)
+    assertThat(visitSessionResults[0].sessionConflicts.size).isEqualTo(1)
+    assertThat(visitSessionResults[0].sessionConflicts).contains(SessionConflict.PRISON_DATE_BLOCKED)
+
+    assertSession(visitSessionResults[1], nextAllowedDay, sessionTemplate2)
+    assertThat(visitSessionResults[1].sessionConflicts.size).isEqualTo(1)
+    assertThat(visitSessionResults[1].sessionConflicts).contains(SessionConflict.PRISON_DATE_BLOCKED)
+
+    assertSession(visitSessionResults[2], nextWeek, sessionTemplate1)
+    assertThat(visitSessionResults[2].sessionConflicts.size).isEqualTo(0)
+    assertSession(visitSessionResults[3], nextWeek, sessionTemplate2)
+    assertThat(visitSessionResults[3].sessionConflicts.size).isEqualTo(0)
   }
 
   @Test
@@ -1628,7 +1653,7 @@ class GetSessionsTest : IntegrationTestBase() {
     val validFromDate = this.getNextAllowedDay()
     val sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek, prisonCode = prisonCode)
 
-    this.visitEntityHelper.create(
+    val visit = this.visitEntityHelper.create(
       prisonerId = associationPrisonerId,
       prisonCode = prisonCode,
       visitRoom = sessionTemplate.visitRoom,
@@ -1650,10 +1675,16 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val returnResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders).expectBody()
 
     // Then
-    assertResponseLength(responseSpec, 3)
+
+    val visitSessions = getResults(returnResult)
+    assertThat(visitSessions).hasSize(4)
+    val visitSessionsForDate = visitSessions.filter { it.startTimestamp.toLocalDate() == visit.sessionSlot.slotDate }
+    visitSessionsForDate.forEach {
+      assertThat(it.sessionConflicts).contains(SessionConflict.NON_ASSOCIATION)
+    }
   }
 
   @Test
@@ -1766,7 +1797,7 @@ class GetSessionsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `visit sessions are not returned for a prisoner with non association visit on same date but on a different session template`() {
+  fun `visit sessions are returned with appropriate flags for a prisoner with non association visit on same date but on a different session template`() {
     // Given
     // test for scenario where 2 session templates exist on the same day but
     // both sessions are for different wings
@@ -1833,13 +1864,14 @@ class GetSessionsTest : IntegrationTestBase() {
 
     // Then
     val sessions = getResults(responseResult.expectBody())
-
-    assertThat(sessions.map { it.startTimestamp.toLocalDate() }).doesNotContain(visit.sessionSlot.slotDate)
-    assertThat(sessions.size).isEqualTo(3)
+    val sessionsForVisitDate = sessions.filter { it.startTimestamp.toLocalDate() == visit.sessionSlot.slotDate }
+    sessionsForVisitDate.forEach {
+      assertThat(it.sessionConflicts).contains(SessionConflict.NON_ASSOCIATION)
+    }
   }
 
   @Test
-  fun `visit sessions are not returned for a prisoner with non association application on same date but on a different session template`() {
+  fun `visit sessions are returned with appropriate flags for a prisoner with non association application on same date but on a different session template`() {
     // Given
     // test for scenario where 2 session templates exist on the same day but
     // both sessions are for different wings
@@ -1907,8 +1939,11 @@ class GetSessionsTest : IntegrationTestBase() {
     // Then
     val sessions = getResults(responseResult)
 
-    assertThat(sessions.map { it.startTimestamp.toLocalDate() }).doesNotContain(application.sessionSlot.slotDate)
-    assertThat(sessions.size).isEqualTo(3)
+    assertThat(sessions.size).isEqualTo(4)
+    val sessionsForVisitDate = sessions.filter { it.startTimestamp.toLocalDate() == application.sessionSlot.slotDate }
+    sessionsForVisitDate.forEach {
+      assertThat(it.sessionConflicts).contains(SessionConflict.NON_ASSOCIATION)
+    }
   }
 
   @Test

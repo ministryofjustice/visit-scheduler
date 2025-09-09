@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.HttpHeaders
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_SESSION_CONTROLLER_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TransitionalLocationTypes
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
@@ -475,7 +476,7 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `one session unavailable when non association has a visit for one of the sessions`() {
+  fun `sessions returned with appropriate flags when non association has a visit for one of the sessions`() {
     // Given
     val prisonerId = "A0000001"
     val prisonerInternalLocation = "SWL-A-1-100-1"
@@ -509,7 +510,17 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     val visitSessionResults = getResults(returnResult)
 
     // none of the sessions on the day will be available
-    Assertions.assertThat(visitSessionResults.size).isEqualTo(0)
+    Assertions.assertThat(visitSessionResults.size).isEqualTo(5)
+    Assertions.assertThat(visitSessionResults[0].sessionConflicts.size).isEqualTo(1)
+    Assertions.assertThat(visitSessionResults[0].sessionConflicts.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
+    Assertions.assertThat(visitSessionResults[1].sessionConflicts.size).isEqualTo(1)
+    Assertions.assertThat(visitSessionResults[1].sessionConflicts.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
+    Assertions.assertThat(visitSessionResults[2].sessionConflicts.size).isEqualTo(1)
+    Assertions.assertThat(visitSessionResults[2].sessionConflicts.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
+    Assertions.assertThat(visitSessionResults[3].sessionConflicts.size).isEqualTo(1)
+    Assertions.assertThat(visitSessionResults[3].sessionConflicts.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
+    Assertions.assertThat(visitSessionResults[4].sessionConflicts.size).isEqualTo(1)
+    Assertions.assertThat(visitSessionResults[4].sessionConflicts.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
   }
 
   @Test
