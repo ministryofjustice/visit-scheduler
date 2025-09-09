@@ -809,7 +809,9 @@ class SessionServiceTest {
       val sessions = sessionService.getAllVisitSessions(prisonCode, prisonerId, userType = STAFF)
 
       // Then
-      assertThat(sessions).size().isEqualTo(0)
+      assertThat(sessions).size().isEqualTo(1)
+      assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
+      assertThat(sessions[0].sessionConflicts.first()).isEqualTo(SessionConflict.DOUBLE_BOOKING_OR_RESERVATION)
       Mockito.verify(prisonerService, times(1)).getPrisonerNonAssociationList(prisonerId)
     }
 
@@ -844,7 +846,9 @@ class SessionServiceTest {
       val sessions = sessionService.getAllVisitSessions(prisonCode, prisonerId, userType = STAFF)
 
       // Then
-      assertThat(sessions).size().isEqualTo(0)
+      assertThat(sessions).size().isEqualTo(1)
+      assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
+      assertThat(sessions[0].sessionConflicts.first()).isEqualTo(SessionConflict.DOUBLE_BOOKING_OR_RESERVATION)
       Mockito.verify(prisonerService, times(1)).getPrisonerNonAssociationList(prisonerId)
     }
 

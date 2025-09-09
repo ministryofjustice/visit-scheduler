@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.DOUBLE_BOOKING_OR_RESERVATION
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.NON_ASSOCIATION
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.PRISON_DATE_BLOCKED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.SESSION_DATE_BLOCKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
@@ -21,9 +23,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTimeSlotD
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.CapacityNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonExcludeDate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplateExcludeDate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionSlotRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
@@ -136,7 +140,7 @@ class SessionService(
 
     var sessionTemplates = getAllSessionTemplatesForDateRange(prisonCode, dateRange).filter { sessionsByUserClientFilter(userType).test(it) }
 
-    LOG.info("Retrieved ${sessionTemplates.size} sessions before beginning filtering for prisoner $prisonerId, with date range $dateRange")
+    LOG.debug("Retrieved ${sessionTemplates.size} sessions before beginning filtering for prisoner $prisonerId, with date range $dateRange")
 
     val prisonerHousingLevels = prisonerService.getPrisonerHousingLevels(prisonerId = prisonerId, prisonCode = prisonCode, sessionTemplates = sessionTemplates)
 
@@ -146,25 +150,20 @@ class SessionService(
       prisonerSessionValidationService.isSessionAvailableToPrisoner(sessionTemplates, sessionTemplate, prisoner, prisonerHousingLevels)
     }
 
-    val visitSessions = sessionTemplates.map {
+    var visitSessions = sessionTemplates.map {
       buildVisitSessionsUsingTemplate(it, dateRange.fromDate, dateRange.toDate)
     }.flatten()
 
     val sessionSlots = getSessionSlots(visitSessions)
-    val nonAssociationConflictSessions = getNonAssociationSessions(visitSessions, prisonerId, prison)
-    val doubleBookingOrReservationSessions = getDoubleBookingOrReservationSessions(visitSessions, sessionSlots, prisonerId, excludedApplicationReference, usernameToExcludeFromReservedApplications)
+    addSessionConflicts(sessionTemplates, visitSessions, prisonerId, prison, sessionSlots, excludedApplicationReference, usernameToExcludeFromReservedApplications)
 
-    return visitSessions.filterNot {
-      hasNonAssociationConflict(nonAssociationConflictSessions, it) && policyFilterNonAssociation
-    }.filterNot {
-      hasDoubleBookingOrReservationSessions(doubleBookingOrReservationSessions, it) && policyFilterDoubleBooking
-    }.also {
-      addConflicts(it, nonAssociationConflictSessions, doubleBookingOrReservationSessions)
-    }.also {
+    visitSessions = visitSessions.also {
       populateBookedCount(sessionSlots, it, excludedApplicationReference, usernameToExcludeFromReservedApplications, true)
     }.sortedWith(compareBy { it.startTimestamp }).also {
       LOG.info("Final count for sessions of ${it.size}, after filtering for prisoner $prisonerId, with date range $dateRange")
     }
+
+    return visitSessions
   }
 
   @Transactional(readOnly = true)
@@ -206,6 +205,38 @@ class SessionService(
     }
   }
 
+  private fun addSessionConflicts(
+    sessionTemplates: List<SessionTemplate>,
+    visitSessions: List<VisitSessionDto>,
+    prisonerId: String,
+    prison: Prison,
+    sessionSlots: List<SessionSlot>,
+    excludedApplicationReference: String?,
+    usernameToExcludeFromReservedApplications: String?,
+  ): List<VisitSessionDto> {
+    val nonAssociationConflictSessions = getNonAssociationSessions(visitSessions, prisonerId, prison)
+    val doubleBookingOrReservationSessions = getDoubleBookingOrReservationSessions(visitSessions, sessionSlots, prisonerId, excludedApplicationReference, usernameToExcludeFromReservedApplications)
+    val sessionExcludeDates = sessionTemplates.flatMap { it.excludeDates }
+    visitSessions.forEach { session ->
+      if (hasNonAssociationConflict(nonAssociationConflictSessions, session)) { // removed &&  policyFilterNonAssociation) {
+        session.sessionConflicts.add(NON_ASSOCIATION)
+      }
+      if (hasDoubleBookingOrReservationSessions(doubleBookingOrReservationSessions, session)) { // removed && policyFilterDoubleBooking*/) {
+        session.sessionConflicts.add(DOUBLE_BOOKING_OR_RESERVATION)
+      }
+      if (isDateExcluded(prison.excludeDates, session)) {
+        // TODO - replace session.sessionConflicts.add(PRISON_DATE_BLOCKED)
+        session.sessionConflicts.add(PRISON_DATE_BLOCKED)
+      }
+      if (isSessionExcluded(sessionExcludeDates, session)) {
+        // TODO - replace session.sessionConflicts.add(SESSION_DATE_BLOCKED)
+        session.sessionConflicts.add(SESSION_DATE_BLOCKED)
+      }
+    }
+
+    return visitSessions
+  }
+
   private fun sessionsByUserClientFilter(userType: UserType): Predicate<SessionTemplate> = Predicate {
     it.clients.filter { userClient ->
       userClient.active
@@ -219,7 +250,7 @@ class SessionService(
     SessionRestriction.CLOSED -> (session.closedVisitCapacity > 0 && (session.closedVisitCapacity > (session.closedVisitBookedCount ?: 0)))
     SessionRestriction.OPEN -> (session.openVisitCapacity > 0 && (session.openVisitCapacity > (session.openVisitBookedCount ?: 0)))
   }
-
+/*
   private fun addConflicts(
     it: List<VisitSessionDto>,
     nonAssociationConflictSessions: Set<VisitSessionDto>,
@@ -231,7 +262,7 @@ class SessionService(
       // set conflict double booked flag
       if (hasDoubleBookingOrReservationSessions(doubleBookingOrReservationSessions, it)) it.sessionConflicts.add(DOUBLE_BOOKING_OR_RESERVATION)
     }
-  }
+  }*/
 
   private fun hasNonAssociationConflict(
     noAssociationConflictSessions: Set<VisitSessionDto>,
@@ -245,6 +276,16 @@ class SessionService(
     doubleBookingOrReservationSessions: List<VisitSessionDto>,
     it: VisitSessionDto,
   ): Boolean = doubleBookingOrReservationSessions.contains(it)
+
+  private fun isDateExcluded(
+    prisonExcludeDates: List<PrisonExcludeDate>,
+    visitSession: VisitSessionDto,
+  ): Boolean = prisonExcludeDates.any { it.excludeDate == visitSession.startTimestamp.toLocalDate() }
+
+  private fun isSessionExcluded(
+    sessionExcludeDates: List<SessionTemplateExcludeDate>,
+    visitSession: VisitSessionDto,
+  ): Boolean = sessionExcludeDates.any { it.sessionTemplate.reference == visitSession.sessionTemplateReference && it.excludeDate == visitSession.startTimestamp.toLocalDate() }
 
   private fun getDoubleBookingOrReservationSessions(
     visitSessions: List<VisitSessionDto>,
@@ -297,13 +338,13 @@ class SessionService(
     val firstBookableSessionDay =
       getFirstBookableSessionDay(requestedBookableStartDate, sessionTemplate.validFromDate, sessionTemplate.dayOfWeek, sessionTemplate.weeklyFrequency)
     val lastBookableSessionDay = getLastBookableSession(requestedBookableEndDate, sessionTemplate.validToDate)
-    val excludeDates = getExcludeDates(sessionTemplate)
+    // val excludeDates = getExcludeDates(sessionTemplate)
 
     if (firstBookableSessionDay <= lastBookableSessionDay) {
       return this.calculateDates(firstBookableSessionDay, lastBookableSessionDay, sessionTemplate)
-        .filter { date ->
+        /*.filter { date ->
           !excludeDates.contains(date)
-        }
+        }*/
         .map { date ->
           VisitSessionDto(
             sessionTemplateReference = sessionTemplate.reference,
