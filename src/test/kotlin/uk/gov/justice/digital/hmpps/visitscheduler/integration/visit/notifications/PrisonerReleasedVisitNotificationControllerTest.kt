@@ -223,6 +223,22 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
   fun `when prisoner has been released to hospital then no visits are flagged or saved and requested visits are not auto rejected`() {
     // Given
     val notificationDto = PrisonerReleasedNotificationDto(prisonerId, prisonCode, RELEASED_TO_HOSPITAL)
+    val visit1 = createApplicationAndVisit(
+      prisonerId = notificationDto.prisonerNumber,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate1,
+    )
+    eventAuditEntityHelper.create(visit1)
+
+    val visit2 = createApplicationAndVisit(
+      prisonerId = notificationDto.prisonerNumber,
+      slotDate = LocalDate.now().plusDays(3),
+      visitStatus = BOOKED,
+      visitSubStatus = VisitSubStatus.REQUESTED,
+      sessionTemplate = sessionTemplate1,
+    )
+    eventAuditEntityHelper.create(visit2)
 
     // When
     val responseSpec = callNotifyVSiPThatPrisonerHadBeenReleased(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
@@ -236,6 +252,22 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
   fun `when prisoner has been temporary released then no visits are flagged or saved and requested visits are not auto rejected`() {
     // Given
     val notificationDto = PrisonerReleasedNotificationDto(prisonerId, prisonCode, TEMPORARY_ABSENCE_RELEASE)
+    val visit1 = createApplicationAndVisit(
+      prisonerId = notificationDto.prisonerNumber,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate1,
+    )
+    eventAuditEntityHelper.create(visit1)
+
+    val visit2 = createApplicationAndVisit(
+      prisonerId = notificationDto.prisonerNumber,
+      slotDate = LocalDate.now().plusDays(3),
+      visitStatus = BOOKED,
+      visitSubStatus = VisitSubStatus.REQUESTED,
+      sessionTemplate = sessionTemplate1,
+    )
+    eventAuditEntityHelper.create(visit2)
 
     // When
     val responseSpec = callNotifyVSiPThatPrisonerHadBeenReleased(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
@@ -249,6 +281,22 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
   fun `when prisoner has been sent to cort then no visits are flagged or saved and requested visits are not auto rejected`() {
     // Given
     val notificationDto = PrisonerReleasedNotificationDto(prisonerId, prisonCode, SENT_TO_COURT)
+    val visit1 = createApplicationAndVisit(
+      prisonerId = notificationDto.prisonerNumber,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate1,
+    )
+    eventAuditEntityHelper.create(visit1)
+
+    val visit2 = createApplicationAndVisit(
+      prisonerId = notificationDto.prisonerNumber,
+      slotDate = LocalDate.now().plusDays(3),
+      visitStatus = BOOKED,
+      visitSubStatus = VisitSubStatus.REQUESTED,
+      sessionTemplate = sessionTemplate1,
+    )
+    eventAuditEntityHelper.create(visit2)
 
     // When
     val responseSpec = callNotifyVSiPThatPrisonerHadBeenReleased(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
@@ -262,6 +310,22 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
   fun `when prisoner has transferred then no visits are flagged or saved and requested visits are not auto rejected`() {
     // Given
     val notificationDto = PrisonerReleasedNotificationDto(prisonerId, prisonCode, TRANSFERRED)
+    val visit1 = createApplicationAndVisit(
+      prisonerId = notificationDto.prisonerNumber,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate1,
+    )
+    eventAuditEntityHelper.create(visit1)
+
+    val visit2 = createApplicationAndVisit(
+      prisonerId = notificationDto.prisonerNumber,
+      slotDate = LocalDate.now().plusDays(3),
+      visitStatus = BOOKED,
+      visitSubStatus = VisitSubStatus.REQUESTED,
+      sessionTemplate = sessionTemplate1,
+    )
+    eventAuditEntityHelper.create(visit2)
 
     // When
     val responseSpec = callNotifyVSiPThatPrisonerHadBeenReleased(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
@@ -275,6 +339,22 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
   fun `when prisoner has been released but we dont know why then no visits are flagged or saved and requested visits are not auto rejected`() {
     // Given
     val notificationDto = PrisonerReleasedNotificationDto(prisonerId, prisonCode, UNKNOWN)
+    val visit1 = createApplicationAndVisit(
+      prisonerId = notificationDto.prisonerNumber,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate1,
+    )
+    eventAuditEntityHelper.create(visit1)
+
+    val visit2 = createApplicationAndVisit(
+      prisonerId = notificationDto.prisonerNumber,
+      slotDate = LocalDate.now().plusDays(3),
+      visitStatus = BOOKED,
+      visitSubStatus = VisitSubStatus.REQUESTED,
+      sessionTemplate = sessionTemplate1,
+    )
+    eventAuditEntityHelper.create(visit2)
 
     // When
     val responseSpec = callNotifyVSiPThatPrisonerHadBeenReleased(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
