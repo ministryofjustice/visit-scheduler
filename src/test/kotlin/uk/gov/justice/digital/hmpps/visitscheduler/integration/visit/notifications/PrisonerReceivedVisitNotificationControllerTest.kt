@@ -268,6 +268,8 @@ class PrisonerReceivedVisitNotificationControllerTest : NotificationTestBase() {
   private fun assertNotHandled() {
     verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
+    verify(visitRepository, times(0)).getBookedVisitsExcludingRequestVisits(any(), any(), any(), any())
+    verify(visitRepository, times(0)).findAllVisitRequestsForPrisonerExcludingCurrentPrison(any(), any())
     assertThat(testEventAuditRepository.getAuditCount(PRISONER_RECEIVED_EVENT)).isEqualTo(0)
   }
 }
