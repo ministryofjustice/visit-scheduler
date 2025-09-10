@@ -376,10 +376,10 @@ class VisitService(
   ): List<VisitDto> = visitRepository.getFutureVisitsByVisitorId(visitorId, prisonerId, startDateTime, endDateTime).map { visitDtoBuilder.build(it) }
 
   @Transactional
-  fun getFutureBookedVisitsExcludingPrison(
+  fun getFutureBookedVisitsExcludingPrisonAndExcludingRequestVisits(
     prisonerNumber: String,
     excludedPrisonCode: String,
-  ): List<VisitDto> = this.visitRepository.getFutureBookedVisitsExcludingPrison(prisonerNumber, excludedPrisonCode).map { visitDtoBuilder.build(it) }
+  ): List<VisitDto> = this.visitRepository.getFutureBookedVisitsExcludingPrisonAndExcludingRequestVisits(prisonerNumber, excludedPrisonCode).map { visitDtoBuilder.build(it) }
 
   @Transactional
   fun findFutureVisitsBySessionPrisoner(prisonerNumber: String): List<VisitDto> = getFutureVisitsBy(prisonerNumber = prisonerNumber)

@@ -11,7 +11,7 @@ parameters:
 jobs:
   acceptance_tests_public_ui_main:
     docker:
-      - image: mcr.microsoft.com/playwright:v1.44.1-jammy
+      - image: mcr.microsoft.com/playwright:v1.55.0-jammy
     circleci_ip_ranges: true
     steps:
       - run:
@@ -44,7 +44,7 @@ jobs:
           path: /root/project/hmpps-book-a-prison-visit-ui-tests/test-results
   acceptance_tests_staff_playwright-e2e:
     docker:
-      - image: mcr.microsoft.com/playwright:v1.51.0-jammy
+      - image: mcr.microsoft.com/playwright:v1.55.0-jammy
     circleci_ip_ranges: true
     steps:
       - run:

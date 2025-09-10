@@ -25,9 +25,6 @@ class AutoRejectVisitRequestsTask(private val visitRequestsService: VisitRequest
   )
   fun autoRejectRequestVisits() {
     LOG.info("Starting auto reject request visits task")
-
-    val requestsRejectedCount = visitRequestsService.autoRejectRequestVisitsAtMinimumBookingWindow()
-
-    LOG.info("Finished auto reject request visits task, rejected $requestsRejectedCount requests")
+    visitRequestsService.autoRejectRequestVisitsAtMinimumBookingWindow()
   }
 }
