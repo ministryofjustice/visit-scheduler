@@ -26,7 +26,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.SESSION_VISITS_BLOCKED_FOR_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.VISITOR_RESTRICTION_UPSERTED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.VISITOR_UNAPPROVED_EVENT
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerReleaseReasonType.RELEASED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SupportedCourtVideoAppointmentCategoryCode
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.IGNORE_VISIT_NOTIFICATIONS
@@ -151,11 +150,11 @@ class VisitNotificationEventService(
   @Transactional
   fun handlePrisonerReleasedNotification(notificationDto: PrisonerReleasedNotificationDto) {
     LOG.info("PrisonerReleasedNotification notification received : {}", notificationDto)
-    if (RELEASED == notificationDto.reasonType) {
-      val affectedVisits = visitService.getFutureBookedVisitsExcludingRequestVisits(notificationDto.prisonerNumber, notificationDto.prisonCode)
-      val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, PRISONER_RELEASED_EVENT, null)
-      processVisitsWithNotifications(processVisitNotificationDto)
-    }
+
+    val affectedVisits = visitService.getFutureBookedVisitsExcludingRequestVisits(notificationDto.prisonerNumber, notificationDto.prisonCode)
+    val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, PRISONER_RELEASED_EVENT, null)
+
+    processVisitsWithNotifications(processVisitNotificationDto)
   }
 
   @Transactional
