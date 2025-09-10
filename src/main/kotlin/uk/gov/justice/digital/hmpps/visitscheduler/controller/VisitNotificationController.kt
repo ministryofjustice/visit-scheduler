@@ -175,7 +175,7 @@ class VisitNotificationController(
     dto: PrisonerReceivedNotificationDto,
   ): ResponseEntity<HttpStatus> {
     LOG.debug("Entered notifyVSiPThatPrisonerReceivedChanged {}", dto)
-    visitNotificationEventService.handlePrisonerReceivedNotification(dto)
+    proactiveBookingService.processPrisonerReceivedEvent(dto)
     return ResponseEntity(HttpStatus.OK)
   }
 

@@ -5,4 +5,5 @@ enum class AutoRejectionReason(
 ) {
   MINIMUM_BOOKING_WINDOW_REACHED("Auto rejected by minimum booking window system cron"),
   PRISONER_RELEASED("Auto rejected by prisoner released event"),
+  PRISONER_TRANSFERRED("Auto rejected by prisoner received event (reason prisoner transferred)"),
 }

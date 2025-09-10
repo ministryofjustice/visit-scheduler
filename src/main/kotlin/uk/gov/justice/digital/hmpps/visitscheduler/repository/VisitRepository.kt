@@ -275,11 +275,12 @@ interface VisitRepository :
       "LEFT JOIN session_slot sl ON v.session_slot_id = sl.id " +
       "WHERE v.prisoner_id = :prisonerId AND " +
       "v.visit_status = 'BOOKED' AND " +
+      "(v.visit_sub_status = 'AUTO_APPROVED' OR v.visit_sub_status = 'APPROVED') AND " +
       "p.code != :excludedPrisonCode AND " +
       "sl.slot_start >= NOW() ORDER BY v.id ",
     nativeQuery = true,
   )
-  fun getFutureBookedVisitsExcludingPrison(
+  fun getFutureBookedVisitsExcludingPrisonAndExcludingRequestVisits(
     @Param("prisonerId") prisonerId: String,
     @Param("excludedPrisonCode") excludedPrisonCode: String,
   ): List<Visit>
@@ -470,6 +471,21 @@ interface VisitRepository :
     nativeQuery = true,
   )
   fun findAllVisitRequestsForPrisoner(prisonerId: String): List<Visit>
+
+  @Transactional(readOnly = true)
+  @Query(
+    "SELECT v.* " +
+      "FROM visit v " +
+      "INNER JOIN prison p ON p.id = v.prison_id " +
+      "INNER JOIN session_slot sl ON sl.id = v.session_slot_id " +
+      "WHERE v.prisoner_id = :prisonerId " +
+      "AND v.visit_status = 'BOOKED' " +
+      "AND v.visit_sub_status = 'REQUESTED' " +
+      "AND p.code != :excludedPrisonCode " +
+      "AND sl.slot_start >= NOW() ",
+    nativeQuery = true,
+  )
+  fun findAllVisitRequestsForPrisonerExcludingCurrentPrison(prisonerId: String, excludedPrisonCode: String): List<Visit>
 
   @Transactional
   @Modifying
