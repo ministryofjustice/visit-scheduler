@@ -8,7 +8,9 @@ import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.visitscheduler.config.FlagVisitTaskConfiguration
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.NON_ASSOCIATION
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.PRISON_DATE_BLOCKED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.SESSION_DATE_BLOCKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonsService
@@ -132,8 +134,6 @@ class FlagVisitsTask(
 
   // filters out sessions that will not be returned to the front end
   private val sessionsWithVisitRenderConflicts: Predicate<VisitSessionDto> = Predicate { session: VisitSessionDto ->
-    (session.sessionConflicts.contains(SessionConflict.SESSION_DATE_BLOCKED)) ||
-      (session.sessionConflicts.contains(SessionConflict.PRISON_DATE_BLOCKED)) ||
-      (session.sessionConflicts.contains(SessionConflict.NON_ASSOCIATION))
+    session.sessionConflicts.toList().any{listOf(NON_ASSOCIATION, PRISON_DATE_BLOCKED, SESSION_DATE_BLOCKED).contains(it)}
   }
 }
