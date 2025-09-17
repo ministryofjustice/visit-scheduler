@@ -251,6 +251,7 @@ fun createUpdateSessionTemplateDto(
   includeCategoryGroupType: Boolean? = true,
   includeIncentiveGroupType: Boolean? = true,
   clients: List<UserClientDto>? = null,
+  visitOrderRestrictionType: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
 ): UpdateSessionTemplateDto = UpdateSessionTemplateDto(
   name = name + dayOfWeek,
   sessionDateRange = sessionDateRange,
@@ -265,6 +266,7 @@ fun createUpdateSessionTemplateDto(
   includeCategoryGroupType = includeCategoryGroupType,
   includeIncentiveGroupType = includeIncentiveGroupType,
   clients = clients,
+  visitOrderRestriction = visitOrderRestrictionType,
 )
 
 fun createUpdateSessionTemplateDto(
@@ -276,6 +278,7 @@ fun createUpdateSessionTemplateDto(
   categoryGroupReferences: List<String>? = null,
   includeIncentiveGroupType: Boolean? = null,
   incentiveLevelReferences: List<String>? = null,
+  visitOrderRestrictionType: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
 ): UpdateSessionTemplateDto = UpdateSessionTemplateDto(
   name = sessionTemplateDto.name,
   sessionDateRange = sessionTemplateDto.sessionDateRange,
@@ -289,6 +292,7 @@ fun createUpdateSessionTemplateDto(
   includeIncentiveGroupType = includeIncentiveGroupType ?: sessionTemplateDto.includeIncentiveGroupType,
   incentiveLevelGroupReferences = incentiveLevelReferences ?: sessionTemplateDto.prisonerIncentiveLevelGroups.stream().map { it.reference }.toList(),
   visitRoom = sessionTemplateDto.visitRoom,
+  visitOrderRestriction = visitOrderRestrictionType,
 )
 
 fun createCreateLocationGroupDto(

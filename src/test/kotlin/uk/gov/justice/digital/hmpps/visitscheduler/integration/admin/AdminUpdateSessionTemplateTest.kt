@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADMIN_SESSIO
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
@@ -117,6 +118,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
       incentiveLevelGroupReferences = mutableListOf(sessionIncentiveGroup.reference, sessionIncentiveGroup.reference),
       weeklyFrequency = sessionTemplateDefault.weeklyFrequency + 1,
       includeLocationGroupType = true,
+      visitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.NONE,
     )
 
     // When
@@ -145,6 +147,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     Assertions.assertThat(sessionTemplateDto.prisonerIncentiveLevelGroups[0].reference).isEqualTo(dto.incentiveLevelGroupReferences!![0])
     Assertions.assertThat(sessionTemplateDto.active).isEqualTo(true)
     Assertions.assertThat(sessionTemplateDto.includeLocationGroupType).isEqualTo(true)
+    Assertions.assertThat(sessionTemplateDto.visitOrderRestriction).isEqualTo(SessionTemplateVisitOrderRestrictionType.NONE)
   }
 
   @Test

@@ -659,6 +659,7 @@ class SessionTemplateEntityHelper(
       includeIncentiveGroupType = includeIncentiveGroupType,
       excludeDates = excludeDates,
       clients = clients,
+      visitOrderRestriction = visitOrderRestrictionType,
     )
   }
 

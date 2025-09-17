@@ -247,6 +247,10 @@ class SessionTemplateService(
       includeIncentiveGroupType?.let {
         sessionTemplateRepository.updateIncludeIncentiveGroupType(reference, includeIncentiveGroupType = it)
       }
+
+      visitOrderRestriction?.let {
+        sessionTemplateRepository.updateVisitOrderRestriction(reference, visitOrderRestriction = it)
+      }
     }
 
     val updatedSessionTemplateEntity = getSessionTemplate(reference)

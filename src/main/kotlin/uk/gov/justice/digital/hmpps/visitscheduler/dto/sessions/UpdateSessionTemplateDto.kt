@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.Session
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.SessionDateRangeValidation
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.SessionTimeSlotValidation
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType
 
 data class UpdateSessionTemplateDto(
   @Schema(description = "Name for Session template", example = "Monday Xmas", required = true)
@@ -57,4 +58,7 @@ data class UpdateSessionTemplateDto(
 
   @Schema(description = "Determines behaviour of incentive groups. True equates to these incentive groups being included, false equates to them being excluded.", required = false)
   val includeIncentiveGroupType: Boolean? = null,
+
+  @Schema(description = "The type of visit order restriction, defaults to VO_PVO (Either allowed)", example = "PVO", required = false)
+  val visitOrderRestriction: SessionTemplateVisitOrderRestrictionType? = null,
 )
