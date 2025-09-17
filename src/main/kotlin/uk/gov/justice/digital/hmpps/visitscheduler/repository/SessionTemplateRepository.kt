@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionDateRangeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTimeSlotDto
@@ -197,6 +198,10 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
   @Modifying(clearAutomatically = true)
   @Query("Update SessionTemplate s set s.includeIncentiveGroupType = :includeIncentiveGroupType WHERE s.reference = :reference")
   fun updateIncludeIncentiveGroupType(reference: String, includeIncentiveGroupType: Boolean): Int
+
+  @Modifying(clearAutomatically = true)
+  @Query("Update SessionTemplate s set s.visitOrderRestriction = :visitOrderRestriction WHERE s.reference = :reference")
+  fun updateVisitOrderRestriction(reference: String, visitOrderRestriction: SessionTemplateVisitOrderRestrictionType): Int
 
   @Query(
     "SELECT new uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTimeSlotDto(st.startTime,st.endTime)  FROM SessionTemplate st WHERE st.reference = :reference",

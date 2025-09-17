@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.helper
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
@@ -64,6 +65,7 @@ fun sessionTemplate(
   includeIncentiveGroupType: Boolean = true,
   prison: Prison,
   userTypes: List<UserType> = listOf(UserType.STAFF, UserType.PUBLIC),
+  visitOrderRestrictionType: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
 ): SessionTemplate {
   var sessionTemplate = SessionTemplate(
     name = name + dayOfWeek,
@@ -85,6 +87,7 @@ fun sessionTemplate(
     includeLocationGroupType = includeLocationGroupType,
     includeCategoryGroupType = includeCategoryGroupType,
     includeIncentiveGroupType = includeIncentiveGroupType,
+    visitOrderRestriction = visitOrderRestrictionType,
   ).also { it.reference = UUID.randomUUID().toString() }
 
   sessionTemplate = addUserClients(sessionTemplate, userTypes)
@@ -117,6 +120,7 @@ fun sessionTemplate(
   includeCategoryGroupType: Boolean = true,
   includeIncentiveGroupType: Boolean = true,
   userTypes: List<UserType> = listOf(UserType.STAFF, UserType.PUBLIC),
+  visitOrderRestrictionType: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
 ): SessionTemplate {
   val prison = Prison(code = prisonCode, active = isActive, policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears)
 
@@ -140,6 +144,7 @@ fun sessionTemplate(
     includeLocationGroupType = includeLocationGroupType,
     includeCategoryGroupType = includeCategoryGroupType,
     includeIncentiveGroupType = includeIncentiveGroupType,
+    visitOrderRestriction = visitOrderRestrictionType,
   ).also { it.reference = UUID.randomUUID().toString() }
   sessionTemplate = addUserClients(sessionTemplate, userTypes)
 
@@ -182,6 +187,7 @@ fun createCreateSessionTemplateDto(
   includeCategoryGroupType: Boolean = true,
   includeIncentiveGroupType: Boolean = true,
   userClients: List<UserClientDto> = listOf(),
+  visitOrderRestrictionType: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
 ): CreateSessionTemplateDto = CreateSessionTemplateDto(
   name = name + dayOfWeek,
   prisonCode = prisonCode,
@@ -198,6 +204,7 @@ fun createCreateSessionTemplateDto(
   includeCategoryGroupType = includeCategoryGroupType,
   includeIncentiveGroupType = includeIncentiveGroupType,
   clients = userClients,
+  visitOrderRestriction = visitOrderRestrictionType,
 )
 
 fun createCreateSessionTemplateDto(
@@ -210,6 +217,7 @@ fun createCreateSessionTemplateDto(
   includeLocationGroupType: Boolean = true,
   includeCategoryGroupType: Boolean = true,
   includeIncentiveGroupType: Boolean = true,
+  visitOrderRestrictionType: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
 ): CreateSessionTemplateDto = CreateSessionTemplateDto(
   name = name + sessionTemplateDto.dayOfWeek,
   prisonCode = sessionTemplateDto.prisonCode,
@@ -225,6 +233,7 @@ fun createCreateSessionTemplateDto(
   includeLocationGroupType = includeLocationGroupType,
   includeCategoryGroupType = includeCategoryGroupType,
   includeIncentiveGroupType = includeIncentiveGroupType,
+  visitOrderRestriction = visitOrderRestrictionType,
 )
 
 fun createUpdateSessionTemplateDto(
@@ -242,6 +251,7 @@ fun createUpdateSessionTemplateDto(
   includeCategoryGroupType: Boolean? = true,
   includeIncentiveGroupType: Boolean? = true,
   clients: List<UserClientDto>? = null,
+  visitOrderRestrictionType: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
 ): UpdateSessionTemplateDto = UpdateSessionTemplateDto(
   name = name + dayOfWeek,
   sessionDateRange = sessionDateRange,
@@ -256,6 +266,7 @@ fun createUpdateSessionTemplateDto(
   includeCategoryGroupType = includeCategoryGroupType,
   includeIncentiveGroupType = includeIncentiveGroupType,
   clients = clients,
+  visitOrderRestriction = visitOrderRestrictionType,
 )
 
 fun createUpdateSessionTemplateDto(
@@ -267,6 +278,7 @@ fun createUpdateSessionTemplateDto(
   categoryGroupReferences: List<String>? = null,
   includeIncentiveGroupType: Boolean? = null,
   incentiveLevelReferences: List<String>? = null,
+  visitOrderRestrictionType: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
 ): UpdateSessionTemplateDto = UpdateSessionTemplateDto(
   name = sessionTemplateDto.name,
   sessionDateRange = sessionTemplateDto.sessionDateRange,
@@ -280,6 +292,7 @@ fun createUpdateSessionTemplateDto(
   includeIncentiveGroupType = includeIncentiveGroupType ?: sessionTemplateDto.includeIncentiveGroupType,
   incentiveLevelGroupReferences = incentiveLevelReferences ?: sessionTemplateDto.prisonerIncentiveLevelGroups.stream().map { it.reference }.toList(),
   visitRoom = sessionTemplateDto.visitRoom,
+  visitOrderRestriction = visitOrderRestrictionType,
 )
 
 fun createCreateLocationGroupDto(

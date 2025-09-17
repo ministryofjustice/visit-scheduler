@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADMIN_SESSIO
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
@@ -55,6 +56,7 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
       includeLocationGroupType = true,
       includeCategoryGroupType = true,
       includeIncentiveGroupType = false,
+      visitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.NONE,
     )
 
     // When
@@ -88,6 +90,7 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
     Assertions.assertThat(sessionTemplateDto.includeCategoryGroupType).isTrue
     Assertions.assertThat(sessionTemplateDto.includeIncentiveGroupType).isFalse
     Assertions.assertThat(sessionTemplateDto.clients).isEqualTo(listOf(staffUserClient, publicUserClient))
+    Assertions.assertThat(sessionTemplateDto.visitOrderRestriction).isEqualTo(SessionTemplateVisitOrderRestrictionType.NONE)
   }
 
   @Test
@@ -125,6 +128,7 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
     Assertions.assertThat(sessionTemplateDto.clients.size).isEqualTo(2)
     Assertions.assertThat(sessionTemplateDto.clients[0]).isEqualTo(UserClientDto(STAFF, false))
     Assertions.assertThat(sessionTemplateDto.clients[1]).isEqualTo(UserClientDto(PUBLIC, true))
+    Assertions.assertThat(sessionTemplateDto.visitOrderRestriction).isEqualTo(SessionTemplateVisitOrderRestrictionType.VO_PVO)
   }
 
   @Test
@@ -158,6 +162,7 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
     Assertions.assertThat(sessionTemplateDto.prisonerIncentiveLevelGroups).isEmpty()
     Assertions.assertThat(sessionTemplateDto.active).isFalse
     Assertions.assertThat(sessionTemplateDto.clients).isEmpty()
+    Assertions.assertThat(sessionTemplateDto.visitOrderRestriction).isEqualTo(SessionTemplateVisitOrderRestrictionType.VO_PVO)
   }
 
   @Test
@@ -194,6 +199,7 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
     Assertions.assertThat(sessionTemplateDto.includeLocationGroupType).isEqualTo(dto.includeLocationGroupType)
     Assertions.assertThat(sessionTemplateDto.includeCategoryGroupType).isFalse
     Assertions.assertThat(sessionTemplateDto.includeIncentiveGroupType).isTrue
+    Assertions.assertThat(sessionTemplateDto.visitOrderRestriction).isEqualTo(SessionTemplateVisitOrderRestrictionType.VO_PVO)
   }
 
   @Test

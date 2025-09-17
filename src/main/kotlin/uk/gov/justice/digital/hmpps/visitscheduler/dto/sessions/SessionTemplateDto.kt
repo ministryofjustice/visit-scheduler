@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.SessionCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.SessionIncentiveLevelGroupDto
@@ -53,6 +54,8 @@ data class SessionTemplateDto(
   val includeCategoryGroupType: Boolean,
   @Schema(description = "Determines behaviour of incentive groups. True equates to these incentive groups being included, false equates to them being excluded.", required = true)
   val includeIncentiveGroupType: Boolean,
+  @Schema(description = "The type of visit order restriction", example = "PVO", required = true)
+  val visitOrderRestriction: SessionTemplateVisitOrderRestrictionType,
 ) {
   constructor(sessionTemplateEntity: SessionTemplate) : this(
     reference = sessionTemplateEntity.reference,
@@ -73,5 +76,6 @@ data class SessionTemplateDto(
     includeCategoryGroupType = sessionTemplateEntity.includeCategoryGroupType,
     includeIncentiveGroupType = sessionTemplateEntity.includeIncentiveGroupType,
     clients = sessionTemplateEntity.clients.map { UserClientDto(it.userType, it.active) },
+    visitOrderRestriction = sessionTemplateEntity.visitOrderRestriction,
   )
 }
