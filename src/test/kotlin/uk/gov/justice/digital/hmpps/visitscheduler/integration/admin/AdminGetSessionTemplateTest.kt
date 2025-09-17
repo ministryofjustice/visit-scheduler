@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryTyp
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType.A_HIGH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType.A_PROVISIONAL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType.A_STANDARD
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -198,5 +199,6 @@ class AdminGetSessionTemplateTest(
     Assertions.assertThat(sessionTemplateDto.visitRoom).isEqualTo(sessionTemplate.visitRoom)
     Assertions.assertThat(sessionTemplateDto.sessionCapacity.closed).isEqualTo(sessionTemplate.closedCapacity)
     Assertions.assertThat(sessionTemplateDto.sessionCapacity.open).isEqualTo(sessionTemplate.openCapacity)
+    Assertions.assertThat(sessionTemplateDto.visitOrderRestriction).isEqualTo(SessionTemplateVisitOrderRestrictionType.VO_PVO)
   }
 }

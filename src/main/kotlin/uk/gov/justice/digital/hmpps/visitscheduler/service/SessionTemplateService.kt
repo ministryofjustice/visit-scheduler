@@ -171,6 +171,7 @@ class SessionTemplateService(
       includeLocationGroupType = createSessionTemplateDto.includeLocationGroupType,
       includeCategoryGroupType = createSessionTemplateDto.includeCategoryGroupType,
       includeIncentiveGroupType = createSessionTemplateDto.includeIncentiveGroupType,
+      visitOrderRestriction = createSessionTemplateDto.visitOrderRestriction,
     )
 
     createSessionTemplateDto.categoryGroupReferences?.let {
