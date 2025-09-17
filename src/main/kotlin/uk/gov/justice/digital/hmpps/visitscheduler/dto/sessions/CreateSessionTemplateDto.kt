@@ -73,6 +73,6 @@ data class CreateSessionTemplateDto(
   @Schema(description = "Determines behaviour of incentive groups. True equates to these incentive groups being included, false equates to them being excluded.", required = true)
   val includeIncentiveGroupType: Boolean,
 
-  @Schema(description = "The type of visit order restriction, defaults to VO_PVO (Either allowed)", example = "PVO", required = false)
+  @Schema(description = "The type of visit order restriction, defaults to VO_PVO (Either allowed)", example = "PVO", implementation = SessionTemplateVisitOrderRestrictionType::class, required = false)
   val visitOrderRestriction: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
 )
