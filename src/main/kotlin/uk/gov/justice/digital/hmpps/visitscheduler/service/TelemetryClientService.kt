@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestVisitorDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ExcludeDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
@@ -87,7 +88,7 @@ class TelemetryClientService(
 
     trackEvent(
       eventType,
-      createBookedVisitTrackData(null, bookedVisitDto, eventAuditDto, false, bookingRequestDto?.visitorAges),
+      createBookedVisitTrackData(null, bookedVisitDto, eventAuditDto, false, bookingRequestDto?.visitorDetails),
     )
   }
 
@@ -304,9 +305,9 @@ class TelemetryClientService(
     visitDto: VisitDto,
     eventAudit: EventAuditDto,
     isUpdate: Boolean = false,
-    visitorAges: Map<Long, Int?>? = null,
+    visitorDetails: Set<BookingRequestVisitorDetailsDto>? = null,
   ): MutableMap<String, String> {
-    val data = createDefaultVisitData(visitDto, visitorAges)
+    val data = createDefaultVisitData(visitDto, visitorDetails)
     data["isUpdated"] = isUpdate.toString()
     visitDto.visitorSupport?.let {
       data.put("supportRequired", it.description)
@@ -395,7 +396,7 @@ class TelemetryClientService(
 
   private fun createDefaultVisitData(
     visitDto: VisitDto,
-    visitorAges: Map<Long, Int?>? = null,
+    visitorDetails: Set<BookingRequestVisitorDetailsDto>? = null,
   ): MutableMap<String, String> = mutableMapOf(
     "reference" to visitDto.reference,
     "applicationReference" to (visitDto.applicationReference ?: ""),
@@ -411,7 +412,7 @@ class TelemetryClientService(
     "hasPhoneNumber" to (visitDto.visitContact.telephone != null).toString(),
     "hasEmail" to (visitDto.visitContact.email != null).toString(),
     "totalVisitors" to visitDto.visitors.size.toString(),
-    "visitors" to objectMapper.writeValueAsString(createVisitorData(visitDto.visitors, visitorAges)),
+    "visitors" to objectMapper.writeValueAsString(createVisitorData(visitDto.visitors, visitorDetails)),
   )
 
   private fun createUnFlagData(
@@ -499,8 +500,13 @@ class TelemetryClientService(
 
   private fun createVisitorData(
     visitors: List<VisitorDto>,
-    visitorAges: Map<Long, Int?>? = null,
-  ): List<VisitorDetails> = visitors.map { VisitorDetails(it.nomisPersonId.toString(), visitorAges?.get(it.nomisPersonId)) }
+    bookingRequestVisitorDetails: Set<BookingRequestVisitorDetailsDto>? = null,
+  ): List<VisitorDetails> = visitors.map { visitor ->
+    VisitorDetails(
+      visitor.nomisPersonId.toString(),
+      bookingRequestVisitorDetails?.firstOrNull { it.visitorId == visitor.nomisPersonId }?.visitorAge,
+    )
+  }
 
   data class VisitorDetails(
     val visitorId: String,

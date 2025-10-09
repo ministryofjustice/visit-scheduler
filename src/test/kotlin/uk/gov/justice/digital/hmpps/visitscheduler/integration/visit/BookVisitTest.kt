@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestVisitorDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
@@ -69,7 +70,7 @@ class BookVisitTest : IntegrationTestBase() {
 
   private lateinit var reservedPublicApplication: Application
 
-  private lateinit var visitorAges: Map<Long, Int?>
+  private lateinit var visitorDetails: MutableSet<BookingRequestVisitorDetailsDto>
 
   @BeforeEach
   internal fun setUp() {
@@ -91,7 +92,10 @@ class BookVisitTest : IntegrationTestBase() {
     applicationEntityHelper.createSupport(application = reservedPublicApplication, description = "Some Text")
     reservedPublicApplication = applicationEntityHelper.save(reservedPublicApplication)
 
-    visitorAges = mapOf(321L to 21, 322L to 25, 323L to null)
+    visitorDetails = mutableSetOf()
+    visitorDetails.add(BookingRequestVisitorDetailsDto(321L, 21))
+    visitorDetails.add(BookingRequestVisitorDetailsDto(322L, 25))
+    visitorDetails.add(BookingRequestVisitorDetailsDto(323L, null))
   }
 
   @Test
@@ -109,7 +113,7 @@ class BookVisitTest : IntegrationTestBase() {
       roleVisitSchedulerHttpHeaders,
       applicationReference,
       userType = PUBLIC,
-      bookingRequestDto = BookingRequestDto("booking_guy", ApplicationMethodType.PHONE, false, PUBLIC, true, visitorAges = visitorAges),
+      bookingRequestDto = BookingRequestDto("booking_guy", ApplicationMethodType.PHONE, false, PUBLIC, true, visitorDetails = visitorDetails),
     )
 
     // Then
@@ -134,7 +138,7 @@ class BookVisitTest : IntegrationTestBase() {
     val applicationReference = reservedStaffApplication.reference
 
     // When
-    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference, visitorAges = visitorAges)
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference, visitorDetails = visitorDetails)
 
     // Then
     responseSpec.expectStatus().isOk
@@ -163,7 +167,7 @@ class BookVisitTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
 
     // When
-    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference, userType = PUBLIC, visitorAges = visitorAges)
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference, userType = PUBLIC, visitorDetails = visitorDetails)
 
     // Then
     responseSpec.expectStatus().isOk
@@ -196,7 +200,7 @@ class BookVisitTest : IntegrationTestBase() {
     testApplicationRepository.updateTimestamp(LocalDateTime.now().minusDays(1), applicationReference)
 
     // When
-    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference, visitorAges = visitorAges)
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference, visitorDetails = visitorDetails)
 
     // Then
     responseSpec.expectStatus().isOk
@@ -231,7 +235,7 @@ class BookVisitTest : IntegrationTestBase() {
     testApplicationRepository.updateTimestamp(LocalDateTime.now().minusDays(1), applicationReference)
 
     // When
-    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference, allowOverBooking = true, visitorAges = visitorAges)
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference, allowOverBooking = true, visitorDetails = visitorDetails)
 
     // Then
     responseSpec.expectStatus().isOk
@@ -243,8 +247,8 @@ class BookVisitTest : IntegrationTestBase() {
     val applicationReference = reservedStaffApplication.reference
 
     // When
-    val responseSpec1 = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference, visitorAges = visitorAges)
-    val responseSpec2 = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference, visitorAges = visitorAges)
+    val responseSpec1 = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference, visitorDetails = visitorDetails)
+    val responseSpec2 = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference, visitorDetails = visitorDetails)
 
     // Then
     val visit1 = createVisitDtoFromResponse(responseSpec1)
@@ -266,7 +270,7 @@ class BookVisitTest : IntegrationTestBase() {
     val applicationReference = reservedStaffApplication.reference
 
     // When
-    val responseSpec = callVisitBook(webTestClient, authHttpHeaders, applicationReference, visitorAges = visitorAges)
+    val responseSpec = callVisitBook(webTestClient, authHttpHeaders, applicationReference, visitorDetails = visitorDetails)
 
     // Then
     responseSpec.expectStatus().isForbidden
@@ -307,7 +311,7 @@ class BookVisitTest : IntegrationTestBase() {
     applicationWithContact = applicationEntityHelper.save(applicationWithContact)
 
     // When
-    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationWithContact.reference, visitorAges = visitorAges)
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationWithContact.reference, visitorDetails = visitorDetails)
 
     // Then
     val visitDto = createVisitDtoFromResponse(responseSpec)
@@ -341,7 +345,7 @@ class BookVisitTest : IntegrationTestBase() {
     applicationEntityHelper.save(applicationWithNoPhoneNumberNoEmail)
 
     // When
-    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationWithNoPhoneNumberNoEmail.reference, visitorAges = visitorAges)
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationWithNoPhoneNumberNoEmail.reference, visitorDetails = visitorDetails)
 
     // Then
     val visitDto = createVisitDtoFromResponse(responseSpec)
@@ -439,8 +443,12 @@ class BookVisitTest : IntegrationTestBase() {
     val applicationReference = reservedStaffApplication.reference
 
     // When visitor sent for some visitors
-    val visitorAges = mapOf(321L to 33, 322L to 35, 323L to null, 324L to 44)
-    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference, visitorAges = visitorAges)
+    val visitorDetails = mutableSetOf<BookingRequestVisitorDetailsDto>()
+    visitorDetails.add(BookingRequestVisitorDetailsDto(321L, 33))
+    visitorDetails.add(BookingRequestVisitorDetailsDto(322L, 35))
+    visitorDetails.add(BookingRequestVisitorDetailsDto(323L, null))
+
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference, visitorDetails = visitorDetails)
 
     // Then
     responseSpec.expectStatus().isOk
@@ -504,7 +512,7 @@ class BookVisitTest : IntegrationTestBase() {
         assertThat(it["hasEmail"]).isEqualTo((visit.visitContact.email != null).toString())
         assertThat(it["supportRequired"]).isEqualTo(visit.visitorSupport?.description)
         assertThat(it["totalVisitors"]).isEqualTo(visit.visitors.size.toString())
-        val visitors = visit.visitors.map { visitor -> TelemetryClientService.VisitorDetails(visitor.nomisPersonId.toString(), visitorAges.get(visitor.nomisPersonId)) }
+        val visitors = visit.visitors.map { visitor -> TelemetryClientService.VisitorDetails(visitor.nomisPersonId.toString(), visitorDetails.firstOrNull { visitorDetails -> visitorDetails.visitorId == visitor.nomisPersonId }?.visitorAge) }
         assertThat(it["visitors"]).isEqualTo(objectMapper.writeValueAsString(visitors))
         eventAudit.actionedBy.userName?.let { value ->
           assertThat(it["actionedBy"]).isEqualTo(value)

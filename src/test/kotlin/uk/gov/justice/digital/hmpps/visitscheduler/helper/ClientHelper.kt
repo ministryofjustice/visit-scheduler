@@ -64,6 +64,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMP
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.migration.MIGRATE_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApproveRejectionVisitRequestBodyDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestVisitorDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ExcludeDateDto
@@ -175,8 +176,8 @@ fun callVisitBook(
   applicationMethodType: ApplicationMethodType = PHONE,
   allowOverBooking: Boolean = false,
   userType: UserType = UserType.STAFF,
-  visitorAges: Map<Long, Int?>? = null,
-  bookingRequestDto: BookingRequestDto = BookingRequestDto("booking_guy", applicationMethodType, allowOverBooking, userType, visitorAges = visitorAges),
+  visitorDetails: Set<BookingRequestVisitorDetailsDto>? = null,
+  bookingRequestDto: BookingRequestDto = BookingRequestDto("booking_guy", applicationMethodType, allowOverBooking, userType, visitorDetails = visitorDetails),
 ): ResponseSpec = callPut(
   bodyValue = bookingRequestDto,
   webTestClient,
