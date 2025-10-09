@@ -44,6 +44,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestApplicationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryClientService
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -68,6 +69,8 @@ class BookVisitTest : IntegrationTestBase() {
 
   private lateinit var reservedPublicApplication: Application
 
+  private lateinit var visitorAges: Map<Long, Int?>
+
   @BeforeEach
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
@@ -75,14 +78,20 @@ class BookVisitTest : IntegrationTestBase() {
     reservedStaffApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS)
     applicationEntityHelper.createContact(application = reservedStaffApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = reservedStaffApplication, nomisPersonId = 321L, visitContact = true)
+    applicationEntityHelper.createVisitor(application = reservedStaffApplication, nomisPersonId = 322L, visitContact = false)
+    applicationEntityHelper.createVisitor(application = reservedStaffApplication, nomisPersonId = 323L, visitContact = false)
     applicationEntityHelper.createSupport(application = reservedStaffApplication, description = "Some Text")
     reservedStaffApplication = applicationEntityHelper.save(reservedStaffApplication)
 
     reservedPublicApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS, userType = PUBLIC)
     applicationEntityHelper.createContact(application = reservedPublicApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = reservedPublicApplication, nomisPersonId = 321L, visitContact = true)
+    applicationEntityHelper.createVisitor(application = reservedPublicApplication, nomisPersonId = 322L, visitContact = false)
+    applicationEntityHelper.createVisitor(application = reservedPublicApplication, nomisPersonId = 323L, visitContact = false)
     applicationEntityHelper.createSupport(application = reservedPublicApplication, description = "Some Text")
     reservedPublicApplication = applicationEntityHelper.save(reservedPublicApplication)
+
+    visitorAges = mapOf(321L to 21, 322L to 25, 323L to null)
   }
 
   @Test
@@ -100,7 +109,7 @@ class BookVisitTest : IntegrationTestBase() {
       roleVisitSchedulerHttpHeaders,
       applicationReference,
       userType = PUBLIC,
-      bookingRequestDto = BookingRequestDto("booking_guy", ApplicationMethodType.PHONE, false, PUBLIC, true),
+      bookingRequestDto = BookingRequestDto("booking_guy", ApplicationMethodType.PHONE, false, PUBLIC, true, visitorAges = visitorAges),
     )
 
     // Then
@@ -125,7 +134,7 @@ class BookVisitTest : IntegrationTestBase() {
     val applicationReference = reservedStaffApplication.reference
 
     // When
-    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference, visitorAges = visitorAges)
 
     // Then
     responseSpec.expectStatus().isOk
@@ -154,7 +163,7 @@ class BookVisitTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
 
     // When
-    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference, userType = PUBLIC)
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference, userType = PUBLIC, visitorAges = visitorAges)
 
     // Then
     responseSpec.expectStatus().isOk
@@ -187,7 +196,7 @@ class BookVisitTest : IntegrationTestBase() {
     testApplicationRepository.updateTimestamp(LocalDateTime.now().minusDays(1), applicationReference)
 
     // When
-    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference, visitorAges = visitorAges)
 
     // Then
     responseSpec.expectStatus().isOk
@@ -222,7 +231,7 @@ class BookVisitTest : IntegrationTestBase() {
     testApplicationRepository.updateTimestamp(LocalDateTime.now().minusDays(1), applicationReference)
 
     // When
-    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference, allowOverBooking = true)
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference, allowOverBooking = true, visitorAges = visitorAges)
 
     // Then
     responseSpec.expectStatus().isOk
@@ -234,8 +243,8 @@ class BookVisitTest : IntegrationTestBase() {
     val applicationReference = reservedStaffApplication.reference
 
     // When
-    val responseSpec1 = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
-    val responseSpec2 = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
+    val responseSpec1 = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference, visitorAges = visitorAges)
+    val responseSpec2 = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference, visitorAges = visitorAges)
 
     // Then
     val visit1 = createVisitDtoFromResponse(responseSpec1)
@@ -257,7 +266,7 @@ class BookVisitTest : IntegrationTestBase() {
     val applicationReference = reservedStaffApplication.reference
 
     // When
-    val responseSpec = callVisitBook(webTestClient, authHttpHeaders, applicationReference)
+    val responseSpec = callVisitBook(webTestClient, authHttpHeaders, applicationReference, visitorAges = visitorAges)
 
     // Then
     responseSpec.expectStatus().isForbidden
@@ -298,7 +307,7 @@ class BookVisitTest : IntegrationTestBase() {
     applicationWithContact = applicationEntityHelper.save(applicationWithContact)
 
     // When
-    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationWithContact.reference)
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationWithContact.reference, visitorAges = visitorAges)
 
     // Then
     val visitDto = createVisitDtoFromResponse(responseSpec)
@@ -332,7 +341,7 @@ class BookVisitTest : IntegrationTestBase() {
     applicationEntityHelper.save(applicationWithNoPhoneNumberNoEmail)
 
     // When
-    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationWithNoPhoneNumberNoEmail.reference)
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationWithNoPhoneNumberNoEmail.reference, visitorAges = visitorAges)
 
     // Then
     val visitDto = createVisitDtoFromResponse(responseSpec)
@@ -404,6 +413,47 @@ class BookVisitTest : IntegrationTestBase() {
     assertThat(eventAudit.applicationReference).isEqualTo(visitEntity.getLastApplication()!!.reference)
   }
 
+  @Test
+  fun `when visit booked without visitor ages passed only visitor ids are sent to app insights`() {
+    // Given
+    val applicationReference = reservedStaffApplication.reference
+
+    // When visitor ages not sent
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
+
+    // Then
+    responseSpec.expectStatus().isOk
+    // Then
+    verify(telemetryClient).trackEvent(
+      eq("visit-booked"),
+      org.mockito.kotlin.check {
+        assertThat(it["visitors"]).isEqualTo("[{\"visitorId\":\"321\"},{\"visitorId\":\"322\"},{\"visitorId\":\"323\"}]")
+      },
+      isNull(),
+    )
+  }
+
+  @Test
+  fun `when visit booked without visitor ages passed for some visitors both ids and ages are sent to app insights`() {
+    // Given
+    val applicationReference = reservedStaffApplication.reference
+
+    // When visitor sent for some visitors
+    val visitorAges = mapOf(321L to 33, 322L to 35, 323L to null, 324L to 44)
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference, visitorAges = visitorAges)
+
+    // Then
+    responseSpec.expectStatus().isOk
+    // Then
+    verify(telemetryClient).trackEvent(
+      eq("visit-booked"),
+      org.mockito.kotlin.check {
+        assertThat(it["visitors"]).isEqualTo("[{\"visitorId\":\"321\",\"age\":33},{\"visitorId\":\"322\",\"age\":35},{\"visitorId\":\"323\"}]")
+      },
+      isNull(),
+    )
+  }
+
   private fun assertVisitMatchesApplication(visitDto: VisitDto, application: Application) {
     assertThat(visitDto.reference).isNotEmpty()
     assertThat(visitDto.applicationReference).isEqualTo(application.reference)
@@ -454,8 +504,8 @@ class BookVisitTest : IntegrationTestBase() {
         assertThat(it["hasEmail"]).isEqualTo((visit.visitContact.email != null).toString())
         assertThat(it["supportRequired"]).isEqualTo(visit.visitorSupport?.description)
         assertThat(it["totalVisitors"]).isEqualTo(visit.visitors.size.toString())
-        val commaDelimitedVisitorIds = visit.visitors.map { it.nomisPersonId }.joinToString(",")
-        assertThat(it["visitors"]).isEqualTo(commaDelimitedVisitorIds)
+        val visitors = visit.visitors.map { visitor -> TelemetryClientService.VisitorDetails(visitor.nomisPersonId.toString(), visitorAges.get(visitor.nomisPersonId)) }
+        assertThat(it["visitors"]).isEqualTo(objectMapper.writeValueAsString(visitors))
         eventAudit.actionedBy.userName?.let { value ->
           assertThat(it["actionedBy"]).isEqualTo(value)
         }

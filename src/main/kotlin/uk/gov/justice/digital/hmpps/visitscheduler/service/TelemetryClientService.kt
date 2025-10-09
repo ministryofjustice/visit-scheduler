@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.microsoft.applicationinsights.TelemetryClient
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -7,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ExcludeDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
@@ -43,7 +45,9 @@ import java.time.temporal.ChronoUnit
 @Service
 class TelemetryClientService(
   private val telemetryClient: TelemetryClient,
-  @Value("\${feature.request-booking-enabled:false}") private val requestBookingFeatureEnabled: Boolean,
+  private val objectMapper: ObjectMapper,
+  @Value("\${feature.request-booking-enabled:false}")
+  private val requestBookingFeatureEnabled: Boolean,
 ) {
 
   companion object {
@@ -68,8 +72,9 @@ class TelemetryClientService(
   fun trackBookingEvent(
     bookedVisitDto: VisitDto,
     eventAuditDto: EventAuditDto,
-    isRequestBooking: Boolean,
+    bookingRequestDto: BookingRequestDto?,
   ) {
+    val isRequestBooking = (bookingRequestDto?.isRequestBooking == true)
     val eventType = if (requestBookingFeatureEnabled) {
       if (isRequestBooking) {
         VISIT_REQUESTED_EVENT
@@ -82,7 +87,7 @@ class TelemetryClientService(
 
     trackEvent(
       eventType,
-      createBookedVisitTrackData(null, bookedVisitDto, eventAuditDto, false),
+      createBookedVisitTrackData(null, bookedVisitDto, eventAuditDto, false, bookingRequestDto?.visitorAges),
     )
   }
 
@@ -299,8 +304,9 @@ class TelemetryClientService(
     visitDto: VisitDto,
     eventAudit: EventAuditDto,
     isUpdate: Boolean = false,
+    visitorAges: Map<Long, Int?>? = null,
   ): MutableMap<String, String> {
-    val data = createDefaultVisitData(visitDto)
+    val data = createDefaultVisitData(visitDto, visitorAges)
     data["isUpdated"] = isUpdate.toString()
     visitDto.visitorSupport?.let {
       data.put("supportRequired", it.description)
@@ -389,6 +395,7 @@ class TelemetryClientService(
 
   private fun createDefaultVisitData(
     visitDto: VisitDto,
+    visitorAges: Map<Long, Int?>? = null,
   ): MutableMap<String, String> = mutableMapOf(
     "reference" to visitDto.reference,
     "applicationReference" to (visitDto.applicationReference ?: ""),
@@ -404,7 +411,7 @@ class TelemetryClientService(
     "hasPhoneNumber" to (visitDto.visitContact.telephone != null).toString(),
     "hasEmail" to (visitDto.visitContact.email != null).toString(),
     "totalVisitors" to visitDto.visitors.size.toString(),
-    "visitors" to getVisitorIdsAsString(visitDto.visitors),
+    "visitors" to objectMapper.writeValueAsString(createVisitorData(visitDto.visitors, visitorAges)),
   )
 
   private fun createUnFlagData(
@@ -448,8 +455,6 @@ class TelemetryClientService(
 
   private fun formatDateToString(date: LocalDate): String = date.format(DateTimeFormatter.ISO_DATE)
 
-  private fun getVisitorIdsAsString(visitors: List<VisitorDto>): String = visitors.map { it.nomisPersonId }.joinToString(",")
-
   private fun createPrisonExcludeDateEventData(
     prisonCode: String,
     excludeDateDto: ExcludeDateDto,
@@ -491,4 +496,14 @@ class TelemetryClientService(
 
     return data.toMap()
   }
+
+  private fun createVisitorData(
+    visitors: List<VisitorDto>,
+    visitorAges: Map<Long, Int?>? = null,
+  ): List<VisitorDetails> = visitors.map { VisitorDetails(it.nomisPersonId.toString(), visitorAges?.get(it.nomisPersonId)) }
+
+  data class VisitorDetails(
+    val visitorId: String,
+    val age: Int?,
+  )
 }

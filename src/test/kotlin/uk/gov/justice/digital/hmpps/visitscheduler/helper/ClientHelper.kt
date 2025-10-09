@@ -175,7 +175,8 @@ fun callVisitBook(
   applicationMethodType: ApplicationMethodType = PHONE,
   allowOverBooking: Boolean = false,
   userType: UserType = UserType.STAFF,
-  bookingRequestDto: BookingRequestDto = BookingRequestDto("booking_guy", applicationMethodType, allowOverBooking, userType),
+  visitorAges: Map<Long, Int?>? = null,
+  bookingRequestDto: BookingRequestDto = BookingRequestDto("booking_guy", applicationMethodType, allowOverBooking, userType, visitorAges = visitorAges),
 ): ResponseSpec = callPut(
   bodyValue = bookingRequestDto,
   webTestClient,
