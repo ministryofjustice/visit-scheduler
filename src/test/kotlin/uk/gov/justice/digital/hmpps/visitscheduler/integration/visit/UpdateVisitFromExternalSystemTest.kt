@@ -34,6 +34,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBa
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService
+import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryClientService
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -177,7 +178,8 @@ class UpdateVisitFromExternalSystemTest : IntegrationTestBase() {
         assertThat(it["hasEmail"]).isEqualTo((updatedVisitDto.visitContact.email != null).toString())
         assertThat(it["supportRequired"]).isEqualTo(updatedVisitDto.visitorSupport?.description)
         assertThat(it["totalVisitors"]).isEqualTo(updatedVisitDto.visitors.size.toString())
-        assertThat(it["visitors"]).isEqualTo(updatedVisitDto.visitors.map { visitor -> visitor.nomisPersonId }.joinToString(","))
+        val visitors = updatedVisitDto.visitors.map { visitor -> TelemetryClientService.VisitorDetails(visitor.nomisPersonId.toString(), null) }
+        assertThat(it["visitors"]).isEqualTo(objectMapper.writeValueAsString(visitors))
         assertThat(it["actionedBy"]).isEqualTo(updatedVisitDto.prisonerId)
         assertThat(it["source"]).isEqualTo(UserType.PRISONER.toString())
         assertThat(it["applicationMethodType"]).isEqualTo(ApplicationMethodType.BY_PRISONER.toString())
