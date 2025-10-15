@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventAt
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
@@ -632,6 +633,7 @@ class SessionTemplateEntityHelper(
     includeIncentiveGroupType: Boolean = true,
     excludeDates: MutableList<LocalDate> = mutableListOf(),
     clients: List<UserClientDto> = listOf(UserClientDto(STAFF, true), UserClientDto(PUBLIC, true)),
+    visitOrderRestrictionType: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
   ): SessionTemplate {
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
 
@@ -657,6 +659,7 @@ class SessionTemplateEntityHelper(
       includeIncentiveGroupType = includeIncentiveGroupType,
       excludeDates = excludeDates,
       clients = clients,
+      visitOrderRestrictionType = visitOrderRestrictionType,
     )
   }
 
@@ -683,6 +686,7 @@ class SessionTemplateEntityHelper(
     includeIncentiveGroupType: Boolean = true,
     excludeDates: MutableList<LocalDate> = mutableListOf(),
     clients: List<UserClientDto> = listOf(UserClientDto(STAFF, true), UserClientDto(PUBLIC, true)),
+    visitOrderRestrictionType: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
   ): SessionTemplate {
     val sessionTemplate = sessionRepository.saveAndFlush(
       SessionTemplate(
@@ -706,6 +710,7 @@ class SessionTemplateEntityHelper(
         includeLocationGroupType = includeLocationGroupType,
         includeCategoryGroupType = includeCategoryGroupType,
         includeIncentiveGroupType = includeIncentiveGroupType,
+        visitOrderRestriction = visitOrderRestrictionType,
       ),
     )
 

@@ -27,6 +27,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonExcludeDateRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateExcludeDateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDate
@@ -41,6 +42,7 @@ class ApplicationValidationService(
   private val visitRepository: VisitRepository,
   private val sessionTemplateRepository: SessionTemplateRepository,
   private val prisonExcludeDateRepository: PrisonExcludeDateRepository,
+  private val sessionTemplateExcludeDateRepository: SessionTemplateExcludeDateRepository,
 ) {
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
@@ -87,6 +89,11 @@ class ApplicationValidationService(
       errorCodes.add(it)
     }
 
+    // check if the session has been blocked for visits on the date
+    checkIfSessionBlocked(application)?.also {
+      errorCodes.add(it)
+    }
+
     checkSessionSlot(application, prisoner, prison)?.also {
       errorCodes.add(it)
     }
@@ -127,6 +134,11 @@ class ApplicationValidationService(
 
     // check if the prison has blocked the application's date for visits
     checkIfPrisonDateBlocked(application)?.also {
+      errorCodes.add(it)
+    }
+
+    // check if the session has been blocked for visits on the date
+    checkIfSessionBlocked(application)?.also {
       errorCodes.add(it)
     }
 
@@ -263,6 +275,16 @@ class ApplicationValidationService(
     val sessionDate = application.sessionSlot.slotDate
     return if (prisonExcludeDateRepository.isDateExcludedByPrison(prisonCode, sessionDate)) {
       ApplicationValidationErrorCodes.APPLICATION_INVALID_VISIT_DATE_BLOCKED
+    } else {
+      null
+    }
+  }
+
+  private fun checkIfSessionBlocked(application: Application): ApplicationValidationErrorCodes? {
+    val sessionTemplateReference = application.sessionSlot.sessionTemplateReference
+    val sessionDate = application.sessionSlot.slotDate
+    return if (sessionTemplateReference != null && sessionTemplateExcludeDateRepository.isSessionDateExcluded(sessionTemplateReference, sessionDate)) {
+      ApplicationValidationErrorCodes.APPLICATION_INVALID_SESSION_DATE_BLOCKED
     } else {
       null
     }

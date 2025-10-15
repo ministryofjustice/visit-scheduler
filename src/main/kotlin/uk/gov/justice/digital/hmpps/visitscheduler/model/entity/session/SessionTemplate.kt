@@ -12,6 +12,7 @@ import jakarta.persistence.ManyToMany
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.base.AbstractReferenceEntity
@@ -109,4 +110,8 @@ class SessionTemplate(
 
   @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "sessionTemplate", orphanRemoval = true)
   var clients: MutableList<SessionTemplateUserClient> = mutableListOf(),
+
+  @Column(nullable = false)
+  @Enumerated(EnumType.STRING)
+  val visitOrderRestriction: SessionTemplateVisitOrderRestrictionType,
 ) : AbstractReferenceEntity(delimiter = ".", chunkSize = 3)

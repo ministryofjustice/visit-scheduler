@@ -28,6 +28,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitNotificat
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonerService
+import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryClientService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitRequestsApprovalRejectionService
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -90,7 +91,8 @@ abstract class NotificationTestBase : IntegrationTestBase() {
       assertThat(data["hasPhoneNumber"]).isEqualTo((visit.visitContact!!.telephone != null).toString())
       assertThat(data["hasEmail"]).isEqualTo((visit.visitContact!!.email != null).toString())
       assertThat(data["totalVisitors"]).isEqualTo(visit.visitors.size.toString())
-      assertThat(data["visitors"]).isEqualTo(visit.visitors.map { it.nomisPersonId }.joinToString(","))
+      val visitors = visit.visitors.map { visitor -> TelemetryClientService.VisitorDetails(visitor.nomisPersonId.toString(), null) }
+      assertThat(data["visitors"]).isEqualTo(objectMapper.writeValueAsString(visitors))
       assertThat(data["reviewType"]).isEqualTo(type.reviewType)
       assertThat(LocalDateTime.parse(data["visitBooked"]).truncatedTo(MINUTES)).isEqualTo(visit.createTimestamp!!.truncatedTo(MINUTES).format(DateTimeFormatter.ISO_DATE_TIME))
 

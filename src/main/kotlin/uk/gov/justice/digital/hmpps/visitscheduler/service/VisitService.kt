@@ -197,7 +197,7 @@ class VisitService(
 
     val bookingEventAuditDto = visitEventAuditService.updateVisitApplicationAndSaveEvent(bookedVisitDto, bookingRequestDto, eventType, text = null)
 
-    telemetryClientService.trackBookingEvent(bookedVisitDto, bookingEventAuditDto, isRequestBooking = bookingRequestDto.isRequestBooking == true)
+    telemetryClientService.trackBookingEvent(bookedVisitDto, bookingEventAuditDto, bookingRequestDto)
 
     val snsDomainEventPublishDto = SnsDomainEventPublishDto(
       bookedVisitDto.reference,
@@ -217,7 +217,7 @@ class VisitService(
   ): VisitDto {
     val bookingEventAuditDto = visitEventAuditService.saveBookingEventAudit(createVisitFromExternalSystemDto.prisonerId, bookedVisitDto, EventAuditType.BOOKED_VISIT, ApplicationMethodType.BY_PRISONER, UserType.PRISONER)
 
-    telemetryClientService.trackBookingEvent(bookedVisitDto, bookingEventAuditDto, isRequestBooking = false)
+    telemetryClientService.trackBookingEvent(bookedVisitDto, bookingEventAuditDto, bookingRequestDto = null)
 
     val snsDomainEventPublishDto = SnsDomainEventPublishDto(
       bookedVisitDto.reference,

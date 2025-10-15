@@ -34,6 +34,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBa
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService
+import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryClientService
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -156,8 +157,8 @@ class CreateVisitFromExternalSystemTest : IntegrationTestBase() {
         assertThat(it["hasEmail"]).isEqualTo((visit.visitContact.email != null).toString())
         assertThat(it["supportRequired"]).isEqualTo(visit.visitorSupport?.description)
         assertThat(it["totalVisitors"]).isEqualTo(visit.visitors.size.toString())
-        val commaDelimitedVisitorIds = visit.visitors.map { visitor -> visitor.nomisPersonId }.joinToString(",")
-        assertThat(it["visitors"]).isEqualTo(commaDelimitedVisitorIds)
+        val visitors = visit.visitors.map { visitor -> TelemetryClientService.VisitorDetails(visitor.nomisPersonId.toString(), null) }
+        assertThat(it["visitors"]).isEqualTo(objectMapper.writeValueAsString(visitors))
         eventAudit.actionedBy.userName?.let { value ->
           assertThat(it["actionedBy"]).isEqualTo(value)
         }

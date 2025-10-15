@@ -43,6 +43,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.getCancelVisitUrl
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryClientService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitNotificationEventService
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -571,6 +572,7 @@ class CancelVisitTest : IntegrationTestBase() {
     type: TelemetryVisitEvents,
   ) {
     val eventAudit = this.eventAuditRepository.findLastEventByBookingReference(cancelledVisit.reference)
+    val visitors = cancelledVisit.visitors.map { visitor -> TelemetryClientService.VisitorDetails(visitor.nomisPersonId.toString(), null) }
 
     verify(telemetryClient).trackEvent(
       eq("visit-cancelled"),
@@ -589,8 +591,8 @@ class CancelVisitTest : IntegrationTestBase() {
         assertThat(it["hasPhoneNumber"]).isEqualTo(((cancelledVisit.visitContact.telephone != null).toString()))
         assertThat(it["hasEmail"]).isEqualTo(((cancelledVisit.visitContact.email != null).toString()))
         assertThat(it["totalVisitors"]).isEqualTo(cancelledVisit.visitors.size.toString())
-        val commaDelimitedVisitorIds = cancelledVisit.visitors.map { it.nomisPersonId }.joinToString(",")
-        assertThat(it["visitors"]).isEqualTo(commaDelimitedVisitorIds)
+        assertThat(it["visitors"]).isEqualTo(objectMapper.writeValueAsString(visitors))
+
         eventAudit.actionedBy.userName?.let { value ->
           assertThat(it["actionedBy"]).isEqualTo(value)
         }
@@ -617,7 +619,7 @@ class CancelVisitTest : IntegrationTestBase() {
       "hasPhoneNumber" to ((cancelledVisit.visitContact.telephone != null).toString()),
       "hasEmail" to ((cancelledVisit.visitContact.email != null).toString()),
       "totalVisitors" to (cancelledVisit.visitors.size.toString()),
-      "visitors" to (cancelledVisit.visitors.map { it.nomisPersonId }.joinToString(",")),
+      "visitors" to objectMapper.writeValueAsString(visitors),
       "actionedBy" to actionedBy,
       "source" to eventAudit.actionedBy.userType.name,
       "applicationMethodType" to eventAudit.applicationMethodType.name,

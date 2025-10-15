@@ -171,6 +171,7 @@ class SessionTemplateService(
       includeLocationGroupType = createSessionTemplateDto.includeLocationGroupType,
       includeCategoryGroupType = createSessionTemplateDto.includeCategoryGroupType,
       includeIncentiveGroupType = createSessionTemplateDto.includeIncentiveGroupType,
+      visitOrderRestriction = createSessionTemplateDto.visitOrderRestriction,
     )
 
     createSessionTemplateDto.categoryGroupReferences?.let {
@@ -245,6 +246,10 @@ class SessionTemplateService(
 
       includeIncentiveGroupType?.let {
         sessionTemplateRepository.updateIncludeIncentiveGroupType(reference, includeIncentiveGroupType = it)
+      }
+
+      visitOrderRestriction?.let {
+        sessionTemplateRepository.updateVisitOrderRestriction(reference, visitOrderRestriction = it)
       }
     }
 

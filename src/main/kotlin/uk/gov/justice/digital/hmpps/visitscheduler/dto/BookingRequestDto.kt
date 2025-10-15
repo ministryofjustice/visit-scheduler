@@ -20,4 +20,6 @@ data class BookingRequestDto(
   val userType: UserType,
   @Schema(description = "flag to determine if visit should be a request or instant booking", required = false)
   val isRequestBooking: Boolean? = false,
+  @Schema(description = "Set of visitor details - includes Person ID (nomis) of the visitor and their age (in years) at the time of booking", required = false)
+  val visitorDetails: Set<BookingRequestVisitorDetailsDto>? = null,
 )
