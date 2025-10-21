@@ -157,4 +157,20 @@ interface ApplicationRepository :
     prisonId: Long,
     @Param("expiredDateAndTime") expiredDateAndTime: LocalDateTime,
   ): Boolean
+
+  @Query(
+    "SELECT a FROM Application a left join SessionSlot sl on a.sessionSlot.id = sl.id " +
+      "WHERE a.prisonerId = :prisonerId AND " +
+      "a.prisonId = :prisonId AND " +
+      "sl.slotDate in (:sessionDates) AND " +
+      "a.modifyTimestamp >= :expiredDateAndTime AND " +
+      "a.applicationStatus = 'IN_PROGRESS' " +
+      "AND a.reservedSlot = true",
+  )
+  fun getInProgressApplicationsForPrisonerAndDates(
+    prisonerId: String,
+    sessionDates: List<LocalDate>,
+    prisonId: Long,
+    expiredDateAndTime: LocalDateTime,
+  ): List<Application>
 }

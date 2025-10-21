@@ -48,6 +48,19 @@ interface VisitRepository :
   ): Boolean
 
   @Query(
+    "SELECT v FROM Visit v left join SessionSlot sl on v.sessionSlot.id = sl.id " +
+      "WHERE v.prisonerId = :prisonerId AND " +
+      "v.prisonId = :prisonId AND " +
+      "sl.slotDate in (:sessionDates) AND " +
+      "v.visitStatus = 'BOOKED'",
+  )
+  fun getBookedVisitsForPrisonerAndDates(
+    prisonerId: String,
+    sessionDates: List<LocalDate>,
+    prisonId: Long,
+  ): List<Visit>
+
+  @Query(
     "SELECT count(v) > 0 FROM Visit v " +
       "WHERE v.sessionSlot.sessionTemplateReference = :sessionTemplateReference AND " +
       "(cast(:slotDate as date)  is null OR v.sessionSlot.slotDate >= :slotDate) ",

@@ -27,6 +27,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType.SOCIAL
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OtherPrisonerDetails
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailsDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AdditionalSessionConflictInfoDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -140,7 +144,7 @@ class GetSessionsTest : IntegrationTestBase() {
     assertThat(visitSessionResults.size).isEqualTo(2)
     assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate)
     assertSession(visitSessionResults[1], nextWeek, sessionTemplate)
-    assertThat(visitSessionResults[1].sessionConflicts).contains(SessionConflict.PRISON_DATE_BLOCKED)
+    assertThat(visitSessionResults[1].sessionConflicts.map { it.sessionConflict }).contains(SessionConflict.PRISON_DATE_BLOCKED)
   }
 
   @Test
@@ -173,7 +177,7 @@ class GetSessionsTest : IntegrationTestBase() {
     assertThat(visitSessionResults.size).isEqualTo(2)
     assertThat(visitSessionResults[0].startTimestamp.toLocalDate()).isEqualTo(nextAllowedDay)
     assertThat(visitSessionResults[0].sessionConflicts.size).isEqualTo(1)
-    assertThat(visitSessionResults[0].sessionConflicts).contains(SessionConflict.SESSION_DATE_BLOCKED)
+    assertThat(visitSessionResults[0].sessionConflicts.map { it.sessionConflict }).contains(SessionConflict.SESSION_DATE_BLOCKED)
 
     assertThat(visitSessionResults[1].startTimestamp).isEqualTo(nextWeek.atTime(sessionTemplate.startTime))
     assertThat(visitSessionResults[1].sessionConflicts.size).isEqualTo(0)
@@ -225,7 +229,7 @@ class GetSessionsTest : IntegrationTestBase() {
     assertThat(visitSessionResults.size).isEqualTo(4)
     assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplateWithExcludedDates)
     assertThat(visitSessionResults[0].sessionConflicts.size).isEqualTo(1)
-    assertThat(visitSessionResults[0].sessionConflicts).contains(SessionConflict.SESSION_DATE_BLOCKED)
+    assertThat(visitSessionResults[0].sessionConflicts.map { it.sessionConflict }).contains(SessionConflict.SESSION_DATE_BLOCKED)
 
     assertSession(visitSessionResults[1], nextAllowedDay, notExcludedSessionTemplate)
     assertThat(visitSessionResults[1].sessionConflicts.size).isEqualTo(0)
@@ -329,11 +333,11 @@ class GetSessionsTest : IntegrationTestBase() {
     assertThat(visitSessionResults.size).isEqualTo(4)
     assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate1)
     assertThat(visitSessionResults[0].sessionConflicts.size).isEqualTo(1)
-    assertThat(visitSessionResults[0].sessionConflicts).contains(SessionConflict.PRISON_DATE_BLOCKED)
+    assertThat(visitSessionResults[0].sessionConflicts.map { it.sessionConflict }).contains(SessionConflict.PRISON_DATE_BLOCKED)
 
     assertSession(visitSessionResults[1], nextAllowedDay, sessionTemplate2)
     assertThat(visitSessionResults[1].sessionConflicts.size).isEqualTo(1)
-    assertThat(visitSessionResults[1].sessionConflicts).contains(SessionConflict.PRISON_DATE_BLOCKED)
+    assertThat(visitSessionResults[1].sessionConflicts.map { it.sessionConflict }).contains(SessionConflict.PRISON_DATE_BLOCKED)
 
     assertSession(visitSessionResults[2], nextWeek, sessionTemplate1)
     assertThat(visitSessionResults[2].sessionConflicts.size).isEqualTo(0)
@@ -1527,7 +1531,7 @@ class GetSessionsTest : IntegrationTestBase() {
 
     assertThat(visitSessionDtos).hasSize(4)
     assertThat(visitSessionDtos[0].sessionConflicts).hasSize(1)
-    assertThat(visitSessionDtos[0].sessionConflicts).contains(SessionConflict.DOUBLE_BOOKING_OR_RESERVATION)
+    assertThat(visitSessionDtos[0].sessionConflicts.map { it.sessionConflict }).contains(SessionConflict.DOUBLE_BOOKING_OR_RESERVATION)
     assertThat(visitSessionDtos[1].sessionConflicts).isEmpty()
     assertThat(visitSessionDtos[2].sessionConflicts).isEmpty()
     assertThat(visitSessionDtos[3].sessionConflicts).isEmpty()
@@ -1594,18 +1598,16 @@ class GetSessionsTest : IntegrationTestBase() {
     val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
-    val returnResult = responseSpec.expectStatus().isOk
-      .expectBody()
-    val visitSessionDtos =
-      objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)
+    val returnResult = responseSpec.expectStatus().isOk.expectBody()
+    val visitSessionDtos = objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)
 
     assertThat(visitSessionDtos).hasSize(4)
     assertThat(visitSessionDtos[0].sessionConflicts).hasSize(1)
-    assertThat(visitSessionDtos[0].sessionConflicts).contains(SessionConflict.DOUBLE_BOOKING_OR_RESERVATION)
+    assertThat(visitSessionDtos[0].sessionConflicts.map { it.sessionConflict }).contains(SessionConflict.DOUBLE_BOOKING_OR_RESERVATION)
     assertThat(visitSessionDtos[1].sessionConflicts).hasSize(1)
-    assertThat(visitSessionDtos[1].sessionConflicts).contains(SessionConflict.DOUBLE_BOOKING_OR_RESERVATION)
+    assertThat(visitSessionDtos[1].sessionConflicts.map { it.sessionConflict }).contains(SessionConflict.DOUBLE_BOOKING_OR_RESERVATION)
     assertThat(visitSessionDtos[2].sessionConflicts).hasSize(1)
-    assertThat(visitSessionDtos[2].sessionConflicts).contains(SessionConflict.DOUBLE_BOOKING_OR_RESERVATION)
+    assertThat(visitSessionDtos[2].sessionConflicts.map { it.sessionConflict }).contains(SessionConflict.DOUBLE_BOOKING_OR_RESERVATION)
     assertThat(visitSessionDtos[3].sessionConflicts).isEmpty()
   }
 
@@ -1682,8 +1684,92 @@ class GetSessionsTest : IntegrationTestBase() {
     val visitSessions = getResults(returnResult)
     assertThat(visitSessions).hasSize(4)
     val visitSessionsForDate = visitSessions.filter { it.startTimestamp.toLocalDate() == visit.sessionSlot.slotDate }
-    visitSessionsForDate.forEach {
-      assertThat(it.sessionConflicts).contains(SessionConflict.NON_ASSOCIATION)
+    visitSessionsForDate.forEach { visitSessionForDate ->
+      assertThat(visitSessionForDate.sessionConflicts.map { it.sessionConflict }).contains(SessionConflict.NON_ASSOCIATION)
+      assertThat(visitSessionForDate.sessionConflicts.map { it.additionalAttributes }.flatten()).containsAll(
+        listOf(
+          listOf(
+            AdditionalSessionConflictInfoDto("prisonerId", associationPrisonerId),
+            AdditionalSessionConflictInfoDto("type", "VISIT"),
+            AdditionalSessionConflictInfoDto("reference", visit.reference),
+          ),
+        ),
+      )
+    }
+  }
+
+  @Test
+  fun `when a session has multiple non associations all of them are returned as session conflicts attributes`() {
+    // Given
+    val prisonerId = "A1234AA"
+    val associationPrisonerId1 = "B1234BB"
+    val associationPrisonerId2 = "B1234BC"
+    val validFromDate = this.getNextAllowedDay()
+    val sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek, prisonCode = prisonCode)
+
+    val visit1 = this.visitEntityHelper.create(
+      prisonerId = associationPrisonerId1,
+      prisonCode = prisonCode,
+      visitRoom = sessionTemplate.visitRoom,
+      slotDate = validFromDate,
+      visitStart = LocalTime.of(9, 0),
+      visitEnd = LocalTime.of(9, 30),
+      visitType = SOCIAL,
+      visitStatus = BOOKED,
+      visitRestriction = OPEN,
+      sessionTemplate = sessionTemplate,
+    )
+
+    val visit2 = this.visitEntityHelper.create(
+      prisonerId = associationPrisonerId2,
+      prisonCode = prisonCode,
+      visitRoom = sessionTemplate.visitRoom,
+      slotDate = validFromDate,
+      visitStart = LocalTime.of(9, 0),
+      visitEnd = LocalTime.of(9, 30),
+      visitType = SOCIAL,
+      visitStatus = BOOKED,
+      visitRestriction = OPEN,
+      sessionTemplate = sessionTemplate,
+    )
+
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(
+      prisonerId,
+      PrisonerNonAssociationDetailsDto(
+        nonAssociations = listOf(
+          PrisonerNonAssociationDetailDto(OtherPrisonerDetails(associationPrisonerId1)),
+          PrisonerNonAssociationDetailDto(OtherPrisonerDetails(associationPrisonerId2)),
+        ),
+      ),
+    )
+
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
+
+    // When
+    val returnResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders).expectBody()
+
+    // Then
+
+    val visitSessions = getResults(returnResult)
+    assertThat(visitSessions).hasSize(4)
+    val visitSessionsForDate = visitSessions.filter { it.startTimestamp.toLocalDate() == visit1.sessionSlot.slotDate }
+    visitSessionsForDate.forEach { visitSessionForDate ->
+      assertThat(visitSessionForDate.sessionConflicts.map { it.sessionConflict }).hasSize(1)
+      assertThat(visitSessionForDate.sessionConflicts.map { it.additionalAttributes }.flatten()).containsAll(
+        listOf(
+          listOf(
+            AdditionalSessionConflictInfoDto("prisonerId", associationPrisonerId1),
+            AdditionalSessionConflictInfoDto("type", "VISIT"),
+            AdditionalSessionConflictInfoDto("reference", visit1.reference),
+          ),
+          listOf(
+            AdditionalSessionConflictInfoDto("prisonerId", associationPrisonerId2),
+            AdditionalSessionConflictInfoDto("type", "VISIT"),
+            AdditionalSessionConflictInfoDto("reference", visit2.reference),
+          ),
+        ),
+      )
     }
   }
 
@@ -1865,8 +1951,17 @@ class GetSessionsTest : IntegrationTestBase() {
     // Then
     val sessions = getResults(responseResult.expectBody())
     val sessionsForVisitDate = sessions.filter { it.startTimestamp.toLocalDate() == visit.sessionSlot.slotDate }
-    sessionsForVisitDate.forEach {
-      assertThat(it.sessionConflicts).contains(SessionConflict.NON_ASSOCIATION)
+    sessionsForVisitDate.forEach { sessionForVisitDate ->
+      assertThat(sessionForVisitDate.sessionConflicts.map { it.sessionConflict }).contains(SessionConflict.NON_ASSOCIATION)
+      assertThat(sessionForVisitDate.sessionConflicts.map { it.additionalAttributes }.flatten()).containsAll(
+        listOf(
+          listOf(
+            AdditionalSessionConflictInfoDto("prisonerId", associationPrisonerId),
+            AdditionalSessionConflictInfoDto("type", "VISIT"),
+            AdditionalSessionConflictInfoDto("reference", visit.reference),
+          ),
+        ),
+      )
     }
   }
 
@@ -1941,8 +2036,16 @@ class GetSessionsTest : IntegrationTestBase() {
 
     assertThat(sessions.size).isEqualTo(4)
     val sessionsForVisitDate = sessions.filter { it.startTimestamp.toLocalDate() == application.sessionSlot.slotDate }
-    sessionsForVisitDate.forEach {
-      assertThat(it.sessionConflicts).contains(SessionConflict.NON_ASSOCIATION)
+    sessionsForVisitDate.forEach { sessionForVisitDate ->
+      assertThat(sessionForVisitDate.sessionConflicts.map { it.sessionConflict }).contains(SessionConflict.NON_ASSOCIATION)
+      assertThat(sessionForVisitDate.sessionConflicts.map { it.additionalAttributes }.flatten()).containsAll(
+        listOf(
+          listOf(
+            AdditionalSessionConflictInfoDto("prisonerId", associationPrisonerId),
+            AdditionalSessionConflictInfoDto("type", "APPLICATION"),
+          ),
+        ),
+      )
     }
   }
 

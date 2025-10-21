@@ -65,7 +65,7 @@ class GetSessionsDoubleBookingTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
     assertThat(visitSessionResults.size).isEqualTo(1)
-    assertThat(visitSessionResults[0].sessionConflicts.contains(DOUBLE_BOOKING_OR_RESERVATION))
+    assertThat(visitSessionResults[0].sessionConflicts.map { it.sessionConflict }.contains(DOUBLE_BOOKING_OR_RESERVATION))
   }
 
   @Test
@@ -89,7 +89,7 @@ class GetSessionsDoubleBookingTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
     assertThat(visitSessionResults.size).isEqualTo(1)
-    assertThat(visitSessionResults[0].sessionConflicts.contains(DOUBLE_BOOKING_OR_RESERVATION))
+    assertThat(visitSessionResults[0].sessionConflicts.map { it.sessionConflict }.contains(DOUBLE_BOOKING_OR_RESERVATION))
   }
 
   @Test
@@ -115,7 +115,7 @@ class GetSessionsDoubleBookingTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
     assertThat(visitSessionResults.size).isEqualTo(1)
-    assertThat(visitSessionResults[0].sessionConflicts.contains(DOUBLE_BOOKING_OR_RESERVATION))
+    assertThat(visitSessionResults[0].sessionConflicts.map { it.sessionConflict }.contains(DOUBLE_BOOKING_OR_RESERVATION))
   }
 
   @Test

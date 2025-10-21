@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.session
 
 import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -13,6 +14,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AdditionalSessionConflictInfoDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -482,7 +484,7 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     val prisonerInternalLocation = "SWL-A-1-100-1"
     val associationId = "B1234BB"
 
-    this.visitEntityHelper.create(
+    val visit = this.visitEntityHelper.create(
       prisonerId = associationId,
       prisonCode = prison.code,
       visitRoom = sessionTemplateForAllPrisoners.visitRoom,
@@ -512,15 +514,61 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     // none of the sessions on the day will be available
     Assertions.assertThat(visitSessionResults.size).isEqualTo(5)
     Assertions.assertThat(visitSessionResults[0].sessionConflicts.size).isEqualTo(1)
-    Assertions.assertThat(visitSessionResults[0].sessionConflicts.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
+    Assertions.assertThat(visitSessionResults[0].sessionConflicts.map { it.sessionConflict }.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
+    assertThat(visitSessionResults[0].sessionConflicts.map { it.additionalAttributes }.flatten()).containsAll(
+      listOf(
+        listOf(
+          AdditionalSessionConflictInfoDto("prisonerId", associationId),
+          AdditionalSessionConflictInfoDto("type", "VISIT"),
+          AdditionalSessionConflictInfoDto("reference", visit.reference),
+        ),
+      ),
+    )
+
     Assertions.assertThat(visitSessionResults[1].sessionConflicts.size).isEqualTo(1)
-    Assertions.assertThat(visitSessionResults[1].sessionConflicts.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
+    Assertions.assertThat(visitSessionResults[1].sessionConflicts.map { it.sessionConflict }.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
+    assertThat(visitSessionResults[1].sessionConflicts.map { it.additionalAttributes }.flatten()).containsAll(
+      listOf(
+        listOf(
+          AdditionalSessionConflictInfoDto("prisonerId", associationId),
+          AdditionalSessionConflictInfoDto("type", "VISIT"),
+          AdditionalSessionConflictInfoDto("reference", visit.reference),
+        ),
+      ),
+    )
     Assertions.assertThat(visitSessionResults[2].sessionConflicts.size).isEqualTo(1)
-    Assertions.assertThat(visitSessionResults[2].sessionConflicts.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
+    Assertions.assertThat(visitSessionResults[2].sessionConflicts.map { it.sessionConflict }.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
+    assertThat(visitSessionResults[2].sessionConflicts.map { it.additionalAttributes }.flatten()).containsAll(
+      listOf(
+        listOf(
+          AdditionalSessionConflictInfoDto("prisonerId", associationId),
+          AdditionalSessionConflictInfoDto("type", "VISIT"),
+          AdditionalSessionConflictInfoDto("reference", visit.reference),
+        ),
+      ),
+    )
     Assertions.assertThat(visitSessionResults[3].sessionConflicts.size).isEqualTo(1)
-    Assertions.assertThat(visitSessionResults[3].sessionConflicts.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
+    Assertions.assertThat(visitSessionResults[3].sessionConflicts.map { it.sessionConflict }.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
+    assertThat(visitSessionResults[3].sessionConflicts.map { it.additionalAttributes }.flatten()).containsAll(
+      listOf(
+        listOf(
+          AdditionalSessionConflictInfoDto("prisonerId", associationId),
+          AdditionalSessionConflictInfoDto("type", "VISIT"),
+          AdditionalSessionConflictInfoDto("reference", visit.reference),
+        ),
+      ),
+    )
     Assertions.assertThat(visitSessionResults[4].sessionConflicts.size).isEqualTo(1)
-    Assertions.assertThat(visitSessionResults[4].sessionConflicts.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
+    Assertions.assertThat(visitSessionResults[4].sessionConflicts.map { it.sessionConflict }.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
+    assertThat(visitSessionResults[4].sessionConflicts.map { it.additionalAttributes }.flatten()).containsAll(
+      listOf(
+        listOf(
+          AdditionalSessionConflictInfoDto("prisonerId", associationId),
+          AdditionalSessionConflictInfoDto("type", "VISIT"),
+          AdditionalSessionConflictInfoDto("reference", visit.reference),
+        ),
+      ),
+    )
   }
 
   @Test

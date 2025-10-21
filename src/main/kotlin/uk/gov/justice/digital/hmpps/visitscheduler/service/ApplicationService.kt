@@ -494,4 +494,11 @@ class ApplicationService(
 
     return applicationEntity
   }
+
+  fun getInProgressApplicationsForPrisonerAndDates(prisonerId: String, sessionDates: List<LocalDate>, prisonId: Long): List<Application> = applicationRepository.getInProgressApplicationsForPrisonerAndDates(
+    prisonerId,
+    sessionDates,
+    prisonId,
+    getExpiredApplicationDateAndTime(),
+  )
 }

@@ -36,6 +36,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousin
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailsDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AdditionalSessionConflictInfoDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonerNotInSuppliedPrisonException
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionSlotEntityHelper
@@ -566,10 +567,31 @@ class SessionServiceTest {
       mockSessionSlots(singleSession)
       val saturdayAfter = currentDate.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
       val slotDate = saturdayAfter.toLocalDate()
-      whenever(visitRepository.hasActiveVisitsForDate(expectedAssociations, slotDate, prison.id))
+
+      val sessionSlot = SessionSlot(
+        sessionTemplateReference = singleSession.reference,
+        prisonId = prison.id,
+        slotDate = slotDate,
+        slotStart = slotDate.atTime(singleSession.startTime),
+        slotEnd = slotDate.atTime(singleSession.endTime),
+      )
+      val nonAssociationVisit = Visit(
+        prisonerId = associationId,
+        prisonId = prison.id,
+        prison = prison,
+        sessionSlotId = sessionSlot.id,
+        sessionSlot = sessionSlot,
+        visitType = SOCIAL,
+        visitRoom = "A",
+        visitStatus = BOOKED,
+        visitSubStatus = VisitSubStatus.AUTO_APPROVED,
+        visitRestriction = OPEN,
+        userType = STAFF,
+      )
+
+      whenever(visitRepository.getBookedVisitsForPrisonerAndDates(associationId, listOf(slotDate), prison.id))
         .thenReturn(
-          true,
-          false,
+          listOf(nonAssociationVisit),
         )
 
       // When
@@ -579,7 +601,17 @@ class SessionServiceTest {
       assertThat(sessions).size().isEqualTo(1)
       assertDate(sessions[0].startTimestamp, saturdayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), dayOfWeek)
       assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
-      assertThat(sessions[0].sessionConflicts.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
+      assertThat(sessions[0].sessionConflicts.map { it.sessionConflict }.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
+      assertThat(sessions[0].sessionConflicts.map { it.additionalAttributes }.flatten()).containsAll(
+        listOf(
+          listOf(
+            AdditionalSessionConflictInfoDto("prisonerId", associationId),
+            AdditionalSessionConflictInfoDto("type", "VISIT"),
+            AdditionalSessionConflictInfoDto("reference", nonAssociationVisit.reference),
+          ),
+        ),
+      )
+
       Mockito.verify(prisonerService, times(1)).getPrisonerNonAssociationList(prisonerId)
     }
 
@@ -616,7 +648,7 @@ class SessionServiceTest {
       assertThat(sessions).size().isEqualTo(1)
       assertDate(sessions[0].startTimestamp, saturdayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), dayOfWeek)
       assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
-      assertThat(sessions[0].sessionConflicts.first()).isEqualTo(SessionConflict.DOUBLE_BOOKING_OR_RESERVATION)
+      assertThat(sessions[0].sessionConflicts.map { it.sessionConflict }.first()).isEqualTo(SessionConflict.DOUBLE_BOOKING_OR_RESERVATION)
       Mockito.verify(prisonerService, times(1)).getPrisonerNonAssociationList(prisonerId)
     }
 
@@ -811,7 +843,7 @@ class SessionServiceTest {
       // Then
       assertThat(sessions).size().isEqualTo(1)
       assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
-      assertThat(sessions[0].sessionConflicts.first()).isEqualTo(SessionConflict.DOUBLE_BOOKING_OR_RESERVATION)
+      assertThat(sessions[0].sessionConflicts.map { it.sessionConflict }.first()).isEqualTo(SessionConflict.DOUBLE_BOOKING_OR_RESERVATION)
       Mockito.verify(prisonerService, times(1)).getPrisonerNonAssociationList(prisonerId)
     }
 
@@ -848,7 +880,7 @@ class SessionServiceTest {
       // Then
       assertThat(sessions).size().isEqualTo(1)
       assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
-      assertThat(sessions[0].sessionConflicts.first()).isEqualTo(SessionConflict.DOUBLE_BOOKING_OR_RESERVATION)
+      assertThat(sessions[0].sessionConflicts.map { it.sessionConflict }.first()).isEqualTo(SessionConflict.DOUBLE_BOOKING_OR_RESERVATION)
       Mockito.verify(prisonerService, times(1)).getPrisonerNonAssociationList(prisonerId)
     }
 
