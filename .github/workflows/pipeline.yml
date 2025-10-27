@@ -36,7 +36,6 @@ jobs:
     uses: ministryofjustice/hmpps-github-actions/.github/workflows/gradle_localstack_postgres_verify.yml@v2 # WORKFLOW_VERSION
     secrets: inherit
     with:
-      services: sns,sqs
       localstack-tag: "4"
       postgres-tag: "17"
       postgres-username: visit_scheduler
