@@ -38,6 +38,7 @@ jobs:
     with:
       localstack-tag: "4"
       postgres-tag: "17"
+      postgres-db: visit-scheduler
       postgres-username: visit_scheduler
       postgres-password: visit_scheduler
   build:
