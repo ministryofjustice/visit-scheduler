@@ -38,11 +38,11 @@ class FindCancelledPublicVisitsTest : IntegrationTestBase() {
 
   private lateinit var otherSessionTemplate: SessionTemplate
 
-  private lateinit var visitCancelledMostRecent: Visit
-  private lateinit var visitCancelledInDifferentPrison: Visit
-  private lateinit var visitCancelledInPast: Visit
-  private lateinit var visitWithOtherBooker: Visit
-  private lateinit var visitCancelledLeastRecent: Visit
+  private lateinit var visitSlot1WeekAhead: Visit
+  private lateinit var visitSlot3WeeksAheadInDifferentPrison: Visit
+  private lateinit var visitSlotInPast: Visit
+  private lateinit var visitSlot2WeeksAheadWithOtherBooker: Visit
+  private lateinit var visitSlot4WeeksAhead: Visit
 
   private lateinit var futureRequestedVisitRejected: Visit
   private lateinit var pastRequestedVisitRejected: Visit
@@ -53,19 +53,19 @@ class FindCancelledPublicVisitsTest : IntegrationTestBase() {
   internal fun createVisits() {
     otherSessionTemplate = sessionTemplateEntityHelper.create(prisonCode = "AWE")
 
-    visitCancelledLeastRecent = createVisit(prisonerId = "least recent", actionedByValue = "aTestRef", visitStatus = CANCELLED, visitSubStatus = VisitSubStatus.CANCELLED, sessionTemplate = sessionTemplateDefault, PUBLIC, slotDateWeeks = 4)
+    visitSlot4WeeksAhead = createVisit(prisonerId = "4-weeks-ahead", actionedByValue = "aTestRef", visitStatus = CANCELLED, visitSubStatus = VisitSubStatus.CANCELLED, sessionTemplate = sessionTemplateDefault, PUBLIC, slotDateWeeks = 4)
 
-    visitCancelledInDifferentPrison = createVisit(prisonerId = "diff prison", actionedByValue = "aTestRef", visitStatus = CANCELLED, visitSubStatus = VisitSubStatus.CANCELLED, sessionTemplate = otherSessionTemplate, PUBLIC, slotDateWeeks = 3)
+    visitSlot3WeeksAheadInDifferentPrison = createVisit(prisonerId = "4-weeks-ahead-diff-prison", actionedByValue = "aTestRef", visitStatus = CANCELLED, visitSubStatus = VisitSubStatus.CANCELLED, sessionTemplate = otherSessionTemplate, PUBLIC, slotDateWeeks = 3)
 
-    visitWithOtherBooker = createVisit(prisonerId = "diff prison", actionedByValue = "aOtherTestRef", visitStatus = CANCELLED, visitSubStatus = VisitSubStatus.CANCELLED, sessionTemplate = sessionTemplateDefault, PUBLIC, slotDateWeeks = 2)
+    visitSlot2WeeksAheadWithOtherBooker = createVisit(prisonerId = "2-weeks-ahead-other-booker", actionedByValue = "aOtherTestRef", visitStatus = CANCELLED, visitSubStatus = VisitSubStatus.CANCELLED, sessionTemplate = sessionTemplateDefault, PUBLIC, slotDateWeeks = 2)
 
-    visitCancelledInPast = createVisit(prisonerId = "in past", actionedByValue = "aTestRef", visitStatus = CANCELLED, visitSubStatus = VisitSubStatus.CANCELLED, sessionTemplate = sessionTemplateDefault, PUBLIC, slotDateWeeks = -1)
+    visitSlotInPast = createVisit(prisonerId = "in past", actionedByValue = "aTestRef", visitStatus = CANCELLED, visitSubStatus = VisitSubStatus.CANCELLED, sessionTemplate = sessionTemplateDefault, PUBLIC, slotDateWeeks = -1)
 
     createVisit(actionedByValue = "aTestRef", visitStatus = BOOKED, visitSubStatus = VisitSubStatus.AUTO_APPROVED, sessionTemplate = sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = 1)
 
     createVisit(actionedByValue = "aTestRef", visitStatus = BOOKED, visitSubStatus = VisitSubStatus.AUTO_APPROVED, sessionTemplate = sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = -1)
 
-    visitCancelledMostRecent = createVisit(prisonerId = "most recent", actionedByValue = "aTestRef", CANCELLED, visitSubStatus = VisitSubStatus.CANCELLED, sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = 1)
+    visitSlot1WeekAhead = createVisit(prisonerId = "1-week-ahead", actionedByValue = "aTestRef", CANCELLED, visitSubStatus = VisitSubStatus.CANCELLED, sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = 1)
 
     // visit requested and approved
     val futureRequestedVisitApproved = createRequestedVisit(prisonerId = "requested-and-approved", actionedByValue = "aOtherTestRef", visitStatus = BOOKED, APPROVED, sessionTemplate = sessionTemplateDefault, slotDateWeeks = 2)
@@ -99,10 +99,10 @@ class FindCancelledPublicVisitsTest : IntegrationTestBase() {
     val visitList = parseVisitsResponse(responseSpec)
 
     Assertions.assertThat(visitList.size).isEqualTo(4)
-    visitAssertHelper.assertVisitDto(visitList[0], visitCancelledMostRecent)
-    visitAssertHelper.assertVisitDto(visitList[1], visitCancelledInPast)
-    visitAssertHelper.assertVisitDto(visitList[2], visitCancelledInDifferentPrison)
-    visitAssertHelper.assertVisitDto(visitList[3], visitCancelledLeastRecent)
+    visitAssertHelper.assertVisitDto(visitList[0], visitSlot4WeeksAhead)
+    visitAssertHelper.assertVisitDto(visitList[1], visitSlot3WeeksAheadInDifferentPrison)
+    visitAssertHelper.assertVisitDto(visitList[2], visitSlot1WeekAhead)
+    visitAssertHelper.assertVisitDto(visitList[3], visitSlotInPast)
   }
 
   @Test
@@ -123,7 +123,7 @@ class FindCancelledPublicVisitsTest : IntegrationTestBase() {
       futureRequestedVisitAutoRejected.reference,
       pastRequestedVisitRejected.reference,
       futureRequestedVisitRejected.reference,
-      visitWithOtherBooker.reference,
+      visitSlot2WeeksAheadWithOtherBooker.reference,
     )
   }
 
