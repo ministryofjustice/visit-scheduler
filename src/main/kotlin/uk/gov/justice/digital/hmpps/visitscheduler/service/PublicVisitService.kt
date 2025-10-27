@@ -27,7 +27,7 @@ class PublicVisitService(
 
   fun getFuturePublicBookedVisitsByBookerReference(bookerReference: String): List<VisitDto> = visitRepository.getPublicFutureBookingsByBookerReference(bookerReference).map { visitDtoBuilder.build(it) }.sortedBy { it.startTimestamp }
 
-  fun getPublicCanceledVisitsByBookerReference(bookerReference: String): List<VisitDto> = visitRepository.getPublicCanceledVisitsByBookerReference(bookerReference).map { visitDtoBuilder.build(it) }.sortedByDescending { it.modifiedTimestamp }
+  fun getPublicCanceledVisitsByBookerReference(bookerReference: String): List<VisitDto> = visitRepository.getPublicCanceledVisitsByBookerReference(bookerReference).map { visitDtoBuilder.build(it) }.sortedByDescending { it.startTimestamp }
 
   fun getPublicPastVisitsByBookerReference(bookerReference: String): List<VisitDto> = visitRepository.getPublicPastBookingsByBookerReference(bookerReference).map { visitDtoBuilder.build(it) }.sortedByDescending { it.startTimestamp }
 
