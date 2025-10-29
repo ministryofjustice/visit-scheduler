@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   visit-scheduler-db:
-    image: postgres:15.5
+    image: postgres:17.6
     networks:
       - hmpps
     container_name: visit-scheduler-db
@@ -14,7 +14,7 @@ services:
       - POSTGRES_DB=visit_scheduler
 
   local-stack-aws:
-    image: localstack/localstack:3
+    image: localstack/localstack:4
     networks:
       - hmpps
     container_name: local-stack-aws
