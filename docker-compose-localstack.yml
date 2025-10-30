@@ -2,7 +2,7 @@ version: "3.8"
 services:
 
   local-stack-aws:
-    image: localstack/localstack:3
+    image: localstack/localstack:4
     networks:
       - hmpps
     container_name: local-stack-aws

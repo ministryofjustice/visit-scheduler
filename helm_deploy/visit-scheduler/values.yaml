@@ -4,7 +4,7 @@ generic-service:
   productId: "DPS035"
 
   image:
-    repository: quay.io/hmpps/visit-scheduler
+    repository: ghcr.io/ministryofjustice/visit-scheduler
     tag: app_version # override at deployment time
     port: 8080
 
@@ -33,7 +33,6 @@ generic-service:
     application-insights:
       APPLICATIONINSIGHTS_CONNECTION_STRING: "APPLICATIONINSIGHTS_CONNECTION_STRING"
     visit-scheduler:
-      APPINSIGHTS_INSTRUMENTATIONKEY: "APPINSIGHTS_INSTRUMENTATIONKEY"
       SYSTEM_CLIENT_ID: "SYSTEM_CLIENT_ID"
       SYSTEM_CLIENT_SECRET: "SYSTEM_CLIENT_SECRET"
     visit-scheduler-rds:
