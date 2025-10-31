@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import java.time.LocalDateTime
 
@@ -68,6 +69,9 @@ data class VisitSessionDto(
 
   @Schema(description = "Session conflicts", required = false)
   val sessionConflicts: MutableList<SessionConflictDto> = mutableListOf(),
+
+  @Schema(description = "The type of visit order restriction", example = "PVO", required = true)
+  val visitOrderRestriction: SessionTemplateVisitOrderRestrictionType,
 )
 
 data class SessionConflictDto(

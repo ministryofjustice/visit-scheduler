@@ -7,32 +7,25 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.DOUBLE_BOOKING_OR_RESERVATION
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.NON_ASSOCIATION
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.PRISON_DATE_BLOCKED
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.SESSION_DATE_BLOCKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AdditionalSessionConflictInfoDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AvailableVisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionConflictDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionDateRangeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionScheduleDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTimeSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.CapacityNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonExcludeDate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplateExcludeDate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionSlotRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionConflictsUtil
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionDatesUtil
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -55,6 +48,7 @@ class SessionService(
   private val prisonsService: PrisonsService,
   private val applicationService: ApplicationService,
   private val prisonerSessionValidationService: PrisonerSessionValidationService,
+  private val sessionConflictsUtil: SessionConflictsUtil,
   @Value("\${policy.session.double-booking.filter:false}")
   private val policyFilterDoubleBooking: Boolean,
   @Value("\${policy.session.non-association.filter:false}")
@@ -87,6 +81,7 @@ class SessionService(
         endTimestamp = LocalDateTime.of(sessionDate, sessionTemplate.endTime),
         visitRoom = sessionTemplate.visitRoom,
         visitType = sessionTemplate.visitType,
+        visitOrderRestriction = sessionTemplate.visitOrderRestriction,
       )
     }.also {
       val sessionSlots = getSessionSlots(it)
@@ -220,25 +215,10 @@ class SessionService(
     val sessionSlotDates = visitSessions.map { it.startTimestamp.toLocalDate() }
     val nonAssociationConflictSessions = getNonAssociationVisitsOrApplications(sessionSlotDates, nonAssociationPrisonerIds, prison)
     val doubleBookingOrReservationSessions = getDoubleBookingOrReservationSessions(visitSessions, sessionSlots, prisonerId, excludedApplicationReference, usernameToExcludeFromReservedApplications)
+    val prisonExcludeDates = prison.excludeDates.map { it.excludeDate }
     val sessionExcludeDates = sessionTemplates.flatMap { it.excludeDates }
     visitSessions.forEach { session ->
-      val sessionDate = session.startTimestamp.toLocalDate()
-      val nonAssociationConflictSessionsForDate = nonAssociationConflictSessions.filter { it.sessionDate == sessionDate }
-      if (nonAssociationConflictSessionsForDate.isNotEmpty()) { // removed &&  policyFilterNonAssociation) {
-        val nonAssociationConflictAttributes = getNonAssociationConflictAttributes(nonAssociationConflictSessionsForDate)
-        session.sessionConflicts.add(SessionConflictDto(NON_ASSOCIATION, nonAssociationConflictAttributes))
-      }
-      if (hasDoubleBookingOrReservationSessions(doubleBookingOrReservationSessions, session)) { // removed && policyFilterDoubleBooking*/) {
-        session.sessionConflicts.add(SessionConflictDto(DOUBLE_BOOKING_OR_RESERVATION))
-      }
-      if (isDateExcluded(prison.excludeDates, session)) {
-        // TODO - replace session.sessionConflicts.add(PRISON_DATE_BLOCKED)
-        session.sessionConflicts.add(SessionConflictDto(PRISON_DATE_BLOCKED))
-      }
-      if (isSessionExcluded(sessionExcludeDates, session)) {
-        // TODO - replace session.sessionConflicts.add(SESSION_DATE_BLOCKED)
-        session.sessionConflicts.add(SessionConflictDto(SESSION_DATE_BLOCKED))
-      }
+      sessionConflictsUtil.addSessionConflicts(session, nonAssociationConflictSessions, doubleBookingOrReservationSessions, prisonExcludeDates, sessionExcludeDates)
     }
 
     return visitSessions
@@ -257,21 +237,6 @@ class SessionService(
     SessionRestriction.CLOSED -> (session.closedVisitCapacity > 0 && (session.closedVisitCapacity > (session.closedVisitBookedCount ?: 0)))
     SessionRestriction.OPEN -> (session.openVisitCapacity > 0 && (session.openVisitCapacity > (session.openVisitBookedCount ?: 0)))
   }
-
-  private fun hasDoubleBookingOrReservationSessions(
-    doubleBookingOrReservationSessions: List<VisitSessionDto>,
-    it: VisitSessionDto,
-  ): Boolean = doubleBookingOrReservationSessions.contains(it)
-
-  private fun isDateExcluded(
-    prisonExcludeDates: List<PrisonExcludeDate>,
-    visitSession: VisitSessionDto,
-  ): Boolean = prisonExcludeDates.any { it.excludeDate == visitSession.startTimestamp.toLocalDate() }
-
-  private fun isSessionExcluded(
-    sessionExcludeDates: List<SessionTemplateExcludeDate>,
-    visitSession: VisitSessionDto,
-  ): Boolean = sessionExcludeDates.any { it.sessionTemplate.reference == visitSession.sessionTemplateReference && it.excludeDate == visitSession.startTimestamp.toLocalDate() }
 
   private fun getDoubleBookingOrReservationSessions(
     visitSessions: List<VisitSessionDto>,
@@ -341,6 +306,7 @@ class SessionService(
             endTimestamp = LocalDateTime.of(date, sessionTemplate.endTime),
             visitRoom = sessionTemplate.visitRoom,
             visitType = sessionTemplate.visitType,
+            visitOrderRestriction = sessionTemplate.visitOrderRestriction,
           )
         }
         .toList()
@@ -557,25 +523,6 @@ class SessionService(
     }
     return startDate
   }
-}
-
-private fun getNonAssociationConflictAttributes(nonAssociationConflictSessions: List<NonAssociationConflictSessionDto>): List<List<AdditionalSessionConflictInfoDto>> {
-  val nonAssociationConflictAttributesList = mutableListOf<List<AdditionalSessionConflictInfoDto>>()
-  nonAssociationConflictSessions.forEach {
-    nonAssociationConflictAttributesList.add(getNonAssociationConflictAttributes(it))
-  }
-  return nonAssociationConflictAttributesList.toList()
-}
-
-private fun getNonAssociationConflictAttributes(nonAssociationConflictSession: NonAssociationConflictSessionDto): List<AdditionalSessionConflictInfoDto> {
-  val nonAssociationConflictAttributes = mutableListOf<AdditionalSessionConflictInfoDto>()
-  nonAssociationConflictAttributes.add(AdditionalSessionConflictInfoDto("prisonerId", nonAssociationConflictSession.prisonerId))
-  nonAssociationConflictAttributes.add(AdditionalSessionConflictInfoDto("type", nonAssociationConflictSession.conflictType.name))
-  if (nonAssociationConflictSession.conflictType == NonAssociationConflictType.VISIT) {
-    nonAssociationConflictAttributes.add(AdditionalSessionConflictInfoDto("reference", nonAssociationConflictSession.reference!!))
-  }
-
-  return nonAssociationConflictAttributes.toList()
 }
 
 data class DateRange(
