@@ -8,7 +8,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.SES
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AdditionalSessionConflictInfoDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionConflictDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplateExcludeDate
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NonAssociationConflictSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NonAssociationConflictType
 import java.time.LocalDate
@@ -20,7 +19,7 @@ class SessionConflictsUtil {
     nonAssociationConflictSessions: List<NonAssociationConflictSessionDto>,
     doubleBookingOrReservationSessions: List<VisitSessionDto>,
     prisonExcludeDates: List<LocalDate>,
-    sessionExcludeDates: List<SessionTemplateExcludeDate>,
+    sessionExcludeDates: List<LocalDate>,
   ) {
     getNonAssociationSessionConflict(session, nonAssociationConflictSessions)?.let {
       session.sessionConflicts.add(it)
@@ -67,7 +66,7 @@ class SessionConflictsUtil {
   }
 
   private fun getSessionDateExcludedSessionConflict(
-    sessionExcludeDates: List<SessionTemplateExcludeDate>,
+    sessionExcludeDates: List<LocalDate>,
     visitSession: VisitSessionDto,
   ): SessionConflictDto? {
     val sessionConflict = SessionConflictDto(SESSION_DATE_BLOCKED)
@@ -85,9 +84,10 @@ class SessionConflictsUtil {
   ): Boolean = prisonExcludeDates.any { it == visitSession.startTimestamp.toLocalDate() }
 
   private fun isSessionExcluded(
-    sessionExcludeDates: List<SessionTemplateExcludeDate>,
+    sessionExcludeDates: List<LocalDate>,
     visitSession: VisitSessionDto,
-  ): Boolean = sessionExcludeDates.any { it.sessionTemplate.reference == visitSession.sessionTemplateReference && it.excludeDate == visitSession.startTimestamp.toLocalDate() }
+  ): Boolean = sessionExcludeDates.any { it == visitSession.startTimestamp.toLocalDate() }
+
   private fun getNonAssociationConflictAttributes(nonAssociationConflictSessions: List<NonAssociationConflictSessionDto>): List<List<AdditionalSessionConflictInfoDto>> {
     val nonAssociationConflictAttributesList = mutableListOf<List<AdditionalSessionConflictInfoDto>>()
     nonAssociationConflictSessions.forEach {

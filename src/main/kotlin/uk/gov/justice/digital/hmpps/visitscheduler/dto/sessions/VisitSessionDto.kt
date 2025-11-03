@@ -5,7 +5,6 @@ import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import java.time.LocalDateTime
 
@@ -69,10 +68,41 @@ data class VisitSessionDto(
 
   @Schema(description = "Session conflicts", required = false)
   val sessionConflicts: MutableList<SessionConflictDto> = mutableListOf(),
+) {
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
 
-  @Schema(description = "The type of visit order restriction", example = "PVO", required = true)
-  val visitOrderRestriction: SessionTemplateVisitOrderRestrictionType,
-)
+    other as VisitSessionDto
+
+    if (openVisitCapacity != other.openVisitCapacity) return false
+    if (openVisitBookedCount != other.openVisitBookedCount) return false
+    if (closedVisitCapacity != other.closedVisitCapacity) return false
+    if (closedVisitBookedCount != other.closedVisitBookedCount) return false
+    if (sessionTemplateReference != other.sessionTemplateReference) return false
+    if (visitRoom != other.visitRoom) return false
+    if (visitType != other.visitType) return false
+    if (prisonCode != other.prisonCode) return false
+    if (startTimestamp != other.startTimestamp) return false
+    if (endTimestamp != other.endTimestamp) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = openVisitCapacity
+    result = 31 * result + (openVisitBookedCount ?: 0)
+    result = 31 * result + closedVisitCapacity
+    result = 31 * result + (closedVisitBookedCount ?: 0)
+    result = 31 * result + sessionTemplateReference.hashCode()
+    result = 31 * result + visitRoom.hashCode()
+    result = 31 * result + visitType.hashCode()
+    result = 31 * result + prisonCode.hashCode()
+    result = 31 * result + startTimestamp.hashCode()
+    result = 31 * result + endTimestamp.hashCode()
+    return result
+  }
+}
 
 data class SessionConflictDto(
   @Schema(description = "Session Conflict", example = "NON_ASSOCIATION", required = true)

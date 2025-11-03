@@ -81,7 +81,6 @@ class SessionService(
         endTimestamp = LocalDateTime.of(sessionDate, sessionTemplate.endTime),
         visitRoom = sessionTemplate.visitRoom,
         visitType = sessionTemplate.visitType,
-        visitOrderRestriction = sessionTemplate.visitOrderRestriction,
       )
     }.also {
       val sessionSlots = getSessionSlots(it)
@@ -216,9 +215,10 @@ class SessionService(
     val nonAssociationConflictSessions = getNonAssociationVisitsOrApplications(sessionSlotDates, nonAssociationPrisonerIds, prison)
     val doubleBookingOrReservationSessions = getDoubleBookingOrReservationSessions(visitSessions, sessionSlots, prisonerId, excludedApplicationReference, usernameToExcludeFromReservedApplications)
     val prisonExcludeDates = prison.excludeDates.map { it.excludeDate }
-    val sessionExcludeDates = sessionTemplates.flatMap { it.excludeDates }
+    val sessionsExcludeDates = sessionTemplates.flatMap { it.excludeDates }
     visitSessions.forEach { session ->
-      sessionConflictsUtil.addSessionConflicts(session, nonAssociationConflictSessions, doubleBookingOrReservationSessions, prisonExcludeDates, sessionExcludeDates)
+      val excludedDatesForSession = sessionsExcludeDates.filter { (it.sessionTemplate.reference == session.sessionTemplateReference) }.map { it.excludeDate }
+      sessionConflictsUtil.addSessionConflicts(session, nonAssociationConflictSessions, doubleBookingOrReservationSessions, prisonExcludeDates, excludedDatesForSession)
     }
 
     return visitSessions
@@ -289,13 +289,9 @@ class SessionService(
     val firstBookableSessionDay =
       getFirstBookableSessionDay(requestedBookableStartDate, sessionTemplate.validFromDate, sessionTemplate.dayOfWeek, sessionTemplate.weeklyFrequency)
     val lastBookableSessionDay = getLastBookableSession(requestedBookableEndDate, sessionTemplate.validToDate)
-    // val excludeDates = getExcludeDates(sessionTemplate)
 
     if (firstBookableSessionDay <= lastBookableSessionDay) {
       return this.calculateDates(firstBookableSessionDay, lastBookableSessionDay, sessionTemplate)
-        /*.filter { date ->
-          !excludeDates.contains(date)
-        }*/
         .map { date ->
           VisitSessionDto(
             sessionTemplateReference = sessionTemplate.reference,
@@ -306,7 +302,6 @@ class SessionService(
             endTimestamp = LocalDateTime.of(date, sessionTemplate.endTime),
             visitRoom = sessionTemplate.visitRoom,
             visitType = sessionTemplate.visitType,
-            visitOrderRestriction = sessionTemplate.visitOrderRestriction,
           )
         }
         .toList()
