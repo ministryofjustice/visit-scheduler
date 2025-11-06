@@ -651,12 +651,12 @@ class VisitController(
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @PostMapping(FIND_LAST_APPROVED_DATE_FOR_VISITORS_BY_PRISONER)
   @Operation(
-    summary = "Get last approved dates for visits booked for a prisoner, given a list of visitors",
-    description = "Get last approved dates for visits booked for a prisoner for a list of visitors, returns NULL if no visits found",
+    summary = "Get last approved dates for visits booked for a prisoner, given a list of nomis person Ids",
+    description = "Get last approved dates for visits booked for a prisoner for a list of visitors(nomis person Ids), returns NULL if no visits found",
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "Returns a map of visitors and last approved dates for visits booked for a prisoner",
+        description = "Returns the passed list of visitors with their last approved dates (or null) for visits booked for a prisoner",
       ),
       ApiResponse(
         responseCode = "400",
