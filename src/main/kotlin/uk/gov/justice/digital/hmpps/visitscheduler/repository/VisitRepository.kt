@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.LastApprovedDateByVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -494,4 +495,20 @@ interface VisitRepository :
     nativeQuery = true,
   )
   fun autoRejectVisitRequestByReference(visitReference: String): Int
+
+  @Query(
+    "select nomis_person_id as nomisPersonId, max(ea.create_timestamp::date) as lastApprovedDate from visit_visitor vv " +
+      "join visit v on vv.visit_id  = v.id  " +
+      "join event_audit ea on v.reference = ea.booking_reference " +
+      "where v.prisoner_id = :prisonerId " +
+      "and v.visit_status = 'BOOKED' " +
+      "and vv.nomis_person_id in (:nomisPersonIds)  " +
+      "and ea.type in ('BOOKED_VISIT', 'REQUESTED_VISIT_APPROVED', 'MIGRATED_VISIT') " +
+      "group by nomis_person_id ",
+    nativeQuery = true,
+  )
+  fun getLastApprovedVisitDatesByVisitor(
+    @Param("prisonerId") prisonerId: String,
+    @Param("nomisPersonIds") nomisPersonIds: List<Long>,
+  ): List<LastApprovedDateByVisitor>
 }
