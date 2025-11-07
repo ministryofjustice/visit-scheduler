@@ -31,6 +31,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OP
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.UNKNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visit.VisitorLastApprovedDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
@@ -405,5 +406,21 @@ class VisitService(
     val updatedVisitDto = visitStoreService.updateVisitFromExternalSystem(updateVisitFromExternalSystemDto, existingVisit)
 
     return processUpdateVisitFromExternalSystemEvents(existingVisitDto, updatedVisitDto)
+  }
+
+  @Transactional(readOnly = true)
+  fun getLastApprovedVisitDatesByVisitor(prisonerId: String, visitorIds: List<Long>): List<VisitorLastApprovedDateDto> {
+    LOG.debug("getLastApprovedVisitDatesByVisitor called for prisoner - {}, with visitorIds - {}", prisonerId, visitorIds)
+
+    val lastApprovedDateByVisitorDates = visitRepository.getLastApprovedVisitDatesByVisitor(prisonerId, visitorIds)
+    val lastApprovedDateByVisitorDatesList = mutableListOf<VisitorLastApprovedDateDto>()
+    visitorIds.forEach { visitorId ->
+      // last approved date returned from DB or null
+      val lastApprovedDate = lastApprovedDateByVisitorDates.firstOrNull { it.nomisPersonId == visitorId }?.lastApprovedDate
+      lastApprovedDateByVisitorDatesList.add(VisitorLastApprovedDateDto(visitorId, lastApprovedDate))
+    }
+
+    LOG.debug("getLastApprovedVisitDatesByVisitor called for prisoner - {}, with visitorIds - {}, results - {}", prisonerId, visitorIds, lastApprovedDateByVisitorDatesList)
+    return lastApprovedDateByVisitorDatesList
   }
 }
