@@ -61,13 +61,18 @@ dependencies {
   testImplementation("org.junit-pioneer:junit-pioneer:2.3.0")
 }
 
+kotlin {
+  jvmToolchain(25)
+}
+
 java {
-  toolchain.languageVersion.set(JavaLanguageVersion.of(21))
+  sourceCompatibility = JavaVersion.VERSION_24
+  targetCompatibility = JavaVersion.VERSION_24
 }
 
 tasks {
   withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-    compilerOptions.jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21
+    compilerOptions.jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_24
   }
 }
 
@@ -77,14 +82,6 @@ allOpen {
 
 tasks.test {
   jvmArgs = listOf("-Xmx2g", "-XX:MaxMetaspaceSize=512m")
-}
-
-tasks {
-  withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-    compilerOptions {
-      jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
-    }
-  }
 }
 
 dependencyCheck {
