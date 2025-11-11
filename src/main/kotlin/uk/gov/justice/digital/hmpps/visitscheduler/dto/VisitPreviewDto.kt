@@ -10,40 +10,40 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import java.time.LocalDateTime
 
 data class VisitPreviewDto(
-  @Schema(required = true, description = "Prisoner Number", example = "A1234AA")
-  @NotNull
+  @param:Schema(required = true, description = "Prisoner Number", example = "A1234AA")
+  @field:NotNull
   val prisonerId: String,
 
-  @Schema(description = "First name of the prisoner", example = "John", required = true)
-  @NotNull
+  @param:Schema(description = "First name of the prisoner", example = "John", required = true)
+  @field:NotNull
   val firstName: String,
 
-  @Schema(description = "Last name of the prisoner", example = "Smith", required = true)
-  @NotNull
+  @param:Schema(description = "Last name of the prisoner", example = "Smith", required = true)
+  @field:NotNull
   val lastName: String,
 
-  @Schema(description = "Visit reference", example = "dp-we-rs-te", required = true)
-  @NotNull
+  @param:Schema(description = "Visit reference", example = "dp-we-rs-te", required = true)
+  @field:NotNull
   val visitReference: String,
 
-  @Schema(description = "Number of visitors added to the visit", example = "10", required = true)
-  @NotNull
+  @param:Schema(description = "Number of visitors added to the visit", example = "10", required = true)
+  @field:NotNull
   val visitorCount: Int,
 
-  @Schema(description = "Timeslot for the visit", required = true)
-  @NotNull
+  @param:Schema(description = "Timeslot for the visit", required = true)
+  @field:NotNull
   val visitTimeSlot: SessionTimeSlotDto,
 
-  @Schema(description = "Date the visit was first booked or migrated", example = "2018-12-01T13:45:00", required = true)
+  @param:Schema(description = "Date the visit was first booked or migrated", example = "2018-12-01T13:45:00", required = true)
   val firstBookedDateTime: LocalDateTime,
 
-  @Schema(description = "Visit Restriction", example = "OPEN", required = true)
+  @param:Schema(description = "Visit Restriction", example = "OPEN", required = true)
   val visitRestriction: VisitRestriction,
 
-  @Schema(description = "Visit Status", example = "BOOKED", required = true)
+  @param:Schema(description = "Visit Status", example = "BOOKED", required = true)
   val visitStatus: VisitStatus,
 
-  @Schema(description = "Visit Sub Status", example = "REQUESTED", required = true)
+  @param:Schema(description = "Visit Sub Status", example = "REQUESTED", required = true)
   val visitSubStatus: VisitSubStatus,
 ) {
   constructor(visit: Visit, visitFirstBookedDateTime: LocalDateTime?) :

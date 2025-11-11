@@ -4,8 +4,8 @@ import jakarta.validation.constraints.NotNull
 import java.time.LocalDate
 
 data class PrisonDateBlockedDto(
-  @NotNull
+  @field:NotNull
   val prisonCode: String,
-  @NotNull
+  @field:NotNull
   val visitDate: LocalDate,
 )

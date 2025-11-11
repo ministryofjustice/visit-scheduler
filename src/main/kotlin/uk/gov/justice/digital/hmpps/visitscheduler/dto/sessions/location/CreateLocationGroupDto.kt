@@ -7,16 +7,16 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
 
 data class CreateLocationGroupDto(
-  @Schema(description = "Group name", example = "Main group", required = true)
+  @param:Schema(description = "Group name", example = "Main group", required = true)
   @field:NotBlank
   val name: String,
 
-  @JsonProperty("prisonId")
-  @Schema(description = "prisonId", example = "MDI", required = true)
+  @param:JsonProperty("prisonId")
+  @param:Schema(description = "prisonId", example = "MDI", required = true)
   @field:NotBlank
   val prisonCode: String,
 
-  @Schema(description = "list of locations for group", required = false)
+  @param:Schema(description = "list of locations for group", required = false)
   @field:Valid
   @field:NotEmpty
   val locations: List<PermittedSessionLocationDto> = listOf(),

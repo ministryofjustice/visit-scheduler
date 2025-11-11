@@ -7,10 +7,10 @@ import jakarta.validation.constraints.NotNull
 import java.time.LocalDate
 
 data class PrisonerRestrictionChangeNotificationDto(
-  @NotBlank
+  @field:NotBlank
   val prisonerNumber: String,
-  @NotNull
+  @field:NotNull
   val validFromDate: LocalDate,
-  @JsonInclude(Include.NON_NULL)
+  @param:JsonInclude(Include.NON_NULL)
   val validToDate: LocalDate? = null,
 )

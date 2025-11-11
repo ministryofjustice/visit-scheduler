@@ -20,11 +20,11 @@ import java.time.Duration.ofSeconds
 
 @Configuration
 class WebClientConfiguration(
-  @Value("\${prison.api.url}") private val prisonApiBaseUrl: String,
-  @Value("\${non-associations.api.url}") private val nonAssociationsApiBaseUrl: String,
-  @Value("\${prisoner.offender.search.url}") private val prisonOffenderSearchBaseUrl: String,
-  @Value("\${prisoner-contact.registry.url}") private val prisonContactRegistryUrl: String,
-  @Value("\${activities.api.url}") private val activitiesApiBaseUrl: String,
+  @param:Value("\${prison.api.url}") private val prisonApiBaseUrl: String,
+  @param:Value("\${non-associations.api.url}") private val nonAssociationsApiBaseUrl: String,
+  @param:Value("\${prisoner.offender.search.url}") private val prisonOffenderSearchBaseUrl: String,
+  @param:Value("\${prisoner-contact.registry.url}") private val prisonContactRegistryUrl: String,
+  @param:Value("\${activities.api.url}") private val activitiesApiBaseUrl: String,
 ) {
   companion object {
     const val CLIENT_REGISTRATION_ID = "hmpps-apis"

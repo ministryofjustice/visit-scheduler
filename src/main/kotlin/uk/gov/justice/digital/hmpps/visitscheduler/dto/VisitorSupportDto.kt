@@ -8,7 +8,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Appl
 
 @Schema(description = "Visitor support")
 data class VisitorSupportDto(
-  @Schema(description = "Support text description", example = "visually impaired assistance", required = true)
+  @param:Schema(description = "Support text description", example = "visually impaired assistance", required = true)
   @Size(min = 3, max = 512)
   @NotBlank
   val description: String,

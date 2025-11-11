@@ -7,15 +7,15 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.SessionIncentiveLevelGroup
 
 data class SessionIncentiveLevelGroupDto(
-  @JsonProperty("name")
-  @Schema(description = "Group name", example = "Enhanced", required = true)
+  @param:JsonProperty("name")
+  @param:Schema(description = "Group name", example = "Enhanced", required = true)
   @field:NotBlank
   val name: String,
 
-  @Schema(description = "Reference", example = "v9-d7-ed-7u", required = true)
+  @param:Schema(description = "Reference", example = "v9-d7-ed-7u", required = true)
   val reference: String,
 
-  @Schema(description = "list of allowed incentive levels for group", required = false)
+  @param:Schema(description = "list of allowed incentive levels for group", required = false)
   val incentiveLevels: List<IncentiveLevel> = listOf(),
 ) {
   constructor(incentiveLevelGroup: SessionIncentiveLevelGroup) : this(

@@ -5,8 +5,8 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 class ReportingTaskConfiguration(
-  @Value("\${task.reporting.visit-counts-report.enabled:false}") val visitCountsReportingEnabled: Boolean,
-  @Value("\${task.reporting.overbooked-sessions-report.enabled:false}") val overbookedSessionsReportingEnabled: Boolean,
+  @param:Value("\${task.reporting.visit-counts-report.enabled:false}") val visitCountsReportingEnabled: Boolean,
+  @param:Value("\${task.reporting.overbooked-sessions-report.enabled:false}") val overbookedSessionsReportingEnabled: Boolean,
 ) {
   companion object {
     const val LOCK_AT_LEAST_FOR = "PT60M"

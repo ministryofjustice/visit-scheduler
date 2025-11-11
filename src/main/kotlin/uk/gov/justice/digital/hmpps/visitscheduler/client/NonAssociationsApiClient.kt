@@ -13,8 +13,8 @@ import java.time.Duration
 
 @Component
 class NonAssociationsApiClient(
-  @Qualifier("nonAssociationsApiWebClient") private val webClient: WebClient,
-  @Value("\${prison.api.timeout:60s}") private val apiTimeout: Duration,
+  @param:Qualifier("nonAssociationsApiWebClient") private val webClient: WebClient,
+  @param:Value("\${prison.api.timeout:60s}") private val apiTimeout: Duration,
 ) {
 
   companion object {

@@ -4,18 +4,18 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 
 data class PrisonerAlertCreatedUpdatedNotificationDto(
-  @NotBlank
+  @field:NotBlank
   val prisonerNumber: String,
 
-  @NotBlank
+  @field:NotBlank
   val description: String,
 
-  @NotNull
+  @field:NotNull
   val alertsAdded: List<String>,
 
-  @NotNull
+  @field:NotNull
   val alertsRemoved: List<String>,
 
-  @NotNull
+  @field:NotNull
   val activeAlerts: List<String>,
 )

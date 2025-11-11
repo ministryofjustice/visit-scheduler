@@ -17,8 +17,8 @@ import java.time.Duration
 
 @Component
 class PrisonerOffenderSearchClient(
-  @Qualifier("prisonerOffenderSearchWebClient") private val webClient: WebClient,
-  @Value("\${prisoner.offender.search.timeout:10s}") private val apiTimeout: Duration,
+  @param:Qualifier("prisonerOffenderSearchWebClient") private val webClient: WebClient,
+  @param:Value("\${prisoner.offender.search.timeout:10s}") private val apiTimeout: Duration,
 ) {
 
   companion object {
