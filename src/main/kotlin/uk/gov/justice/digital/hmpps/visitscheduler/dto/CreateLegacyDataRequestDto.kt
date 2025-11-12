@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull
 
 data class CreateLegacyDataRequestDto(
 
-  @Schema(description = "NOMIS lead visitor ID", example = "1234556", required = true)
+  @param:Schema(description = "NOMIS lead visitor ID", example = "1234556", required = true)
   @field:NotNull
   val leadVisitorId: Long,
 )

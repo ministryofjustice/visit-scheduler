@@ -5,11 +5,11 @@ import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 
 data class MigratedCancelVisitDto(
-  @Schema(description = "Outcome - status and text", required = true)
+  @param:Schema(description = "Outcome - status and text", required = true)
   @field:Valid
   val cancelOutcome: OutcomeDto,
 
-  @Schema(description = "Username for user who actioned this request", required = true)
+  @param:Schema(description = "Username for user who actioned this request", required = true)
   @field:NotBlank
   val actionedBy: String,
 )

@@ -5,8 +5,8 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 class FlagVisitTaskConfiguration(
-  @Value("\${task.flag-visits.enabled:false}") val flagVisitsEnabled: Boolean,
-  @Value("\${task.flag-visits.number-of-days-ahead:30}") val numberOfDaysAhead: Int,
+  @param:Value("\${task.flag-visits.enabled:false}") val flagVisitsEnabled: Boolean,
+  @param:Value("\${task.flag-visits.number-of-days-ahead:30}") val numberOfDaysAhead: Int,
 ) {
   companion object {
     const val LOCK_AT_LEAST_FOR = "PT4H"

@@ -13,34 +13,34 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import java.time.LocalDate
 
 data class CreateApplicationDto(
-  @Schema(description = "Prisoner Id", example = "AF34567G", required = true)
+  @param:Schema(description = "Prisoner Id", example = "AF34567G", required = true)
   @field:NotBlank
   val prisonerId: String,
-  @Schema(description = "Session template reference", example = "v9d.7ed.7u", required = true)
+  @param:Schema(description = "Session template reference", example = "v9d.7ed.7u", required = true)
   @field:NotBlank
   val sessionTemplateReference: String,
-  @Schema(description = "The date for the visit", example = "2018-12-01", required = true)
+  @param:Schema(description = "The date for the visit", example = "2018-12-01", required = true)
   @field:NotNull
   val sessionDate: LocalDate,
-  @Schema(description = "Visit Restriction", example = "OPEN", required = true)
+  @param:Schema(description = "Visit Restriction", example = "OPEN", required = true)
   @field:NotNull
   val applicationRestriction: SessionRestriction,
-  @Schema(description = "Contact associated with the visit", required = false)
+  @param:Schema(description = "Contact associated with the visit", required = false)
   @field:Valid
   val visitContact: ContactDto?,
-  @Schema(description = "List of visitors associated with the visit", required = true)
+  @param:Schema(description = "List of visitors associated with the visit", required = true)
   @field:NotEmpty
   @field:VisitorContactValidation
   var visitors: Set<@Valid VisitorDto>,
-  @Schema(description = "additional support associated with the visit", required = false)
-  @Valid
+  @param:Schema(description = "additional support associated with the visit", required = false)
+  @param:Valid
   var visitorSupport: ApplicationSupportDto? = null,
-  @Schema(description = "Username for user who actioned this request", required = true)
+  @param:Schema(description = "Username for user who actioned this request", required = true)
   val actionedBy: String,
-  @Schema(description = "User type", example = "STAFF", required = true)
+  @param:Schema(description = "User type", example = "STAFF", required = true)
   @field:NotNull
   val userType: UserType,
-  @Schema(description = "allow over booking", required = false)
+  @param:Schema(description = "allow over booking", required = false)
   @field:NotNull
   val allowOverBooking: Boolean = false,
 )

@@ -36,7 +36,7 @@ import java.time.LocalDate
 class ApplicationValidationService(
   private val prisonerSessionValidationService: PrisonerSessionValidationService,
   private val prisonerService: PrisonerService,
-  @Lazy
+  @param:Lazy
   private val slotCapacityService: SlotCapacityService,
   private val applicationService: ApplicationService,
   private val visitRepository: VisitRepository,

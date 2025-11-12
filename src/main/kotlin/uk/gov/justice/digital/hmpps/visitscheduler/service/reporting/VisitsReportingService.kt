@@ -18,7 +18,7 @@ class VisitsReportingService(
   private val visitCountsByDateReportService: VisitCountsByDateReportService,
   private val overbookedVisitsReportService: OverbookedSessionsReportService,
   private val vsipReportingRepository: VSIPReportingRepository,
-  @Value("\${task.overbooked-sessions-report.futureDays:7}") private val maxDays: Long,
+  @param:Value("\${task.overbooked-sessions-report.futureDays:7}") private val maxDays: Long,
 ) {
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)

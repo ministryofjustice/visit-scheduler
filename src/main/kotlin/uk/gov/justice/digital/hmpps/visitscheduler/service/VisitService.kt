@@ -48,7 +48,7 @@ class VisitService(
   private val eventAuditService: VisitEventAuditService,
   private val snsService: SnsService,
   private val updateVisitSummaryUtil: UpdateVisitSummaryUtil,
-  @Value("\${feature.request-booking-enabled:false}") private val requestBookingFeatureEnabled: Boolean,
+  @param:Value("\${feature.request-booking-enabled:false}") private val requestBookingFeatureEnabled: Boolean,
 ) {
 
   @Lazy

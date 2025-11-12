@@ -47,7 +47,7 @@ import java.time.temporal.ChronoUnit
 class TelemetryClientService(
   private val telemetryClient: TelemetryClient,
   private val objectMapper: ObjectMapper,
-  @Value("\${feature.request-booking-enabled:false}")
+  @param:Value("\${feature.request-booking-enabled:false}")
   private val requestBookingFeatureEnabled: Boolean,
 ) {
 

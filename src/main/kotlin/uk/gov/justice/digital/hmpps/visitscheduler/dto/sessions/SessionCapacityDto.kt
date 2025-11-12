@@ -6,10 +6,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionT
 
 @Schema(description = "Session Capacity")
 data class SessionCapacityDto(
-  @Schema(description = "closed capacity", example = "10", required = true)
+  @param:Schema(description = "closed capacity", example = "10", required = true)
   @field:Min(0)
   val closed: Int,
-  @Schema(description = "open capacity", example = "50", required = true)
+  @param:Schema(description = "open capacity", example = "50", required = true)
   @field:Min(0)
   val open: Int,
 ) {

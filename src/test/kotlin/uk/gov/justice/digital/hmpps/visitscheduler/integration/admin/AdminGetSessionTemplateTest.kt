@@ -21,7 +21,7 @@ import java.time.format.DateTimeFormatter
 
 @DisplayName("Get /visit-session-templates")
 class AdminGetSessionTemplateTest(
-  @Autowired private val repository: TestSessionTemplateRepository,
+  @param:Autowired private val repository: TestSessionTemplateRepository,
 ) : IntegrationTestBase() {
 
   private val adminRole = listOf("ROLE_VISIT_SCHEDULER_CONFIG")

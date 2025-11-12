@@ -14,8 +14,8 @@ import java.time.Duration
 
 @Component
 class PrisonerContactRegistryClient(
-  @Qualifier("prisonerContactRegistryWebClient") private val webClient: WebClient,
-  @Value("\${prisoner-contact.registry.timeout:10s}") private val apiTimeout: Duration,
+  @param:Qualifier("prisonerContactRegistryWebClient") private val webClient: WebClient,
+  @param:Value("\${prisoner-contact.registry.timeout:10s}") private val apiTimeout: Duration,
 ) {
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)

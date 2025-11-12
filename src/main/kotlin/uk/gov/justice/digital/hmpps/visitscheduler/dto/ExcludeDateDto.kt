@@ -7,11 +7,11 @@ import java.time.LocalDate
 
 @Schema(description = "Prison exclude date")
 data class ExcludeDateDto(
-  @Valid
-  @Schema(description = "exclude date", required = true)
-  @FutureOrPresent
+  @param:Valid
+  @param:Schema(description = "exclude date", required = true)
+  @param:FutureOrPresent
   val excludeDate: LocalDate,
 
-  @Schema(description = "actioned by", required = true)
+  @param:Schema(description = "actioned by", required = true)
   val actionedBy: String,
 )

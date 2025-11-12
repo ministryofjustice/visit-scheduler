@@ -47,7 +47,7 @@ class ApplicationService(
   private val telemetryClientService: TelemetryClientService,
   private val sessionTemplateService: SessionTemplateService,
   private val prisonsService: PrisonsService,
-  @Value("\${expired.applications.validity-minutes:10}") private val expiredPeriodMinutes: Int,
+  @param:Value("\${expired.applications.validity-minutes:10}") private val expiredPeriodMinutes: Int,
 ) {
 
   @Lazy

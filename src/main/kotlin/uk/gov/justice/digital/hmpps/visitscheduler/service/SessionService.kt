@@ -49,9 +49,9 @@ class SessionService(
   private val prisonsService: PrisonsService,
   private val applicationService: ApplicationService,
   private val prisonerSessionValidationService: PrisonerSessionValidationService,
-  @Value("\${policy.session.double-booking.filter:false}")
+  @param:Value("\${policy.session.double-booking.filter:false}")
   private val policyFilterDoubleBooking: Boolean,
-  @Value("\${policy.session.non-association.filter:false}")
+  @param:Value("\${policy.session.non-association.filter:false}")
   private val policyFilterNonAssociation: Boolean,
 ) {
 

@@ -37,6 +37,7 @@ jobs:
     secrets: inherit
     with:
       localstack-tag: "4"
+      java-version: '25'
       postgres-tag: "17"
       postgres-db: visit_scheduler
       postgres-username: visit_scheduler

@@ -27,10 +27,10 @@ import java.time.LocalDate
 
 @DisplayName("Data base test")
 open class DataBaseTest(
-  @Autowired val testVisitRepository: TestVisitRepository,
-  @Autowired val testSessionLocationGroupRepository: TestSessionLocationGroupRepository,
-  @Autowired val testTemplateRepository: TestSessionTemplateRepository,
-  @Autowired val testApplicationRepository: TestApplicationRepository,
+  @param:Autowired val testVisitRepository: TestVisitRepository,
+  @param:Autowired val testSessionLocationGroupRepository: TestSessionLocationGroupRepository,
+  @param:Autowired val testTemplateRepository: TestSessionTemplateRepository,
+  @param:Autowired val testApplicationRepository: TestApplicationRepository,
 ) : IntegrationTestBase() {
 
   private lateinit var inCompleteApplication: Application

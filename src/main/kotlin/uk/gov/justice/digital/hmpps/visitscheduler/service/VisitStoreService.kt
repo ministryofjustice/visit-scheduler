@@ -42,9 +42,9 @@ class VisitStoreService(
   private val sessionSlotService: SessionSlotService,
   private val applicationValidationService: ApplicationValidationService,
   private val applicationService: ApplicationService,
-  @Autowired private val visitDtoBuilder: VisitDtoBuilder,
-  @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int,
-  @Value("\${feature.request-booking-enabled:false}") private val requestBookingFeatureEnabled: Boolean,
+  @param:Autowired private val visitDtoBuilder: VisitDtoBuilder,
+  @param:Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int,
+  @param:Value("\${feature.request-booking-enabled:false}") private val requestBookingFeatureEnabled: Boolean,
 ) {
 
   @Lazy
