@@ -21,7 +21,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventAttributeType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SupportedCourtVideoAppointmentCategoryCode
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
@@ -63,7 +62,7 @@ class CourtVideoAppointmentUpdatedVisitNotificationControllerTest : Notification
   fun `when court video appointment is updated then existing flagged visits are un-flagged and future booked visits are flagged and saved`() {
     // Given
     val activitiesApiResponse = ActivitiesAppointmentInstanceDetailsDto(
-      categoryCode = SupportedCourtVideoAppointmentCategoryCode.VLPM.toString(),
+      categoryCode = "VLPM",
       appointmentDate = LocalDate.now().plusDays(1),
       startTime = "12:00",
       endTime = "16:00",
