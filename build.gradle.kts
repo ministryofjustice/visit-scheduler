@@ -3,7 +3,7 @@ plugins {
   kotlin("plugin.spring") version "2.2.21"
   kotlin("plugin.jpa") version "2.2.21"
   idea
-  id("org.owasp.dependencycheck") version "12.1.8"
+  id("org.owasp.dependencycheck") version "12.1.9"
 }
 
 springBoot {
@@ -28,9 +28,9 @@ dependencies {
 
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8")
-  implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.21.0")
+  implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.22.0")
 
-  implementation("org.springframework.data:spring-data-commons:3.5.5")
+  implementation("org.springframework.data:spring-data-commons:3.5.6")
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:2.8.14")
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14")
   implementation("org.springdoc:springdoc-openapi-starter-common:2.8.14")
