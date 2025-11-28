@@ -32,6 +32,12 @@ class PrisonUserClient(
   @Column(name = "user_type")
   val userType: UserType,
 
+  @Column(name = "policy_notice_days_min")
+  val policyNoticeDaysMin: Int,
+
+  @Column(name = "policy_notice_days_max")
+  val policyNoticeDaysMax: Int,
+
   @Column(name = "active")
   var active: Boolean,
 

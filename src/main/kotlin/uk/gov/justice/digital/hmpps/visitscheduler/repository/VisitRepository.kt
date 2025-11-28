@@ -450,11 +450,12 @@ interface VisitRepository :
     "SELECT v.* " +
       "FROM visit v " +
       "INNER JOIN prison p ON p.id = v.prison_id " +
+      "INNER JOIN prison_user_client pc ON p.id = pc.prison_id " +
       "INNER JOIN session_slot sl ON sl.id = v.session_slot_id " +
       "WHERE v.visit_status = 'BOOKED' " +
       "AND v.visit_sub_status = 'REQUESTED' " +
-      "AND sl.slot_start >= NOW() AND " +
-      "sl.slot_date <= (CURRENT_DATE + p.policy_notice_days_min + 1)", // +1 here to handle 0 day booking window (E.g. Monday rejects Sunday, NOT Monday).
+      "AND pc.user_type = 'PUBLIC' " +
+      "AND sl.slot_date <= (CURRENT_DATE + pc.policy_notice_days_min + 1)", // +1 here to handle 0 day booking window (E.g. Monday rejects Sunday, NOT Monday).
     nativeQuery = true,
   )
   fun findAllVisitRequestsDueForAutoRejection(): List<Visit>
