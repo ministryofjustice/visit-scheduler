@@ -105,7 +105,7 @@ class SessionService(
     }
 
     val prison = prisonsService.findPrisonByCode(prisonCode)
-    val dateRange = getDateRange(prison, minOverride, maxOverride)
+    val dateRange = getDateRange(prison, minOverride, maxOverride, userType)
 
     return getVisitSessions(
       prison = prison,
@@ -271,12 +271,14 @@ class SessionService(
     prison: Prison,
     minOverride: Int? = null,
     maxOverride: Int? = null,
+    userType: UserType,
   ): DateRange {
     val today = LocalDate.now()
 
     // add 1 to the policyNoticeDaysMin to ensure we are adding whole days
-    val min = minOverride ?: (prison.policyNoticeDaysMin.plus(1))
-    val max = maxOverride ?: prison.policyNoticeDaysMax
+    val client = prison.clients.find { it.userType == userType }
+    val min = minOverride ?: (client?.policyNoticeDaysMin?.plus(1)) ?: 2
+    val max = maxOverride ?: client?.policyNoticeDaysMax ?: 28
 
     val requestedBookableStartDate = today.plusDays(min.toLong())
     val requestedBookableEndDate = today.plusDays(max.toLong())
