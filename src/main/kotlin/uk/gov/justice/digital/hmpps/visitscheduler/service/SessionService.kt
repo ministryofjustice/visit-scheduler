@@ -27,6 +27,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionT
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionSlotRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonConfigService.Companion.DEFAULT_BOOKING_MAX_DAYS
+import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonConfigService.Companion.DEFAULT_BOOKING_MIN_DAYS
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionDatesUtil
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -277,8 +279,8 @@ class SessionService(
 
     // add 1 to the policyNoticeDaysMin to ensure we are adding whole days
     val client = prison.clients.find { it.userType == userType }
-    val min = minOverride ?: (client?.policyNoticeDaysMin?.plus(1)) ?: 2
-    val max = maxOverride ?: client?.policyNoticeDaysMax ?: 28
+    val min = minOverride ?: (client?.policyNoticeDaysMin?.plus(1)) ?: DEFAULT_BOOKING_MIN_DAYS
+    val max = maxOverride ?: client?.policyNoticeDaysMax ?: DEFAULT_BOOKING_MAX_DAYS
 
     val requestedBookableStartDate = today.plusDays(min.toLong())
     val requestedBookableEndDate = today.plusDays(max.toLong())

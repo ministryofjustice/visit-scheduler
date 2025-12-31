@@ -174,6 +174,34 @@ class PrisonEntityHelper(
     return prison!!
   }
 
+  @Transactional(propagation = REQUIRES_NEW)
+  fun create(
+    prisonCode: String = "MDI",
+    clients: List<PrisonUserClientDto>,
+  ): Prison {
+    var prison = prisonRepository.findByCode(prisonCode)
+    if (prison == null) {
+      prison = prisonRepository.saveAndFlush(
+        createPrison(
+          prisonCode = prisonCode,
+          activePrison = true,
+        ),
+      )
+
+      clients.forEach { client ->
+        createPrisonUserClient(
+          prison = prison,
+          active = true,
+          policyNoticeDaysMin = client.policyNoticeDaysMin,
+          policyNoticeDaysMax = client.policyNoticeDaysMax,
+          userType = client.userType,
+        )
+      }
+    }
+
+    return prison!!
+  }
+
   private fun createPrisonUserClient(
     prison: Prison,
     active: Boolean,
