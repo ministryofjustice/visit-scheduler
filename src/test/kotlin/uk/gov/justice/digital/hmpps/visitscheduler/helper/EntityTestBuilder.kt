@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.helper
 
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonUserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
@@ -24,6 +25,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.Permitt
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.SessionLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.UpdateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonUserClient
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplateUserClient
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
@@ -43,7 +45,19 @@ fun prison(
   maxChildVisitors: Int = 3,
   adultAgeYears: Int = 18,
   isActive: Boolean = true,
-): Prison = Prison(code = prisonCode, active = isActive, policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears)
+  clients: List<PrisonUserClientDto> = listOf(
+    PrisonUserClientDto(policyNoticeDaysMin, policyNoticeDaysMax, UserType.STAFF, true),
+    PrisonUserClientDto(policyNoticeDaysMin, policyNoticeDaysMax, UserType.PUBLIC, true),
+  ),
+): Prison {
+  val prison = Prison(code = prisonCode, active = isActive, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears)
+  clients.forEach { client ->
+    PrisonUserClient(prisonId = prison.id, prison = prison, userType = client.userType, policyNoticeDaysMin = client.policyNoticeDaysMin, policyNoticeDaysMax = client.policyNoticeDaysMax, active = true).also {
+      prison.clients.add(it)
+    }
+  }
+  return prison
+}
 
 fun sessionTemplate(
   name: String = "sessionTemplate_",
@@ -122,7 +136,10 @@ fun sessionTemplate(
   userTypes: List<UserType> = listOf(UserType.STAFF, UserType.PUBLIC),
   visitOrderRestrictionType: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
 ): SessionTemplate {
-  val prison = Prison(code = prisonCode, active = isActive, policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears)
+  val prison = Prison(code = prisonCode, active = isActive, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears)
+  val staffClient = PrisonUserClient(prisonId = prison.id, prison = prison, userType = UserType.STAFF, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax, active = true)
+  val publicClient = PrisonUserClient(prisonId = prison.id, prison = prison, userType = UserType.PUBLIC, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax, active = true)
+  prison.clients.addAll(listOf(staffClient, publicClient))
 
   var sessionTemplate = SessionTemplate(
     name = name + dayOfWeek,
