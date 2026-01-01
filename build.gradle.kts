@@ -1,7 +1,7 @@
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "9.2.0"
-  kotlin("plugin.spring") version "2.2.21"
-  kotlin("plugin.jpa") version "2.2.21"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "9.3.0"
+  kotlin("plugin.spring") version "2.3.0"
+  kotlin("plugin.jpa") version "2.3.0"
   idea
   id("org.owasp.dependencycheck") version "12.1.9"
 }
@@ -31,9 +31,9 @@ dependencies {
   implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.23.0")
 
   implementation("org.springframework.data:spring-data-commons:3.5.7")
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:2.8.14")
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14")
-  implementation("org.springdoc:springdoc-openapi-starter-common:2.8.14")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:2.8.15")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.15")
+  implementation("org.springdoc:springdoc-openapi-starter-common:2.8.15")
 
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
   implementation("net.javacrumbs.shedlock:shedlock-spring:6.10.0")
@@ -46,17 +46,17 @@ dependencies {
 
   annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
-  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.36")
+  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.37")
   testImplementation("com.github.tomakehurst:wiremock-jre8-standalone:3.0.1")
   testImplementation("org.mockito:mockito-inline:5.2.0")
-  testImplementation("org.testcontainers:localstack:1.21.3")
+  testImplementation("org.testcontainers:localstack:1.21.4")
   testImplementation("org.awaitility:awaitility-kotlin:4.3.0")
   testImplementation("javax.xml.bind:jaxb-api:2.4.0-b180830.0359")
   testImplementation("org.springframework.boot:spring-boot-starter-test")
   testImplementation("io.jsonwebtoken:jjwt:0.13.0")
   testImplementation("org.springframework.security:spring-security-test")
-  testImplementation("org.testcontainers:postgresql:1.21.3")
-  testImplementation("com.amazonaws:aws-java-sdk-s3:1.12.795")
+  testImplementation("org.testcontainers:postgresql:1.21.4")
+  testImplementation("com.amazonaws:aws-java-sdk-s3:1.12.797")
   testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.20.1")
   testImplementation("org.junit-pioneer:junit-pioneer:2.3.0")
 }
