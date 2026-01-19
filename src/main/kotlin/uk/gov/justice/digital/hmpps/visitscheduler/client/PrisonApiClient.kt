@@ -18,7 +18,7 @@ import java.time.Duration
 @Component
 class PrisonApiClient(
   @param:Qualifier("prisonApiWebClient") private val webClient: WebClient,
-  @param:Value("\${prison.api.timeout:60s}") private val apiTimeout: Duration,
+  @param:Value("\${prison.api.timeout:10s}") private val apiTimeout: Duration,
 ) {
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)

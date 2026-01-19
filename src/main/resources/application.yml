@@ -162,3 +162,8 @@ migrate:
     months:
       in:
         future: 6
+
+api:
+  timeout: 10s
+  health:
+    timeout: 2s
