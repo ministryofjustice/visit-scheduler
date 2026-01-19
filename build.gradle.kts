@@ -36,8 +36,8 @@ dependencies {
   implementation("org.springdoc:springdoc-openapi-starter-common:2.8.15")
 
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-  implementation("net.javacrumbs.shedlock:shedlock-spring:6.10.0")
-  implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:6.10.0")
+  implementation("net.javacrumbs.shedlock:shedlock-spring:7.5.0")
+  implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:7.5.0")
   implementation("org.freemarker:freemarker:2.3.34")
 
   runtimeOnly("org.postgresql:postgresql:42.7.8")
