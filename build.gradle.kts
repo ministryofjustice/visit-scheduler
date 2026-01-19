@@ -32,7 +32,7 @@ dependencies {
 
   implementation("org.springframework.data:spring-data-commons:3.5.7")
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:2.8.15")
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.15")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1")
   implementation("org.springdoc:springdoc-openapi-starter-common:2.8.15")
 
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
