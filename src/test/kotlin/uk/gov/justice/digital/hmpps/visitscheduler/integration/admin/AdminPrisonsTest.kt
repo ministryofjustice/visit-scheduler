@@ -18,6 +18,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.DEACTIVATE_P
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.PRISON
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.PRISON_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonUserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
@@ -187,7 +188,12 @@ class AdminPrisonsTest : IntegrationTestBase() {
   @Test
   fun `create prison`() {
     // Given
-    val clients = listOf(UserClientDto(PUBLIC, true), UserClientDto(STAFF, false))
+    val min = 2
+    val max = 28
+    val clients = listOf(
+      PrisonUserClientDto(userType = PUBLIC, policyNoticeDaysMin = min, policyNoticeDaysMax = max, active = true),
+      PrisonUserClientDto(userType = STAFF, policyNoticeDaysMin = min, policyNoticeDaysMax = max, active = false),
+    )
     val prisonDto = PrisonEntityHelper.createPrisonDto("AWE", true, clients = clients)
 
     // When

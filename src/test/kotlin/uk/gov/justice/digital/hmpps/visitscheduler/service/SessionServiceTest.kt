@@ -84,7 +84,7 @@ class SessionServiceTest {
   @BeforeEach
   fun beforeEachTestSetup() {
     whenever(prisonerService.getPrisoner(any())).thenReturn(PrisonerDto(prisonerId, "john", "smith", "C", IncentiveLevel.STANDARD, prisonCode))
-    whenever(prisonsService.findPrisonByCode(prisonCode)).thenReturn(PrisonEntityHelper.createPrison(prisonCode, policyNoticeDaysMin = noticeDaysMin, policyNoticeDaysMax = noticeDaysMax))
+    whenever(prisonsService.findPrisonByCode(prisonCode)).thenReturn(PrisonEntityHelper.createPrison(prisonCode))
 
     whenever(prisonerService.getPrisonerHousingLocation(any(), any())).thenReturn(
       PrisonerHousingLocationsDto(
@@ -100,6 +100,10 @@ class SessionServiceTest {
     whenever(
       prisonerService.getPrisoner(any()),
     ).thenReturn(PrisonerDto(prisonerId = prisonerId, firstName = "john", lastName = "smith", category = category, incentiveLevel = incentiveLevel))
+
+    whenever(
+      prisonsService.findPrisonByCode(prisonCode),
+    ).thenReturn(prison(policyNoticeDaysMin = 0, policyNoticeDaysMax = 100))
 
     whenever(
       sessionTemplateRepository.findSessionTemplateMinCapacityBy(

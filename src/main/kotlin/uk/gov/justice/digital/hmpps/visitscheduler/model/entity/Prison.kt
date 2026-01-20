@@ -25,11 +25,6 @@ class Prison(
   @Column(name = "active")
   var active: Boolean,
 
-  @Column(name = "policy_notice_days_min")
-  var policyNoticeDaysMin: Int,
-  @Column(name = "policy_notice_days_max")
-  var policyNoticeDaysMax: Int,
-
   @Column(name = "max_total_visitors")
   var maxTotalVisitors: Int,
   @Column(name = "max_adult_visitors")
@@ -76,8 +71,6 @@ class Prison(
   constructor(dto: PrisonDto) : this(
     code = dto.code,
     active = dto.active,
-    policyNoticeDaysMin = dto.policyNoticeDaysMin,
-    policyNoticeDaysMax = dto.policyNoticeDaysMax,
     maxTotalVisitors = dto.maxTotalVisitors,
     maxAdultVisitors = dto.maxAdultVisitors,
     maxChildVisitors = dto.maxChildVisitors,
