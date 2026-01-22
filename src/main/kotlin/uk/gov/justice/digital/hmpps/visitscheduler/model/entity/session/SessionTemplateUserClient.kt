@@ -10,10 +10,8 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
-import jakarta.persistence.TemporalType
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
-import org.springframework.data.jpa.repository.Temporal
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonUserClient
 import java.time.LocalDateTime
@@ -37,12 +35,10 @@ class SessionTemplateUserClient(
   var active: Boolean,
 
   @CreationTimestamp
-  @Temporal(TemporalType.TIMESTAMP)
   @Column
   val createTimestamp: LocalDateTime? = null,
 
   @UpdateTimestamp
-  @Temporal(TemporalType.TIMESTAMP)
   @Column
   val modifyTimestamp: LocalDateTime? = null,
 ) {

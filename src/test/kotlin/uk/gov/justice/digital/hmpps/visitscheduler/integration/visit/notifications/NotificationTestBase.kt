@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit.notificati
 
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.ArgumentCaptor
 import org.mockito.Captor
 import org.mockito.Mockito
@@ -11,9 +10,6 @@ import org.mockito.kotlin.isNull
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
-import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
@@ -21,7 +17,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.Notific
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitNotificationEventDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitNotificationEventHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.HmppsAuthExtension
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestEventAuditRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitNotificationEventRepository
@@ -34,9 +29,6 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit.MINUTES
 
-@SpringBootTest(webEnvironment = RANDOM_PORT)
-@ActiveProfiles("test")
-@ExtendWith(HmppsAuthExtension::class)
 abstract class NotificationTestBase : IntegrationTestBase() {
 
   @MockitoSpyBean

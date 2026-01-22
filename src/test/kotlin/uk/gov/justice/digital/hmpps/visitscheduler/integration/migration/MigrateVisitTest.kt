@@ -612,7 +612,7 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
 
     // Then
     responseSpec
-      .expectStatus().isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY)
+      .expectStatus().isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT)
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Migration failure: Could not migrate visit")
       .jsonPath("$.developerMessage").value(Matchers.startsWith("Visit more than 6 months in future, will not be migrated!"))
@@ -628,7 +628,7 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
 
     // Then
     responseSpec
-      .expectStatus().isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY)
+      .expectStatus().isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT)
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Migration failure: Could not migrate visit")
       .jsonPath("$.developerMessage").value(Matchers.startsWith("Visit more than 6 months in future, will not be migrated!"))

@@ -331,10 +331,10 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
 
     changeApplicationRequest.visitContact?.let {
       Assertions.assertThat(applicationDto.visitContact!!.name).isEqualTo(it.name)
-      Assertions.assertThat(applicationDto.visitContact!!.telephone).isEqualTo(it.telephone)
+      Assertions.assertThat(applicationDto.visitContact.telephone).isEqualTo(it.telephone)
     } ?: run {
       Assertions.assertThat(applicationDto.visitContact!!.name).isEqualTo(initialApplication.visitContact?.name)
-      Assertions.assertThat(applicationDto.visitContact!!.telephone).isEqualTo(initialApplication.visitContact?.telephone)
+      Assertions.assertThat(applicationDto.visitContact.telephone).isEqualTo(initialApplication.visitContact?.telephone)
     }
 
     val visitorsDtoList = applicationDto.visitors.toList()

@@ -1,7 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.health
 
-import org.springframework.boot.actuate.health.Health
-import org.springframework.boot.actuate.health.HealthIndicator
+import org.springframework.boot.health.contributor.Health
+import org.springframework.boot.health.contributor.HealthIndicator
 import org.springframework.boot.info.BuildProperties
 import org.springframework.stereotype.Component
 
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component
  */
 @Component
 class HealthInfo(buildProperties: BuildProperties) : HealthIndicator {
-  private val version: String = buildProperties.version
+  private val version: String? = buildProperties.version
 
-  override fun health(): Health = Health.up().withDetail("version", version).build()
+  override fun health(): Health = Health.up().withDetail("version", version ?: "VERSION UNKNOWN").build()
 }
