@@ -1,6 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.config
 
-import org.springframework.boot.test.web.reactive.server.WebTestClientBuilderCustomizer
+import org.springframework.boot.webtestclient.autoconfigure.WebTestClientBuilderCustomizer
 import org.springframework.stereotype.Component
 import org.springframework.test.web.reactive.server.WebTestClient.Builder
 import org.springframework.web.reactive.function.client.ClientRequest

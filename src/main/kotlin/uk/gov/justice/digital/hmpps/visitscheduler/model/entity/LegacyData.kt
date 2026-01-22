@@ -6,10 +6,8 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
-import jakarta.persistence.TemporalType
 import org.hibernate.Hibernate
 import org.hibernate.annotations.CreationTimestamp
-import org.springframework.data.jpa.repository.Temporal
 import java.time.LocalDateTime
 
 @Entity
@@ -28,7 +26,6 @@ class LegacyData(
   val leadPersonId: Long?,
 
   @CreationTimestamp
-  @Temporal(TemporalType.TIMESTAMP)
   @Column
   val migrateDateTime: LocalDateTime? = null,
 
