@@ -155,7 +155,7 @@ class VisitSchedulerExceptionHandler(
   }
 
   @ExceptionHandler(VisitNotFoundException::class)
-  fun handleVisitNotFoundException(e: VisitNotFoundException): ResponseEntity<ErrorResponse?>? {
+  fun handleVisitNotFoundException(e: VisitNotFoundException): ResponseEntity<ErrorResponse>? {
     log.debug("Visit not found exception caught: {}", e.message)
     return ResponseEntity
       .status(HttpStatus.NOT_FOUND)
@@ -169,7 +169,7 @@ class VisitSchedulerExceptionHandler(
   }
 
   @ExceptionHandler(CapacityNotFoundException::class)
-  fun handleCapacityNotFoundException(e: CapacityNotFoundException): ResponseEntity<ErrorResponse?>? {
+  fun handleCapacityNotFoundException(e: CapacityNotFoundException): ResponseEntity<ErrorResponse>? {
     log.debug("Capacity not found exception caught: {}", e.message)
     return ResponseEntity
       .status(HttpStatus.NOT_FOUND)
@@ -183,7 +183,7 @@ class VisitSchedulerExceptionHandler(
   }
 
   @ExceptionHandler(OverCapacityException::class)
-  fun handleOverCapacityException(e: OverCapacityException): ResponseEntity<ErrorResponse?>? {
+  fun handleOverCapacityException(e: OverCapacityException): ResponseEntity<ErrorResponse>? {
     log.debug("Over capacity exception caught : {}", e.message)
     return ResponseEntity
       .status(HttpStatus.BAD_REQUEST)
@@ -197,7 +197,7 @@ class VisitSchedulerExceptionHandler(
   }
 
   @ExceptionHandler(TemplateNotFoundException::class)
-  fun handleTemplateNotFoundException(e: TemplateNotFoundException): ResponseEntity<ErrorResponse?>? {
+  fun handleTemplateNotFoundException(e: TemplateNotFoundException): ResponseEntity<ErrorResponse>? {
     log.debug("Template not found exception caught: {}", e.message)
     return ResponseEntity
       .status(HttpStatus.NOT_FOUND)
@@ -211,7 +211,7 @@ class VisitSchedulerExceptionHandler(
   }
 
   @ExceptionHandler(SupportNotFoundException::class)
-  fun handleSupportNotFoundException(e: SupportNotFoundException): ResponseEntity<ErrorResponse?>? {
+  fun handleSupportNotFoundException(e: SupportNotFoundException): ResponseEntity<ErrorResponse>? {
     log.debug("Support not found exception caught: {}", e.message)
     return ResponseEntity
       .status(HttpStatus.BAD_REQUEST)
@@ -225,7 +225,7 @@ class VisitSchedulerExceptionHandler(
   }
 
   @ExceptionHandler(PublishEventException::class)
-  fun handlePublishEventException(e: PublishEventException): ResponseEntity<ErrorResponse?>? {
+  fun handlePublishEventException(e: PublishEventException): ResponseEntity<ErrorResponse>? {
     log.error("Publish event exception caught: {}", e.message)
     val error = ErrorResponse(
       status = HttpStatus.INTERNAL_SERVER_ERROR,
@@ -237,7 +237,7 @@ class VisitSchedulerExceptionHandler(
   }
 
   @ExceptionHandler(ItemNotFoundException::class)
-  fun handleItemNotFoundException(e: ItemNotFoundException): ResponseEntity<ErrorResponse?>? {
+  fun handleItemNotFoundException(e: ItemNotFoundException): ResponseEntity<ErrorResponse>? {
     log.debug("Not found exception caught: {}", e.message)
     return ResponseEntity
       .status(HttpStatus.NOT_FOUND)
@@ -251,7 +251,7 @@ class VisitSchedulerExceptionHandler(
   }
 
   @ExceptionHandler(PrisonNotFoundException::class)
-  fun handlePrisonNotFoundException(e: PrisonNotFoundException): ResponseEntity<ErrorResponse?>? {
+  fun handlePrisonNotFoundException(e: PrisonNotFoundException): ResponseEntity<ErrorResponse>? {
     log.debug("Prison not found exception caught: {}", e.message)
     return ResponseEntity
       .status(HttpStatus.NOT_FOUND)
@@ -265,7 +265,7 @@ class VisitSchedulerExceptionHandler(
   }
 
   @ExceptionHandler(VSiPValidationException::class)
-  fun handleVSiPValidationException(e: VSiPValidationException): ResponseEntity<ValidationErrorResponse?>? {
+  fun handleVSiPValidationException(e: VSiPValidationException): ResponseEntity<ValidationErrorResponse>? {
     log.error("Validation exception", e)
     return ResponseEntity
       .status(HttpStatus.BAD_REQUEST)
@@ -277,7 +277,7 @@ class VisitSchedulerExceptionHandler(
   }
 
   @ExceptionHandler(ApplicationValidationException::class)
-  fun handleApplicationValidationException(e: ApplicationValidationException): ResponseEntity<ApplicationValidationErrorResponse?>? {
+  fun handleApplicationValidationException(e: ApplicationValidationException): ResponseEntity<ApplicationValidationErrorResponse>? {
     log.error("Validation exception", e)
     return ResponseEntity
       .status(HttpStatus.UNPROCESSABLE_ENTITY)
@@ -289,7 +289,7 @@ class VisitSchedulerExceptionHandler(
   }
 
   @ExceptionHandler(java.lang.Exception::class)
-  fun handleException(e: java.lang.Exception): ResponseEntity<ErrorResponse?>? {
+  fun handleException(e: java.lang.Exception): ResponseEntity<ErrorResponse>? {
     log.error("Unexpected exception", e)
     val error = ErrorResponse(
       status = HttpStatus.INTERNAL_SERVER_ERROR,

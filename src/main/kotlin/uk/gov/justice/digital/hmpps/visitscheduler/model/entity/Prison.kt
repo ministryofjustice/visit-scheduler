@@ -9,10 +9,8 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
-import jakarta.persistence.TemporalType
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
-import org.springframework.data.jpa.repository.Temporal
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
 import java.time.LocalDateTime
 
@@ -40,12 +38,10 @@ class Prison(
   var adultAgeYears: Int,
 
   @CreationTimestamp
-  @Temporal(TemporalType.TIMESTAMP)
   @Column
   val createTimestamp: LocalDateTime? = null,
 
   @UpdateTimestamp
-  @Temporal(TemporalType.TIMESTAMP)
   @Column
   val modifyTimestamp: LocalDateTime? = null,
 
