@@ -1,9 +1,9 @@
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "10.0.0"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "10.0.1"
   kotlin("plugin.spring") version "2.3.0"
   kotlin("plugin.jpa") version "2.3.0"
   idea
-  id("org.owasp.dependencycheck") version "12.1.9"
+  id("org.owasp.dependencycheck") version "12.2.0"
 }
 
 springBoot {
@@ -32,9 +32,9 @@ dependencies {
 
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8")
-  implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.23.0")
+  implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.24.0")
 
-  implementation("org.springframework.data:spring-data-commons:4.0.1")
+  implementation("org.springframework.data:spring-data-commons:4.0.2")
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:3.0.1")
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1")
   implementation("org.springdoc:springdoc-openapi-starter-common:3.0.1")
@@ -44,7 +44,7 @@ dependencies {
   implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:6.10.0")
   implementation("org.freemarker:freemarker:2.3.34")
 
-  runtimeOnly("org.postgresql:postgresql:42.7.8")
+  runtimeOnly("org.postgresql:postgresql:42.7.9")
   runtimeOnly("org.flywaydb:flyway-core")
   runtimeOnly("org.flywaydb:flyway-database-postgresql")
 
@@ -63,7 +63,7 @@ dependencies {
   testImplementation("org.springframework.security:spring-security-test")
   testImplementation("org.testcontainers:postgresql:1.21.4")
   testImplementation("com.amazonaws:aws-java-sdk-s3:1.12.797")
-  testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.20.1")
+  testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.0")
   testImplementation("org.junit-pioneer:junit-pioneer:2.3.0")
 }
 
