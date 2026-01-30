@@ -1,22 +1,17 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.config
 
-import io.netty.resolver.DefaultAddressResolverGroup
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.http.client.reactive.ReactorClientHttpConnector
-import org.springframework.http.codec.ClientCodecConfigurer
 import org.springframework.security.oauth2.client.AuthorizedClientServiceOAuth2AuthorizedClientManager
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProviderBuilder
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository
-import org.springframework.security.oauth2.client.web.reactive.function.client.ServletOAuth2AuthorizedClientExchangeFilterFunction
-import org.springframework.web.reactive.function.client.ExchangeStrategies
 import org.springframework.web.reactive.function.client.WebClient
-import reactor.netty.http.client.HttpClient
-import reactor.netty.resources.ConnectionProvider
-import java.time.Duration.ofSeconds
+import uk.gov.justice.hmpps.kotlin.auth.authorisedWebClient
+import uk.gov.justice.hmpps.kotlin.auth.healthWebClient
+import uk.gov.justice.hmpps.kotlin.auth.service.GlobalPrincipalOAuth2AuthorizedClientService
+import java.time.Duration
 
 @Configuration
 class WebClientConfiguration(
@@ -25,90 +20,64 @@ class WebClientConfiguration(
   @param:Value("\${prisoner.offender.search.url}") private val prisonOffenderSearchBaseUrl: String,
   @param:Value("\${prisoner-contact.registry.url}") private val prisonContactRegistryUrl: String,
   @param:Value("\${activities.api.url}") private val activitiesApiBaseUrl: String,
+  @param:Value("\${api.health.timeout:2s}") val healthTimeout: Duration,
+  @param:Value("\${api.timeout:10s}") val apiTimeout: Duration,
 ) {
   companion object {
     const val CLIENT_REGISTRATION_ID = "hmpps-apis"
   }
 
   @Bean
-  fun prisonApiWebClient(authorizedClientManager: OAuth2AuthorizedClientManager): WebClient {
-    val oauth2Client = getOauth2Client(authorizedClientManager, CLIENT_REGISTRATION_ID)
-    return getWebClient(prisonApiBaseUrl, oauth2Client)
-  }
+  fun prisonApiWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: WebClient.Builder): WebClient = getWebClient(prisonApiBaseUrl, authorizedClientManager, builder)
 
   @Bean
-  fun nonAssociationsApiWebClient(authorizedClientManager: OAuth2AuthorizedClientManager): WebClient {
-    val oauth2Client = getOauth2Client(authorizedClientManager, CLIENT_REGISTRATION_ID)
-    return getWebClient(nonAssociationsApiBaseUrl, oauth2Client)
-  }
+  fun nonAssociationsApiWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: WebClient.Builder): WebClient = getWebClient(nonAssociationsApiBaseUrl, authorizedClientManager, builder)
 
   @Bean
-  fun activitiesApiWebClient(authorizedClientManager: OAuth2AuthorizedClientManager): WebClient {
-    val oauth2Client = getOauth2Client(authorizedClientManager, CLIENT_REGISTRATION_ID)
-    return getWebClient(activitiesApiBaseUrl, oauth2Client)
-  }
+  fun activitiesApiWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: WebClient.Builder): WebClient = getWebClient(activitiesApiBaseUrl, authorizedClientManager, builder)
 
   @Bean
-  fun prisonerOffenderSearchWebClient(authorizedClientManager: OAuth2AuthorizedClientManager): WebClient {
-    val oauth2Client = getOauth2Client(authorizedClientManager, CLIENT_REGISTRATION_ID)
-    return getWebClient(prisonOffenderSearchBaseUrl, oauth2Client)
-  }
+  fun prisonerOffenderSearchWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: WebClient.Builder): WebClient = getWebClient(prisonOffenderSearchBaseUrl, authorizedClientManager, builder)
 
   @Bean
-  fun prisonerContactRegistryWebClient(authorizedClientManager: OAuth2AuthorizedClientManager): WebClient {
-    val oauth2Client = getOauth2Client(authorizedClientManager, CLIENT_REGISTRATION_ID)
-    return getWebClient(prisonContactRegistryUrl, oauth2Client)
-  }
+  fun prisonerContactRegistryWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: WebClient.Builder): WebClient = getWebClient(prisonContactRegistryUrl, authorizedClientManager, builder)
 
   @Bean
-  fun prisonApiHealthWebClient(): WebClient = WebClient.builder().baseUrl(prisonApiBaseUrl).build()
+  fun prisonApiHealthWebClient(builder: WebClient.Builder): WebClient = builder.healthWebClient(prisonApiBaseUrl, healthTimeout)
 
   @Bean
-  fun prisonOffenderSearchHealthWebClient(): WebClient = WebClient.builder().baseUrl(prisonOffenderSearchBaseUrl).build()
+  fun nonAssociationsApiHealthWebClient(builder: WebClient.Builder): WebClient = builder.healthWebClient(nonAssociationsApiBaseUrl, healthTimeout)
+
+  @Bean
+  fun activitiesApiHealthWebClient(builder: WebClient.Builder): WebClient = builder.healthWebClient(activitiesApiBaseUrl, healthTimeout)
+
+  @Bean
+  fun prisonerOffenderSearchHealthWebClient(builder: WebClient.Builder): WebClient = builder.healthWebClient(prisonOffenderSearchBaseUrl, healthTimeout)
+
+  @Bean
+  fun prisonerContactRegistryHealthWebClient(builder: WebClient.Builder): WebClient = builder.healthWebClient(prisonContactRegistryUrl, healthTimeout)
 
   @Bean
   fun authorizedClientManager(
-    clientRegistrationRepository: ClientRegistrationRepository?,
-    oAuth2AuthorizedClientService: OAuth2AuthorizedClientService?,
-  ): OAuth2AuthorizedClientManager? {
+    clientRegistrationRepository: ClientRegistrationRepository,
+  ): OAuth2AuthorizedClientManager {
     val authorizedClientProvider = OAuth2AuthorizedClientProviderBuilder.builder().clientCredentials().build()
-    val authorizedClientManager =
-      AuthorizedClientServiceOAuth2AuthorizedClientManager(clientRegistrationRepository, oAuth2AuthorizedClientService)
+    val authorizedClientManager = AuthorizedClientServiceOAuth2AuthorizedClientManager(
+      clientRegistrationRepository,
+      GlobalPrincipalOAuth2AuthorizedClientService(clientRegistrationRepository),
+    )
     authorizedClientManager.setAuthorizedClientProvider(authorizedClientProvider)
     return authorizedClientManager
   }
 
-  private fun getOauth2Client(authorizedClientManager: OAuth2AuthorizedClientManager, clientRegistrationId: String): ServletOAuth2AuthorizedClientExchangeFilterFunction {
-    val oauth2Client = ServletOAuth2AuthorizedClientExchangeFilterFunction(authorizedClientManager)
-    oauth2Client.setDefaultClientRegistrationId(clientRegistrationId)
-    return oauth2Client
-  }
-
-  private fun getExchangeStrategies(): ExchangeStrategies = ExchangeStrategies.builder()
-    .codecs { configurer: ClientCodecConfigurer -> configurer.defaultCodecs().maxInMemorySize(-1) }
-    .build()
-
-  private fun getWebClient(baseUrl: String, oauth2Client: ServletOAuth2AuthorizedClientExchangeFilterFunction): WebClient {
-    val provider = ConnectionProvider.builder("custom")
-      .maxConnections(500)
-      .maxIdleTime(ofSeconds(20))
-      .maxLifeTime(ofSeconds(60))
-      .pendingAcquireTimeout(ofSeconds(60))
-      .evictInBackground(ofSeconds(120))
-      .build()
-
-    return WebClient.builder()
-      .baseUrl(baseUrl)
-      .clientConnector(
-        ReactorClientHttpConnector(
-          HttpClient.create(provider)
-            .resolver(DefaultAddressResolverGroup.INSTANCE)
-            .compress(true)
-            .responseTimeout(ofSeconds(30)),
-        ),
-      )
-      .apply(oauth2Client.oauth2Configuration())
-      .exchangeStrategies(getExchangeStrategies())
-      .build()
-  }
+  private fun getWebClient(
+    url: String,
+    authorizedClientManager: OAuth2AuthorizedClientManager,
+    builder: WebClient.Builder,
+  ): WebClient = builder.authorisedWebClient(
+    authorizedClientManager = authorizedClientManager,
+    url = url,
+    registrationId = CLIENT_REGISTRATION_ID,
+    timeout = apiTimeout,
+  )
 }
