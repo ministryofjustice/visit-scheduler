@@ -96,12 +96,12 @@ class VisitSchedulerExceptionHandler(
   fun handleVisitToMigrateException(e: Exception): ResponseEntity<ErrorResponse> {
     log.error("Migration exception: {}", e.message)
     val error = ErrorResponse(
-      status = HttpStatus.UNPROCESSABLE_ENTITY,
+      status = HttpStatus.UNPROCESSABLE_CONTENT,
       userMessage = "Migration failure: Could not migrate visit",
       developerMessage = e.message,
     )
     sendErrorTelemetry(TelemetryVisitEvents.BAD_REQUEST_ERROR_EVENT.eventName, error)
-    return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(error)
+    return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(error)
   }
 
   @ExceptionHandler(MissingServletRequestParameterException::class)
@@ -280,7 +280,7 @@ class VisitSchedulerExceptionHandler(
   fun handleApplicationValidationException(e: ApplicationValidationException): ResponseEntity<ApplicationValidationErrorResponse>? {
     log.error("Validation exception", e)
     return ResponseEntity
-      .status(HttpStatus.UNPROCESSABLE_ENTITY)
+      .status(HttpStatus.UNPROCESSABLE_CONTENT)
       .body(
         ApplicationValidationErrorResponse(
           validationErrors = e.errorCodes.toList(),
@@ -338,4 +338,4 @@ data class ValidationErrorResponse(
 
 data class ApplicationValidationErrorResponse(
   val validationErrors: List<ApplicationValidationErrorCodes>,
-) : ErrorResponse(status = HttpStatus.UNPROCESSABLE_ENTITY)
+) : ErrorResponse(status = HttpStatus.UNPROCESSABLE_CONTENT)

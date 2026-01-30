@@ -105,7 +105,6 @@ class VisitStoreService(
       it.visitRestriction = application.restriction
       it.visitRoom = visitRoom
       it.visitStatus = BOOKED
-      // TODO [Request a visit feature]: Allow 'Requested' visits sub status to change during update flow.
       it
     } ?: run {
       // Create new booking
