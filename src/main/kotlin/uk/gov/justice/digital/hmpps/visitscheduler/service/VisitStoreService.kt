@@ -42,6 +42,7 @@ class VisitStoreService(
   private val sessionSlotService: SessionSlotService,
   private val applicationValidationService: ApplicationValidationService,
   private val applicationService: ApplicationService,
+  private val visitRequestRuleCheckerService: VisitRequestRuleCheckerService,
   @param:Autowired private val visitDtoBuilder: VisitDtoBuilder,
   @param:Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int,
   @param:Value("\${feature.request-booking-enabled:false}") private val requestBookingFeatureEnabled: Boolean,
@@ -112,7 +113,7 @@ class VisitStoreService(
         if (bookingRequestDto.isRequestBooking == true) {
           VisitSubStatus.REQUESTED
         } else {
-          VisitSubStatus.AUTO_APPROVED
+          getApprovedOrRequestedStatus(application)
         }
       } else {
         VisitSubStatus.AUTO_APPROVED
@@ -182,6 +183,12 @@ class VisitStoreService(
   @Transactional(readOnly = true)
   fun getBookingByApplicationReference(applicationReference: String): VisitDto? = visitRepository.findVisitByApplicationReference(applicationReference)?.let {
     visitDtoBuilder.build(it)
+  }
+
+  private fun getApprovedOrRequestedStatus(application: Application): VisitSubStatus = if (visitRequestRuleCheckerService.getRequestReviewReasons(application).isNotEmpty()) {
+    VisitSubStatus.REQUESTED
+  } else {
+    VisitSubStatus.AUTO_APPROVED
   }
 
   private fun hasNotBeenAddedToBooking(booking: Visit, application: Application): Boolean = if (booking.getApplications().isEmpty()) true else booking.getApplications().any { it.id == application.id }

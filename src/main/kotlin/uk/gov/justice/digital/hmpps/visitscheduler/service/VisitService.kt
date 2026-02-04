@@ -322,6 +322,19 @@ class VisitService(
   ).map { visitDtoBuilder.build(it) }
 
   @Transactional(readOnly = true)
+  fun getBookedVisits(
+    prisonerNumber: String,
+    prisonCode: String,
+    fromDate: LocalDate,
+    toDate: LocalDate,
+  ): List<VisitDto> = visitRepository.findBookedVisits(
+    prisonerId = prisonerNumber,
+    prisonCode = prisonCode,
+    fromDate = fromDate,
+    toDate = toDate,
+  ).map { visitDtoBuilder.build(it) }
+
+  @Transactional(readOnly = true)
   fun getVisitByReference(reference: String): VisitDto {
     val visitEntity = visitRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit reference $reference not found")
     return visitDtoBuilder.build(visitEntity)

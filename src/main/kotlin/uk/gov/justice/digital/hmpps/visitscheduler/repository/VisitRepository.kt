@@ -174,6 +174,22 @@ interface VisitRepository :
   ): List<Visit>
 
   @Query(
+    "SELECT v  FROM Visit v " +
+      "WHERE v.visitStatus = 'BOOKED' AND " +
+      "v.prisonerId = :prisonerId AND " +
+      "v.prison.code = :prisonCode AND " +
+      "v.sessionSlot.slotDate >= :fromDate AND " +
+      "v.sessionSlot.slotDate <= :toDate " +
+      "ORDER BY v.sessionSlot.slotStart,v.id",
+  )
+  fun findBookedVisits(
+    @Param("prisonerId") prisonerId: String,
+    @Param("prisonCode") prisonCode: String,
+    @Param("fromDate") fromDate: LocalDate,
+    @Param("toDate") toDate: LocalDate,
+  ): List<Visit>
+
+  @Query(
     "SELECT v FROM Visit v WHERE " +
       "(:#{#prisonerId} is null OR v.prisonerId = :prisonerId)  AND  " +
       "(:#{#prisonCode} is null OR v.prison.code = :prisonCode) AND " +
