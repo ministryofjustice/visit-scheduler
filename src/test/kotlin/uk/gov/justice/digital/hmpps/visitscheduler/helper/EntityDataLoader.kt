@@ -55,6 +55,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonExcludeDateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonUserClientRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonVisitRequestRulesConfigRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonVisitRequestRulesRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionCategoryGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionIncentiveLevelGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionLocationGroupRepository
@@ -758,11 +760,17 @@ class DeleteEntityHelper(
   private val testPrisonUserClientRepository: TestPrisonUserClientRepository,
   private val testActionedByRepository: TestActionedByRepository,
   private val visitNotifyHistoryRepository: VisitNotifyHistoryRepository,
+  private val prisonVisitRequestRulesConfigRepository: PrisonVisitRequestRulesConfigRepository,
+  private val prisonVisitRequestRulesRepository: PrisonVisitRequestRulesRepository,
 ) {
 
   @Transactional(propagation = REQUIRES_NEW)
   fun deleteAll() {
     println("Delete all")
+    prisonVisitRequestRulesConfigRepository.deleteAll()
+    prisonVisitRequestRulesConfigRepository.flush()
+    prisonVisitRequestRulesRepository.deleteAll()
+    prisonVisitRequestRulesRepository.flush()
     sessionRepository.deleteAll()
     sessionRepository.flush()
     sessionLocationGroupRepository.deleteAll()
