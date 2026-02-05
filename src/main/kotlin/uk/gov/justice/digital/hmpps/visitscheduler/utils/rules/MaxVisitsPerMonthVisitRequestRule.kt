@@ -12,24 +12,24 @@ import java.time.temporal.TemporalAdjusters
 
 @Service
 @Description("This rule will ensure visits for same prisoner within n days are being flagged")
-class MaxVisitsPerMonthRule(
+class MaxVisitsPerMonthVisitRequestRule(
   private val visitRepository: VisitRepository,
-) : Rule<Application> {
+) : VisitRequestRule<Application> {
   companion object {
     private const val DEFAULT_MAX_VISITS_PER_MONTH = 7
     val logger: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
-  override fun ruleCheck(t: Application, prisonVisitRequestRules: PrisonVisitRequestRules): Boolean {
+  override fun ruleCheck(application: Application, prisonVisitRequestRules: PrisonVisitRequestRules): Boolean {
     var maxVisitsAllowedPerMonth = getMaxVisitsPerMonth(prisonVisitRequestRules)
     if (maxVisitsAllowedPerMonth == null) {
       logger.error("Max visits not set or set incorrectly for max visits a month rule for prison ${prisonVisitRequestRules.prison.code}, using default interval of $DEFAULT_MAX_VISITS_PER_MONTH")
       maxVisitsAllowedPerMonth = DEFAULT_MAX_VISITS_PER_MONTH
     }
 
-    val prisonerId = t.prisonerId
-    val prisonCode = t.prison.code
-    val visitDate = t.sessionSlot.slotDate
+    val prisonerId = application.prisonerId
+    val prisonCode = application.prison.code
+    val visitDate = application.sessionSlot.slotDate
     val fromDate = visitDate.withDayOfMonth(1)
     val toDate = visitDate.with(TemporalAdjusters.lastDayOfMonth())
 

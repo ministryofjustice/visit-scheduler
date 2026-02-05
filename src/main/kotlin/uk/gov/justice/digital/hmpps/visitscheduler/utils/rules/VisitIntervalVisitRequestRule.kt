@@ -11,24 +11,24 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 
 @Service
 @Description("This rule will ensure visits for same prisoner within n days are being flagged")
-class VisitIntervalRule(
+class VisitIntervalVisitRequestRule(
   private val visitRepository: VisitRepository,
-) : Rule<Application> {
+) : VisitRequestRule<Application> {
   companion object {
     private const val DEFAULT_INTERVAL = 2
     val logger: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
-  override fun ruleCheck(t: Application, prisonVisitRequestRules: PrisonVisitRequestRules): Boolean {
+  override fun ruleCheck(application: Application, prisonVisitRequestRules: PrisonVisitRequestRules): Boolean {
     var interval = getInterval(prisonVisitRequestRules)
     if (interval == null) {
-      logger.error("Interval not set or set incorrectly for visit interval rulefor prison ${prisonVisitRequestRules.prison.code}, using default interval of $DEFAULT_INTERVAL")
+      logger.error("Interval not set or set incorrectly for visit interval rule for prison ${prisonVisitRequestRules.prison.code}, using default interval of $DEFAULT_INTERVAL")
       interval = DEFAULT_INTERVAL
     }
 
-    val prisonerId = t.prisonerId
-    val prisonCode = t.prison.code
-    val visitDate = t.sessionSlot.slotDate
+    val prisonerId = application.prisonerId
+    val prisonCode = application.prison.code
+    val visitDate = application.sessionSlot.slotDate
     val fromDate = visitDate.minusDays(interval.toLong())
     val toDate = visitDate.plusDays(interval.toLong())
 
