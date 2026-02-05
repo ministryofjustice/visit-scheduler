@@ -24,7 +24,7 @@ class VisitRequestRuleCheckerService(
   }
 
   private fun checkVisitRequestRule(application: Application, prisonVisitRequestRule: PrisonVisitRequestRules): PrisonVisitRequestRuleType? {
-    val checkResult = visitRequestRuleFactory.getRuleChecker(prisonVisitRequestRule)?.ruleCheck(application) ?: false
+    val checkResult = visitRequestRuleFactory.getRuleChecker(prisonVisitRequestRule)?.ruleCheck(application, prisonVisitRequestRule) ?: false
     if (checkResult) {
       return prisonVisitRequestRule.ruleName
     }
