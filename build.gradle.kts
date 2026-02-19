@@ -50,7 +50,7 @@ dependencies {
 
   annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
-  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.37")
+  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.38")
   testImplementation("org.springframework.boot:spring-boot-starter-webclient-test")
   testImplementation("org.springframework.boot:spring-boot-starter-webflux-test")
   testImplementation("org.wiremock:wiremock-standalone:3.13.2")
