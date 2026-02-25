@@ -45,7 +45,7 @@ internal class VisitStoreServiceTest {
   private val applicationService = mock<ApplicationService>()
   private val visitDtoBuilder = mock<VisitDtoBuilder>()
 
-  private val visitStoreService: VisitStoreService = VisitStoreService(visitRepository, prisonRepository, sessionSlotService, applicationValidationService, applicationService, visitDtoBuilder, 28, false)
+  private val visitStoreService: VisitStoreService = VisitStoreService(visitRepository, prisonRepository, sessionSlotService, applicationValidationService, applicationService, visitDtoBuilder, 28)
 
   @Nested
   @DisplayName("createVisitFromExternalSystem")

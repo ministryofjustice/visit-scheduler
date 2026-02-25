@@ -44,7 +44,6 @@ class VisitStoreService(
   private val applicationService: ApplicationService,
   @param:Autowired private val visitDtoBuilder: VisitDtoBuilder,
   @param:Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int,
-  @param:Value("\${feature.request-booking-enabled:false}") private val requestBookingFeatureEnabled: Boolean,
 ) {
 
   @Lazy
@@ -108,15 +107,12 @@ class VisitStoreService(
       it
     } ?: run {
       // Create new booking
-      val visitSubStatus = if (requestBookingFeatureEnabled) {
+      val visitSubStatus =
         if (bookingRequestDto.isRequestBooking == true) {
           VisitSubStatus.REQUESTED
         } else {
           VisitSubStatus.AUTO_APPROVED
         }
-      } else {
-        VisitSubStatus.AUTO_APPROVED
-      }
 
       Visit(
         prisonId = application.prisonId,
@@ -209,12 +205,14 @@ class VisitStoreService(
 
     val cancelOutcome = cancelVisitDto.cancelOutcome
 
-    if (requestBookingFeatureEnabled && (visitEntity.visitSubStatus == VisitSubStatus.REQUESTED && cancelVisitDto.userType == UserType.PUBLIC)) {
+    if (visitEntity.visitSubStatus == VisitSubStatus.REQUESTED && cancelVisitDto.userType == UserType.PUBLIC) {
       visitEntity.visitSubStatus = VisitSubStatus.WITHDRAWN
     } else {
       visitEntity.visitSubStatus = VisitSubStatus.CANCELLED
     }
+
     visitEntity.visitStatus = CANCELLED
+
     visitEntity.outcomeStatus = cancelOutcome.outcomeStatus
 
     cancelOutcome.text?.let {

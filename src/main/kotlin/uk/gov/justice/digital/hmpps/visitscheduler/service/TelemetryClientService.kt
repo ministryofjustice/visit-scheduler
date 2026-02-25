@@ -5,7 +5,6 @@ import com.microsoft.applicationinsights.TelemetryClient
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
@@ -47,8 +46,6 @@ import java.time.temporal.ChronoUnit
 class TelemetryClientService(
   private val telemetryClient: TelemetryClient,
   private val objectMapper: ObjectMapper,
-  @param:Value("\${feature.request-booking-enabled:false}")
-  private val requestBookingFeatureEnabled: Boolean,
 ) {
 
   companion object {
@@ -76,12 +73,8 @@ class TelemetryClientService(
     bookingRequestDto: BookingRequestDto?,
   ) {
     val isRequestBooking = (bookingRequestDto?.isRequestBooking == true)
-    val eventType = if (requestBookingFeatureEnabled) {
-      if (isRequestBooking) {
-        VISIT_REQUESTED_EVENT
-      } else {
-        VISIT_BOOKED_EVENT
-      }
+    val eventType = if (isRequestBooking) {
+      VISIT_REQUESTED_EVENT
     } else {
       VISIT_BOOKED_EVENT
     }
