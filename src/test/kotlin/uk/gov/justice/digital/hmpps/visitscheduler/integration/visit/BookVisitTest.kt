@@ -12,7 +12,6 @@ import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
-import org.springframework.test.context.TestPropertySource
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
@@ -52,7 +51,6 @@ import java.time.format.DateTimeFormatter
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("PUT $VISIT_BOOK")
-@TestPropertySource(properties = ["feature.request-booking-enabled=false"])
 class BookVisitTest : IntegrationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
@@ -99,7 +97,7 @@ class BookVisitTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `Book a requested visit feature enabled (booked via public application)`() {
+  fun `Book a requested visit (booked via public application)`() {
     // Given
     val prisonerId = reservedPublicApplication.prisonerId
     val applicationReference = reservedPublicApplication.reference
@@ -123,13 +121,12 @@ class BookVisitTest : IntegrationTestBase() {
 
     assertVisitMatchesApplication(visitDto, reservedPublicApplication)
     val visitEntity = testVisitRepository.findByReference(visitDto.reference)
-    assertAuditEvent(visitDto, visitEntity, PUBLIC)
+    assertAuditEvent(visitDto, visitEntity, PUBLIC, isRequestVisit = true)
     assertThat(visitEntity.getApplications().size).isEqualTo(1)
     assertThat(visitEntity.getLastApplication()?.reference).isEqualTo(applicationReference)
     assertThat(visitEntity.getLastApplication()?.applicationStatus).isEqualTo(ACCEPTED)
-    assertThat(visitEntity.visitSubStatus).isEqualTo(VisitSubStatus.AUTO_APPROVED)
-
-    assertBookedEvent(visitDto)
+    assertThat(visitEntity.visitSubStatus).isEqualTo(VisitSubStatus.REQUESTED)
+    assertBookedEvent(visitDto, isRequestVisit = true)
   }
 
   @Test
@@ -396,9 +393,15 @@ class BookVisitTest : IntegrationTestBase() {
     verify(telemetryClient, times(0)).trackEvent(eq("visit-booked"), any(), isNull())
   }
 
-  private fun assertAuditEvent(visitDto: VisitDto, visitEntity: Visit, userType: UserType = STAFF) {
+  private fun assertAuditEvent(visitDto: VisitDto, visitEntity: Visit, userType: UserType = STAFF, isRequestVisit: Boolean = false) {
     val eventAudit = this.eventAuditRepository.findLastEventByBookingReference(visitDto.reference)
-    assertThat(eventAudit.type).isEqualTo(EventAuditType.BOOKED_VISIT)
+
+    if (isRequestVisit) {
+      assertThat(eventAudit.type).isEqualTo(EventAuditType.REQUESTED_VISIT)
+    } else {
+      assertThat(eventAudit.type).isEqualTo(EventAuditType.BOOKED_VISIT)
+    }
+
     assertThat(eventAudit.actionedBy).isNotNull()
     assertThat(eventAudit.actionedBy.userType).isEqualTo(userType)
 
@@ -491,11 +494,17 @@ class BookVisitTest : IntegrationTestBase() {
     assertThat(visitDto.userType).isEqualTo(application.userType)
   }
 
-  private fun assertBookedEvent(visit: VisitDto) {
+  private fun assertBookedEvent(visit: VisitDto, isRequestVisit: Boolean = false) {
     val eventAudit = eventAuditRepository.findLastEventByBookingReference(visit.reference)
 
+    val eventName = if (isRequestVisit) {
+      "visit-requested"
+    } else {
+      "visit-booked"
+    }
+
     verify(telemetryClient).trackEvent(
-      eq("visit-booked"),
+      eq(eventName),
       org.mockito.kotlin.check {
         assertThat(it["reference"]).isEqualTo(visit.reference)
         assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
@@ -522,7 +531,7 @@ class BookVisitTest : IntegrationTestBase() {
       },
       isNull(),
     )
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-booked"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq(eventName), any(), isNull())
   }
 
   private fun createVisitDtoFromResponse(responseSpec: ResponseSpec): VisitDto {
