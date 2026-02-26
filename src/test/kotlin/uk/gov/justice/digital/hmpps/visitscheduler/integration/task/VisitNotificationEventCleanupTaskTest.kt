@@ -38,8 +38,8 @@ class VisitNotificationEventCleanupTaskTest : IntegrationTestBase() {
   fun `when session report called for a report date then a valid session report is returned`() {
     // Given
     val prison1 = prisonEntityHelper.create("ABC", activePrison = true, excludeDates = emptyList())
-    val sessionTemplate1Prison1 = sessionTemplateEntityHelper.create(prison = prison1, validFromDate = LocalDate.now().minusDays(7), validToDate =  LocalDate.now().minusDays(2))
-    val sessionTemplate2Prison1 = sessionTemplateEntityHelper.create(prison = prison1, validFromDate = LocalDate.now().minusDays(7), validToDate =  LocalDate.now().plusDays(7))
+    val sessionTemplate1Prison1 = sessionTemplateEntityHelper.create(prison = prison1, validFromDate = LocalDate.now().minusDays(7), validToDate = LocalDate.now().minusDays(2))
+    val sessionTemplate2Prison1 = sessionTemplateEntityHelper.create(prison = prison1, validFromDate = LocalDate.now().minusDays(7), validToDate = LocalDate.now().plusDays(7))
 
     // visit 1 - In the past (3 days)
     val expiredVisitMarkedForRemoval = visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplate1Prison1, slotDate = LocalDate.now().minusDays(3), visitStart = LocalTime.of(15, 0), visitEnd = LocalTime.of(16, 0))
