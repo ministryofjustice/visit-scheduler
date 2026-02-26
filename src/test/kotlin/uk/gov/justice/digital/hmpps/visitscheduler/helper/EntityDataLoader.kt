@@ -927,6 +927,8 @@ class VisitNotificationEventHelper(
   fun getVisitNotifications(
     visitBookingReference: String,
   ): List<VisitNotificationEvent> = visitNotificationEventRepository.findVisitNotificationEventByVisitReference(visitBookingReference)
+
+  fun getAllVisitNotifications(): List<VisitNotificationEvent> = visitNotificationEventRepository.findAll()
 }
 
 @Component
