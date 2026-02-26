@@ -99,7 +99,7 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
     "SELECT vne.* FROM visit_notification_event vne " +
       "JOIN visit v ON v.id = vne.visit_id " +
       "JOIN session_slot ss ON ss.id = v.session_slot_id " +
-      "WHERE ss.slot_start <= NOW() - INTERVAL '1 day' " +
+      "WHERE ss.slot_start <= (NOW() - INTERVAL '1 day') " +
       "ORDER BY ss.slot_start, v.id",
     nativeQuery = true,
   )
