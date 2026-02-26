@@ -4,7 +4,6 @@ import jakarta.validation.ValidationException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Lazy
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
@@ -48,7 +47,6 @@ class VisitService(
   private val eventAuditService: VisitEventAuditService,
   private val snsService: SnsService,
   private val updateVisitSummaryUtil: UpdateVisitSummaryUtil,
-  @param:Value("\${feature.request-booking-enabled:false}") private val requestBookingFeatureEnabled: Boolean,
 ) {
 
   @Lazy
@@ -186,12 +184,8 @@ class VisitService(
     bookedVisitDto: VisitDto,
     bookingRequestDto: BookingRequestDto,
   ): VisitDto {
-    val eventType = if (requestBookingFeatureEnabled) {
-      if (bookingRequestDto.isRequestBooking == true) {
-        EventAuditType.REQUESTED_VISIT
-      } else {
-        EventAuditType.BOOKED_VISIT
-      }
+    val eventType = if (bookingRequestDto.isRequestBooking == true) {
+      EventAuditType.REQUESTED_VISIT
     } else {
       EventAuditType.BOOKED_VISIT
     }

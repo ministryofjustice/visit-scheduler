@@ -155,7 +155,6 @@ feature:
       enabled: true
 
 visit:
-  request-booking-enabled: false
   cancel:
     day-limit: 28
 
