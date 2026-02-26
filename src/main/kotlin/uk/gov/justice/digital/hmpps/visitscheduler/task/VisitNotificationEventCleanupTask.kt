@@ -13,7 +13,6 @@ class VisitNotificationEventCleanupTask(val visitNotificationEventService: Visit
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
-  // TODO: Cron timing variable
   @Scheduled(cron = "\${task.visit-notification-events.cron:0 30 3 * * ?}")
   @SchedulerLock(
     name = "Visit notification events - clean up events in the past",
