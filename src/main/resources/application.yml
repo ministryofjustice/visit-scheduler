@@ -148,6 +148,8 @@ task:
   requests:
     auto-reject:
       cron: "0 0 20 * * *"
+  visit-notification-events:
+    cron: "0 30 3 * * ?" #every day at 3:30 AM
 
 feature:
   events:

@@ -97,6 +97,16 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
 
   @Query(
     "SELECT vne.* FROM visit_notification_event vne " +
+      "JOIN visit v ON v.id = vne.visit_id " +
+      "JOIN session_slot ss ON ss.id = v.session_slot_id " +
+      "WHERE ss.slot_start <= NOW() - INTERVAL '1 day' " +
+      "ORDER BY ss.slot_start, v.id",
+    nativeQuery = true,
+  )
+  fun findExpiredVisitNotificationEvents(): List<VisitNotificationEvent>
+
+  @Query(
+    "SELECT vne.* FROM visit_notification_event vne " +
       " JOIN visit v ON v.id  = vne.visit_id " +
       " JOIN prison p on p.id  = v.prison_id  AND p.code= :prisonCode " +
       " JOIN session_slot ss on ss.id  = v.session_slot_id " +
