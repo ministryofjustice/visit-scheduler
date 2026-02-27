@@ -4,10 +4,10 @@ import jakarta.validation.constraints.NotBlank
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerReceivedReasonType
 
 data class PrisonerReceivedNotificationDto(
-  @NotBlank
+  @field:NotBlank
   val prisonerNumber: String,
-  @NotBlank
+  @field:NotBlank
   val prisonCode: String,
-  @NotBlank
+  @param:NotBlank
   val reason: PrisonerReceivedReasonType,
 )

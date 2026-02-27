@@ -28,10 +28,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplat
 
 @DisplayName("Get/Delete $CATEGORY_GROUP_ADMIN_PATH")
 class AdminSessionTemplateCategoryGroupTest(
-  @Autowired val testTemplateRepository: TestSessionTemplateRepository,
-  @Autowired val sessionCategoryGroupRepository: SessionCategoryGroupRepository,
-  @Autowired val testSessionCategoryGroupRepository: TestSessionCategoryGroupRepository,
-  @Autowired val testSessionCategoryRepository: TestSessionCategoryRepository,
+  @param:Autowired val testTemplateRepository: TestSessionTemplateRepository,
+  @param:Autowired val sessionCategoryGroupRepository: SessionCategoryGroupRepository,
+  @param:Autowired val testSessionCategoryGroupRepository: TestSessionCategoryGroupRepository,
+  @param:Autowired val testSessionCategoryRepository: TestSessionCategoryRepository,
 ) : IntegrationTestBase() {
 
   private val adminRole = listOf("ROLE_VISIT_SCHEDULER_CONFIG")

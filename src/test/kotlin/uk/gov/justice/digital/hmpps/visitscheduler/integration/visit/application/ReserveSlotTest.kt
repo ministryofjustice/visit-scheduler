@@ -430,10 +430,10 @@ class ReserveSlotTest : IntegrationTestBase() {
 
     createApplicationRequest.visitContact?.let {
       assertThat(returnedApplication.visitContact!!.name).isEqualTo(it.name)
-      assertThat(returnedApplication.visitContact!!.telephone).isEqualTo(it.telephone)
+      assertThat(returnedApplication.visitContact.telephone).isEqualTo(it.telephone)
     } ?: run {
       assertThat(returnedApplication.visitContact!!.name).isEqualTo(persistedApplication.visitContact?.name)
-      assertThat(returnedApplication.visitContact!!.telephone).isEqualTo(persistedApplication.visitContact?.telephone)
+      assertThat(returnedApplication.visitContact.telephone).isEqualTo(persistedApplication.visitContact?.telephone)
     }
 
     val visitorsDtoList = returnedApplication.visitors.toList()

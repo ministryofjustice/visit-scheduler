@@ -18,7 +18,7 @@ import java.time.LocalTime
 
 @DisplayName("Session template tests for activate - $ACTIVATE_SESSION_TEMPLATE and deactivate  $DEACTIVATE_SESSION_TEMPLATE")
 class AdminSessionTemplateTest(
-  @Autowired private val testTemplateRepository: TestSessionTemplateRepository,
+  @param:Autowired private val testTemplateRepository: TestSessionTemplateRepository,
 ) : IntegrationTestBase() {
 
   private val adminRole = listOf("ROLE_VISIT_SCHEDULER_CONFIG")

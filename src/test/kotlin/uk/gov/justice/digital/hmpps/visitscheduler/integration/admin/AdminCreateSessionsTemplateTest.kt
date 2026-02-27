@@ -5,7 +5,6 @@ import org.hamcrest.Matchers
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADMIN_SESSION_TEMPLATES_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
@@ -206,7 +205,7 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
   fun `when session template name greater than 100 then validation fails and BAD_REQUEST is returned`() {
     // Given
     val dto = createCreateSessionTemplateDto(
-      name = RandomStringUtils.randomAlphabetic(101),
+      name = (1..101).map { ('a'..'z').random() }.joinToString(""),
     )
 
     // When
@@ -437,7 +436,7 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
   fun `when session template visit room greater then 255 validation fails and BAD_REQUEST is returned`() {
     // Given
     val dto = createCreateSessionTemplateDto(
-      name = RandomStringUtils.randomAlphabetic(256),
+      name = (1..101).map { ('a'..'z').random() }.joinToString(""),
     )
 
     // When

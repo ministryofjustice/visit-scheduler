@@ -56,9 +56,9 @@ class MigrateVisitService(
   private val migrationSessionTemplateMatcher: MigrationSessionTemplateMatcher,
   private val telemetryClient: TelemetryClient,
   private val sessionDatesUtil: SessionDatesUtil,
-  @Value("\${migrate.sessiontemplate.mapping.offset.days:0}")
+  @param:Value("\${migrate.sessiontemplate.mapping.offset.days:0}")
   private val migrateSessionTemplateMappingOffsetDays: Long,
-  @Value("\${migrate.max.months.in.future:6}")
+  @param:Value("\${migrate.max.months.in.future:6}")
   private val migrateMaxMonthsInFuture: Long,
 ) {
 

@@ -26,7 +26,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.SESSION_VISITS_BLOCKED_FOR_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.VISITOR_RESTRICTION_UPSERTED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.VISITOR_UNAPPROVED_EVENT
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SupportedCourtVideoAppointmentCategoryCode
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.IGNORE_VISIT_NOTIFICATIONS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.NON_ASSOCIATION_REMOVED
@@ -298,11 +297,9 @@ class VisitNotificationEventService(
   fun handleCourtVideoAppointmentCreatedNotification(notificationDto: CourtVideoAppointmentNotificationDto) {
     LOG.info("handleCourtVideoAppointmentCreatedNotification notification received : {}", notificationDto)
 
-    val supportedCourtVideoAppointmentCategoryCodes = SupportedCourtVideoAppointmentCategoryCode.entries.map { it.name }.toSet()
-
     val appointmentInstanceDetails = activitiesApiClient.getAppointmentInstanceDetails(notificationDto.appointmentInstanceId)
-    if (appointmentInstanceDetails == null || !supportedCourtVideoAppointmentCategoryCodes.contains(appointmentInstanceDetails.categoryCode)) {
-      LOG.warn("Appointment instance details not found or not processable for appointment instance ID ${notificationDto.appointmentInstanceId}, skipping processing / flagging of visits")
+    if (appointmentInstanceDetails == null) {
+      LOG.warn("Appointment instance details not found for appointment instance ID ${notificationDto.appointmentInstanceId}, skipping processing / flagging of visits")
       return
     }
 
@@ -332,11 +329,9 @@ class VisitNotificationEventService(
   fun handleCourtVideoAppointmentUpdatedNotification(notificationDto: CourtVideoAppointmentNotificationDto) {
     LOG.info("handleCourtVideoAppointmentUpdatedNotification notification received : {}", notificationDto)
 
-    val supportedCourtVideoAppointmentCategoryCodes = SupportedCourtVideoAppointmentCategoryCode.entries.map { it.name }.toSet()
-
     val appointmentInstanceDetails = activitiesApiClient.getAppointmentInstanceDetails(notificationDto.appointmentInstanceId)
-    if (appointmentInstanceDetails == null || !supportedCourtVideoAppointmentCategoryCodes.contains(appointmentInstanceDetails.categoryCode)) {
-      LOG.warn("Appointment instance details not found or not processable for appointment instance ID ${notificationDto.appointmentInstanceId}, skipping processing / flagging of visits")
+    if (appointmentInstanceDetails == null) {
+      LOG.warn("Appointment instance details not found for appointment instance ID ${notificationDto.appointmentInstanceId}, skipping processing / flagging of visits")
       return
     }
 

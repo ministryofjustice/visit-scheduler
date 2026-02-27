@@ -37,6 +37,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitPreviewDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visit.VisitorLastApprovedDateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visit.VisitorLastApprovedDatesRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
 import java.time.LocalDate
@@ -54,6 +56,7 @@ const val GET_VISIT_BY_REFERENCE: String = "$VISIT_CONTROLLER_PATH/{reference}"
 const val GET_VISIT_REFERENCE_BY_CLIENT_REFERENCE: String = "$VISIT_CONTROLLER_PATH/external-system/{clientReference}"
 const val POST_VISIT_FROM_EXTERNAL_SYSTEM: String = "$VISIT_CONTROLLER_PATH/external-system"
 const val PUT_VISIT_FROM_EXTERNAL_SYSTEM: String = "$VISIT_CONTROLLER_PATH/external-system/{reference}"
+const val FIND_LAST_APPROVED_DATE_FOR_VISITORS_BY_PRISONER: String = "$VISIT_CONTROLLER_PATH/prisoner/{prisonerNumber}/visitors/last-approved-date"
 
 @RestController
 @Validated
@@ -644,4 +647,40 @@ class VisitController(
     @RequestBody @Valid
     updateVisitFromExternalSystemDto: UpdateVisitFromExternalSystemDto,
   ): VisitDto = visitService.updateVisitFromExternalSystem(reference, updateVisitFromExternalSystemDto)
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PostMapping(FIND_LAST_APPROVED_DATE_FOR_VISITORS_BY_PRISONER)
+  @Operation(
+    summary = "Get last approved dates for visits booked for a prisoner, given a list of nomis person Ids",
+    description = "Get last approved dates for visits booked for a prisoner for a list of visitors(nomis person Ids), returns NULL if no visits found",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Returns the passed list of visitors with their last approved dates (or null) for visits booked for a prisoner",
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Incorrect request to get last approved dates booked for a prisoner",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to get last approved dates for a visitor list",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun getLastApprovedDatesForVisitors(
+    @PathVariable(value = "prisonerNumber", required = true)
+    @NotBlank
+    prisonerNumber: String,
+    @RequestBody
+    @Valid
+    visitorLastApprovedDatesRequest: VisitorLastApprovedDatesRequestDto,
+  ): List<VisitorLastApprovedDateDto> = visitService.getLastApprovedVisitDatesByVisitor(prisonerNumber, visitorLastApprovedDatesRequest.nomisPersonIds)
 }

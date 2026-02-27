@@ -28,8 +28,8 @@ import java.time.LocalTime
 
 @DisplayName("Session template tests for visit stats - $SESSION_TEMPLATE_VISIT_STATS")
 class AdminSessionTemplateVisitStatsTest(
-  @Autowired private val testTemplateRepository: TestSessionTemplateRepository,
-  @Value("\${policy.session.booking-notice-period.maximum-days:28}")
+  @param:Autowired private val testTemplateRepository: TestSessionTemplateRepository,
+  @param:Value("\${policy.session.booking-notice-period.maximum-days:28}")
   private val policyNoticeDaysMax: Long,
 ) : IntegrationTestBase() {
 

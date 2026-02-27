@@ -6,11 +6,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.Session
 import java.time.LocalDate
 
 data class SessionDateRangeDto(
-  @Schema(description = "The start of the Validity period for the session template", example = "2019-11-02", required = true)
+  @param:Schema(description = "The start of the Validity period for the session template", example = "2019-11-02", required = true)
   @field:NotNull
   @field:SessionDateRangeValidation
   val validFromDate: LocalDate,
 
-  @Schema(description = "The end of the Validity period for the session template", example = "2019-12-02", required = false)
+  @param:Schema(description = "The end of the Validity period for the session template", example = "2019-12-02", required = false)
   val validToDate: LocalDate? = null,
 )

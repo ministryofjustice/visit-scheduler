@@ -22,8 +22,8 @@ import java.time.LocalDate
 
 @DisplayName("Get/Create/Update/Delete $LOCATION_GROUP_ADMIN_PATH")
 class AdminCreateSessionTemplateLocationGroupTest(
-  @Autowired val testTemplateRepository: TestSessionTemplateRepository,
-  @Autowired val testSessionLocationGroupRepository: TestSessionLocationGroupRepository,
+  @param:Autowired val testTemplateRepository: TestSessionTemplateRepository,
+  @param:Autowired val testSessionLocationGroupRepository: TestSessionLocationGroupRepository,
 ) : IntegrationTestBase() {
 
   private val adminRole = listOf("ROLE_VISIT_SCHEDULER_CONFIG")

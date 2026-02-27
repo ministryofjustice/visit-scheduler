@@ -458,10 +458,10 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
 
     createApplicationRequest.visitContact?.let {
       assertThat(returnedApplication.visitContact!!.name).isEqualTo(it.name)
-      assertThat(returnedApplication.visitContact!!.telephone).isEqualTo(it.telephone)
+      assertThat(returnedApplication.visitContact.telephone).isEqualTo(it.telephone)
     } ?: run {
       assertThat(returnedApplication.visitContact!!.name).isEqualTo(lastBooking.visitContact!!.name)
-      assertThat(returnedApplication.visitContact!!.telephone).isEqualTo(lastBooking.visitContact!!.telephone)
+      assertThat(returnedApplication.visitContact.telephone).isEqualTo(lastBooking.visitContact!!.telephone)
     }
 
     val visitorsDtoList = returnedApplication.visitors.toList()

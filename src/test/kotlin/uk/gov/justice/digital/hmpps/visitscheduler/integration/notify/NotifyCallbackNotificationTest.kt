@@ -7,7 +7,6 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpHeaders
 import org.springframework.web.reactive.function.BodyInserters
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomUtils
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFY_CONTROLLER_CALLBACK_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.NotifyHistoryDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.ACCEPTED
@@ -31,6 +30,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNotifyHisto
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import java.util.UUID.randomUUID
+import java.util.concurrent.ThreadLocalRandom
 
 @DisplayName("Tests for create GOV.UK notify events")
 @Disabled("Currently we don't surface these notifications, until then, tests will be disabled")
@@ -237,7 +237,7 @@ class NotifyCallbackNotificationTest : IntegrationTestBase() {
   fun `when event audit for notification does not exist validation error is returned`() {
     // Given
     val notifyCallbackDto = createCallbackNotificationDto(
-      eventAuditReference = RandomUtils.nextLong(),
+      eventAuditReference = ThreadLocalRandom.current().nextLong(),
       notificationType = "email",
       notificationStatus = "delivered",
     )

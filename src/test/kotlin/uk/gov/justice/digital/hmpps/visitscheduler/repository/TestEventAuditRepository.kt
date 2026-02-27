@@ -1,10 +1,13 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.repository
 
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
+import java.time.LocalDateTime
 
 @Repository
 interface TestEventAuditRepository : JpaRepository<EventAudit, Long> {
@@ -47,4 +50,12 @@ interface TestEventAuditRepository : JpaRepository<EventAudit, Long> {
     nativeQuery = true,
   )
   fun findLastEventByApplicationReference(applicationReference: String, eventAuditType: EventAuditType): EventAudit
+
+  @Transactional
+  @Modifying
+  @Query(
+    "Update event_audit SET create_timestamp = :createTimestamp WHERE id=:eventId",
+    nativeQuery = true,
+  )
+  fun updateCreateTimeStamp(eventId: Long, createTimestamp: LocalDateTime): Int
 }

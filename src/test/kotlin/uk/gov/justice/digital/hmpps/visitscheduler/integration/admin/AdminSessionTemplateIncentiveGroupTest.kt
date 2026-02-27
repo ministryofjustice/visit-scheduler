@@ -28,10 +28,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplat
 
 @DisplayName("Get/Delete $INCENTIVE_GROUP_ADMIN_PATH")
 class AdminSessionTemplateIncentiveGroupTest(
-  @Autowired val testTemplateRepository: TestSessionTemplateRepository,
-  @Autowired val sessionIncentiveGroupRepository: SessionIncentiveLevelGroupRepository,
-  @Autowired val testSessionIncentiveGroupRepository: TestSessionIncentiveLevelGroupRepository,
-  @Autowired val testSessionIncentiveRepository: TestSessionPrisonerIncentiveLevelRepository,
+  @param:Autowired val testTemplateRepository: TestSessionTemplateRepository,
+  @param:Autowired val sessionIncentiveGroupRepository: SessionIncentiveLevelGroupRepository,
+  @param:Autowired val testSessionIncentiveGroupRepository: TestSessionIncentiveLevelGroupRepository,
+  @param:Autowired val testSessionIncentiveRepository: TestSessionPrisonerIncentiveLevelRepository,
 ) : IntegrationTestBase() {
 
   private val adminRole = listOf("ROLE_VISIT_SCHEDULER_CONFIG")

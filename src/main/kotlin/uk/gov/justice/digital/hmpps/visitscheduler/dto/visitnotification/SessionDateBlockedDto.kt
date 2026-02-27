@@ -4,8 +4,8 @@ import jakarta.validation.constraints.NotNull
 import java.time.LocalDate
 
 data class SessionDateBlockedDto(
-  @NotNull
+  @field:NotNull
   val sessionTemplateReference: String,
-  @NotNull
+  @field:NotNull
   val visitDate: LocalDate,
 )

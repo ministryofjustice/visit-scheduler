@@ -8,19 +8,19 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 
 data class CancelVisitDto(
-  @Schema(description = "Outcome - status and text", required = true)
+  @param:Schema(description = "Outcome - status and text", required = true)
   @field:Valid
   val cancelOutcome: OutcomeDto,
 
-  @Schema(description = "Username for user who actioned this request", required = true)
+  @param:Schema(description = "Username for user who actioned this request", required = true)
   @field:NotBlank
   val actionedBy: String,
 
-  @Schema(description = "User type", example = "STAFF", required = true)
+  @param:Schema(description = "User type", example = "STAFF", required = true)
   @field:NotNull
   val userType: UserType,
 
-  @Schema(description = "application method", required = true)
+  @param:Schema(description = "application method", required = true)
   @field:NotNull
   val applicationMethodType: ApplicationMethodType,
 )

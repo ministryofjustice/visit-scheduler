@@ -10,7 +10,6 @@ import org.mockito.kotlin.eq
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADMIN_SESSION_TEMPLATES_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
@@ -225,7 +224,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
   fun `when session template name greater than 100 then validation fails and BAD_REQUEST is returned`() {
     // Given
     val dto = createUpdateSessionTemplateDto(
-      name = RandomStringUtils.randomAlphabetic(101),
+      name = (1..101).map { ('a'..'z').random() }.joinToString(""),
     )
 
     // When

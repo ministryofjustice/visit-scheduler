@@ -8,39 +8,39 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 @Schema(description = "Prison dto")
 data class PrisonDto(
 
-  @Schema(description = "prison code", example = "BHI", required = true)
+  @param:Schema(description = "prison code", example = "BHI", required = true)
   @field:NotNull
   var code: String,
 
-  @Schema(description = "is prison active", example = "true", required = true)
+  @param:Schema(description = "is prison active", example = "true", required = true)
   @field:NotNull
   var active: Boolean = false,
 
-  @Schema(description = "minimum number of days notice from the current date to booked a visit", example = "2", required = true)
+  @param:Schema(description = "minimum number of days notice from the current date to booked a visit", example = "2", required = true)
   @field:NotNull
   @field:Min(0)
   val policyNoticeDaysMin: Int,
-  @Schema(description = "maximum number of days notice from the current date to booked a visit", example = "28", required = true)
+  @param:Schema(description = "maximum number of days notice from the current date to booked a visit", example = "28", required = true)
   @field:NotNull
   @field:Min(0)
   val policyNoticeDaysMax: Int,
 
-  @Schema(description = "Max number of total visitors")
+  @param:Schema(description = "Max number of total visitors")
   @field:NotNull
   @field:Min(1)
   val maxTotalVisitors: Int,
-  @Schema(description = "Max number of adults")
+  @param:Schema(description = "Max number of adults")
   @field:NotNull
   @field:Min(1)
   val maxAdultVisitors: Int,
-  @Schema(description = "Max number of children")
+  @param:Schema(description = "Max number of children")
   @field:NotNull
   @field:Min(0)
   val maxChildVisitors: Int,
-  @Schema(description = "Age of adults in years")
+  @param:Schema(description = "Age of adults in years")
   @field:NotNull
   val adultAgeYears: Int,
-  @Schema(description = "prison user client", required = false)
+  @param:Schema(description = "prison user client", required = false)
   val clients: List<UserClientDto> = mutableListOf(),
 ) {
   constructor(prisonEntity: Prison) : this(

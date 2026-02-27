@@ -7,15 +7,15 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryTyp
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
 
 data class SessionCategoryGroupDto(
-  @JsonProperty("name")
-  @Schema(description = "Group name", example = "Category A Group", required = true)
+  @param:JsonProperty("name")
+  @param:Schema(description = "Group name", example = "Category A Group", required = true)
   @field:NotBlank
   val name: String,
 
-  @Schema(description = "Reference", example = "v9-d7-ed-7u", required = true)
+  @param:Schema(description = "Reference", example = "v9-d7-ed-7u", required = true)
   val reference: String,
 
-  @Schema(description = "list of allowed prisoner categories for group", required = false)
+  @param:Schema(description = "list of allowed prisoner categories for group", required = false)
   val categories: List<PrisonerCategoryType> = listOf(),
 ) {
   constructor(sessionCategoryGroup: SessionCategoryGroup) : this(

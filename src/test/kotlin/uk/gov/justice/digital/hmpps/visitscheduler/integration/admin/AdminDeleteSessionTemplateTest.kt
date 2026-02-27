@@ -18,8 +18,8 @@ import java.time.LocalDate
 
 @DisplayName("Delete session template tests $ADMIN_SESSION_TEMPLATES_PATH")
 class AdminDeleteSessionTemplateTest(
-  @Autowired private val testTemplateRepository: TestSessionTemplateRepository,
-  @Autowired val testSessionLocationGroupRepository: TestSessionLocationGroupRepository,
+  @param:Autowired private val testTemplateRepository: TestSessionTemplateRepository,
+  @param:Autowired val testSessionLocationGroupRepository: TestSessionLocationGroupRepository,
 ) : IntegrationTestBase() {
 
   private val adminRole = listOf("ROLE_VISIT_SCHEDULER_CONFIG")

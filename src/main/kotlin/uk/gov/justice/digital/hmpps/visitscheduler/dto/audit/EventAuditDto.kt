@@ -14,37 +14,37 @@ import java.time.LocalDateTime
 @Schema(description = "Event Audit")
 class EventAuditDto(
 
-  @Schema(description = "The id of the event", required = true)
+  @param:Schema(description = "The id of the event", required = true)
   val id: Long,
 
-  @Schema(description = "The type of event", required = true)
+  @param:Schema(description = "The type of event", required = true)
   @field:NotNull
   val type: EventAuditType,
 
-  @Schema(description = "What was the application method for this event", required = true)
+  @param:Schema(description = "What was the application method for this event", required = true)
   @field:NotNull
   val applicationMethodType: ApplicationMethodType,
 
-  @Schema(description = "Event actioned by information", required = true)
+  @param:Schema(description = "Event actioned by information", required = true)
   @field:NotNull
   @field:Valid
   val actionedBy: ActionedByDto,
 
-  @Schema(description = "Visit reference", required = false)
+  @param:Schema(description = "Visit reference", required = false)
   val bookingReference: String? = null,
 
-  @Schema(description = "Session template used for this event", required = false)
+  @param:Schema(description = "Session template used for this event", required = false)
   var sessionTemplateReference: String? = null,
 
-  @Schema(description = "Notes added against the event", required = false)
+  @param:Schema(description = "Notes added against the event", required = false)
   @NullableNotBlank
   var text: String? = null,
 
-  @Schema(description = "Notify history for the event", required = false)
+  @param:Schema(description = "Notify history for the event", required = false)
   @NullableNotBlank
   val notifyHistory: List<NotifyHistoryDto> = emptyList(),
 
-  @Schema(description = "event creat date and time", example = "2018-12-01T13:45:00", required = true)
+  @param:Schema(description = "event creat date and time", example = "2018-12-01T13:45:00", required = true)
   @field:NotBlank
   val createTimestamp: LocalDateTime = LocalDateTime.now(),
 ) {

@@ -6,11 +6,11 @@ import jakarta.validation.constraints.NotBlank
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
 
 data class UpdateCategoryGroupDto(
-  @JsonProperty("name")
-  @Schema(description = "Group name", example = "Main group", required = true)
+  @param:JsonProperty("name")
+  @param:Schema(description = "Group name", example = "Main group", required = true)
   @field:NotBlank
   val name: String,
 
-  @Schema(description = "list of category for group", required = false)
+  @param:Schema(description = "list of category for group", required = false)
   val categories: List<PrisonerCategoryType> = listOf(),
 )

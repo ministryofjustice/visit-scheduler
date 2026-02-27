@@ -5,8 +5,8 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 class ExpiredApplicationTaskConfiguration(
-  @Value("\${task.delete.expired-applications.enabled:true}") val expiredApplicationTaskEnabled: Boolean,
-  @Value("\${task.delete.expired-applications.validity-minutes:1440}") val deleteExpiredApplicationsAfterMinutes: Int,
+  @param:Value("\${task.delete.expired-applications.enabled:true}") val expiredApplicationTaskEnabled: Boolean,
+  @param:Value("\${task.delete.expired-applications.validity-minutes:1440}") val deleteExpiredApplicationsAfterMinutes: Int,
 ) {
   companion object {
     const val LOCK_AT_LEAST_FOR = "PT5M"

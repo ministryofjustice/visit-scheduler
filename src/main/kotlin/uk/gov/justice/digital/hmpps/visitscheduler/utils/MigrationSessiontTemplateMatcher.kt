@@ -29,7 +29,7 @@ class MigrationSessionTemplateMatcher(
   private val prisonerIncentiveLevelMatcher: PrisonerIncentiveLevelMatcher,
   private val sessionValidator: PrisonerSessionValidator,
   private val sessionDatesUtil: SessionDatesUtil,
-  @Value("\${policy.session.max-proximity-minutes:$DEFAULT_MAX_PROX_MINUTES}")
+  @param:Value("\${policy.session.max-proximity-minutes:$DEFAULT_MAX_PROX_MINUTES}")
   private var maxProximityMinutes: Int = DEFAULT_MAX_PROX_MINUTES,
 ) {
 

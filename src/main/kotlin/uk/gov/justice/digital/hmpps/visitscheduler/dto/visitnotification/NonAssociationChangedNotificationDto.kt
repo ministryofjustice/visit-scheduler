@@ -5,10 +5,10 @@ import jakarta.validation.constraints.NotNull
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonAssociationDomainEventType
 
 data class NonAssociationChangedNotificationDto(
-  @NotNull
+  @field:NotNull
   val type: NonAssociationDomainEventType,
-  @NotBlank
+  @field:NotBlank
   val prisonerNumber: String,
-  @NotBlank
+  @field:NotBlank
   val nonAssociationPrisonerNumber: String,
 )

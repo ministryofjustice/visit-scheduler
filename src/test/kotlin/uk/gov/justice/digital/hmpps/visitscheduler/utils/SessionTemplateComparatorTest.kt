@@ -163,7 +163,7 @@ class SessionTemplateComparatorTest {
     // new session template has rest of the details same as the existing session template, only session dates are different
     val newSessionTemplate = createCreateSessionTemplateDto(
       sessionTemplateDto = existingSessionTemplateDto,
-      sessionDateRange = SessionDateRangeDto(validFromDate = sessionTemplate.validToDate!!.plusDays(1), validToDate = sessionTemplate.validToDate!!.plusDays(21)),
+      sessionDateRange = SessionDateRangeDto(validFromDate = sessionTemplate.validToDate!!.plusDays(1), validToDate = sessionTemplate.validToDate.plusDays(21)),
     )
 
     // When

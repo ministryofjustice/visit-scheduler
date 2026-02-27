@@ -18,7 +18,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventAttributeType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SupportedCourtVideoAppointmentCategoryCode
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.CourtVideoAppointmentNotificationDto
@@ -57,7 +56,7 @@ class CourtVideoAppointmentCreatedVisitNotificationControllerTest : Notification
   fun `when court video appointment is created then future booked visits are flagged and saved`() {
     // Given
     val activitiesApiResponse = ActivitiesAppointmentInstanceDetailsDto(
-      categoryCode = SupportedCourtVideoAppointmentCategoryCode.VLPM.toString(),
+      categoryCode = "VLPM",
       appointmentDate = LocalDate.now().plusDays(1),
       startTime = "12:00",
       endTime = "16:00",
@@ -125,7 +124,7 @@ class CourtVideoAppointmentCreatedVisitNotificationControllerTest : Notification
   fun `when court video appointment is created then future booked visits inside the 30 minute window buffer are flagged and saved`() {
     // Given
     val activitiesApiResponse = ActivitiesAppointmentInstanceDetailsDto(
-      categoryCode = SupportedCourtVideoAppointmentCategoryCode.VLPM.toString(),
+      categoryCode = "VLPM",
       appointmentDate = LocalDate.now().plusDays(1),
       startTime = "12:00",
       endTime = "16:00",

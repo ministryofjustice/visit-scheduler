@@ -8,13 +8,13 @@ import uk.gov.justice.digital.hmpps.visitscheduler.validation.NullableNotBlank
 
 @Schema(description = "Contact")
 data class ContactDto(
-  @Schema(description = "Contact Name", example = "John Smith", required = true)
+  @param:Schema(description = "Contact Name", example = "John Smith", required = true)
   @field:NotBlank
   val name: String,
-  @Schema(description = "Contact Phone Number", example = "01234 567890", required = false)
+  @param:Schema(description = "Contact Phone Number", example = "01234 567890", required = false)
   @field:NullableNotBlank
   val telephone: String?,
-  @Schema(description = "Contact Email Address", example = "email@example.com", required = false)
+  @param:Schema(description = "Contact Email Address", example = "email@example.com", required = false)
   @field:NullableNotBlank
   val email: String?,
 ) {

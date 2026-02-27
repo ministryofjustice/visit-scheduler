@@ -1,6 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.helper
 
-import org.junit.Assert
+import org.junit.jupiter.api.Assertions.assertNull
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Propagation.REQUIRES_NEW
 import org.springframework.transaction.annotation.Transactional
@@ -531,7 +531,7 @@ class EventAuditEntityHelper(
 
   private fun createOrGetActionBy(actionedByValue: String? = null, userType: UserType): ActionedBy {
     if (userType == SYSTEM) {
-      Assert.assertNull(actionedByValue)
+      assertNull(actionedByValue)
     }
 
     val bookerReference: String? = if (userType == PUBLIC) actionedByValue else null

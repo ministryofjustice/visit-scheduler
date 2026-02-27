@@ -13,8 +13,8 @@ import java.time.Duration
 
 @Component
 class ActivitiesApiClient(
-  @Qualifier("activitiesApiWebClient") private val webClient: WebClient,
-  @Value("\${activities.api.timeout:10s}") private val apiTimeout: Duration,
+  @param:Qualifier("activitiesApiWebClient") private val webClient: WebClient,
+  @param:Value("\${activities.api.timeout:10s}") private val apiTimeout: Duration,
 ) {
 
   companion object {

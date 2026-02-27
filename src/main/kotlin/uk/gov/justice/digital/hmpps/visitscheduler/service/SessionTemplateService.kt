@@ -75,7 +75,7 @@ class SessionTemplateService(
   private val sessionTemplateUtil: SessionTemplateUtil,
   private val visitMoveValidator: SessionTemplateVisitMoveValidator,
   private val sessionSlotService: SessionSlotService,
-  @Lazy
+  @param:Lazy
   private val excludeDateService: ExcludeDateService,
 ) {
   companion object {

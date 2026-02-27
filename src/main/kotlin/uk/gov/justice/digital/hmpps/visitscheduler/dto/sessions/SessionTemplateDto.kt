@@ -14,47 +14,47 @@ import java.time.DayOfWeek
 
 data class SessionTemplateDto(
 
-  @Schema(description = "Reference", example = "v9d.7ed.7u", required = true)
+  @param:Schema(description = "Reference", example = "v9d.7ed.7u", required = true)
   val reference: String,
-  @Schema(description = "name", example = "Monday Session", required = true)
+  @param:Schema(description = "name", example = "Monday Session", required = true)
   @field:NotBlank
   val name: String,
-  @JsonProperty("prisonId")
-  @Schema(description = "prisonId", example = "MDI", required = true)
+  @param:JsonProperty("prisonId")
+  @param:Schema(description = "prisonId", example = "MDI", required = true)
   @field:NotBlank
   val prisonCode: String,
-  @Schema(description = "The time slot of the generated visit session(s)", required = true)
+  @param:Schema(description = "The time slot of the generated visit session(s)", required = true)
   val sessionTimeSlot: SessionTimeSlotDto,
-  @Schema(description = "Validity period for the session template", required = true)
+  @param:Schema(description = "Validity period for the session template", required = true)
   val sessionDateRange: SessionDateRangeDto,
-  @Schema(description = "visit type", example = "SOCIAL", required = true)
+  @param:Schema(description = "visit type", example = "SOCIAL", required = true)
   val visitType: VisitType,
-  @Schema(description = "number of weeks until the weekly day is repeated", example = "1", required = true)
+  @param:Schema(description = "number of weeks until the weekly day is repeated", example = "1", required = true)
   val weeklyFrequency: Int,
-  @Schema(description = "Visit Room", example = "A1 L3", required = true)
+  @param:Schema(description = "Visit Room", example = "A1 L3", required = true)
   @field:NotBlank
   val visitRoom: String,
-  @Schema(description = "session capacity", required = true)
+  @param:Schema(description = "session capacity", required = true)
   val sessionCapacity: SessionCapacityDto,
-  @Schema(description = "day of week for visit", example = "MONDAY", required = true)
+  @param:Schema(description = "day of week for visit", example = "MONDAY", required = true)
   val dayOfWeek: DayOfWeek,
-  @Schema(description = "is session template active", example = "true", required = true)
+  @param:Schema(description = "is session template active", example = "true", required = true)
   val active: Boolean,
-  @Schema(description = "list of permitted session location groups", required = false)
+  @param:Schema(description = "list of permitted session location groups", required = false)
   val permittedLocationGroups: List<SessionLocationGroupDto> = listOf(),
-  @Schema(description = "list of permitted prisoner category groups", required = false)
+  @param:Schema(description = "list of permitted prisoner category groups", required = false)
   val prisonerCategoryGroups: List<SessionCategoryGroupDto> = listOf(),
-  @Schema(description = "list of permitted incentive level groups", required = false)
+  @param:Schema(description = "list of permitted incentive level groups", required = false)
   val prisonerIncentiveLevelGroups: List<SessionIncentiveLevelGroupDto> = listOf(),
-  @Schema(description = "Determines behaviour of location groups. True equates to these location groups being included, false equates to them being excluded.", required = true)
+  @param:Schema(description = "Determines behaviour of location groups. True equates to these location groups being included, false equates to them being excluded.", required = true)
   val includeLocationGroupType: Boolean,
-  @Schema(description = "User Client's for the session template", required = false)
+  @param:Schema(description = "User Client's for the session template", required = false)
   val clients: List<UserClientDto> = mutableListOf(),
-  @Schema(description = "Determines behaviour of category groups. True equates to these category groups being included, false equates to them being excluded.", required = true)
+  @param:Schema(description = "Determines behaviour of category groups. True equates to these category groups being included, false equates to them being excluded.", required = true)
   val includeCategoryGroupType: Boolean,
-  @Schema(description = "Determines behaviour of incentive groups. True equates to these incentive groups being included, false equates to them being excluded.", required = true)
+  @param:Schema(description = "Determines behaviour of incentive groups. True equates to these incentive groups being included, false equates to them being excluded.", required = true)
   val includeIncentiveGroupType: Boolean,
-  @Schema(description = "The type of visit order restriction", example = "PVO", required = true)
+  @param:Schema(description = "The type of visit order restriction", example = "PVO", required = true)
   val visitOrderRestriction: SessionTemplateVisitOrderRestrictionType,
 ) {
   constructor(sessionTemplateEntity: SessionTemplate) : this(
