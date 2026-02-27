@@ -11,7 +11,7 @@ import java.time.LocalDateTime
 @Schema(description = "Visit Session")
 data class VisitSessionDto(
 
-  @Schema(description = "Session Template Reference", example = "v9d.7ed.7u", required = true)
+  @param:Schema(description = "Session Template Reference", example = "v9d.7ed.7u", required = true)
   @field:NotBlank
   val sessionTemplateReference: String,
 
