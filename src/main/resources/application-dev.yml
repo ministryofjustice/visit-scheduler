@@ -54,7 +54,7 @@ task:
       enabled: true
       validity-minutes: 1440
   visit-notification-events:
-    cron: "0 30 3 * * ?" #every day at 9:00 AM - Testing functionality
+    cron: "0 30 9 * * ?" #every day at 9:00 AM - Testing functionality
 
 hmpps.sqs:
   provider: localstack
