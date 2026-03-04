@@ -53,6 +53,8 @@ task:
     expired-applications:
       enabled: true
       validity-minutes: 1440
+  visit-notification-events:
+    cron: "0 30 3 * * ?" #every day at 9:00 AM - Testing functionality
 
 hmpps.sqs:
   provider: localstack
