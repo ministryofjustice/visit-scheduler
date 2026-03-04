@@ -18,6 +18,7 @@ generic-service:
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.dev.json
     BOOKING_NOTICE_PERIOD_MAXIMUM_DAYS: 50
     TASK_VISIT_COUNTS_REPORT_CRON: "0 0 0/1 * * ?" #every hour on dev
+    TASK_VISIT_NOTIFICATION_EVENTS_CRON: "0 0/10 * * * ?" #every 10mins on dev - TEMP - Testing
     TASK_FLAG_VISITS_CRON: "0 0 0/4 * * ?" #every 4 hours on dev
     TASK_REQUESTS_AUTO-REJECT_CRON: "0 0 0/4 * * ?" #every 4 hours on dev
 
