@@ -424,6 +424,13 @@ class VisitNotificationEventService(
     deleteNotificationsThatAreNoLongerValid(currentPrisonNotifications, PRISONER_RECEIVED_EVENT, PRISONER_RETURNED_TO_PRISON)
   }
 
+  @Transactional
+  fun deleteExpiredNotificationEvents(): Int {
+    val markedForRemovalList = visitNotificationEventRepository.findExpiredVisitNotificationEvents()
+    visitNotificationEventRepository.deleteAll(markedForRemovalList)
+    return markedForRemovalList.size
+  }
+
   private fun processVisitsWithNotifications(processVisitNotificationDto: ProcessVisitNotificationDto) {
     val affectedVisits = processVisitNotificationDto.affectedVisits
 
