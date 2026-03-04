@@ -75,10 +75,6 @@ data class VisitSessionDto(
 
     other as VisitSessionDto
 
-    if (openVisitCapacity != other.openVisitCapacity) return false
-    if (openVisitBookedCount != other.openVisitBookedCount) return false
-    if (closedVisitCapacity != other.closedVisitCapacity) return false
-    if (closedVisitBookedCount != other.closedVisitBookedCount) return false
     if (sessionTemplateReference != other.sessionTemplateReference) return false
     if (visitRoom != other.visitRoom) return false
     if (visitType != other.visitType) return false

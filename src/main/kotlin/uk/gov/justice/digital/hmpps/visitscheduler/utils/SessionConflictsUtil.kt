@@ -75,8 +75,8 @@ class SessionConflictsUtil {
 
   private fun hasDoubleBookingOrReservationSessions(
     doubleBookingOrReservationSessions: List<VisitSessionDto>,
-    it: VisitSessionDto,
-  ): Boolean = doubleBookingOrReservationSessions.contains(it)
+    visitSession: VisitSessionDto,
+  ): Boolean = doubleBookingOrReservationSessions.contains(visitSession)
 
   private fun isDateExcluded(
     prisonExcludeDates: List<LocalDate>,
