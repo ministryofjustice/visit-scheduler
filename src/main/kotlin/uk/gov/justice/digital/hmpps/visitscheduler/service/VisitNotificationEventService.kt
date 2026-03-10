@@ -688,7 +688,7 @@ class VisitNotificationEventService(
   }
 
   private fun doesSocialRelationshipForVisitorStillExist(prisonerId: String, visitorId: String): Boolean {
-    val prisonerApprovedContacts = prisonerContactRegistryClient.getPrisonersApprovedSocialContacts(prisonerId, withAddress = false)
+    val prisonerApprovedContacts = prisonerContactRegistryClient.getPrisonersApprovedSocialContacts(prisonerId, withAddress = false, withRestrictions = false)
     return prisonerApprovedContacts?.filter { it.personId != null }?.map { it.personId.toString() }?.contains(visitorId) ?: false
   }
 

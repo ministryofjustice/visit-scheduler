@@ -25,9 +25,10 @@ class PrisonerContactRegistryClient(
   fun getPrisonersApprovedSocialContacts(
     prisonerId: String,
     withAddress: Boolean,
+    withRestrictions: Boolean,
   ): List<PrisonerContactDto>? {
     val uri = GET_PRISONERS_APPROVED_SOCIAL_CONTACTS_URL.replace("{prisonerId}", prisonerId)
-    return getPrisonersSocialContactsAsMono(prisonerId, withAddress = withAddress)
+    return getPrisonersSocialContactsAsMono(prisonerId, withAddress = withAddress, withRestrictions = withRestrictions)
       .onErrorResume { e ->
         if (!isNotFoundError(e)) {
           LOG.error("getPrisonersSocialContacts Failed for get request $uri")
@@ -43,10 +44,11 @@ class PrisonerContactRegistryClient(
   private fun getPrisonersSocialContactsAsMono(
     prisonerId: String,
     withAddress: Boolean,
+    withRestrictions: Boolean,
   ): Mono<List<PrisonerContactDto>> {
     val uri = GET_PRISONERS_APPROVED_SOCIAL_CONTACTS_URL.replace("{prisonerId}", prisonerId)
     return webClient.get().uri(uri) {
-      getSocialContactsUriBuilder(withAddress = withAddress, uriBuilder = it).build()
+      getSocialContactsUriBuilder(withAddress = withAddress, withRestrictions = withRestrictions, uriBuilder = it).build()
     }
       .retrieve()
       .bodyToMono<List<PrisonerContactDto>>()
@@ -54,9 +56,11 @@ class PrisonerContactRegistryClient(
 
   private fun getSocialContactsUriBuilder(
     withAddress: Boolean,
+    withRestrictions: Boolean,
     uriBuilder: UriBuilder,
   ): UriBuilder {
     uriBuilder.queryParam("withAddress", withAddress)
+    uriBuilder.queryParam("withRestrictions", withRestrictions)
     return uriBuilder
   }
 }
