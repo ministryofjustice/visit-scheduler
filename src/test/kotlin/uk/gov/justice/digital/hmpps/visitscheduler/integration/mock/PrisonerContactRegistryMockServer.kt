@@ -12,12 +12,13 @@ class PrisonerContactRegistryMockServer : WireMockServer(8095) {
   fun stubGetPrisonerApprovedSocialContacts(
     prisonerId: String,
     withAddress: Boolean = false,
+    withRestrictions: Boolean = false,
     contactsList: List<PrisonerContactDto>?,
     httpStatus: HttpStatus = HttpStatus.NOT_FOUND,
   ) {
     val url = GET_PRISONERS_APPROVED_SOCIAL_CONTACTS_URL.replace("{prisonerId}", prisonerId)
     stubFor(
-      get("$url?${getContactsQueryParams(withAddress)}")
+      get("$url?${getContactsQueryParams(withAddress, withRestrictions)}")
         .willReturn(
           if (contactsList == null) {
             aResponse()
@@ -35,10 +36,14 @@ class PrisonerContactRegistryMockServer : WireMockServer(8095) {
 
   private fun getContactsQueryParams(
     withAddress: Boolean? = null,
+    withRestrictions: Boolean? = null,
   ): String {
     val queryParams = ArrayList<String>()
     withAddress?.let {
       queryParams.add("withAddress=$it")
+    }
+    withRestrictions?.let {
+      queryParams.add("withRestrictions=$it")
     }
 
     return queryParams.joinToString("&")
