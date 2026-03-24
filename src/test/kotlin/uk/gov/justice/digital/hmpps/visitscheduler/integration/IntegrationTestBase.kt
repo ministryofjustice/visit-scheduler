@@ -69,6 +69,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.VsipReportingEntityHel
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGet
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callPut
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.container.LocalStackContainer
+import uk.gov.justice.digital.hmpps.visitscheduler.integration.container.LocalStackContainer.setLocalStackProperties
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.container.PostgresContainer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.ActivitiesApiMockServer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.HmppsAuthExtension
@@ -251,18 +252,17 @@ abstract class IntegrationTestBase {
     @DynamicPropertySource
     fun properties(registry: DynamicPropertyRegistry) {
       pgContainer?.run {
-        registry.add("spring.datasource.url", pgContainer::getJdbcUrl)
-        registry.add("spring.datasource.username", pgContainer::getUsername)
-        registry.add("spring.datasource.password", pgContainer::getPassword)
-        registry.add("spring.datasource.placeholders.database_update_password", pgContainer::getPassword)
-        registry.add("spring.datasource.placeholders.database_read_only_password", pgContainer::getPassword)
-        registry.add("spring.flyway.url", pgContainer::getJdbcUrl)
-        registry.add("spring.flyway.user", pgContainer::getUsername)
-        registry.add("spring.flyway.password", pgContainer::getPassword)
+        registry.add("spring.datasource.url") { PostgresContainer.jdbcUrl }
+        registry.add("spring.datasource.username") { PostgresContainer.dbUsername }
+        registry.add("spring.datasource.password") { PostgresContainer.dbPassword }
+        registry.add("spring.datasource.placeholders.database_update_password") { PostgresContainer.dbPassword }
+        registry.add("spring.datasource.placeholders.database_read_only_password") { PostgresContainer.dbPassword }
+        registry.add("spring.flyway.url") { PostgresContainer.jdbcUrl }
+        registry.add("spring.flyway.user") { PostgresContainer.dbUsername }
+        registry.add("spring.flyway.password") { PostgresContainer.dbPassword }
       }
       lsContainer?.run {
-        registry.add("hmpps.sqs.localstackUrl") { lsContainer.getEndpointOverride(org.testcontainers.containers.localstack.LocalStackContainer.Service.SNS) }
-        registry.add("hmpps.sqs.region") { lsContainer.region }
+        setLocalStackProperties(lsContainer, registry)
       }
     }
   }
