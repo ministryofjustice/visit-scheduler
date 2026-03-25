@@ -453,7 +453,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     responseSpec.expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.developerMessage")
-      .value(Matchers.containsString("Only one visit contact allowed"))
+      .value<String> { it.contains("Only one visit contact allowed") }
   }
 
   @Test

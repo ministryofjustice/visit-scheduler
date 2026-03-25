@@ -174,7 +174,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update session times for ${sessionTemplateDefault.reference} as there are existing visits associated with this session template!"))
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot update session times for ${sessionTemplateDefault.reference} as there are existing visits associated with this session template!")
   }
 
   @Test
@@ -201,7 +201,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update session valid from date for ${sessionTemplateDefault.reference} as there are existing visits associated with this session template!"))
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot update session valid from date for ${sessionTemplateDefault.reference} as there are existing visits associated with this session template!")
   }
 
   @Test
@@ -876,8 +876,8 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update session times for ${sessionTemplateDefault.reference} as there are existing visits associated with this session template!"))
-      .jsonPath("$.validationMessages[1]").value(Matchers.equalTo("Cannot update session valid from date for ${sessionTemplateDefault.reference} as there are existing visits associated with this session template!"))
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot update session times for ${sessionTemplateDefault.reference} as there are existing visits associated with this session template!")
+      .jsonPath("$.validationMessages[1]").isEqualTo("Cannot update session valid from date for ${sessionTemplateDefault.reference} as there are existing visits associated with this session template!")
   }
 
   @Test
@@ -1181,7 +1181,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update locations to the new location list as all existing locations in session template are not catered for."))
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot update locations to the new location list as all existing locations in session template are not catered for.")
   }
 
   @Test
@@ -1210,7 +1210,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update locations to the new location list as all existing locations in session template are not catered for."))
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot update locations to the new location list as all existing locations in session template are not catered for.")
   }
 
   @Test
@@ -1311,7 +1311,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update locations to the new location list as all existing locations in session template are not catered for."))
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot update locations to the new location list as all existing locations in session template are not catered for.")
   }
 
   @Test
@@ -1346,7 +1346,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update locations to the new location list as all existing locations in session template are not catered for."))
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot update locations to the new location list as all existing locations in session template are not catered for.")
   }
 
   @Test
@@ -1381,7 +1381,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update locations to the new location list as all existing locations in session template are not catered for."))
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot update locations to the new location list as all existing locations in session template are not catered for.")
   }
 
   @Test
@@ -1513,7 +1513,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update locations to the new location list as all existing locations in session template are not catered for."))
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot update locations to the new location list as all existing locations in session template are not catered for.")
   }
 
   @Test
@@ -1548,7 +1548,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update locations to the new location list as all existing locations in session template are not catered for."))
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot update locations to the new location list as all existing locations in session template are not catered for.")
   }
 
   @Test
@@ -1583,7 +1583,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update locations to the new location list as all existing locations in session template are not catered for."))
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot update locations to the new location list as all existing locations in session template are not catered for.")
   }
 
   @Test
@@ -1618,7 +1618,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update locations to the new location list as all existing locations in session template are not catered for."))
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot update locations to the new location list as all existing locations in session template are not catered for.")
   }
 
   @Test
@@ -1653,7 +1653,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update locations to the new location list as all existing locations in session template are not catered for."))
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot update locations to the new location list as all existing locations in session template are not catered for.")
   }
 
   @Test
@@ -1688,7 +1688,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update locations to the new location list as all existing locations in session template are not catered for."))
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot update locations to the new location list as all existing locations in session template are not catered for.")
   }
 
   @Test
@@ -1723,7 +1723,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update locations to the new location list as all existing locations in session template are not catered for."))
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot update locations to the new location list as all existing locations in session template are not catered for.")
   }
 
   @Test
@@ -1851,7 +1851,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update locations to the new location list as all existing locations in session template are not catered for."))
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot update locations to the new location list as all existing locations in session template are not catered for.")
   }
 
   @Test
@@ -1986,7 +1986,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update categories to the new category list as all existing prisoner categories in session template are not catered for."))
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot update categories to the new category list as all existing prisoner categories in session template are not catered for.")
   }
 
   @Test
@@ -2015,7 +2015,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update categories to the new category list as all existing prisoner categories in session template are not catered for."))
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot update categories to the new category list as all existing prisoner categories in session template are not catered for.")
   }
 
   @Test
@@ -2147,7 +2147,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update categories to the new category list as all existing prisoner categories in session template are not catered for."))
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot update categories to the new category list as all existing prisoner categories in session template are not catered for.")
   }
 
   @Test
@@ -2182,7 +2182,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update categories to the new category list as all existing prisoner categories in session template are not catered for."))
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot update categories to the new category list as all existing prisoner categories in session template are not catered for.")
   }
 
   @Test
@@ -2250,7 +2250,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update categories to the new category list as all existing prisoner categories in session template are not catered for."))
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot update categories to the new category list as all existing prisoner categories in session template are not catered for.")
   }
 
   @Test
@@ -2285,7 +2285,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update categories to the new category list as all existing prisoner categories in session template are not catered for."))
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot update categories to the new category list as all existing prisoner categories in session template are not catered for.")
   }
 
   @Test
@@ -2320,7 +2320,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update categories to the new category list as all existing prisoner categories in session template are not catered for."))
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot update categories to the new category list as all existing prisoner categories in session template are not catered for.")
   }
 
   @Test
@@ -2355,7 +2355,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update categories to the new category list as all existing prisoner categories in session template are not catered for."))
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot update categories to the new category list as all existing prisoner categories in session template are not catered for.")
   }
 
   @Test
@@ -2483,7 +2483,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update categories to the new category list as all existing prisoner categories in session template are not catered for."))
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot update categories to the new category list as all existing prisoner categories in session template are not catered for.")
   }
 
   @Test
@@ -2591,7 +2591,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update incentive levels to the new incentive levels list as all existing incentive levels in session template are not catered for."))
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot update incentive levels to the new incentive levels list as all existing incentive levels in session template are not catered for.")
   }
 
   @Test
@@ -2620,7 +2620,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update incentive levels to the new incentive levels list as all existing incentive levels in session template are not catered for."))
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot update incentive levels to the new incentive levels list as all existing incentive levels in session template are not catered for.")
   }
 
   @Test
@@ -2968,7 +2968,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update incentive levels to the new incentive levels list as all existing incentive levels in session template are not catered for."))
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot update incentive levels to the new incentive levels list as all existing incentive levels in session template are not catered for.")
   }
 
   @Test
@@ -3003,7 +3003,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update incentive levels to the new incentive levels list as all existing incentive levels in session template are not catered for."))
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot update incentive levels to the new incentive levels list as all existing incentive levels in session template are not catered for.")
   }
 
   @Test
@@ -3071,7 +3071,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update incentive levels to the new incentive levels list as all existing incentive levels in session template are not catered for."))
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot update incentive levels to the new incentive levels list as all existing incentive levels in session template are not catered for.")
   }
 
   @Test
@@ -3106,7 +3106,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update incentive levels to the new incentive levels list as all existing incentive levels in session template are not catered for."))
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot update incentive levels to the new incentive levels list as all existing incentive levels in session template are not catered for.")
   }
 
   @Test
@@ -3141,7 +3141,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update incentive levels to the new incentive levels list as all existing incentive levels in session template are not catered for."))
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot update incentive levels to the new incentive levels list as all existing incentive levels in session template are not catered for.")
   }
 
   @Test
@@ -3176,7 +3176,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update incentive levels to the new incentive levels list as all existing incentive levels in session template are not catered for."))
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot update incentive levels to the new incentive levels list as all existing incentive levels in session template are not catered for.")
   }
 
   @Test
@@ -3308,7 +3308,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update incentive levels to the new incentive levels list as all existing incentive levels in session template are not catered for."))
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot update incentive levels to the new incentive levels list as all existing incentive levels in session template are not catered for.")
   }
 
   @Test

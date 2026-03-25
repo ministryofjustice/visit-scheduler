@@ -169,10 +169,10 @@ class PrisonEntityHelper(
     } else {
       prison.active = activePrison
     }
-    prison?.let {
+    prison.let {
       prison.excludeDates.addAll(excludeDates.map { PrisonExcludeDate(prisonId = prison.id, prison = prison, excludeDate = it, actionedBy = "TEST_USER") })
     }
-    return prison!!
+    return prison
   }
 
   private fun createPrisonUserClient(prison: Prison, active: Boolean, userType: UserType): PrisonUserClient {
