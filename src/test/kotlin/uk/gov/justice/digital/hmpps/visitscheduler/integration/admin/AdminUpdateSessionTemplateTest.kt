@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.admin
 
 import org.assertj.core.api.Assertions
-import org.hamcrest.Matchers
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -264,7 +263,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.developerMessage").value(Matchers.containsString("Session end time should be greater than start time"))
+      .jsonPath("$.developerMessage").value<String> { it.contains(("Session end time should be greater than start time")) }
   }
 
   @Test
@@ -283,7 +282,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.developerMessage").value(Matchers.containsString("Session end time should be greater than start time"))
+      .jsonPath("$.developerMessage").value<String> { it.contains(("Session end time should be greater than start time")) }
   }
 
   @Test
@@ -333,7 +332,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.developerMessage").value(Matchers.containsString("Session valid to date cannot be less than valid from date"))
+      .jsonPath("$.developerMessage").value<String> { it.contains(("Session valid to date cannot be less than valid from date")) }
   }
 
   @Test
@@ -580,7 +579,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.containsString("Cannot update session valid to date to $newValidToDate for session template - ${sessionTemplateWithValidDates.reference} as there are booked or reserved visits associated with this session template after $newValidToDate."))
+      .jsonPath("$.validationMessages[0]").value<String> { it.contains(("Cannot update session valid to date to $newValidToDate for session template - ${sessionTemplateWithValidDates.reference} as there are booked or reserved visits associated with this session template after $newValidToDate.")) }
     verify(visitRepository, times(0)).hasVisitsForSessionTemplate(any(), any())
     verify(visitRepository, times(1)).hasBookedVisitsForSessionTemplate(eq(sessionTemplateWithValidDates.reference), eq(newValidToDate.plusDays(1)))
   }
@@ -672,7 +671,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.containsString("Cannot update session template weekly frequency from ${sessionTemplateDefault.weeklyFrequency} to $newWeeklyFrequency for ${sessionTemplateDefault.reference} as existing visits for ${sessionTemplateDefault.reference} might be affected!"))
+      .jsonPath("$.validationMessages[0]").value<String> { it.contains(("Cannot update session template weekly frequency from ${sessionTemplateDefault.weeklyFrequency} to $newWeeklyFrequency for ${sessionTemplateDefault.reference} as existing visits for ${sessionTemplateDefault.reference} might be affected!")) }
   }
 
   @Test
@@ -697,7 +696,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.containsString("Cannot update session template weekly frequency from ${sessionTemplateWithWeeklyFrequencyOf6.weeklyFrequency} to $newWeeklyFrequency for ${sessionTemplateWithWeeklyFrequencyOf6.reference} as existing visits for ${sessionTemplateWithWeeklyFrequencyOf6.reference} might be affected!"))
+      .jsonPath("$.validationMessages[0]").value<String> { it.contains(("Cannot update session template weekly frequency from ${sessionTemplateWithWeeklyFrequencyOf6.weeklyFrequency} to $newWeeklyFrequency for ${sessionTemplateWithWeeklyFrequencyOf6.reference} as existing visits for ${sessionTemplateWithWeeklyFrequencyOf6.reference} might be affected!")) }
   }
 
   @Test
@@ -896,7 +895,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.developerMessage").value(Matchers.containsString("Either open capacity or closed capacity should be greater than 0"))
+      .jsonPath("$.developerMessage").value<String> { it.contains(("Either open capacity or closed capacity should be greater than 0")) }
   }
 
   @Test
@@ -3327,7 +3326,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.developerMessage").value(Matchers.containsString("Session valid to date cannot be less than valid from date"))
+      .jsonPath("$.developerMessage").value<String> { it.contains(("Session valid to date cannot be less than valid from date")) }
   }
 
   @Test
