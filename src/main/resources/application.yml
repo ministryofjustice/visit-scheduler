@@ -172,3 +172,5 @@ api:
   timeout: 10s
   health:
     timeout: 2s
+
+springdoc.swagger-ui.version: 5.32.1
