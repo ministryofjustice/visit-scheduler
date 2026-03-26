@@ -160,10 +160,15 @@ class SessionTemplateComparatorTest {
     val sessionTemplate = sessionTemplate(weeklyFrequency = 1, validFromDate = LocalDate.now(), validToDate = LocalDate.now().plusYears(1), dayOfWeek = DayOfWeek.FRIDAY)
     val existingSessionTemplateDto = SessionTemplateDto(sessionTemplate)
 
+    val validToDate = sessionTemplate.validToDate!!
+
     // new session template has rest of the details same as the existing session template, only session dates are different
     val newSessionTemplate = createCreateSessionTemplateDto(
       sessionTemplateDto = existingSessionTemplateDto,
-      sessionDateRange = SessionDateRangeDto(validFromDate = sessionTemplate.validToDate!!.plusDays(1), validToDate = sessionTemplate.validToDate.plusDays(21)),
+      sessionDateRange = SessionDateRangeDto(
+        validFromDate = validToDate.plusDays(1),
+        validToDate = validToDate.plusDays(21),
+      ),
     )
 
     // When

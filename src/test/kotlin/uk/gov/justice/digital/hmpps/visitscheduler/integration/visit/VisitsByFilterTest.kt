@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
 
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions
-import org.hamcrest.Matchers
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -234,7 +233,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.developerMessage").value(Matchers.containsString("Must have prisonId or prisonerId"))
+      .jsonPath("$.developerMessage").value<String> { it.contains(("Must have prisonId or prisonerId")) }
   }
 
   @Test

@@ -32,7 +32,6 @@ class SessionSlot(
 
   @Column
   var reference: String = ""
-    private set
 
   @PostPersist
   fun createReference() {

@@ -53,7 +53,7 @@ import java.time.temporal.ChronoUnit
 @TestPropertySource(properties = ["visit.cancel.day-limit=7"])
 class CancelVisitTest : IntegrationTestBase() {
   @Autowired
-  protected lateinit var visitNotificationEventHelper: VisitNotificationEventHelper
+  private lateinit var visitNotificationEventHelper: VisitNotificationEventHelper
 
   companion object {
     const val RESERVED_BY_USER = "reserved_by"
