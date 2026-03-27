@@ -146,6 +146,8 @@ task:
   requests:
     auto-reject:
       cron: "0 0 20 * * *"
+  visit-notification-events:
+    cron: "0 30 3 * * ?" #every day at 3:30 AM
 
 feature:
   events:
@@ -170,3 +172,5 @@ api:
   timeout: 10s
   health:
     timeout: 2s
+
+springdoc.swagger-ui.version: 5.32.1

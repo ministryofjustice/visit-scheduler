@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit.applicatio
 
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions
-import org.hamcrest.Matchers
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -453,7 +452,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     responseSpec.expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.developerMessage")
-      .value(Matchers.containsString("Only one visit contact allowed"))
+      .value<String> { it.contains("Only one visit contact allowed") }
   }
 
   @Test
