@@ -424,6 +424,13 @@ class VisitNotificationEventService(
     deleteNotificationsThatAreNoLongerValid(currentPrisonNotifications, PRISONER_RECEIVED_EVENT, PRISONER_RETURNED_TO_PRISON)
   }
 
+  @Transactional
+  fun deleteExpiredNotificationEvents(): Int {
+    val markedForRemovalList = visitNotificationEventRepository.findExpiredVisitNotificationEvents()
+    visitNotificationEventRepository.deleteAll(markedForRemovalList)
+    return markedForRemovalList.size
+  }
+
   private fun processVisitsWithNotifications(processVisitNotificationDto: ProcessVisitNotificationDto) {
     val affectedVisits = processVisitNotificationDto.affectedVisits
 
@@ -681,7 +688,7 @@ class VisitNotificationEventService(
   }
 
   private fun doesSocialRelationshipForVisitorStillExist(prisonerId: String, visitorId: String): Boolean {
-    val prisonerApprovedContacts = prisonerContactRegistryClient.getPrisonersApprovedSocialContacts(prisonerId, withAddress = false)
+    val prisonerApprovedContacts = prisonerContactRegistryClient.getPrisonersApprovedSocialContacts(prisonerId, withAddress = false, withRestrictions = false)
     return prisonerApprovedContacts?.filter { it.personId != null }?.map { it.personId.toString() }?.contains(visitorId) ?: false
   }
 

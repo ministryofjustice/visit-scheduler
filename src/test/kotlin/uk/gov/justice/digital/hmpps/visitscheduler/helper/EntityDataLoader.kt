@@ -1,6 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.helper
 
-import org.junit.Assert
+import org.junit.jupiter.api.Assertions.assertNull
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Propagation.REQUIRES_NEW
 import org.springframework.transaction.annotation.Transactional
@@ -168,10 +168,10 @@ class PrisonEntityHelper(
     } else {
       prison.active = activePrison
     }
-    prison?.let {
+    prison.let {
       prison.excludeDates.addAll(excludeDates.map { PrisonExcludeDate(prisonId = prison.id, prison = prison, excludeDate = it, actionedBy = "TEST_USER") })
     }
-    return prison!!
+    return prison
   }
 
   @Transactional(propagation = REQUIRES_NEW)
@@ -564,7 +564,7 @@ class EventAuditEntityHelper(
 
   private fun createOrGetActionBy(actionedByValue: String? = null, userType: UserType): ActionedBy {
     if (userType == SYSTEM) {
-      Assert.assertNull(actionedByValue)
+      assertNull(actionedByValue)
     }
 
     val bookerReference: String? = if (userType == PUBLIC) actionedByValue else null
@@ -960,6 +960,8 @@ class VisitNotificationEventHelper(
   fun getVisitNotifications(
     visitBookingReference: String,
   ): List<VisitNotificationEvent> = visitNotificationEventRepository.findVisitNotificationEventByVisitReference(visitBookingReference)
+
+  fun getAllVisitNotifications(): List<VisitNotificationEvent> = visitNotificationEventRepository.findAll()
 }
 
 @Component

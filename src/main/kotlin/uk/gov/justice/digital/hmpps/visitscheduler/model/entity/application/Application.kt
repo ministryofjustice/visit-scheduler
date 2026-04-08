@@ -100,7 +100,6 @@ class Application(
 
   @Column
   var reference: String = ""
-    private set
 
   @PostPersist
   fun createReference() {

@@ -27,7 +27,7 @@ class AuthenticationHelperService {
 
   private val userPrincipal: Any?
     get() {
-      val authentication: Authentication = SecurityContextHolder.getContext().authentication
-      return authentication.principal
+      val authentication: Authentication? = SecurityContextHolder.getContext().authentication
+      return authentication?.principal
     }
 }

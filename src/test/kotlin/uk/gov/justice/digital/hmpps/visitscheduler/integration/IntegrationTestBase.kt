@@ -1,15 +1,16 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.ExtendWith
+import org.mockito.junit.jupiter.MockitoExtension
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
+import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTestClient
 import org.springframework.http.HttpHeaders
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
@@ -17,6 +18,7 @@ import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.transaction.annotation.Transactional
+import tools.jackson.databind.ObjectMapper
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFY_CONTROLLER_CALLBACK_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFY_CONTROLLER_CREATE_PATH
@@ -67,6 +69,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.VsipReportingEntityHel
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGet
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callPut
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.container.LocalStackContainer
+import uk.gov.justice.digital.hmpps.visitscheduler.integration.container.LocalStackContainer.setLocalStackProperties
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.container.PostgresContainer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.ActivitiesApiMockServer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.HmppsAuthExtension
@@ -95,6 +98,8 @@ import java.util.UUID.randomUUID
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
 @ExtendWith(HmppsAuthExtension::class)
+@ExtendWith(MockitoExtension::class)
+@AutoConfigureWebTestClient
 abstract class IntegrationTestBase {
   @Suppress("unused")
   @Autowired
@@ -247,18 +252,17 @@ abstract class IntegrationTestBase {
     @DynamicPropertySource
     fun properties(registry: DynamicPropertyRegistry) {
       pgContainer?.run {
-        registry.add("spring.datasource.url", pgContainer::getJdbcUrl)
-        registry.add("spring.datasource.username", pgContainer::getUsername)
-        registry.add("spring.datasource.password", pgContainer::getPassword)
-        registry.add("spring.datasource.placeholders.database_update_password", pgContainer::getPassword)
-        registry.add("spring.datasource.placeholders.database_read_only_password", pgContainer::getPassword)
-        registry.add("spring.flyway.url", pgContainer::getJdbcUrl)
-        registry.add("spring.flyway.user", pgContainer::getUsername)
-        registry.add("spring.flyway.password", pgContainer::getPassword)
+        registry.add("spring.datasource.url") { PostgresContainer.jdbcUrl }
+        registry.add("spring.datasource.username") { PostgresContainer.dbUsername }
+        registry.add("spring.datasource.password") { PostgresContainer.dbPassword }
+        registry.add("spring.datasource.placeholders.database_update_password") { PostgresContainer.dbPassword }
+        registry.add("spring.datasource.placeholders.database_read_only_password") { PostgresContainer.dbPassword }
+        registry.add("spring.flyway.url") { PostgresContainer.jdbcUrl }
+        registry.add("spring.flyway.user") { PostgresContainer.dbUsername }
+        registry.add("spring.flyway.password") { PostgresContainer.dbPassword }
       }
       lsContainer?.run {
-        registry.add("hmpps.sqs.localstackUrl") { lsContainer.getEndpointOverride(org.testcontainers.containers.localstack.LocalStackContainer.Service.SNS) }
-        registry.add("hmpps.sqs.region") { lsContainer.region }
+        setLocalStackProperties(lsContainer, registry)
       }
     }
   }

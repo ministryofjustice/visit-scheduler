@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit.applicatio
 
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions
-import org.hamcrest.Matchers
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -257,7 +256,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     val applicationDto = getApplicationDto(returnResult)
 
     Assertions.assertThat(applicationDto.visitContact!!.name).isEqualTo(updateRequest.visitContact!!.name)
-    Assertions.assertThat(applicationDto.visitContact!!.telephone).isEqualTo(updateRequest.visitContact!!.telephone)
+    Assertions.assertThat(applicationDto.visitContact.telephone).isEqualTo(updateRequest.visitContact.telephone)
 
     // And
     assertTelemetry(applicationDto)
@@ -283,8 +282,8 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
 
     Assertions.assertThat(applicationDto.visitors.size).isEqualTo(updateRequest.visitors!!.size)
     applicationDto.visitors.forEachIndexed { index, visitorDto ->
-      Assertions.assertThat(visitorDto.nomisPersonId).isEqualTo(updateRequest.visitors!!.toList()[index].nomisPersonId)
-      Assertions.assertThat(visitorDto.visitContact).isEqualTo(updateRequest.visitors!!.toList()[index].visitContact)
+      Assertions.assertThat(visitorDto.nomisPersonId).isEqualTo(updateRequest.visitors.toList()[index].nomisPersonId)
+      Assertions.assertThat(visitorDto.visitContact).isEqualTo(updateRequest.visitors.toList()[index].visitContact)
     }
 
     // And
@@ -453,7 +452,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     responseSpec.expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.developerMessage")
-      .value(Matchers.containsString("Only one visit contact allowed"))
+      .value<String> { it.contains("Only one visit contact allowed") }
   }
 
   @Test
@@ -606,10 +605,10 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
 
     updateRequest.visitContact?.let {
       Assertions.assertThat(applicationDto.visitContact!!.name).isEqualTo(it.name)
-      Assertions.assertThat(applicationDto.visitContact!!.telephone).isEqualTo(it.telephone)
+      Assertions.assertThat(applicationDto.visitContact.telephone).isEqualTo(it.telephone)
     } ?: run {
       Assertions.assertThat(applicationDto.visitContact!!.name).isEqualTo(originalApplication.visitContact?.name)
-      Assertions.assertThat(applicationDto.visitContact!!.telephone).isEqualTo(originalApplication.visitContact?.telephone)
+      Assertions.assertThat(applicationDto.visitContact.telephone).isEqualTo(originalApplication.visitContact?.telephone)
     }
 
     val visitorsDtoList = applicationDto.visitors.toList()

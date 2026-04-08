@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit.applicatio
 
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions.assertThat
-import org.hamcrest.Matchers
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -251,7 +250,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     responseSpec.expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.developerMessage")
-      .value(Matchers.containsString("Only one visit contact allowed"))
+      .value<String> { it.contains(("Only one visit contact allowed")) }
   }
 
   @Test
@@ -458,10 +457,10 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
 
     createApplicationRequest.visitContact?.let {
       assertThat(returnedApplication.visitContact!!.name).isEqualTo(it.name)
-      assertThat(returnedApplication.visitContact!!.telephone).isEqualTo(it.telephone)
+      assertThat(returnedApplication.visitContact.telephone).isEqualTo(it.telephone)
     } ?: run {
       assertThat(returnedApplication.visitContact!!.name).isEqualTo(lastBooking.visitContact!!.name)
-      assertThat(returnedApplication.visitContact!!.telephone).isEqualTo(lastBooking.visitContact!!.telephone)
+      assertThat(returnedApplication.visitContact.telephone).isEqualTo(lastBooking.visitContact!!.telephone)
     }
 
     val visitorsDtoList = returnedApplication.visitors.toList()
