@@ -36,6 +36,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.S
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.VISITOR_APPROVED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitorSupportedRestrictionType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonercontactregistry.PrisonerContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.CourtVideoAppointmentNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PersonRestrictionUpsertedNotificationDto
@@ -232,14 +233,25 @@ class VisitNotificationEventService(
         endDateTime = notificationDto.validToDate?.atTime(LocalTime.MAX),
       )
       if (affectedVisits.isNotEmpty()) {
-        val notificationAttributes = hashMapOf(
-          NotificationEventAttributeType.VISITOR_RESTRICTION to notificationDto.restrictionType,
-          NotificationEventAttributeType.VISITOR_RESTRICTION_ID to notificationDto.restrictionId,
-          NotificationEventAttributeType.VISITOR_ID to notificationDto.visitorId,
+        val affectedPrisonerIds: List<String> = affectedVisits.map { it.prisonerId }.distinct()
+        val affectedPrisonerIdAndRestrictionIdMap = getAffectedVisitAndRestrictionIdMap(
+          affectedPrisonerIds = affectedPrisonerIds,
+          visitorId = notificationDto.visitorId.toLong(),
+          restrictionType = notificationDto.restrictionType,
+          restrictionId = notificationDto.restrictionId.toLong(),
         )
-        val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, PERSON_RESTRICTION_UPSERTED_EVENT, notificationAttributes)
 
-        processVisitsWithNotifications(processVisitNotificationDto)
+        affectedPrisonerIds.forEach { prisonerId ->
+          val restrictionId = affectedPrisonerIdAndRestrictionIdMap[prisonerId]!!
+          val notificationAttributes = hashMapOf(
+            NotificationEventAttributeType.VISITOR_RESTRICTION to notificationDto.restrictionType,
+            NotificationEventAttributeType.VISITOR_RESTRICTION_ID to restrictionId,
+            NotificationEventAttributeType.VISITOR_ID to notificationDto.visitorId,
+          )
+
+          val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits.filter { it.prisonerId == prisonerId }, PERSON_RESTRICTION_UPSERTED_EVENT, notificationAttributes)
+          processVisitsWithNotifications(processVisitNotificationDto)
+        }
       }
     }
   }
@@ -256,14 +268,27 @@ class VisitNotificationEventService(
         visitorId = notificationDto.visitorId,
         endDateTime = notificationDto.validToDate?.atTime(LocalTime.MAX),
       )
+
       if (affectedVisits.isNotEmpty()) {
-        val notificationAttributes = hashMapOf(
-          NotificationEventAttributeType.VISITOR_RESTRICTION to notificationDto.restrictionType,
-          NotificationEventAttributeType.VISITOR_RESTRICTION_ID to notificationDto.restrictionId,
-          NotificationEventAttributeType.VISITOR_ID to notificationDto.visitorId,
+        val affectedPrisonerIds: List<String> = affectedVisits.map { it.prisonerId }.distinct()
+        val affectedPrisonerIdAndRestrictionIdMap = getAffectedVisitAndRestrictionIdMap(
+          affectedPrisonerIds = affectedPrisonerIds,
+          visitorId = notificationDto.visitorId.toLong(),
+          restrictionType = notificationDto.restrictionType,
+          restrictionId = notificationDto.restrictionId.toLong(),
         )
-        val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, VISITOR_RESTRICTION_UPSERTED_EVENT, notificationAttributes)
-        processVisitsWithNotifications(processVisitNotificationDto)
+
+        affectedPrisonerIds.forEach { prisonerId ->
+          val restrictionId = affectedPrisonerIdAndRestrictionIdMap[prisonerId]!!
+          val notificationAttributes = hashMapOf(
+            NotificationEventAttributeType.VISITOR_RESTRICTION to notificationDto.restrictionType,
+            NotificationEventAttributeType.VISITOR_RESTRICTION_ID to restrictionId,
+            NotificationEventAttributeType.VISITOR_ID to notificationDto.visitorId,
+          )
+
+          val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits.filter { it.prisonerId == prisonerId }, VISITOR_RESTRICTION_UPSERTED_EVENT, notificationAttributes)
+          processVisitsWithNotifications(processVisitNotificationDto)
+        }
       }
     }
   }
@@ -695,4 +720,26 @@ class VisitNotificationEventService(
   private fun getActionedBy(actionedBy: ActionedBy?): ActionedByDto = actionedBy?.let {
     ActionedByDto(it)
   } ?: ActionedByDto(userType = UserType.SYSTEM, userName = null, bookerReference = null)
+
+  private fun getAffectedVisitAndRestrictionIdMap(
+    affectedPrisonerIds: List<String>,
+    visitorId: Long,
+    restrictionType: String,
+    restrictionId: Long,
+  ): Map<String, String> {
+    val prisonerIdAndRestrictionIdMap = mutableMapOf<String, String>()
+    affectedPrisonerIds.forEach { prisonerId ->
+      val restrictionId = getVisitorRestrictions(prisonerId, visitorId)
+        ?.restrictions?.firstOrNull { it.restrictionType == restrictionType }?.restrictionId ?: restrictionId
+      prisonerIdAndRestrictionIdMap[prisonerId] = restrictionId.toString()
+    }
+
+    return prisonerIdAndRestrictionIdMap.toMap()
+  }
+
+  private fun getVisitorRestrictions(prisonerId: String, visitorId: Long): PrisonerContactDto? = prisonerContactRegistryClient.getPrisonersApprovedSocialContacts(
+    prisonerId = prisonerId,
+    withAddress = false,
+    withRestrictions = true,
+  )?.firstOrNull { it.personId == visitorId }
 }
