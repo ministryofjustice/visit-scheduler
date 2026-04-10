@@ -11,7 +11,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonercontactregistry.P
 class PrisonerContactRegistryMockServer : WireMockServer(8095) {
   fun stubGetPrisonerApprovedSocialContacts(
     prisonerId: String,
-    withAddress: Boolean = false,
+    withAddress: Boolean? = false,
     withRestrictions: Boolean = false,
     contactsList: List<PrisonerContactDto>?,
     httpStatus: HttpStatus = HttpStatus.NOT_FOUND,

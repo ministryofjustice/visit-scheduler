@@ -15,12 +15,15 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PERSON_RESTRICTION_UPSERTED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventAttributeType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitorSupportedRestrictionType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonercontactregistry.PrisonerContactDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonercontactregistry.RestrictionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PersonRestrictionUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatPersonRestrictionUpserted
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
@@ -207,6 +210,15 @@ class PersonRestrictionUpsertedNotificationControllerTest : NotificationTestBase
   @Test
   fun `when visitor is given a restriction with expiry date then no visits are flagged or saved after expiry`() {
     // Given
+    val currentApprovedPrisonerContacts = listOf(
+      PrisonerContactDto(
+        personId = visitorId.toLong(),
+        restrictions = listOf(
+          RestrictionDto(restrictionId = 33, restrictionType = VisitorSupportedRestrictionType.CLOSED.name),
+        ),
+      ),
+    )
+
     val notificationDto = PersonRestrictionUpsertedNotificationDto(
       prisonerNumber = prisonerId,
       visitorId = visitorId,
@@ -255,6 +267,7 @@ class PersonRestrictionUpsertedNotificationControllerTest : NotificationTestBase
     eventAuditEntityHelper.create(visit2)
 
     // When
+    prisonerContactRegistryMockServer.stubGetPrisonerApprovedSocialContacts(prisonerId, withAddress = false, withRestrictions = true, currentApprovedPrisonerContacts)
     val responseSpec = callNotifyVSiPThatPersonRestrictionUpserted(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
 
     // Then
@@ -266,6 +279,13 @@ class PersonRestrictionUpsertedNotificationControllerTest : NotificationTestBase
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(1)
     assertThat(visitNotifications[0].visit.reference).isEqualTo(visit1.reference)
+
+    val attributes = visitNotifications[0].visitNotificationEventAttributes.map { it.attributeName to it.attributeValue }
+    assertThat(attributes).hasSize(3)
+
+    assertThat(attributes).contains(Pair(NotificationEventAttributeType.VISITOR_RESTRICTION, VisitorSupportedRestrictionType.CLOSED.name))
+    assertThat(attributes).contains(Pair(NotificationEventAttributeType.VISITOR_RESTRICTION_ID, "33"))
+    assertThat(attributes).contains(Pair(NotificationEventAttributeType.VISITOR_ID, visitorId))
 
     val auditEvents = testEventAuditRepository.getAuditByType(EventAuditType.PERSON_RESTRICTION_UPSERTED_EVENT)
     assertThat(auditEvents).hasSize(1)
