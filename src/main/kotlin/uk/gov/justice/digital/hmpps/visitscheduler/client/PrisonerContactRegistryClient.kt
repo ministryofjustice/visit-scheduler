@@ -53,10 +53,10 @@ class PrisonerContactRegistryClient(
       .bodyToMono<PrisonerContactDto>()
       .onErrorResume { e ->
         if (!isNotFoundError(e)) {
-          LOG.info("getPrisonerContactRelationshipDetailsWithRestrictions Failed for get request $uri")
+          LOG.error("getPrisonerContactRelationshipDetailsWithRestrictions Failed for get request $uri")
           Mono.error(e)
         } else {
-          LOG.error("getPrisonerContactRelationshipDetailsWithRestrictions NOT_FOUND for get request $uri")
+          LOG.info("getPrisonerContactRelationshipDetailsWithRestrictions NOT_FOUND for get request $uri")
           return@onErrorResume Mono.justOrEmpty(null)
         }
       }

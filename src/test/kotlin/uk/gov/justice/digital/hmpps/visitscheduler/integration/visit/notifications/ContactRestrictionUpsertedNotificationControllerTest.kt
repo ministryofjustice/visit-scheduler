@@ -36,7 +36,7 @@ import java.time.LocalDate
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("POST $VISIT_NOTIFICATION_PRISONER_CONTACT_RESTRICTION_UPSERTED_PATH")
-class ContactRestrictionCreatedNotificationControllerTest : NotificationTestBase() {
+class ContactRestrictionUpsertedNotificationControllerTest : NotificationTestBase() {
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
   val prisonerId = "A1234AA"
@@ -77,6 +77,7 @@ class ContactRestrictionCreatedNotificationControllerTest : NotificationTestBase
     )
 
     val visit1 = createApplicationAndVisit(
+      prisonerId = prisonerId,
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
       sessionTemplate = sessionTemplate1,
