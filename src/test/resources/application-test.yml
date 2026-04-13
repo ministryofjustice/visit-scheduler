@@ -53,6 +53,10 @@ activities:
     url: http://localhost:8096
     timeout: 5s
 
+personal-relationships:
+  api:
+    url: http://localhost:8097
+
 policy:
   session:
     non-association:

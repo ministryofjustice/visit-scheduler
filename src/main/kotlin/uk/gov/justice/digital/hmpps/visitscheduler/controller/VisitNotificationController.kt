@@ -26,6 +26,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.IgnoreVisitNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.ContactRestrictionCreatedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.CourtVideoAppointmentNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NotificationCountDto
@@ -58,6 +59,8 @@ const val VISIT_NOTIFICATION_COUNT_FOR_PRISON_PATH: String = "$VISIT_NOTIFICATIO
 const val FUTURE_NOTIFICATION_VISITS: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/{prisonCode}/visits"
 const val VISIT_NOTIFICATION_EVENTS: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/visit/{reference}/events"
 const val VISIT_NOTIFICATION_IGNORE: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/visit/{reference}/ignore"
+const val VISIT_NOTIFICATION_CONTACT_RESTRICTION_CREATED_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/contact/restriction/created"
+const val VISIT_NOTIFICATION_PRISONER_CONTACT_RESTRICTION_CREATED_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/prisoner/contact/restriction/created"
 
 @RestController
 @Validated
@@ -640,4 +643,40 @@ class VisitNotificationController(
     @RequestBody @Valid
     ignoreNotifications: IgnoreVisitNotificationsDto,
   ): VisitDto = visitNotificationEventService.ignoreVisitNotifications(reference.trim(), ignoreNotifications)
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PostMapping(VISIT_NOTIFICATION_CONTACT_RESTRICTION_CREATED_PATH)
+  @ResponseStatus(HttpStatus.OK)
+  @Operation(
+    summary = "To notify VSiP that a global contact restriction has been created",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "notification has completed successfully",
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Incorrect request to notify VSiP of change",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to notify VSiP of change",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun notifyVSiPThatContactRestrictionCreated(
+    @RequestBody @Valid
+    dto: ContactRestrictionCreatedNotificationDto,
+  ): ResponseEntity<HttpStatus> {
+    LOG.debug("Entered notifyVSiPThatContactRestrictionCreated {}", dto)
+    visitNotificationEventService.handleContactRestrictionNotification(dto)
+    return ResponseEntity(HttpStatus.OK)
+  }
 }

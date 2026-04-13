@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.client.ActivitiesApiClient
+import uk.gov.justice.digital.hmpps.visitscheduler.client.PersonalRelationshipApiClient
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonerContactRegistryClient
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.IgnoreVisitNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
@@ -36,6 +37,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.S
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.VISITOR_APPROVED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitorSupportedRestrictionType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.ContactRestrictionCreatedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.CourtVideoAppointmentNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PersonRestrictionUpsertedNotificationDto
@@ -73,6 +75,9 @@ class VisitNotificationEventService(
   private val prisonerContactRegistryClient: PrisonerContactRegistryClient,
   private val activitiesApiClient: ActivitiesApiClient,
 ) {
+
+  @Autowired
+  private lateinit var personalRelationshipApiClient: PersonalRelationshipApiClient
 
   @Autowired
   private lateinit var visitRepository: VisitRepository
@@ -429,6 +434,42 @@ class VisitNotificationEventService(
     val markedForRemovalList = visitNotificationEventRepository.findExpiredVisitNotificationEvents()
     visitNotificationEventRepository.deleteAll(markedForRemovalList)
     return markedForRemovalList.size
+  }
+
+  @Transactional
+  fun handleContactRestrictionNotification(notificationDto: ContactRestrictionCreatedNotificationDto) {
+    LOG.info("ContactRestrictionCreatedNotificationDto notification received : {}", notificationDto)
+
+    // get affected visits
+    val affectedVisits = visitService.getFutureVisitsByVisitorId(
+      visitorId = notificationDto.visitorId.toString(),
+      startDateTime = LocalDateTime.now(),
+    )
+
+    if (affectedVisits.isNotEmpty()) {
+      // get contact restriction matching the restriction ID on notification
+      val restrictions = personalRelationshipApiClient.getContactRestrictions(notificationDto.visitorId)
+      val restriction = restrictions?.firstOrNull { it.contactRestrictionId == notificationDto.restrictionId }
+
+      if (restriction != null) {
+        // if valid restriction and dates valid add notifications
+        val visitorSupportedRestrictionTypes = VisitorSupportedRestrictionType.entries.map { it.name }.toSet()
+        if (isNotificationDatesValid(restriction.startDate) && visitorSupportedRestrictionTypes.contains(restriction.restrictionType)) {
+          // PersonRestrictionUpsertedNotification is a local version of the global VisitorRestrictionChangeNotification event.
+          // Hence, the need for the prisonerId, to only flag visits between the given visitor and prisoner.
+          val notificationAttributes = hashMapOf(
+            NotificationEventAttributeType.VISITOR_RESTRICTION to restriction.restrictionType,
+            NotificationEventAttributeType.VISITOR_RESTRICTION_ID to notificationDto.restrictionId.toString(),
+            NotificationEventAttributeType.VISITOR_ID to notificationDto.visitorId.toString(),
+          )
+          val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, PERSON_RESTRICTION_UPSERTED_EVENT, notificationAttributes)
+
+          processVisitsWithNotifications(processVisitNotificationDto)
+        }
+      } else {
+        LOG.error("Contact restriction with ID {} not found for visitor ID {}, skipping notification", notificationDto.restrictionId, notificationDto.visitorId)
+      }
+    }
   }
 
   private fun processVisitsWithNotifications(processVisitNotificationDto: ProcessVisitNotificationDto) {
