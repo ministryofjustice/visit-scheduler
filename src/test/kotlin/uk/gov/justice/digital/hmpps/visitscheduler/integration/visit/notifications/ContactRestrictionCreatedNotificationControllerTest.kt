@@ -11,6 +11,7 @@ import org.mockito.kotlin.isNull
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_CONTACT_RESTRICTION_UPSERTED_PATH
@@ -26,7 +27,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitorSupportedRes
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonercontactregistry.PrisonerContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonercontactregistry.RestrictionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.ContactRestrictionUpsertedNotificationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatContactRestrictionCreated
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatContactRestrictionUpserted
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
@@ -133,7 +134,7 @@ class ContactRestrictionCreatedNotificationControllerTest : NotificationTestBase
 
     // When
     prisonerContactRegistryMockServer.stubGetPrisonerContactRelationshipDetailsWithRestrictions(prisonerId, visitorId, prisonerContactId, PrisonerContactDto(visitorId, contactRestrictions))
-    val responseSpec = callNotifyVSiPThatContactRestrictionCreated(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
+    val responseSpec = callNotifyVSiPThatContactRestrictionUpserted(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
 
     // Then
     responseSpec.expectStatus().isOk
@@ -197,11 +198,9 @@ class ContactRestrictionCreatedNotificationControllerTest : NotificationTestBase
       restrictionId = visitorRestrictionId,
     )
 
-    val contactRestrictions = emptyList<RestrictionDto>()
-
     // When
-    prisonerContactRegistryMockServer.stubGetPrisonerContactRelationshipDetailsWithRestrictions(prisonerId, visitorId, prisonerContactId, PrisonerContactDto(visitorId, contactRestrictions))
-    val responseSpec = callNotifyVSiPThatContactRestrictionCreated(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
+    prisonerContactRegistryMockServer.stubGetPrisonerContactRelationshipDetailsWithRestrictions(prisonerId, visitorId, prisonerContactId, null, HttpStatus.NOT_FOUND)
+    val responseSpec = callNotifyVSiPThatContactRestrictionUpserted(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
 
     // Then
     responseSpec.expectStatus().isOk
@@ -244,13 +243,13 @@ class ContactRestrictionCreatedNotificationControllerTest : NotificationTestBase
 
     // When
     prisonerContactRegistryMockServer.stubGetPrisonerContactRelationshipDetailsWithRestrictions(prisonerId, visitorId, prisonerContactId, PrisonerContactDto(visitorId, contactRestrictions))
-    val responseSpec = callNotifyVSiPThatContactRestrictionCreated(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
+    val responseSpec = callNotifyVSiPThatContactRestrictionUpserted(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
 
     // Then
     responseSpec.expectStatus().isOk
     verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
-    assertThat(testEventAuditRepository.getAuditCount(EventAuditType.VISITOR_RESTRICTION_UPSERTED_EVENT)).isEqualTo(0)
+    assertThat(testEventAuditRepository.getAuditCount(EventAuditType.PERSON_RESTRICTION_UPSERTED_EVENT)).isEqualTo(0)
   }
 
   @Test
@@ -305,7 +304,7 @@ class ContactRestrictionCreatedNotificationControllerTest : NotificationTestBase
 
     // When
     prisonerContactRegistryMockServer.stubGetPrisonerContactRelationshipDetailsWithRestrictions(prisonerId, visitorId, prisonerContactId, PrisonerContactDto(visitorId, contactRestrictions))
-    val responseSpec = callNotifyVSiPThatContactRestrictionCreated(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
+    val responseSpec = callNotifyVSiPThatContactRestrictionUpserted(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
 
     // Then
     responseSpec.expectStatus().isOk
@@ -357,9 +356,9 @@ class ContactRestrictionCreatedNotificationControllerTest : NotificationTestBase
 
     // When
     prisonerContactRegistryMockServer.stubGetPrisonerContactRelationshipDetailsWithRestrictions(prisonerId, visitorId, prisonerContactId, PrisonerContactDto(visitorId, contactRestrictions))
-    var responseSpec = callNotifyVSiPThatContactRestrictionCreated(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto1)
+    var responseSpec = callNotifyVSiPThatContactRestrictionUpserted(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto1)
     responseSpec.expectStatus().isOk
-    responseSpec = callNotifyVSiPThatContactRestrictionCreated(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto2)
+    responseSpec = callNotifyVSiPThatContactRestrictionUpserted(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto2)
     responseSpec.expectStatus().isOk
 
     // Then

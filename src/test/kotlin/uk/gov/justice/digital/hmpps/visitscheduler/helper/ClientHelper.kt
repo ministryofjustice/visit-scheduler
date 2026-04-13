@@ -892,7 +892,7 @@ fun callNotifyVSiPThatPrisonerRestrictionHasChanged(
   dto,
 )
 
-fun callNotifyVSiPThatContactRestrictionCreated(
+fun callNotifyVSiPThatContactRestrictionUpserted(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
   dto: ContactRestrictionUpsertedNotificationDto? = null,
