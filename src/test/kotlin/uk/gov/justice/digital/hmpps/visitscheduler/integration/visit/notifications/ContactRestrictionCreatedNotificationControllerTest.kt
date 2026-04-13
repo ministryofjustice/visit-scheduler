@@ -191,6 +191,25 @@ class ContactRestrictionCreatedNotificationControllerTest : NotificationTestBase
   @Test
   fun `when a contact global restriction is created but cannot be found in contact registry API then no visits are flagged or saved`() {
     // Given
+
+    val visit1 = createApplicationAndVisit(
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate1,
+    )
+
+    visit1.visitors.add(
+      VisitVisitor(
+        nomisPersonId = visitorId,
+        visitId = visit1.id,
+        visit = visit1,
+        visitContact = true,
+      ),
+    )
+
+    visitEntityHelper.save(visit1)
+    eventAuditEntityHelper.create(visit1)
+
     val notificationDto = ContactRestrictionUpsertedNotificationDto(
       prisonerNumber = prisonerId,
       contactId = visitorId,
@@ -310,7 +329,7 @@ class ContactRestrictionCreatedNotificationControllerTest : NotificationTestBase
     responseSpec.expectStatus().isOk
     verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
-    assertThat(testEventAuditRepository.getAuditCount(EventAuditType.VISITOR_RESTRICTION_UPSERTED_EVENT)).isEqualTo(0)
+    assertThat(testEventAuditRepository.getAuditCount(EventAuditType.PERSON_RESTRICTION_UPSERTED_EVENT)).isEqualTo(0)
   }
 
   @Test
