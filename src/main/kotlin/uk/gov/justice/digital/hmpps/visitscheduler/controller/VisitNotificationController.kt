@@ -59,8 +59,8 @@ const val VISIT_NOTIFICATION_COUNT_FOR_PRISON_PATH: String = "$VISIT_NOTIFICATIO
 const val FUTURE_NOTIFICATION_VISITS: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/{prisonCode}/visits"
 const val VISIT_NOTIFICATION_EVENTS: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/visit/{reference}/events"
 const val VISIT_NOTIFICATION_IGNORE: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/visit/{reference}/ignore"
-const val VISIT_NOTIFICATION_CONTACT_RESTRICTION_CREATED_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/contact/restriction/created"
-const val VISIT_NOTIFICATION_PRISONER_CONTACT_RESTRICTION_CREATED_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/prisoner/contact/restriction/created"
+const val VISIT_NOTIFICATION_CONTACT_RESTRICTION_UPSERTED_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/contact/restriction/upserted"
+const val VISIT_NOTIFICATION_PRISONER_CONTACT_RESTRICTION_UPSERTED_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/prisoner/contact/restriction/upserted"
 
 @RestController
 @Validated
@@ -645,10 +645,10 @@ class VisitNotificationController(
   ): VisitDto = visitNotificationEventService.ignoreVisitNotifications(reference.trim(), ignoreNotifications)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @PostMapping(VISIT_NOTIFICATION_PRISONER_CONTACT_RESTRICTION_CREATED_PATH)
+  @PostMapping(VISIT_NOTIFICATION_PRISONER_CONTACT_RESTRICTION_UPSERTED_PATH)
   @ResponseStatus(HttpStatus.OK)
   @Operation(
-    summary = "To notify VSiP that a prisoner contact restriction has been created",
+    summary = "To notify VSiP that a prisoner contact restriction has been created / updated",
     responses = [
       ApiResponse(
         responseCode = "200",
@@ -671,11 +671,11 @@ class VisitNotificationController(
       ),
     ],
   )
-  fun notifyVSiPThatContactRestrictionCreated(
+  fun notifyVSiPThatContactRestrictionUpserted(
     @RequestBody @Valid
     dto: ContactRestrictionUpsertedNotificationDto,
   ): ResponseEntity<HttpStatus> {
-    LOG.debug("Entered notifyVSiPThatContactRestrictionCreated {}", dto)
+    LOG.debug("Entered notifyVSiPThatContactRestrictionUpserted {}", dto)
     visitNotificationEventService.handleContactRestrictionNotification(dto)
     return ResponseEntity(HttpStatus.OK)
   }
