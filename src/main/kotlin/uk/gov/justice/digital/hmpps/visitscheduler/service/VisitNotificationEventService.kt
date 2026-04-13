@@ -455,9 +455,7 @@ class VisitNotificationEventService(
       if (restriction != null) {
         // if valid restriction and dates valid add notifications
         val visitorSupportedRestrictionTypes = VisitorSupportedRestrictionType.entries.map { it.name }.toSet()
-        if (isNotificationDatesValid(restriction.startDate) && visitorSupportedRestrictionTypes.contains(restriction.restrictionType)) {
-          // PersonRestrictionUpsertedNotification is a local version of the global VisitorRestrictionChangeNotification event.
-          // Hence, the need for the prisonerId, to only flag visits between the given visitor and prisoner.
+        if (isNotificationDatesValid(restriction.expiryDate) && visitorSupportedRestrictionTypes.contains(restriction.restrictionType)) {
           val notificationAttributes = hashMapOf(
             NotificationEventAttributeType.VISITOR_RESTRICTION to restriction.restrictionType,
             NotificationEventAttributeType.VISITOR_RESTRICTION_ID to notificationDto.restrictionId.toString(),

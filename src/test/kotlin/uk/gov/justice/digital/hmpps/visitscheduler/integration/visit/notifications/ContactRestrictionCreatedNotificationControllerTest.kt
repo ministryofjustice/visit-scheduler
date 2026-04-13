@@ -13,7 +13,7 @@ import org.mockito.kotlin.verify
 import org.springframework.http.HttpHeaders
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_VISITOR_RESTRICTION_UPSERTED_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_CONTACT_RESTRICTION_UPSERTED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventAttributeType
@@ -34,7 +34,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionT
 import java.time.LocalDate
 
 @Transactional(propagation = SUPPORTS)
-@DisplayName("POST $VISIT_NOTIFICATION_VISITOR_RESTRICTION_UPSERTED_PATH")
+@DisplayName("POST $VISIT_NOTIFICATION_PRISONER_CONTACT_RESTRICTION_UPSERTED_PATH")
 class ContactRestrictionCreatedNotificationControllerTest : NotificationTestBase() {
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
@@ -207,11 +207,11 @@ class ContactRestrictionCreatedNotificationControllerTest : NotificationTestBase
     responseSpec.expectStatus().isOk
     verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
-    assertThat(testEventAuditRepository.getAuditCount(EventAuditType.VISITOR_RESTRICTION_UPSERTED_EVENT)).isEqualTo(0)
+    assertThat(testEventAuditRepository.getAuditCount(EventAuditType.PERSON_RESTRICTION_UPSERTED_EVENT)).isEqualTo(0)
   }
 
   @Test
-  fun `when a contact global restriction is created with a date in the past then no visits are flagged or saved`() {
+  fun `when a contact global restriction is created but no visits exist for that visitorId then no visits are flagged or saved`() {
     // Given
     val notificationDto = ContactRestrictionUpsertedNotificationDto(
       prisonerNumber = prisonerId,
@@ -219,6 +219,24 @@ class ContactRestrictionCreatedNotificationControllerTest : NotificationTestBase
       prisonerContactId = prisonerContactId,
       restrictionId = visitorRestrictionId,
     )
+
+    val visit1 = createApplicationAndVisit(
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate1,
+    )
+
+    visit1.visitors.add(
+      VisitVisitor(
+        nomisPersonId = 999L,
+        visitId = visit1.id,
+        visit = visit1,
+        visitContact = true,
+      ),
+    )
+
+    visitEntityHelper.save(visit1)
+    eventAuditEntityHelper.create(visit1)
 
     val contactRestrictions = listOf(
       RestrictionDto(contactRestrictionId = visitorRestrictionId, contactId = visitorId, restrictionType = VisitorSupportedRestrictionType.CLOSED.name, startDate = LocalDate.now()),
@@ -299,6 +317,7 @@ class ContactRestrictionCreatedNotificationControllerTest : NotificationTestBase
   @Test
   fun `when multiple visitor restrictions with the same restriction type multiple notification events are added and not rejected as duplicates `() {
     // Given
+    val visitorRestrictionId2 = 200L
     val notificationDto1 = ContactRestrictionUpsertedNotificationDto(
       prisonerNumber = prisonerId,
       contactId = visitorId,
@@ -310,7 +329,7 @@ class ContactRestrictionCreatedNotificationControllerTest : NotificationTestBase
       prisonerNumber = prisonerId,
       contactId = visitorId,
       prisonerContactId = prisonerContactId,
-      restrictionId = visitorRestrictionId,
+      restrictionId = visitorRestrictionId2,
     )
 
     val visit1 = createApplicationAndVisit(
@@ -333,6 +352,7 @@ class ContactRestrictionCreatedNotificationControllerTest : NotificationTestBase
 
     val contactRestrictions = listOf(
       RestrictionDto(contactRestrictionId = visitorRestrictionId, contactId = visitorId, restrictionType = VisitorSupportedRestrictionType.BAN.name, startDate = LocalDate.now()),
+      RestrictionDto(contactRestrictionId = visitorRestrictionId2, contactId = visitorId, restrictionType = VisitorSupportedRestrictionType.BAN.name, startDate = LocalDate.now()),
     )
 
     // When
@@ -361,7 +381,7 @@ class ContactRestrictionCreatedNotificationControllerTest : NotificationTestBase
       .extracting({ it.attributeName }, { it.attributeValue })
       .containsExactlyInAnyOrder(
         tuple(NotificationEventAttributeType.VISITOR_RESTRICTION, VisitorSupportedRestrictionType.BAN.name),
-        tuple(NotificationEventAttributeType.VISITOR_RESTRICTION_ID, visitorRestrictionId.toString()),
+        tuple(NotificationEventAttributeType.VISITOR_RESTRICTION_ID, visitorRestrictionId2.toString()),
         tuple(NotificationEventAttributeType.VISITOR_ID, visitorId.toString()),
       )
 
