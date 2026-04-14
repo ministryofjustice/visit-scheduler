@@ -20,6 +20,7 @@ class PrisonerContactRegistryClient(
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
     const val GET_PRISONERS_APPROVED_SOCIAL_CONTACTS_URL = "/v2/prisoners/{prisonerId}/contacts/social/approved"
+    const val GET_PRISONER_CONTACT_DETAILS_WITH_RESTRICTIONS_URL = "/v2/prisoners/{prisonerId}/contacts/{contactId}/relationships/{relationshipId}?withRestrictions=true"
   }
 
   fun getPrisonersApprovedSocialContacts(
@@ -36,6 +37,27 @@ class PrisonerContactRegistryClient(
         } else {
           LOG.error("getPrisonersSocialContacts NOT_FOUND for get request $uri")
           Mono.empty()
+        }
+      }
+      .block(apiTimeout)
+  }
+
+  fun getPrisonerContactRelationshipDetailsWithRestrictions(
+    prisonerId: String,
+    contactId: Long,
+    relationshipId: Long,
+  ): PrisonerContactDto? {
+    val uri = GET_PRISONER_CONTACT_DETAILS_WITH_RESTRICTIONS_URL.replace("{prisonerId}", prisonerId).replace("{contactId}", contactId.toString()).replace("{relationshipId}", relationshipId.toString())
+    return webClient.get().uri(uri)
+      .retrieve()
+      .bodyToMono<PrisonerContactDto>()
+      .onErrorResume { e ->
+        if (!isNotFoundError(e)) {
+          LOG.error("getPrisonerContactRelationshipDetailsWithRestrictions Failed for get request $uri")
+          Mono.error(e)
+        } else {
+          LOG.info("getPrisonerContactRelationshipDetailsWithRestrictions NOT_FOUND for get request $uri")
+          return@onErrorResume Mono.justOrEmpty(null)
         }
       }
       .block(apiTimeout)

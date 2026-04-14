@@ -25,6 +25,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_NON_ASSOCIATION_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PERSON_RESTRICTION_UPSERTED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_ALERTS_UPDATED_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_CONTACT_RESTRICTION_UPSERTED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RECEIVED_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RELEASED_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RESTRICTION_CHANGE_PATH
@@ -89,6 +90,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.Create
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.UpdateIncentiveGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.CreateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.UpdateLocationGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.ContactRestrictionUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.CourtVideoAppointmentNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PersonRestrictionUpsertedNotificationDto
@@ -887,6 +889,17 @@ fun callNotifyVSiPThatPrisonerRestrictionHasChanged(
   webTestClient,
   authHttpHeaders,
   VISIT_NOTIFICATION_PRISONER_RESTRICTION_CHANGE_PATH,
+  dto,
+)
+
+fun callNotifyVSiPThatContactRestrictionUpserted(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  dto: ContactRestrictionUpsertedNotificationDto? = null,
+): ResponseSpec = callNotifyVSiPOfAEvent(
+  webTestClient,
+  authHttpHeaders,
+  VISIT_NOTIFICATION_PRISONER_CONTACT_RESTRICTION_UPSERTED_PATH,
   dto,
 )
 
