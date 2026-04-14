@@ -63,7 +63,7 @@ class ContactRestrictionUpsertedNotificationControllerTest : NotificationTestBas
   }
 
   @Test
-  fun `when a contact global restriction is created then valid visits in all prisons flagged and saved`() {
+  fun `when a prisoner contact restriction is created then valid visits in all prisons flagged and saved`() {
     // Given
     val notificationDto = ContactRestrictionUpsertedNotificationDto(
       prisonerNumber = prisonerId,
@@ -190,7 +190,7 @@ class ContactRestrictionUpsertedNotificationControllerTest : NotificationTestBas
   }
 
   @Test
-  fun `when a contact global restriction is created but cannot be found in contact registry API then no visits are flagged or saved`() {
+  fun `when a prisoner contact restriction is created but cannot be found in contact registry API then no visits are flagged or saved`() {
     // Given
 
     val visit1 = createApplicationAndVisit(
@@ -230,7 +230,7 @@ class ContactRestrictionUpsertedNotificationControllerTest : NotificationTestBas
   }
 
   @Test
-  fun `when a contact global restriction is created but no visits exist for that visitorId then no visits are flagged or saved`() {
+  fun `when a prisoner contact restriction is created but no visits exist for that visitorId then no visits are flagged or saved`() {
     // Given
     val notificationDto = ContactRestrictionUpsertedNotificationDto(
       prisonerNumber = prisonerId,
@@ -273,7 +273,7 @@ class ContactRestrictionUpsertedNotificationControllerTest : NotificationTestBas
   }
 
   @Test
-  fun `when a contact global restriction is created with expiry date in the past then no visits after expiry are flagged or saved`() {
+  fun `when a prisoner contact restriction is created with expiry date in the past then no visits after expiry are flagged or saved`() {
     // Given
     val notificationDto = ContactRestrictionUpsertedNotificationDto(
       prisonerNumber = prisonerId,
