@@ -69,7 +69,7 @@ class ContactRestrictionUpsertedNotificationControllerTest : NotificationTestBas
     )
 
     val contactRestrictions = listOf(
-      RestrictionDto(contactRestrictionId = visitorRestrictionId, contactId = visitorId, restrictionType = VisitorSupportedRestrictionType.BAN.name, startDate = LocalDate.now()),
+      RestrictionDto(restrictionId = visitorRestrictionId, restrictionType = VisitorSupportedRestrictionType.BAN.name, startDate = LocalDate.now()),
     )
 
     val visit1 = createApplicationAndVisit(
@@ -250,7 +250,7 @@ class ContactRestrictionUpsertedNotificationControllerTest : NotificationTestBas
     eventAuditEntityHelper.create(visit1)
 
     val contactRestrictions = listOf(
-      RestrictionDto(contactRestrictionId = visitorRestrictionId, contactId = visitorId, restrictionType = VisitorSupportedRestrictionType.CLOSED.name, startDate = LocalDate.now()),
+      RestrictionDto(restrictionId = visitorRestrictionId, restrictionType = VisitorSupportedRestrictionType.CLOSED.name, startDate = LocalDate.now()),
     )
 
     // When
@@ -309,7 +309,7 @@ class ContactRestrictionUpsertedNotificationControllerTest : NotificationTestBas
     eventAuditEntityHelper.create(visit2)
 
     val contactRestrictions = listOf(
-      RestrictionDto(contactRestrictionId = visitorRestrictionId, contactId = visitorId, restrictionType = VisitorSupportedRestrictionType.BAN.name, startDate = LocalDate.now().minusDays(1), expiryDate = LocalDate.now().minusDays(1)),
+      RestrictionDto(restrictionId = visitorRestrictionId, restrictionType = VisitorSupportedRestrictionType.BAN.name, startDate = LocalDate.now().minusDays(1), expiryDate = LocalDate.now().minusDays(1)),
     )
 
     // When
@@ -356,8 +356,8 @@ class ContactRestrictionUpsertedNotificationControllerTest : NotificationTestBas
     eventAuditEntityHelper.create(visit1)
 
     val contactRestrictions = listOf(
-      RestrictionDto(contactRestrictionId = visitorRestrictionId, contactId = visitorId, restrictionType = VisitorSupportedRestrictionType.BAN.name, startDate = LocalDate.now()),
-      RestrictionDto(contactRestrictionId = visitorRestrictionId2, contactId = visitorId, restrictionType = VisitorSupportedRestrictionType.BAN.name, startDate = LocalDate.now()),
+      RestrictionDto(restrictionId = visitorRestrictionId, restrictionType = VisitorSupportedRestrictionType.BAN.name, startDate = LocalDate.now()),
+      RestrictionDto(restrictionId = visitorRestrictionId2, restrictionType = VisitorSupportedRestrictionType.BAN.name, startDate = LocalDate.now()),
     )
 
     // When

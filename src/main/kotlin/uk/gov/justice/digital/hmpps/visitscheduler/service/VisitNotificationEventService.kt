@@ -450,7 +450,7 @@ class VisitNotificationEventService(
         prisonerId = notificationDto.prisonerNumber,
         contactId = notificationDto.contactId,
         relationshipId = notificationDto.prisonerContactId,
-      )?.restrictions?.firstOrNull { it.contactRestrictionId == notificationDto.restrictionId }
+      )?.restrictions?.firstOrNull { it.restrictionId == notificationDto.restrictionId }
 
       if (restriction != null) {
         // if valid restriction and dates valid add notifications
@@ -485,7 +485,7 @@ class VisitNotificationEventService(
       // get contact restriction matching the restriction ID on notification
       val restriction = prisonerContactRegistryClient.getContactGlobalRestrictions(
         contactId = notificationDto.contactId,
-      )?.firstOrNull { it.contactRestrictionId == notificationDto.restrictionId }
+      )?.firstOrNull { it.restrictionId == notificationDto.restrictionId }
 
       if (restriction != null) {
         // if valid restriction and dates valid add notifications
