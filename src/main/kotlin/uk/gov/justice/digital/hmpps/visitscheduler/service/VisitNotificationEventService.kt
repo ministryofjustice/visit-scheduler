@@ -466,7 +466,7 @@ class VisitNotificationEventService(
           processVisitsWithNotifications(processVisitNotificationDto)
         }
       } else {
-        LOG.error("Contact restriction with ID {} not found for visitor ID {} and prisoner number {}, skipping notification", notificationDto.restrictionId, notificationDto.contactId, notificationDto.prisonerNumber)
+        LOG.warn("Contact restriction with ID {} not found for visitor ID {} and prisoner number {}, skipping notification", notificationDto.restrictionId, notificationDto.contactId, notificationDto.prisonerNumber)
       }
     }
   }
