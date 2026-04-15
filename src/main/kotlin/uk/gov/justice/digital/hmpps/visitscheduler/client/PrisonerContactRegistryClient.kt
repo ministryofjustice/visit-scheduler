@@ -22,7 +22,7 @@ class PrisonerContactRegistryClient(
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
     const val GET_PRISONERS_APPROVED_SOCIAL_CONTACTS_URL = "/v2/prisoners/{prisonerId}/contacts/social/approved"
     const val GET_PRISONER_CONTACT_DETAILS_WITH_RESTRICTIONS_URL = "/v2/prisoners/{prisonerId}/contacts/{contactId}/relationships/{relationshipId}?withRestrictions=true"
-    const val GET_CONTACT_GLOBAL_RESTRICTIONS_URL = "/v2/contact/{contactId}/restrictions/global"
+    const val GET_CONTACT_GLOBAL_RESTRICTIONS_URL = "/v2/contacts/{contactId}/restrictions/global"
   }
 
   fun getPrisonersApprovedSocialContacts(
