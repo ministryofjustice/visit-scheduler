@@ -10,6 +10,7 @@ import org.springframework.web.reactive.function.client.bodyToMono
 import org.springframework.web.util.UriBuilder
 import reactor.core.publisher.Mono
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonercontactregistry.PrisonerContactDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonercontactregistry.RestrictionDto
 import java.time.Duration
 
 @Component
@@ -21,6 +22,7 @@ class PrisonerContactRegistryClient(
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
     const val GET_PRISONERS_APPROVED_SOCIAL_CONTACTS_URL = "/v2/prisoners/{prisonerId}/contacts/social/approved"
     const val GET_PRISONER_CONTACT_DETAILS_WITH_RESTRICTIONS_URL = "/v2/prisoners/{prisonerId}/contacts/{contactId}/relationships/{relationshipId}?withRestrictions=true"
+    const val GET_CONTACT_GLOBAL_RESTRICTIONS_URL = "/v2/contacts/{contactId}/restrictions/global"
   }
 
   fun getPrisonersApprovedSocialContacts(
@@ -74,6 +76,24 @@ class PrisonerContactRegistryClient(
     }
       .retrieve()
       .bodyToMono<List<PrisonerContactDto>>()
+  }
+
+  fun getContactGlobalRestrictions(
+    contactId: Long,
+  ): List<RestrictionDto>? {
+    val uri = GET_CONTACT_GLOBAL_RESTRICTIONS_URL.replace("{contactId}", contactId.toString())
+    return webClient.get().uri(uri)
+      .retrieve()
+      .bodyToMono<List<RestrictionDto>>()
+      .onErrorResume { e ->
+        if (!isNotFoundError(e)) {
+          LOG.error("getContactGlobalRestrictions Failed for get request $uri")
+          Mono.error(e)
+        } else {
+          LOG.info("getContactGlobalRestrictions NOT_FOUND for get request $uri, returning empty list")
+          Mono.just(emptyList())
+        }
+      }.block(apiTimeout)
   }
 
   private fun getSocialContactsUriBuilder(

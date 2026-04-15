@@ -4,18 +4,12 @@ import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDate
 
 data class RestrictionDto(
-  @param:Schema(description = "Unique identifier for the contact restriction", example = "1")
-  val contactRestrictionId: Long,
-
-  @param:Schema(description = "Unique identifier for the contact", example = "123")
-  val contactId: Long,
-
-  @param:Schema(description = "Restriction type", example = "BAN")
+  @param:Schema(description = "Restriction ID", example = "123", required = true)
+  val restrictionId: Long,
+  @param:Schema(description = "Restriction Type Code", example = "123", required = true)
   val restrictionType: String,
-
-  @param:Schema(description = "Restriction start date", example = "2024-01-01")
-  val startDate: LocalDate? = null,
-
-  @param:Schema(description = "Restriction end date ", example = "2024-01-01")
+  @param:Schema(description = "Date from which the restriction applies", example = "2000-10-31", required = true)
+  val startDate: LocalDate,
+  @param:Schema(description = "Restriction Expiry", example = "2000-10-31", required = false)
   val expiryDate: LocalDate? = null,
 )

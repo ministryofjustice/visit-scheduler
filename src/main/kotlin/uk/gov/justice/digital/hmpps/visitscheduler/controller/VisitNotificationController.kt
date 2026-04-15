@@ -32,6 +32,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAsso
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NotificationCountDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PersonRestrictionUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertCreatedUpdatedNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerContactRestrictionUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerRestrictionChangeNotificationDto
@@ -60,6 +61,7 @@ const val FUTURE_NOTIFICATION_VISITS: String = "$VISIT_NOTIFICATION_CONTROLLER_P
 const val VISIT_NOTIFICATION_EVENTS: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/visit/{reference}/events"
 const val VISIT_NOTIFICATION_IGNORE: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/visit/{reference}/ignore"
 const val VISIT_NOTIFICATION_PRISONER_CONTACT_RESTRICTION_UPSERTED_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/prisoner/contact/restriction/upserted"
+const val VISIT_NOTIFICATION_CONTACT_RESTRICTION_UPSERTED_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/contact/restriction/upserted"
 
 @RestController
 @Validated
@@ -648,6 +650,42 @@ class VisitNotificationController(
   @ResponseStatus(HttpStatus.OK)
   @Operation(
     summary = "To notify VSiP that a prisoner contact restriction has been created / updated",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "notification has completed successfully",
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Incorrect request to notify VSiP of change",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to notify VSiP of change",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun notifyVSiPThatPrisonerContactRestrictionUpserted(
+    @RequestBody @Valid
+    dto: PrisonerContactRestrictionUpsertedNotificationDto,
+  ): ResponseEntity<HttpStatus> {
+    LOG.debug("Entered notifyVSiPThatPrisonerContactRestrictionUpserted {}", dto)
+    visitNotificationEventService.handlePrisonerContactRestrictionNotification(dto)
+    return ResponseEntity(HttpStatus.OK)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PostMapping(VISIT_NOTIFICATION_CONTACT_RESTRICTION_UPSERTED_PATH)
+  @ResponseStatus(HttpStatus.OK)
+  @Operation(
+    summary = "To notify VSiP that a contact's global restriction has been created / updated",
     responses = [
       ApiResponse(
         responseCode = "200",
