@@ -91,7 +91,7 @@ class PrisonerContactRegistryClient(
           Mono.error(e)
         } else {
           LOG.info("getContactGlobalRestrictions NOT_FOUND for get request $uri, returning empty list")
-          Mono.empty()
+          Mono.just(emptyList())
         }
       }.block(apiTimeout)
   }

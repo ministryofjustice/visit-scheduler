@@ -85,6 +85,7 @@ class VisitNotificationEventService(
 
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
+    val visitorSupportedRestrictionTypes = VisitorSupportedRestrictionType.entries.map { it.name }.toSet()
   }
 
   @Transactional
@@ -488,7 +489,6 @@ class VisitNotificationEventService(
 
       if (restriction != null) {
         // if valid restriction and dates valid add notifications
-        val visitorSupportedRestrictionTypes = VisitorSupportedRestrictionType.entries.map { it.name }.toSet()
         if (isNotificationDatesValid(restriction.expiryDate) && visitorSupportedRestrictionTypes.contains(restriction.restrictionType)) {
           val notificationAttributes = hashMapOf(
             NotificationEventAttributeType.VISITOR_RESTRICTION to restriction.restrictionType,
@@ -500,7 +500,7 @@ class VisitNotificationEventService(
           processVisitsWithNotifications(processVisitNotificationDto)
         }
       } else {
-        LOG.error("Contact restriction with ID {} not found for visitor ID {}, skipping notification", notificationDto.restrictionId, notificationDto.contactId)
+        LOG.warn("Contact restriction with ID {} not found for visitor ID {}, skipping notification", notificationDto.restrictionId, notificationDto.contactId)
       }
     }
   }
