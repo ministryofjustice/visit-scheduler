@@ -334,7 +334,7 @@ class PrisonerContactRestrictionUpsertedNotificationControllerTest : Notificatio
   }
 
   @Test
-  fun `when multiple visitor restrictions with the same restriction type multiple notification events are added and not rejected as duplicates `() {
+  fun `when multiple visitor restrictions with the same restriction type multiple notification events are added and not rejected as duplicates`() {
     // Given
     val visitorRestrictionId2 = 200L
     val notificationDto1 = PrisonerContactRestrictionUpsertedNotificationDto(
