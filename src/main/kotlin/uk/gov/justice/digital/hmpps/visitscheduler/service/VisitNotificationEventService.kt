@@ -42,6 +42,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAsso
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PersonRestrictionUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonDateBlockedDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertCreatedUpdatedNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerContactRestrictionUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerRestrictionChangeNotificationDto
@@ -433,8 +434,8 @@ class VisitNotificationEventService(
   }
 
   @Transactional
-  fun handleContactRestrictionNotification(notificationDto: ContactRestrictionUpsertedNotificationDto) {
-    LOG.info("ContactRestrictionUpsertedNotificationDto notification received : {}", notificationDto)
+  fun handlePrisonerContactRestrictionNotification(notificationDto: PrisonerContactRestrictionUpsertedNotificationDto) {
+    LOG.info("PrisonerContactRestrictionUpsertedNotificationDto notification received : {}", notificationDto)
 
     // get affected visits
     val affectedVisits = visitService.getFutureVisitsByVisitorId(
@@ -444,13 +445,11 @@ class VisitNotificationEventService(
 
     if (affectedVisits.isNotEmpty()) {
       // get contact restriction matching the restriction ID on notification
-      val prisonerContactDetails = prisonerContactRegistryClient.getPrisonerContactRelationshipDetailsWithRestrictions(
+      val restriction = prisonerContactRegistryClient.getPrisonerContactRelationshipDetailsWithRestrictions(
         prisonerId = notificationDto.prisonerNumber,
         contactId = notificationDto.contactId,
         relationshipId = notificationDto.prisonerContactId,
-      )
-
-      val restriction = prisonerContactDetails?.restrictions?.firstOrNull { it.contactRestrictionId == notificationDto.restrictionId }
+      )?.restrictions?.firstOrNull { it.contactRestrictionId == notificationDto.restrictionId }
 
       if (restriction != null) {
         // if valid restriction and dates valid add notifications
@@ -462,6 +461,41 @@ class VisitNotificationEventService(
             NotificationEventAttributeType.VISITOR_ID to notificationDto.contactId.toString(),
           )
           val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, PERSON_RESTRICTION_UPSERTED_EVENT, notificationAttributes)
+
+          processVisitsWithNotifications(processVisitNotificationDto)
+        }
+      } else {
+        LOG.error("Contact restriction with ID {} not found for visitor ID {} and prisoner number {}, skipping notification", notificationDto.restrictionId, notificationDto.contactId, notificationDto.prisonerNumber)
+      }
+    }
+  }
+
+  @Transactional
+  fun handleContactRestrictionNotification(notificationDto: ContactRestrictionUpsertedNotificationDto) {
+    LOG.info("ContactRestrictionUpsertedNotificationDto notification received : {}", notificationDto)
+
+    // get affected visits
+    val affectedVisits = visitService.getFutureVisitsByVisitorId(
+      visitorId = notificationDto.contactId.toString(),
+      startDateTime = LocalDateTime.now(),
+    )
+
+    if (affectedVisits.isNotEmpty()) {
+      // get contact restriction matching the restriction ID on notification
+      val restriction = prisonerContactRegistryClient.getContactGlobalRestrictions(
+        contactId = notificationDto.contactId,
+      )?.firstOrNull { it.contactRestrictionId == notificationDto.restrictionId }
+
+      if (restriction != null) {
+        // if valid restriction and dates valid add notifications
+        val visitorSupportedRestrictionTypes = VisitorSupportedRestrictionType.entries.map { it.name }.toSet()
+        if (isNotificationDatesValid(restriction.expiryDate) && visitorSupportedRestrictionTypes.contains(restriction.restrictionType)) {
+          val notificationAttributes = hashMapOf(
+            NotificationEventAttributeType.VISITOR_RESTRICTION to restriction.restrictionType,
+            NotificationEventAttributeType.VISITOR_RESTRICTION_ID to notificationDto.restrictionId.toString(),
+            NotificationEventAttributeType.VISITOR_ID to notificationDto.contactId.toString(),
+          )
+          val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, VISITOR_RESTRICTION_UPSERTED_EVENT, notificationAttributes)
 
           processVisitsWithNotifications(processVisitNotificationDto)
         }
