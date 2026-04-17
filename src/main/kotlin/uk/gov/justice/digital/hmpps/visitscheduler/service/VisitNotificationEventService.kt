@@ -36,11 +36,12 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.S
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.VISITOR_APPROVED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitorSupportedRestrictionType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.ContactRestrictionUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.CourtVideoAppointmentNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PersonRestrictionUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonDateBlockedDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertCreatedUpdatedNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerContactRestrictionUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerRestrictionChangeNotificationDto
@@ -50,7 +51,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.Session
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitNotificationEventDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorApprovedUnapprovedNotificationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorRestrictionUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.ActionedBy
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
@@ -83,6 +83,7 @@ class VisitNotificationEventService(
 
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
+    val visitorSupportedRestrictionTypes = VisitorSupportedRestrictionType.entries.map { it.name }.toSet()
   }
 
   @Transactional
@@ -214,56 +215,6 @@ class VisitNotificationEventService(
           PRISONER_ALERTS_UPDATED_EVENT,
           PRISONER_ALERT_CODE_REMOVED,
         )
-      }
-    }
-  }
-
-  @Transactional
-  fun handlePersonRestrictionUpsertedNotification(notificationDto: PersonRestrictionUpsertedNotificationDto) {
-    LOG.info("PersonRestrictionUpsertedNotificationDto notification received : {}", notificationDto)
-
-    val visitorSupportedRestrictionTypes = VisitorSupportedRestrictionType.entries.map { it.name }.toSet()
-    if (isNotificationDatesValid(notificationDto.validToDate) && visitorSupportedRestrictionTypes.contains(notificationDto.restrictionType)) {
-      // PersonRestrictionUpsertedNotification is a local version of the global VisitorRestrictionChangeNotification event.
-      // Hence, the need for the prisonerId, to only flag visits between the given visitor and prisoner.
-      val affectedVisits = visitService.getFutureVisitsByVisitorId(
-        visitorId = notificationDto.visitorId,
-        prisonerId = notificationDto.prisonerNumber,
-        endDateTime = notificationDto.validToDate?.atTime(LocalTime.MAX),
-      )
-      if (affectedVisits.isNotEmpty()) {
-        val notificationAttributes = hashMapOf(
-          NotificationEventAttributeType.VISITOR_RESTRICTION to notificationDto.restrictionType,
-          NotificationEventAttributeType.VISITOR_RESTRICTION_ID to notificationDto.restrictionId,
-          NotificationEventAttributeType.VISITOR_ID to notificationDto.visitorId,
-        )
-        val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, PERSON_RESTRICTION_UPSERTED_EVENT, notificationAttributes)
-
-        processVisitsWithNotifications(processVisitNotificationDto)
-      }
-    }
-  }
-
-  @Transactional
-  fun handleVisitorRestrictionUpsertedNotification(notificationDto: VisitorRestrictionUpsertedNotificationDto) {
-    LOG.info("VisitorRestrictionUpsertedNotificationDto notification received : {}", notificationDto)
-
-    val visitorSupportedRestrictionTypes = VisitorSupportedRestrictionType.entries.map { it.name }.toSet()
-    if (isNotificationDatesValid(notificationDto.validToDate) && visitorSupportedRestrictionTypes.contains(notificationDto.restrictionType)) {
-      // VisitorRestrictionUpsertedNotificationDto is the global version of the local PersonRestrictionUpsertedNotificationDto event.
-      // Hence, no prisonerId is given, so we flag every visit they have.
-      val affectedVisits = visitService.getFutureVisitsByVisitorId(
-        visitorId = notificationDto.visitorId,
-        endDateTime = notificationDto.validToDate?.atTime(LocalTime.MAX),
-      )
-      if (affectedVisits.isNotEmpty()) {
-        val notificationAttributes = hashMapOf(
-          NotificationEventAttributeType.VISITOR_RESTRICTION to notificationDto.restrictionType,
-          NotificationEventAttributeType.VISITOR_RESTRICTION_ID to notificationDto.restrictionId,
-          NotificationEventAttributeType.VISITOR_ID to notificationDto.visitorId,
-        )
-        val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, VISITOR_RESTRICTION_UPSERTED_EVENT, notificationAttributes)
-        processVisitsWithNotifications(processVisitNotificationDto)
       }
     }
   }
@@ -429,6 +380,77 @@ class VisitNotificationEventService(
     val markedForRemovalList = visitNotificationEventRepository.findExpiredVisitNotificationEvents()
     visitNotificationEventRepository.deleteAll(markedForRemovalList)
     return markedForRemovalList.size
+  }
+
+  @Transactional
+  fun handlePrisonerContactRestrictionNotification(notificationDto: PrisonerContactRestrictionUpsertedNotificationDto) {
+    LOG.info("PrisonerContactRestrictionUpsertedNotificationDto notification received : {}", notificationDto)
+
+    // get affected visits
+    val affectedVisits = visitService.getFutureVisitsByVisitorId(
+      visitorId = notificationDto.contactId.toString(),
+      startDateTime = LocalDateTime.now(),
+    )
+
+    if (affectedVisits.isNotEmpty()) {
+      // get contact restriction matching the restriction ID on notification
+      val restriction = prisonerContactRegistryClient.getPrisonerContactRelationshipDetailsWithRestrictions(
+        prisonerId = notificationDto.prisonerNumber,
+        contactId = notificationDto.contactId,
+        relationshipId = notificationDto.prisonerContactId,
+      )?.restrictions?.firstOrNull { it.restrictionId == notificationDto.restrictionId }
+
+      if (restriction != null) {
+        // if valid restriction and dates valid add notifications
+        val visitorSupportedRestrictionTypes = VisitorSupportedRestrictionType.entries.map { it.name }.toSet()
+        if (isNotificationDatesValid(restriction.expiryDate) && visitorSupportedRestrictionTypes.contains(restriction.restrictionType)) {
+          val notificationAttributes = hashMapOf(
+            NotificationEventAttributeType.VISITOR_RESTRICTION to restriction.restrictionType,
+            NotificationEventAttributeType.VISITOR_RESTRICTION_ID to notificationDto.restrictionId.toString(),
+            NotificationEventAttributeType.VISITOR_ID to notificationDto.contactId.toString(),
+          )
+          val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, PERSON_RESTRICTION_UPSERTED_EVENT, notificationAttributes)
+
+          processVisitsWithNotifications(processVisitNotificationDto)
+        }
+      } else {
+        LOG.warn("Contact restriction with ID {} not found for visitor ID {} and prisoner number {}, skipping notification", notificationDto.restrictionId, notificationDto.contactId, notificationDto.prisonerNumber)
+      }
+    }
+  }
+
+  @Transactional
+  fun handleContactRestrictionNotification(notificationDto: ContactRestrictionUpsertedNotificationDto) {
+    LOG.info("ContactRestrictionUpsertedNotificationDto notification received : {}", notificationDto)
+
+    // get affected visits
+    val affectedVisits = visitService.getFutureVisitsByVisitorId(
+      visitorId = notificationDto.contactId.toString(),
+      startDateTime = LocalDateTime.now(),
+    )
+
+    if (affectedVisits.isNotEmpty()) {
+      // get contact restriction matching the restriction ID on notification
+      val restriction = prisonerContactRegistryClient.getContactGlobalRestrictions(
+        contactId = notificationDto.contactId,
+      )?.firstOrNull { it.restrictionId == notificationDto.restrictionId }
+
+      if (restriction != null) {
+        // if valid restriction and dates valid add notifications
+        if (isNotificationDatesValid(restriction.expiryDate) && visitorSupportedRestrictionTypes.contains(restriction.restrictionType)) {
+          val notificationAttributes = hashMapOf(
+            NotificationEventAttributeType.VISITOR_RESTRICTION to restriction.restrictionType,
+            NotificationEventAttributeType.VISITOR_RESTRICTION_ID to notificationDto.restrictionId.toString(),
+            NotificationEventAttributeType.VISITOR_ID to notificationDto.contactId.toString(),
+          )
+          val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, VISITOR_RESTRICTION_UPSERTED_EVENT, notificationAttributes)
+
+          processVisitsWithNotifications(processVisitNotificationDto)
+        }
+      } else {
+        LOG.warn("Contact restriction with ID {} not found for visitor ID {}, skipping notification", notificationDto.restrictionId, notificationDto.contactId)
+      }
+    }
   }
 
   private fun processVisitsWithNotifications(processVisitNotificationDto: ProcessVisitNotificationDto) {
