@@ -92,3 +92,9 @@ feature:
 visit:
   cancel:
     day-limit: 28
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
