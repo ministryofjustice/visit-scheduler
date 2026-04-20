@@ -6,10 +6,12 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.NON
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.PRISON_DATE_BLOCKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.SESSION_DATE_BLOCKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AdditionalSessionConflictInfoDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionConflictAttribute
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionConflictDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
+import uk.gov.justice.digital.hmpps.visitscheduler.service.DoubleBookedConflictSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NonAssociationConflictSessionDto
-import uk.gov.justice.digital.hmpps.visitscheduler.service.NonAssociationConflictType
+import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionConflictType
 import java.time.LocalDate
 
 @Component
@@ -17,14 +19,14 @@ class SessionConflictsUtil {
   fun addSessionConflicts(
     session: VisitSessionDto,
     nonAssociationConflictSessions: List<NonAssociationConflictSessionDto>,
-    doubleBookingOrReservationSessions: List<VisitSessionDto>,
+    doubleBookingConflictSessions: List<DoubleBookedConflictSessionDto>,
     prisonExcludeDates: List<LocalDate>,
     sessionExcludeDates: List<LocalDate>,
   ) {
     getNonAssociationSessionConflict(session, nonAssociationConflictSessions)?.let {
       session.sessionConflicts.add(it)
     }
-    getDoubleBookingOrReservationSessionConflict(doubleBookingOrReservationSessions, session)?.let {
+    getDoubleBookingOrReservationSessionConflict(session, doubleBookingConflictSessions)?.let {
       session.sessionConflicts.add(it)
     }
     getPrisonDateExcludedSessionConflict(prisonExcludeDates, session)?.let {
@@ -41,7 +43,7 @@ class SessionConflictsUtil {
   ): SessionConflictDto? {
     val sessionDate = session.startTimestamp.toLocalDate()
     val nonAssociationConflictSessionsForDate = nonAssociationConflictSessions.filter { it.sessionDate == sessionDate }
-    if (nonAssociationConflictSessionsForDate.isNotEmpty()) { // removed &&  policyFilterNonAssociation) {
+    if (nonAssociationConflictSessionsForDate.isNotEmpty()) { // removed && policyFilterNonAssociation) {
       val nonAssociationConflictAttributes = getNonAssociationConflictAttributes(nonAssociationConflictSessionsForDate)
       return SessionConflictDto(NON_ASSOCIATION, nonAssociationConflictAttributes)
     }
@@ -50,11 +52,17 @@ class SessionConflictsUtil {
   }
 
   private fun getDoubleBookingOrReservationSessionConflict(
-    doubleBookingOrReservationSessions: List<VisitSessionDto>,
-    visitSession: VisitSessionDto,
+    session: VisitSessionDto,
+    doubleBookingConflicts: List<DoubleBookedConflictSessionDto>,
   ): SessionConflictDto? {
-    val sessionConflict = SessionConflictDto(DOUBLE_BOOKING_OR_RESERVATION)
-    return if (hasDoubleBookingOrReservationSessions(doubleBookingOrReservationSessions, visitSession)) sessionConflict else null
+    doubleBookingConflicts.firstOrNull { doubleBookingConflict ->
+      doubleBookingConflict.sessionTemplateReference == session.sessionTemplateReference && session.startTimestamp.toLocalDate() == doubleBookingConflict.sessionDate
+    }?.let { doubleBookedSession ->
+      val doubleBookingConflictAttributes = getDoubleBookingConflictAttributes(doubleBookedSession)
+      return SessionConflictDto(DOUBLE_BOOKING_OR_RESERVATION, listOf(doubleBookingConflictAttributes))
+    }
+
+    return null
   }
 
   private fun getPrisonDateExcludedSessionConflict(
@@ -98,12 +106,22 @@ class SessionConflictsUtil {
 
   private fun getNonAssociationConflictAttributes(nonAssociationConflictSession: NonAssociationConflictSessionDto): List<AdditionalSessionConflictInfoDto> {
     val nonAssociationConflictAttributes = mutableListOf<AdditionalSessionConflictInfoDto>()
-    nonAssociationConflictAttributes.add(AdditionalSessionConflictInfoDto("prisonerId", nonAssociationConflictSession.prisonerId))
-    nonAssociationConflictAttributes.add(AdditionalSessionConflictInfoDto("type", nonAssociationConflictSession.conflictType.name))
-    if (nonAssociationConflictSession.conflictType == NonAssociationConflictType.VISIT) {
-      nonAssociationConflictAttributes.add(AdditionalSessionConflictInfoDto("reference", nonAssociationConflictSession.reference!!))
+    nonAssociationConflictAttributes.add(AdditionalSessionConflictInfoDto(SessionConflictAttribute.PRISONER_NUMBER, nonAssociationConflictSession.prisonerId))
+    nonAssociationConflictAttributes.add(AdditionalSessionConflictInfoDto(SessionConflictAttribute.CONFLICT_TYPE, nonAssociationConflictSession.conflictType.name))
+    if (nonAssociationConflictSession.conflictType == SessionConflictType.VISIT) {
+      nonAssociationConflictAttributes.add(AdditionalSessionConflictInfoDto(SessionConflictAttribute.REFERENCE, nonAssociationConflictSession.reference!!))
     }
 
     return nonAssociationConflictAttributes.toList()
+  }
+
+  private fun getDoubleBookingConflictAttributes(doubleBookedConflictSession: DoubleBookedConflictSessionDto): List<AdditionalSessionConflictInfoDto> {
+    val doubleBookingConflictAttributes = mutableListOf<AdditionalSessionConflictInfoDto>()
+    doubleBookingConflictAttributes.add(AdditionalSessionConflictInfoDto(SessionConflictAttribute.CONFLICT_TYPE, doubleBookedConflictSession.conflictType.name))
+    if (doubleBookedConflictSession.conflictType == SessionConflictType.VISIT) {
+      doubleBookingConflictAttributes.add(AdditionalSessionConflictInfoDto(SessionConflictAttribute.REFERENCE, doubleBookedConflictSession.reference!!))
+    }
+
+    return doubleBookingConflictAttributes.toList()
   }
 }

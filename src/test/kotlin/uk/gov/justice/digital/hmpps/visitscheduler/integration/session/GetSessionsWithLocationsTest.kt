@@ -15,6 +15,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AdditionalSessionConflictInfoDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionConflictAttribute.CONFLICT_TYPE
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionConflictAttribute.PRISONER_NUMBER
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionConflictAttribute.REFERENCE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -518,9 +521,9 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     assertThat(visitSessionResults[0].sessionConflicts.map { it.additionalAttributes }.flatten()).containsAll(
       listOf(
         listOf(
-          AdditionalSessionConflictInfoDto("prisonerId", associationId),
-          AdditionalSessionConflictInfoDto("type", "VISIT"),
-          AdditionalSessionConflictInfoDto("reference", visit.reference),
+          AdditionalSessionConflictInfoDto(PRISONER_NUMBER, associationId),
+          AdditionalSessionConflictInfoDto(CONFLICT_TYPE, "VISIT"),
+          AdditionalSessionConflictInfoDto(REFERENCE, visit.reference),
         ),
       ),
     )
@@ -530,9 +533,9 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     assertThat(visitSessionResults[1].sessionConflicts.map { it.additionalAttributes }.flatten()).containsAll(
       listOf(
         listOf(
-          AdditionalSessionConflictInfoDto("prisonerId", associationId),
-          AdditionalSessionConflictInfoDto("type", "VISIT"),
-          AdditionalSessionConflictInfoDto("reference", visit.reference),
+          AdditionalSessionConflictInfoDto(PRISONER_NUMBER, associationId),
+          AdditionalSessionConflictInfoDto(CONFLICT_TYPE, "VISIT"),
+          AdditionalSessionConflictInfoDto(REFERENCE, visit.reference),
         ),
       ),
     )
@@ -541,9 +544,9 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     assertThat(visitSessionResults[2].sessionConflicts.map { it.additionalAttributes }.flatten()).containsAll(
       listOf(
         listOf(
-          AdditionalSessionConflictInfoDto("prisonerId", associationId),
-          AdditionalSessionConflictInfoDto("type", "VISIT"),
-          AdditionalSessionConflictInfoDto("reference", visit.reference),
+          AdditionalSessionConflictInfoDto(PRISONER_NUMBER, associationId),
+          AdditionalSessionConflictInfoDto(CONFLICT_TYPE, "VISIT"),
+          AdditionalSessionConflictInfoDto(REFERENCE, visit.reference),
         ),
       ),
     )
@@ -552,9 +555,9 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     assertThat(visitSessionResults[3].sessionConflicts.map { it.additionalAttributes }.flatten()).containsAll(
       listOf(
         listOf(
-          AdditionalSessionConflictInfoDto("prisonerId", associationId),
-          AdditionalSessionConflictInfoDto("type", "VISIT"),
-          AdditionalSessionConflictInfoDto("reference", visit.reference),
+          AdditionalSessionConflictInfoDto(PRISONER_NUMBER, associationId),
+          AdditionalSessionConflictInfoDto(CONFLICT_TYPE, "VISIT"),
+          AdditionalSessionConflictInfoDto(REFERENCE, visit.reference),
         ),
       ),
     )
@@ -563,9 +566,9 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     assertThat(visitSessionResults[4].sessionConflicts.map { it.additionalAttributes }.flatten()).containsAll(
       listOf(
         listOf(
-          AdditionalSessionConflictInfoDto("prisonerId", associationId),
-          AdditionalSessionConflictInfoDto("type", "VISIT"),
-          AdditionalSessionConflictInfoDto("reference", visit.reference),
+          AdditionalSessionConflictInfoDto(PRISONER_NUMBER, associationId),
+          AdditionalSessionConflictInfoDto(CONFLICT_TYPE, "VISIT"),
+          AdditionalSessionConflictInfoDto(REFERENCE, visit.reference),
         ),
       ),
     )

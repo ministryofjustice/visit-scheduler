@@ -31,6 +31,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OtherPrisonerD
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AdditionalSessionConflictInfoDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionConflictAttribute
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -1689,9 +1690,9 @@ class GetSessionsTest : IntegrationTestBase() {
       assertThat(visitSessionForDate.sessionConflicts.map { it.additionalAttributes }.flatten()).containsAll(
         listOf(
           listOf(
-            AdditionalSessionConflictInfoDto("prisonerId", associationPrisonerId),
-            AdditionalSessionConflictInfoDto("type", "VISIT"),
-            AdditionalSessionConflictInfoDto("reference", visit.reference),
+            AdditionalSessionConflictInfoDto(SessionConflictAttribute.PRISONER_NUMBER, associationPrisonerId),
+            AdditionalSessionConflictInfoDto(SessionConflictAttribute.CONFLICT_TYPE, "VISIT"),
+            AdditionalSessionConflictInfoDto(SessionConflictAttribute.REFERENCE, visit.reference),
           ),
         ),
       )
@@ -1759,14 +1760,14 @@ class GetSessionsTest : IntegrationTestBase() {
       assertThat(visitSessionForDate.sessionConflicts.map { it.additionalAttributes }.flatten()).containsAll(
         listOf(
           listOf(
-            AdditionalSessionConflictInfoDto("prisonerId", associationPrisonerId1),
-            AdditionalSessionConflictInfoDto("type", "VISIT"),
-            AdditionalSessionConflictInfoDto("reference", visit1.reference),
+            AdditionalSessionConflictInfoDto(SessionConflictAttribute.PRISONER_NUMBER, associationPrisonerId1),
+            AdditionalSessionConflictInfoDto(SessionConflictAttribute.CONFLICT_TYPE, "VISIT"),
+            AdditionalSessionConflictInfoDto(SessionConflictAttribute.REFERENCE, visit1.reference),
           ),
           listOf(
-            AdditionalSessionConflictInfoDto("prisonerId", associationPrisonerId2),
-            AdditionalSessionConflictInfoDto("type", "VISIT"),
-            AdditionalSessionConflictInfoDto("reference", visit2.reference),
+            AdditionalSessionConflictInfoDto(SessionConflictAttribute.PRISONER_NUMBER, associationPrisonerId2),
+            AdditionalSessionConflictInfoDto(SessionConflictAttribute.CONFLICT_TYPE, "VISIT"),
+            AdditionalSessionConflictInfoDto(SessionConflictAttribute.REFERENCE, visit2.reference),
           ),
         ),
       )
@@ -1956,9 +1957,9 @@ class GetSessionsTest : IntegrationTestBase() {
       assertThat(sessionForVisitDate.sessionConflicts.map { it.additionalAttributes }.flatten()).containsAll(
         listOf(
           listOf(
-            AdditionalSessionConflictInfoDto("prisonerId", associationPrisonerId),
-            AdditionalSessionConflictInfoDto("type", "VISIT"),
-            AdditionalSessionConflictInfoDto("reference", visit.reference),
+            AdditionalSessionConflictInfoDto(SessionConflictAttribute.PRISONER_NUMBER, associationPrisonerId),
+            AdditionalSessionConflictInfoDto(SessionConflictAttribute.CONFLICT_TYPE, "VISIT"),
+            AdditionalSessionConflictInfoDto(SessionConflictAttribute.REFERENCE, visit.reference),
           ),
         ),
       )
@@ -2041,8 +2042,8 @@ class GetSessionsTest : IntegrationTestBase() {
       assertThat(sessionForVisitDate.sessionConflicts.map { it.additionalAttributes }.flatten()).containsAll(
         listOf(
           listOf(
-            AdditionalSessionConflictInfoDto("prisonerId", associationPrisonerId),
-            AdditionalSessionConflictInfoDto("type", "APPLICATION"),
+            AdditionalSessionConflictInfoDto(SessionConflictAttribute.PRISONER_NUMBER, associationPrisonerId),
+            AdditionalSessionConflictInfoDto(SessionConflictAttribute.CONFLICT_TYPE, "APPLICATION"),
           ),
         ),
       )

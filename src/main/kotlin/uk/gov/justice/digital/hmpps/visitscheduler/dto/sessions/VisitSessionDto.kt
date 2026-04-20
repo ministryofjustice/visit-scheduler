@@ -112,9 +112,15 @@ data class SessionConflictDto(
 data class AdditionalSessionConflictInfoDto(
   @Schema(description = "Attribute Name", required = true)
   @field:NotBlank
-  val attributeName: String,
+  val attributeName: SessionConflictAttribute,
 
   @Schema(description = "Attribute value", required = true)
   @field:NotBlank
   val attributeValue: String,
 )
+
+enum class SessionConflictAttribute(description: String) {
+  PRISONER_NUMBER("Prisoner Number"),
+  CONFLICT_TYPE("Application or Visit"),
+  REFERENCE("Application or Visit reference"),
+}
