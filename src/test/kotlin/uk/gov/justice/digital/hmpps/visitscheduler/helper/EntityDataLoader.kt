@@ -191,7 +191,7 @@ class PrisonEntityHelper(
       clients.forEach { client ->
         createPrisonUserClient(
           prison = prison,
-          active = true,
+          active = client.active,
           policyNoticeDaysMin = client.policyNoticeDaysMin,
           policyNoticeDaysMax = client.policyNoticeDaysMax,
           userType = client.userType,

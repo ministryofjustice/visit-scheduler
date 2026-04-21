@@ -1,10 +1,11 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
-import jakarta.validation.Validation
 import jakarta.validation.ValidationException
+import jakarta.validation.Validator
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ExcludeDateDto
@@ -16,7 +17,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonUserClient
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonUserClientRepository
-import java.time.LocalDateTime
 
 @Service
 @Transactional
@@ -25,6 +25,8 @@ class PrisonConfigService(
   private val messageService: MessageService,
   private val prisonsService: PrisonsService,
   private val excludeDateService: ExcludeDateService,
+  @param:Qualifier("validator")
+  private val validator: Validator,
 ) {
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
@@ -71,7 +73,6 @@ class PrisonConfigService(
     prison.maxChildVisitors = maxChildVisitors
     prison.adultAgeYears = adultAgeYears
 
-    prison = prisonRepository.saveAndFlush(prison)
     if (prisonDto.clients != null) {
       prison.clients.clear()
       prisonDto.clients.forEach {
@@ -83,8 +84,6 @@ class PrisonConfigService(
             policyNoticeDaysMin = it.policyNoticeDaysMin,
             policyNoticeDaysMax = it.policyNoticeDaysMax,
             active = it.active,
-            createTimestamp = LocalDateTime.now(),
-            modifyTimestamp = LocalDateTime.now(),
           ),
         )
       }
@@ -198,12 +197,10 @@ class PrisonConfigService(
     clients: List<PrisonUserClientDto>,
     prisonCode: String,
   ) {
-    val validator = Validation.buildDefaultValidatorFactory().validator
-
     clients.forEach { client ->
       val validationErrors = validator.validate(client)
       if (validationErrors.isNotEmpty()) {
-        throw ValidationException(validationErrors.joinToString(separator = ", ") { it.message })
+        throw ValidationException(validationErrors.joinToString(separator = ", ") { "${it.propertyPath}: ${it.message} (invalid value: ${it.invalidValue})" })
       }
       if (client.policyNoticeDaysMin > client.policyNoticeDaysMax) {
         throw ValidationException(

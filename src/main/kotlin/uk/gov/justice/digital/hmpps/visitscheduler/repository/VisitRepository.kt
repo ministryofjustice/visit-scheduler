@@ -447,7 +447,7 @@ interface VisitRepository :
 
   @Transactional(readOnly = true)
   @Query(
-    "SELECT v.* " +
+    "SELECT DISTINCT v.* " +
       "FROM visit v " +
       "INNER JOIN prison p ON p.id = v.prison_id " +
       "INNER JOIN prison_user_client pc ON p.id = pc.prison_id " +

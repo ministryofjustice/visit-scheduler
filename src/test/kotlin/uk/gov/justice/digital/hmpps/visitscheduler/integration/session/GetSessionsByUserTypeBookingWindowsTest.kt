@@ -46,13 +46,14 @@ class GetSessionsByUserTypeBookingWindowsTest : IntegrationTestBase() {
     // When
     val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
     val expectedSessionDates = (1L..21L).map { LocalDate.now().plusDays(it) }.toList()
+    val today = LocalDate.now()
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getVisitSessionResults(returnResult)
     assertThat(visitSessionResults.size).isEqualTo(21)
-    assertThat(visitSessionResults[0].startTimestamp.toLocalDate()).isEqualTo(LocalDate.now().plusDays(1))
-    assertThat(visitSessionResults.last().startTimestamp.toLocalDate()).isEqualTo(LocalDate.now().plusDays(21))
+    assertThat(visitSessionResults[0].startTimestamp.toLocalDate()).isEqualTo(today.plusDays(1))
+    assertThat(visitSessionResults.last().startTimestamp.toLocalDate()).isEqualTo(today.plusDays(21))
     assertThat(visitSessionResults.map { it.startTimestamp.toLocalDate() }.toList()).isEqualTo(expectedSessionDates)
   }
 

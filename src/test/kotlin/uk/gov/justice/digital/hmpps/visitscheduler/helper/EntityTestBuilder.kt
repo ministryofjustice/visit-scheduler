@@ -52,7 +52,7 @@ fun prison(
 ): Prison {
   val prison = Prison(code = prisonCode, active = isActive, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears)
   clients.forEach { client ->
-    PrisonUserClient(prisonId = prison.id, prison = prison, userType = client.userType, policyNoticeDaysMin = client.policyNoticeDaysMin, policyNoticeDaysMax = client.policyNoticeDaysMax, active = true).also {
+    PrisonUserClient(prisonId = prison.id, prison = prison, userType = client.userType, policyNoticeDaysMin = client.policyNoticeDaysMin, policyNoticeDaysMax = client.policyNoticeDaysMax, active = client.active).also {
       prison.clients.add(it)
     }
   }
