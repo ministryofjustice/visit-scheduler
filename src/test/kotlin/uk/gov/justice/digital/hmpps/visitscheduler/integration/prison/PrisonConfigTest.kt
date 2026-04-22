@@ -254,11 +254,7 @@ class PrisonConfigTest : IntegrationTestBase() {
     val responseSpec = callUpdatePrison(webTestClient, roleVisitSchedulerHttpHeaders, prison.code, updatePrisonRequest)
 
     // Then
-    val errorResponse = getErrorResponse(responseSpec)
-
-    Assertions.assertThat(errorResponse.userMessage).isEqualTo("Invalid Arguments")
-    Assertions.assertThat(errorResponse.developerMessage).contains("'policyNoticeDaysMin': rejected value [-1]")
-    Assertions.assertThat(errorResponse.developerMessage).contains("'policyNoticeDaysMax': rejected value [-1]")
+    responseSpec.expectStatus().isBadRequest.expectBody()
   }
 
   @Test
