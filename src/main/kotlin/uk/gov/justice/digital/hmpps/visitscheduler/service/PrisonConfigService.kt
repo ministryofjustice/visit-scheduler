@@ -154,7 +154,7 @@ class PrisonConfigService(
       prisonUserClient.active = active
     } else {
       val prison = prisonsService.findPrisonByCode(prisonCode)
-      prisonUserClient = PrisonUserClient(prison.id, prison, userType, policyNoticeDaysMin = DEFAULT_BOOKING_MIN_DAYS, policyNoticeDaysMax = DEFAULT_BOOKING_MAX_DAYS, active)
+      prisonUserClient = PrisonUserClient(prison.id, prison, userType, policyNoticeDaysMin = DEFAULT_BOOKING_MIN_DAYS, policyNoticeDaysMax = DEFAULT_BOOKING_MAX_DAYS, active = active)
       prison.clients.add(prisonUserClient)
     }
     return PrisonUserClientDto(prisonUserClient)
