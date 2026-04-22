@@ -1,8 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.config
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import jakarta.validation.Validation
-import jakarta.validation.Validator
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -74,9 +72,6 @@ class WebClientConfiguration(
     authorizedClientManager.setAuthorizedClientProvider(authorizedClientProvider)
     return authorizedClientManager
   }
-
-  @Bean
-  fun validator(): Validator = Validation.buildDefaultValidatorFactory().validator
 
   private fun getWebClient(
     url: String,
