@@ -196,12 +196,14 @@ class PrisonEntityHelper(
       )
 
       clients.forEach { client ->
-        createPrisonUserClient(
-          prison = prison,
-          active = client.active,
-          policyNoticeDaysMin = client.policyNoticeDaysMin,
-          policyNoticeDaysMax = client.policyNoticeDaysMax,
-          userType = client.userType,
+        prisonUserClientRepository.saveAndFlush(
+          createPrisonUserClient(
+            prison = prison,
+            active = client.active,
+            policyNoticeDaysMin = client.policyNoticeDaysMin,
+            policyNoticeDaysMax = client.policyNoticeDaysMax,
+            userType = client.userType,
+          ),
         )
       }
     }
