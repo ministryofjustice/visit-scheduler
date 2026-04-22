@@ -94,7 +94,14 @@ class PrisonEntityHelper(
       maxAdultVisitors: Int = 3,
       maxChildVisitors: Int = 3,
       adultAgeYears: Int = 18,
-    ): Prison = Prison(code = prisonCode, active = activePrison, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears)
+    ): Prison = Prison(
+      code = prisonCode,
+      active = activePrison,
+      maxTotalVisitors = maxTotalVisitors,
+      maxAdultVisitors = maxAdultVisitors,
+      maxChildVisitors = maxChildVisitors,
+      adultAgeYears = adultAgeYears,
+    )
 
     fun createPrisonDto(
       prisonCode: String = "AWE",
