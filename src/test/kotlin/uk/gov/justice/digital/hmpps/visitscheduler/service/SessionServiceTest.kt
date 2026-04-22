@@ -102,10 +102,6 @@ class SessionServiceTest {
     ).thenReturn(PrisonerDto(prisonerId = prisonerId, firstName = "john", lastName = "smith", category = category, incentiveLevel = incentiveLevel))
 
     whenever(
-      prisonsService.findPrisonByCode(prisonCode),
-    ).thenReturn(prison(policyNoticeDaysMin = 0, policyNoticeDaysMax = 100))
-
-    whenever(
       sessionTemplateRepository.findSessionTemplateMinCapacityBy(
         prisonCode = prisonCode,
         rangeStartDate = currentDate.plusDays(noticeDaysMin.toLong().plus(1)),
