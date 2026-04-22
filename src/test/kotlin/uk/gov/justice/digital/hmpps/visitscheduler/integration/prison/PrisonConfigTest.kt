@@ -172,7 +172,7 @@ class PrisonConfigTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isOk
     verify(prisonConfigServiceSpy, times(1)).updatePrison(prison.code, updatePrisonRequest)
-    verify(prisonRepositorySpy, times(1)).saveAndFlush(any())
+    verify(prisonRepositorySpy, times(2)).saveAndFlush(any())
 
     val result = getPrison(responseSpec.expectBody())
     Assertions.assertThat(result.maxTotalVisitors).isNotEqualTo(prison.maxTotalVisitors)

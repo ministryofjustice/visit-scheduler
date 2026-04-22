@@ -75,6 +75,8 @@ class PrisonConfigService(
 
     if (prisonDto.clients != null) {
       prison.clients.clear()
+      prison = prisonRepository.saveAndFlush(prison)
+
       prisonDto.clients.forEach {
         prison.clients.add(
           PrisonUserClient(
