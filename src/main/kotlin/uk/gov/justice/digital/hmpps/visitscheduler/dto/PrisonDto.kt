@@ -33,7 +33,7 @@ data class PrisonDto(
   @param:Schema(description = "Age of adults in years")
   @field:NotNull
   val adultAgeYears: Int,
-  @param:Schema(description = "prison user client", required = false)
+  @param:Schema(description = "prison user client", required = true)
   @field:NotEmpty
   val clients: List<@Valid PrisonUserClientDto> = mutableListOf(),
 ) {
