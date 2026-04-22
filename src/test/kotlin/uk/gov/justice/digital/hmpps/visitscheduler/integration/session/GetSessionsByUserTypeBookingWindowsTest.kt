@@ -45,8 +45,8 @@ class GetSessionsByUserTypeBookingWindowsTest : IntegrationTestBase() {
   fun `when get visit sessions called with userType STAFF only visit sessions for STAFF are returned`() {
     // When
     val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
-    val expectedSessionDates = (1L..21L).map { LocalDate.now().plusDays(it) }.toList()
     val today = LocalDate.now()
+    val expectedSessionDates = (1L..21L).map { today.plusDays(it) }.toList()
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
