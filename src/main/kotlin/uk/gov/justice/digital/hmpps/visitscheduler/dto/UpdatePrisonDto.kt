@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto
 
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.Valid
 import jakarta.validation.constraints.Min
 
 @Schema(description = "Prison update dto")
@@ -16,6 +17,7 @@ data class UpdatePrisonDto(
   val maxChildVisitors: Int?,
   @param:Schema(description = "Age of adults in years")
   val adultAgeYears: Int?,
+  @field:Valid
   @param:Schema(description = "prison user client", required = false)
   val clients: List<PrisonUserClientDto>?,
 )
