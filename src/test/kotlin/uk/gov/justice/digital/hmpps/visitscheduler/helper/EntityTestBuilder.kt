@@ -136,7 +136,14 @@ fun sessionTemplate(
   userTypes: List<UserType> = listOf(UserType.STAFF, UserType.PUBLIC),
   visitOrderRestrictionType: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
 ): SessionTemplate {
-  val prison = Prison(code = prisonCode, active = isActive, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears)
+  val prison = Prison(
+    code = prisonCode,
+    active = isActive,
+    maxTotalVisitors = maxTotalVisitors,
+    maxAdultVisitors = maxAdultVisitors,
+    maxChildVisitors = maxChildVisitors,
+    adultAgeYears = adultAgeYears,
+  )
   val staffClient = PrisonUserClient(prisonId = prison.id, prison = prison, userType = UserType.STAFF, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax, active = true)
   val publicClient = PrisonUserClient(prisonId = prison.id, prison = prison, userType = UserType.PUBLIC, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax, active = true)
   prison.clients.addAll(listOf(staffClient, publicClient))
