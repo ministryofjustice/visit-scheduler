@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.dto
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Min
+import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 
@@ -33,6 +34,7 @@ data class PrisonDto(
   @field:NotNull
   val adultAgeYears: Int,
   @param:Schema(description = "prison user client", required = false)
+  @field:NotEmpty
   val clients: List<@Valid PrisonUserClientDto> = mutableListOf(),
 ) {
   constructor(prisonEntity: Prison) : this(

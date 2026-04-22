@@ -106,7 +106,10 @@ class PrisonEntityHelper(
     fun createPrisonDto(
       prisonCode: String = "AWE",
       activePrison: Boolean = true,
-      clients: List<PrisonUserClientDto> = mutableListOf(),
+      clients: List<PrisonUserClientDto> = listOf(
+        PrisonUserClientDto(2, 28, STAFF, active = true),
+        PrisonUserClientDto(2, 28, PUBLIC, active = true),
+      ),
       maxTotalVisitors: Int = 6,
       maxAdultVisitors: Int = 3,
       maxChildVisitors: Int = 3,
