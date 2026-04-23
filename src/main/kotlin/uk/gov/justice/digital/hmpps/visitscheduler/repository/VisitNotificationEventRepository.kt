@@ -34,11 +34,14 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
       " JOIN session_slot ss on ss.id  = v.session_slot_id " +
       " JOIN prison p on p.id  = v.prison_id " +
       " JOIN visit_visitor vv on vv.visit_id = v.id " +
+      " JOIN visit_notification_event_attribute vnea on vnea.visit_notification_event_id = vne.id " +
       " WHERE ss.slot_date >= NOW() " +
       " AND v.prisoner_id = :prisonerNumber " +
       " AND p.code = :prisonCode " +
       " AND vv.nomis_person_id = :visitorId " +
       " AND vne.type=:#{#notificationEvent.name()}" +
+      " AND vnea.attribute_name = 'VISITOR_ID' " +
+      " AND vnea.attribute_value = :#{#visitorId.toString()} " +
       " ORDER BY vne.id",
     nativeQuery = true,
   )

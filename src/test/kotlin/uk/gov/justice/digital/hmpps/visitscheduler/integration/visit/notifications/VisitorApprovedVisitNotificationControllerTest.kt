@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonerContactRegistryClient
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_VISITOR_APPROVED_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventAttributeType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
@@ -73,7 +74,8 @@ class VisitorApprovedVisitNotificationControllerTest : NotificationTestBase() {
     val visit = visitEntityHelper.save(visit1)
     eventAuditEntityHelper.create(visit1)
 
-    visitNotificationEventHelper.create(visit = visit, notificationEventType = NotificationEventType.VISITOR_UNAPPROVED_EVENT)
+    val notificationEventAttributes = mutableMapOf(NotificationEventAttributeType.VISITOR_ID to visitorId)
+    visitNotificationEventHelper.create(visit = visit, notificationEventType = NotificationEventType.VISITOR_UNAPPROVED_EVENT, notificationAttributes = notificationEventAttributes)
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
     whenever(prisonerService.getPrisonerPrisonCodeFromPrisonId(prisonerId)).thenReturn(prisonCode)
@@ -85,6 +87,144 @@ class VisitorApprovedVisitNotificationControllerTest : NotificationTestBase() {
     responseSpec.expectStatus().isOk
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(0)
+    verify(telemetryClient).trackEvent(
+      eq("unflagged-visit-event"),
+      org.mockito.kotlin.check {
+        assertThat(it["reference"]).isEqualTo(visit.reference)
+        assertThat(it["reviewTypes"]).isEqualTo(NotificationEventType.VISITOR_UNAPPROVED_EVENT.reviewType)
+        assertThat(it["reason"]).isEqualTo(UnFlagEventReason.VISITOR_APPROVED.desc)
+      },
+      isNull(),
+    )
+
+    verify(prisonerContactRegistryClientSpy, times(1)).getPrisonersApprovedSocialContacts(prisonerId, withAddress = false, withRestrictions = false)
+    verify(telemetryClient, times(1)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
+  }
+
+  @Test
+  fun `when visitor is re-approved then multiple flagged visits are un-flagged`() {
+    // Given
+    val currentApprovedPrisonerContacts = listOf(PrisonerContactDto(personId = visitorId.toLong()))
+    val notificationDto = VisitorApprovedUnapprovedNotificationDto(visitorId = visitorId, prisonerNumber = prisonerId)
+    prisonerContactRegistryMockServer.stubGetPrisonerApprovedSocialContacts(prisonerId, withAddress = false, withRestrictions = false, currentApprovedPrisonerContacts)
+    val visit1 = createApplicationAndVisit(
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate,
+      prisonerId = prisonerId,
+    )
+    visit1.visitors.add(
+      VisitVisitor(
+        nomisPersonId = visitorId.toLong(),
+        visitId = visit1.id,
+        visit = visit1,
+        visitContact = true,
+      ),
+    )
+    var visit = visitEntityHelper.save(visit1)
+    eventAuditEntityHelper.create(visit1)
+
+    var notificationEventAttributes = mutableMapOf(NotificationEventAttributeType.VISITOR_ID to visitorId)
+    visitNotificationEventHelper.create(visit = visit, notificationEventType = NotificationEventType.VISITOR_UNAPPROVED_EVENT, notificationAttributes = notificationEventAttributes)
+
+    val visit2 = createApplicationAndVisit(
+      slotDate = LocalDate.now().plusDays(8),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate,
+      prisonerId = prisonerId,
+    )
+    visit2.visitors.add(
+      VisitVisitor(
+        nomisPersonId = visitorId.toLong(),
+        visitId = visit2.id,
+        visit = visit2,
+        visitContact = true,
+      ),
+    )
+    visit = visitEntityHelper.save(visit2)
+    eventAuditEntityHelper.create(visit2)
+
+    notificationEventAttributes = mutableMapOf(NotificationEventAttributeType.VISITOR_ID to visitorId)
+    visitNotificationEventHelper.create(visit = visit, notificationEventType = NotificationEventType.VISITOR_UNAPPROVED_EVENT, notificationAttributes = notificationEventAttributes)
+
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+    whenever(prisonerService.getPrisonerPrisonCodeFromPrisonId(prisonerId)).thenReturn(prisonCode)
+
+    // When
+    val responseSpec = callNotifyVSiPThatVisitorApproved(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
+
+    // Then
+    responseSpec.expectStatus().isOk
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
+    assertThat(visitNotifications).hasSize(0)
+
+    verify(prisonerContactRegistryClientSpy, times(1)).getPrisonersApprovedSocialContacts(prisonerId, withAddress = false, withRestrictions = false)
+    verify(telemetryClient, times(2)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
+  }
+
+  @Test
+  fun `when multiple visitors are unapproved and one of them re-approved then only that visitors flags are un-flagged`() {
+    // Given
+    val visitor1Id = "22"
+    val visitor2Id = "33"
+    val currentApprovedPrisonerContacts = listOf(PrisonerContactDto(personId = visitor1Id.toLong()), PrisonerContactDto(personId = visitor2Id.toLong()))
+    prisonerContactRegistryMockServer.stubGetPrisonerApprovedSocialContacts(prisonerId, withAddress = false, withRestrictions = false, currentApprovedPrisonerContacts)
+
+    // visit exists with 2 visitors
+    val visit1 = createApplicationAndVisit(
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate,
+      prisonerId = prisonerId,
+    )
+    val visitors = mutableListOf(
+      VisitVisitor(
+        nomisPersonId = visitor1Id.toLong(),
+        visitId = visit1.id,
+        visit = visit1,
+        visitContact = true,
+      ),
+      VisitVisitor(
+        nomisPersonId = visitor2Id.toLong(),
+        visitId = visit1.id,
+        visit = visit1,
+        visitContact = false,
+      ),
+    )
+    visit1.visitors.addAll(visitors)
+
+    val visit = visitEntityHelper.save(visit1)
+    eventAuditEntityHelper.create(visit1)
+
+    val notificationEventAttributes1 = mutableMapOf(
+      NotificationEventAttributeType.VISITOR_ID to visitor1Id,
+    )
+    visitNotificationEventHelper.create(visit = visit, notificationEventType = NotificationEventType.VISITOR_UNAPPROVED_EVENT, notificationAttributes = notificationEventAttributes1)
+
+    val notificationEventAttributes2 = mutableMapOf(
+      NotificationEventAttributeType.VISITOR_ID to visitor2Id,
+    )
+    visitNotificationEventHelper.create(visit = visit, notificationEventType = NotificationEventType.VISITOR_UNAPPROVED_EVENT, notificationAttributes = notificationEventAttributes2)
+
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+    whenever(prisonerService.getPrisonerPrisonCodeFromPrisonId(prisonerId)).thenReturn(prisonCode)
+
+    // When
+    // only one of the unapproved visitors is re-approved
+    val notificationDto = VisitorApprovedUnapprovedNotificationDto(visitorId = visitor1Id, prisonerNumber = prisonerId)
+    val responseSpec = callNotifyVSiPThatVisitorApproved(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
+
+    // Then
+    responseSpec.expectStatus().isOk
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
+
+    // since only visitor1 is re-approved, only that visitor's flags are un-flagged and visitor2's flags still exist
+    assertThat(visitNotifications).hasSize(1)
+    assertThat(visitNotifications[0].type).isEqualTo(NotificationEventType.VISITOR_UNAPPROVED_EVENT)
+    assertThat(visitNotifications[0].visitNotificationEventAttributes).hasSize(1)
+    assertThat(visitNotifications[0].visitNotificationEventAttributes[0].attributeName).isEqualTo(NotificationEventAttributeType.VISITOR_ID)
+    assertThat(visitNotifications[0].visitNotificationEventAttributes[0].attributeValue).isEqualTo(visitor2Id)
+
     verify(telemetryClient).trackEvent(
       eq("unflagged-visit-event"),
       org.mockito.kotlin.check {
@@ -161,7 +301,8 @@ class VisitorApprovedVisitNotificationControllerTest : NotificationTestBase() {
     val visit = visitEntityHelper.save(visit1)
     eventAuditEntityHelper.create(visit1)
 
-    visitNotificationEventHelper.create(visit = visit, notificationEventType = NotificationEventType.VISITOR_UNAPPROVED_EVENT)
+    val notificationEventAttributes = mutableMapOf(NotificationEventAttributeType.VISITOR_ID to visitorId)
+    visitNotificationEventHelper.create(visit = visit, notificationEventType = NotificationEventType.VISITOR_UNAPPROVED_EVENT, notificationEventAttributes)
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
     whenever(prisonerService.getPrisonerPrisonCodeFromPrisonId(prisonerId)).thenReturn(prisonCode)
