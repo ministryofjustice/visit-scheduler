@@ -302,7 +302,11 @@ class VisitorApprovedVisitNotificationControllerTest : NotificationTestBase() {
     eventAuditEntityHelper.create(visit1)
 
     val notificationEventAttributes = mutableMapOf(NotificationEventAttributeType.VISITOR_ID to visitorId)
-    visitNotificationEventHelper.create(visit = visit, notificationEventType = NotificationEventType.VISITOR_UNAPPROVED_EVENT, notificationEventAttributes)
+    visitNotificationEventHelper.create(
+      visit = visit,
+      notificationEventType = NotificationEventType.VISITOR_UNAPPROVED_EVENT,
+      notificationAttributes = notificationEventAttributes,
+    )
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
     whenever(prisonerService.getPrisonerPrisonCodeFromPrisonId(prisonerId)).thenReturn(prisonCode)
