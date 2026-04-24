@@ -112,19 +112,20 @@ class ReportVisitCountsTaskTest : IntegrationTestBase() {
     Assertions.assertThat(sessionsReport.size).isEqualTo(5)
 
     val session3Prison1 = getSessionReport(sessionsReport, prison1.code, sessionTemplate3Prison1.reference)!!
-    assertSessionVisitCounts(session3Prison1, reportDate, prison1, isBlockedDate = false, hasSessionsOnDate = true, sessionTemplate3Prison1, 0, 0, 0, 0, sessionTemplate3Prison1.visitRoom)
+
+    assertSessionVisitCounts(sessionVisitCounts = session3Prison1, reportDate = reportDate, prison = prison1, isBlockedDate = false, hasSessionsOnDate = true, sessionTemplate = sessionTemplate3Prison1, openBookedCount = 0, closedBookedCount = 0, openCancelledCount = 0, closedCancelledCount = 0, visitRoom = sessionTemplate3Prison1.visitRoom)
 
     val session6Prison1 = getSessionReport(sessionsReport, prison1.code, sessionTemplate6Prison1.reference)!!
-    assertSessionVisitCounts(session6Prison1, reportDate, prison1, isBlockedDate = false, hasSessionsOnDate = true, sessionTemplate6Prison1, 3, 1, 2, 0, sessionTemplate6Prison1.visitRoom)
+    assertSessionVisitCounts(sessionVisitCounts = session6Prison1, reportDate = reportDate, prison = prison1, isBlockedDate = false, hasSessionsOnDate = true, sessionTemplate = sessionTemplate6Prison1, openBookedCount = 3, closedBookedCount = 1, openCancelledCount = 2, closedCancelledCount = 0, visitRoom = sessionTemplate6Prison1.visitRoom)
 
     val session7Prison1 = getSessionReport(sessionsReport, prison1.code, sessionTemplate7Prison1.reference)!!
-    assertSessionVisitCounts(session7Prison1, reportDate, prison1, isBlockedDate = false, hasSessionsOnDate = true, sessionTemplate7Prison1, 1, 0, 0, 0, sessionTemplate7Prison1.visitRoom)
+    assertSessionVisitCounts(sessionVisitCounts = session7Prison1, reportDate = reportDate, prison = prison1, isBlockedDate = false, hasSessionsOnDate = true, sessionTemplate = sessionTemplate7Prison1, openBookedCount = 1, closedBookedCount = 0, openCancelledCount = 0, closedCancelledCount = 0, visitRoom = sessionTemplate7Prison1.visitRoom)
 
     val prison2Report = getSessionReport(sessionsReport, prison2.code, null)!!
-    assertSessionVisitCounts(prison2Report, reportDate, prison2, isBlockedDate = true, hasSessionsOnDate = false, 0, 0, 0, 0)
+    assertSessionVisitCounts(sessionVisitCounts = prison2Report, reportDate = reportDate, prison = prison2, isBlockedDate = true, hasSessionsOnDate = false, openBookedCount = 0, closedBookedCount = 0, openCancelledCount = 0, closedCancelledCount = 0)
 
     val prison3Report = getSessionReport(sessionsReport, prison3.code, null)!!
-    assertSessionVisitCounts(prison3Report, reportDate, prison3, isBlockedDate = false, hasSessionsOnDate = false, 0, 0, 0, 0)
+    assertSessionVisitCounts(sessionVisitCounts = prison3Report, reportDate = reportDate, prison = prison3, isBlockedDate = false, hasSessionsOnDate = false, openBookedCount = 0, closedBookedCount = 0, openCancelledCount = 0, closedCancelledCount = 0)
 
     verify(telemetryClient, times(5)).trackEvent(eq("visit-counts-report"), any(), isNull())
   }
