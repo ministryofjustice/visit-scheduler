@@ -17,7 +17,7 @@ generic-service:
     ACTIVITIES_API_URL: https://activities-api-dev.prison.service.justice.gov.uk
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.dev.json
     BOOKING_NOTICE_PERIOD_MAXIMUM_DAYS: 50
-    TASK_REPORTING_VISIT-COUNTS-REPORT_CRON: "0 0/10 * * * ?" #every hour on dev
+    TASK_REPORTING_VISIT_COUNTS_REPORT_CRON: "0 0/10 * * * ?" #every hour on dev
     TASK_FLAG-VISITS_CRON: "0 0 0/4 * * ?" #every 4 hours on dev
     TASK_REQUESTS_AUTO-REJECT_CRON: "0 0 0/4 * * ?" #every 4 hours on dev
     # Enable Swagger UI and Swagger API docs on Dev
