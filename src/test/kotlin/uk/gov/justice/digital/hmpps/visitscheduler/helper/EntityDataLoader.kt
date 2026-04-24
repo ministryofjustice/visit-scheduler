@@ -184,7 +184,6 @@ class PrisonEntityHelper(
     return prison
   }
 
-  @Transactional(propagation = REQUIRES_NEW)
   fun create(
     prisonCode: String = "MDI",
     clients: List<PrisonUserClientDto>,
