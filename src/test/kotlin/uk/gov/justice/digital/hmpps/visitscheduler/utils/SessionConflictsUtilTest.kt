@@ -11,11 +11,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.SES
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AdditionalSessionConflictInfoDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.DoubleBookedConflictSessionDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.NonAssociationConflictSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionConflictAttribute
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionConflictType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
-import uk.gov.justice.digital.hmpps.visitscheduler.service.DoubleBookedConflictSessionDto
-import uk.gov.justice.digital.hmpps.visitscheduler.service.NonAssociationConflictSessionDto
-import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionConflictType
 import java.time.DayOfWeek.MONDAY
 import java.time.LocalDate
 import java.time.temporal.TemporalAdjusters
@@ -71,7 +71,7 @@ class SessionConflictsUtilTest {
   }
 
   @Test
-  fun `when non associations exists but not for same date then session is marked with non-association session conflict`() {
+  fun `when non associations exists but not for same date then session is not marked with non-association session conflict`() {
     val nonAssociationSessionsList = listOf(
       NonAssociationConflictSessionDto("non-association-1", SessionConflictType.VISIT, "ref2", visitDate.plusDays(1)),
     )

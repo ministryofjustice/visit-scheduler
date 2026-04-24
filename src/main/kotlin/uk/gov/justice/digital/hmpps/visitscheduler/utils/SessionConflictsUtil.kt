@@ -6,12 +6,12 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.NON
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.PRISON_DATE_BLOCKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.SESSION_DATE_BLOCKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AdditionalSessionConflictInfoDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.DoubleBookedConflictSessionDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.NonAssociationConflictSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionConflictAttribute
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionConflictDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionConflictType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
-import uk.gov.justice.digital.hmpps.visitscheduler.service.DoubleBookedConflictSessionDto
-import uk.gov.justice.digital.hmpps.visitscheduler.service.NonAssociationConflictSessionDto
-import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionConflictType
 import java.time.LocalDate
 
 @Component
@@ -80,11 +80,6 @@ class SessionConflictsUtil {
     val sessionConflict = SessionConflictDto(SESSION_DATE_BLOCKED)
     return if (isSessionExcluded(sessionExcludeDates, visitSession)) sessionConflict else null
   }
-
-  private fun hasDoubleBookingOrReservationSessions(
-    doubleBookingOrReservationSessions: List<VisitSessionDto>,
-    visitSession: VisitSessionDto,
-  ): Boolean = doubleBookingOrReservationSessions.contains(visitSession)
 
   private fun isDateExcluded(
     prisonExcludeDates: List<LocalDate>,

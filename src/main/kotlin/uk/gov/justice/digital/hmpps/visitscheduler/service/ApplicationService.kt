@@ -428,20 +428,24 @@ class ApplicationService(
     val expiredDateAndTime = getExpiredApplicationDateAndTime()
 
     return if (usernameToExcludeFromReservedApplications != null) {
-      applicationRepository.hasReservations(
+      val x = applicationRepository.hasReservations(
         prisonerId = prisonerId,
         sessionSlotId = sessionSlotId,
         expiredDateAndTime,
         excludedApplicationReference = excludedApplicationReference,
         usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications,
       )
+
+      x
     } else {
-      applicationRepository.hasReservations(
+      val x = applicationRepository.hasReservations(
         prisonerId = prisonerId,
         sessionSlotId = sessionSlotId,
         expiredDateAndTime,
         excludedApplicationReference = excludedApplicationReference,
       )
+
+      x
     }
   }
 

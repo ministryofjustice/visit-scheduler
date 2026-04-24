@@ -4,16 +4,17 @@ import jakarta.validation.ValidationException
 import jakarta.validation.constraints.NotNull
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AvailableVisitSessionDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.DoubleBookedConflictSessionDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.NonAssociationConflictSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionConflictType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionDateRangeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionScheduleDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTimeSlotDto
@@ -51,10 +52,6 @@ class SessionService(
   private val applicationService: ApplicationService,
   private val prisonerSessionValidationService: PrisonerSessionValidationService,
   private val sessionConflictsUtil: SessionConflictsUtil,
-  @param:Value("\${policy.session.double-booking.filter:false}")
-  private val policyFilterDoubleBooking: Boolean,
-  @param:Value("\${policy.session.non-association.filter:false}")
-  private val policyFilterNonAssociation: Boolean,
 ) {
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
@@ -212,7 +209,7 @@ class SessionService(
     usernameToExcludeFromReservedApplications: String?,
   ): List<VisitSessionDto> {
     val nonAssociationPrisonerIds = getNonAssociationPrisonerIds(prisonerService.getPrisonerNonAssociationList(prisonerId))
-    val sessionSlotDates = visitSessions.map { it.startTimestamp.toLocalDate() }
+    val sessionSlotDates = visitSessions.map { it.startTimestamp.toLocalDate() }.distinct()
     val nonAssociationConflictSessions = getNonAssociationVisitsOrApplications(sessionSlotDates, nonAssociationPrisonerIds, prison)
     val doubleBookingOrReservationSessions = getDoubleBookingOrReservationSessions(visitSessions, sessionSlots, prisonerId, excludedApplicationReference, usernameToExcludeFromReservedApplications)
 
@@ -267,8 +264,6 @@ class SessionService(
         }
       }
     }
-
-    // TODO - add application check
     return doubleBookingOrReservationSessions
   }
 
@@ -424,22 +419,12 @@ class SessionService(
     prisonerId: String,
     excludedApplicationReference: String?,
     usernameToExcludeFromReservedApplications: String?,
-  ): Boolean {
-    /*if (visitRepository.hasActiveVisitForSessionSlot(
-        prisonerId = prisonerId,
-        sessionSlotId = sessionSlot.id,
-      )
-    ) {
-      return true
-    }*/
-
-    return applicationService.hasReservations(
-      prisonerId = prisonerId,
-      sessionSlotId = sessionSlot.id,
-      excludedApplicationReference = excludedApplicationReference,
-      usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications,
-    )
-  }
+  ): Boolean = applicationService.hasReservations(
+    prisonerId = prisonerId,
+    sessionSlotId = sessionSlot.id,
+    excludedApplicationReference = excludedApplicationReference,
+    usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications,
+  )
 
   private fun getBookedVisitForSessionSlot(
     sessionSlot: SessionSlot,
@@ -552,23 +537,3 @@ data class DateRange(
   val fromDate: LocalDate,
   val toDate: LocalDate,
 )
-
-data class NonAssociationConflictSessionDto(
-  val prisonerId: String,
-  val conflictType: SessionConflictType,
-  val reference: String?,
-  val sessionDate: LocalDate,
-)
-
-data class DoubleBookedConflictSessionDto(
-  val reference: String?,
-  val sessionDate: LocalDate,
-  val conflictType: SessionConflictType,
-  val visitSubStatus: VisitSubStatus?,
-  val sessionTemplateReference: String,
-)
-
-enum class SessionConflictType {
-  APPLICATION,
-  VISIT,
-}

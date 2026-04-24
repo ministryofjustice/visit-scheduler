@@ -32,7 +32,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OtherPrisonerDetails
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailsDto
@@ -97,7 +96,7 @@ class SessionServiceTest {
       ),
     )
 
-    whenever(prisonerService.getLevelsMapForPrisoner(any(), any())).thenReturn(mutableMapOf<PrisonerHousingLevels, String?>())
+    whenever(prisonerService.getLevelsMapForPrisoner(any(), any())).thenReturn(mutableMapOf())
     whenever(sessionValidationService.isSessionAvailableToPrisoner(any(), any(), any(), any())).thenReturn(true)
   }
 
@@ -176,8 +175,6 @@ class SessionServiceTest {
         visitRepository = visitRepository,
         sessionSlotRepository = sessionSlotRepository,
         prisonerService = prisonerService,
-        policyFilterDoubleBooking = false,
-        policyFilterNonAssociation = false,
         prisonerValidationService = prisonerValidationService,
         prisonsService = prisonsService,
         applicationService = applicationService,
@@ -476,8 +473,6 @@ class SessionServiceTest {
         visitRepository = visitRepository,
         sessionSlotRepository = sessionSlotRepository,
         prisonerService = prisonerService,
-        policyFilterDoubleBooking = false,
-        policyFilterNonAssociation = false,
         prisonerSessionValidationService = sessionValidationService,
         prisonerValidationService = prisonerValidationService,
         prisonsService = prisonsService,
@@ -568,8 +563,6 @@ class SessionServiceTest {
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
       mockGetPrisonerNonAssociation(prisonerId, associationId)
 
-      val expectedAssociations = listOf(associationId)
-
       mockSessionSlots(singleSession)
       val saturdayAfter = currentDate.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
       val slotDate = saturdayAfter.toLocalDate()
@@ -608,7 +601,7 @@ class SessionServiceTest {
       assertDate(sessions[0].startTimestamp, saturdayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), dayOfWeek)
       assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
       assertThat(sessions[0].sessionConflicts.map { it.sessionConflict }.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
-      assertThat(sessions[0].sessionConflicts.map { it.additionalAttributes }.flatten()).containsAll(
+      assertThat(sessions[0].sessionConflicts.flatMap { it.additionalAttributes }).containsAll(
         listOf(
           listOf(
             AdditionalSessionConflictInfoDto(SessionConflictAttribute.PRISONER_NUMBER, associationId),
@@ -763,8 +756,6 @@ class SessionServiceTest {
         visitRepository = visitRepository,
         sessionSlotRepository = sessionSlotRepository,
         prisonerService = prisonerService,
-        policyFilterDoubleBooking = true,
-        policyFilterNonAssociation = true,
         prisonerSessionValidationService = sessionValidationService,
         prisonerValidationService = prisonerValidationService,
         prisonsService = prisonsService,

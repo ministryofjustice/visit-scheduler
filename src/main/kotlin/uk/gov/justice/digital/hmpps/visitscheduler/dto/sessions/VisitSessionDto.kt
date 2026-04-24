@@ -86,11 +86,7 @@ data class VisitSessionDto(
   }
 
   override fun hashCode(): Int {
-    var result = openVisitCapacity
-    result = 31 * result + (openVisitBookedCount ?: 0)
-    result = 31 * result + closedVisitCapacity
-    result = 31 * result + (closedVisitBookedCount ?: 0)
-    result = 31 * result + sessionTemplateReference.hashCode()
+    var result = sessionTemplateReference.hashCode()
     result = 31 * result + visitRoom.hashCode()
     result = 31 * result + visitType.hashCode()
     result = 31 * result + prisonCode.hashCode()
@@ -115,7 +111,7 @@ data class AdditionalSessionConflictInfoDto(
   val attributeName: SessionConflictAttribute,
 
   @Schema(description = "Attribute value", required = true)
-  @field:NotBlank
+  @field:NotNull
   val attributeValue: String,
 )
 
