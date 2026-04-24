@@ -137,7 +137,7 @@ class ReportVisitCountsTaskTest : IntegrationTestBase() {
     prison: Prison,
     isBlockedDate: Boolean,
     hasSessionsOnDate: Boolean,
-    sessionTemplate: SessionTemplate?,
+    sessionTemplate: SessionTemplate,
     openBookedCount: Int,
     closedBookedCount: Int,
     openCancelledCount: Int,
@@ -149,7 +149,7 @@ class ReportVisitCountsTaskTest : IntegrationTestBase() {
     Assertions.assertThat(sessionVisitCounts.isBlockedDate).isEqualTo(isBlockedDate)
     Assertions.assertThat(sessionVisitCounts.hasSessionsOnDate).isEqualTo(hasSessionsOnDate)
 
-    Assertions.assertThat(sessionVisitCounts.sessionReference).isEqualTo(sessionTemplate!!.reference)
+    Assertions.assertThat(sessionVisitCounts.sessionReference).isEqualTo(sessionTemplate.reference)
     Assertions.assertThat(sessionVisitCounts.sessionTimeSlot?.startTime).isEqualTo(sessionTemplate.startTime)
     Assertions.assertThat(sessionVisitCounts.sessionTimeSlot?.endTime).isEqualTo(sessionTemplate.endTime)
     Assertions.assertThat(sessionVisitCounts.sessionCapacity?.open).isEqualTo(sessionTemplate.openCapacity)
