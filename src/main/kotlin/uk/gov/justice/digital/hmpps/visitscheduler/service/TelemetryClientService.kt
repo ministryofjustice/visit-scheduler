@@ -261,6 +261,9 @@ class TelemetryClientService(
     sessionReport.closedCancelledCount?.let {
       reportEvent["closedCancelled"] = it.toString()
     }
+    sessionReport.visitRoom?.let {
+      reportEvent["visitRoom"] = it
+    }
 
     return reportEvent.toMap()
   }

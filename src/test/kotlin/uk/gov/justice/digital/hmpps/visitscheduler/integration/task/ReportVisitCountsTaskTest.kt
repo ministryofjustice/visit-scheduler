@@ -112,19 +112,19 @@ class ReportVisitCountsTaskTest : IntegrationTestBase() {
     Assertions.assertThat(sessionsReport.size).isEqualTo(5)
 
     val session3Prison1 = getSessionReport(sessionsReport, prison1.code, sessionTemplate3Prison1.reference)!!
-    assertSessionVisitCounts(session3Prison1, reportDate, prison1, isBlockedDate = false, hasSessionsOnDate = true, sessionTemplate3Prison1, 0, 0, 0, 0)
+    assertSessionVisitCounts(session3Prison1, reportDate, prison1, isBlockedDate = false, hasSessionsOnDate = true, sessionTemplate3Prison1, 0, 0, 0, 0, sessionTemplate3Prison1.visitRoom)
 
     val session6Prison1 = getSessionReport(sessionsReport, prison1.code, sessionTemplate6Prison1.reference)!!
-    assertSessionVisitCounts(session6Prison1, reportDate, prison1, isBlockedDate = false, hasSessionsOnDate = true, sessionTemplate6Prison1, 3, 1, 2, 0)
+    assertSessionVisitCounts(session6Prison1, reportDate, prison1, isBlockedDate = false, hasSessionsOnDate = true, sessionTemplate6Prison1, 3, 1, 2, 0, sessionTemplate6Prison1.visitRoom)
 
     val session7Prison1 = getSessionReport(sessionsReport, prison1.code, sessionTemplate7Prison1.reference)!!
-    assertSessionVisitCounts(session7Prison1, reportDate, prison1, isBlockedDate = false, hasSessionsOnDate = true, sessionTemplate7Prison1, 1, 0, 0, 0)
+    assertSessionVisitCounts(session7Prison1, reportDate, prison1, isBlockedDate = false, hasSessionsOnDate = true, sessionTemplate7Prison1, 1, 0, 0, 0, sessionTemplate7Prison1.visitRoom)
 
     val prison2Report = getSessionReport(sessionsReport, prison2.code, null)!!
-    assertSessionVisitCounts(prison2Report, reportDate, prison2, isBlockedDate = true, hasSessionsOnDate = false, null, 0, 0, 0, 0)
+    assertSessionVisitCounts(prison2Report, reportDate, prison2, isBlockedDate = true, hasSessionsOnDate = false, 0, 0, 0, 0)
 
     val prison3Report = getSessionReport(sessionsReport, prison3.code, null)!!
-    assertSessionVisitCounts(prison3Report, reportDate, prison3, isBlockedDate = false, hasSessionsOnDate = false, null, 0, 0, 0, 0)
+    assertSessionVisitCounts(prison3Report, reportDate, prison3, isBlockedDate = false, hasSessionsOnDate = false, 0, 0, 0, 0)
 
     verify(telemetryClient, times(5)).trackEvent(eq("visit-counts-report"), any(), isNull())
   }
@@ -142,19 +142,43 @@ class ReportVisitCountsTaskTest : IntegrationTestBase() {
     closedBookedCount: Int,
     openCancelledCount: Int,
     closedCancelledCount: Int,
+    visitRoom: String,
   ) {
     Assertions.assertThat(sessionVisitCounts.reportDate).isEqualTo(reportDate)
     Assertions.assertThat(sessionVisitCounts.prisonCode).isEqualTo(prison.code)
     Assertions.assertThat(sessionVisitCounts.isBlockedDate).isEqualTo(isBlockedDate)
     Assertions.assertThat(sessionVisitCounts.hasSessionsOnDate).isEqualTo(hasSessionsOnDate)
-    sessionTemplate?.let {
-      Assertions.assertThat(sessionVisitCounts.sessionReference).isEqualTo(sessionTemplate.reference)
-      Assertions.assertThat(sessionVisitCounts.sessionTimeSlot?.startTime).isEqualTo(sessionTemplate.startTime)
-      Assertions.assertThat(sessionVisitCounts.sessionTimeSlot?.endTime).isEqualTo(sessionTemplate.endTime)
-      Assertions.assertThat(sessionVisitCounts.sessionCapacity?.open).isEqualTo(sessionTemplate.openCapacity)
-      Assertions.assertThat(sessionVisitCounts.sessionCapacity?.closed).isEqualTo(sessionTemplate.closedCapacity)
-      Assertions.assertThat(sessionVisitCounts.visitType).isEqualTo(sessionTemplate.visitType)
-    }
+
+    Assertions.assertThat(sessionVisitCounts.sessionReference).isEqualTo(sessionTemplate!!.reference)
+    Assertions.assertThat(sessionVisitCounts.sessionTimeSlot?.startTime).isEqualTo(sessionTemplate.startTime)
+    Assertions.assertThat(sessionVisitCounts.sessionTimeSlot?.endTime).isEqualTo(sessionTemplate.endTime)
+    Assertions.assertThat(sessionVisitCounts.sessionCapacity?.open).isEqualTo(sessionTemplate.openCapacity)
+    Assertions.assertThat(sessionVisitCounts.sessionCapacity?.closed).isEqualTo(sessionTemplate.closedCapacity)
+    Assertions.assertThat(sessionVisitCounts.visitType).isEqualTo(sessionTemplate.visitType)
+    Assertions.assertThat(sessionVisitCounts.visitRoom).isEqualTo(visitRoom)
+
+    Assertions.assertThat(sessionVisitCounts.openBookedCount).isEqualTo(openBookedCount)
+    Assertions.assertThat(sessionVisitCounts.closedBookedCount).isEqualTo(closedBookedCount)
+    Assertions.assertThat(sessionVisitCounts.openCancelledCount).isEqualTo(openCancelledCount)
+    Assertions.assertThat(sessionVisitCounts.closedCancelledCount).isEqualTo(closedCancelledCount)
+  }
+
+  private fun assertSessionVisitCounts(
+    sessionVisitCounts: SessionVisitCountsDto,
+    reportDate: LocalDate,
+    prison: Prison,
+    isBlockedDate: Boolean,
+    hasSessionsOnDate: Boolean,
+    openBookedCount: Int,
+    closedBookedCount: Int,
+    openCancelledCount: Int,
+    closedCancelledCount: Int,
+  ) {
+    Assertions.assertThat(sessionVisitCounts.reportDate).isEqualTo(reportDate)
+    Assertions.assertThat(sessionVisitCounts.prisonCode).isEqualTo(prison.code)
+    Assertions.assertThat(sessionVisitCounts.isBlockedDate).isEqualTo(isBlockedDate)
+    Assertions.assertThat(sessionVisitCounts.hasSessionsOnDate).isEqualTo(hasSessionsOnDate)
+
     Assertions.assertThat(sessionVisitCounts.openBookedCount).isEqualTo(openBookedCount)
     Assertions.assertThat(sessionVisitCounts.closedBookedCount).isEqualTo(closedBookedCount)
     Assertions.assertThat(sessionVisitCounts.openCancelledCount).isEqualTo(openCancelledCount)

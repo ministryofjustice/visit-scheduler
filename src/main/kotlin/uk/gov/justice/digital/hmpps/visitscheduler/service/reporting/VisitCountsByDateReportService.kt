@@ -155,6 +155,7 @@ class VisitCountsByDateReportService(
     sessionVisitCount.closedBookedCount = visitCounts[Pair(VisitStatus.BOOKED, VisitRestriction.CLOSED)] ?: 0
     sessionVisitCount.openCancelledCount = visitCounts[Pair(VisitStatus.CANCELLED, VisitRestriction.OPEN)] ?: 0
     sessionVisitCount.closedCancelledCount = visitCounts[Pair(VisitStatus.CANCELLED, VisitRestriction.CLOSED)] ?: 0
+    sessionVisitCount.visitRoom = session.visitRoom
   }
 
   fun sendTelemetryEvent(sessionReports: List<SessionVisitCountsDto>) {
