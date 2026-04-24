@@ -132,7 +132,7 @@ class FlagVisitsTask(
 
   private fun getVisitNotifications(visitReference: String): List<NotificationEventType> = visitNotificationEventService.getNotificationsTypesForBookingReference(visitReference)
 
-  // filters out sessions that will not be returned to the front end
+  // filters out only the sessions that are needed on the report
   private val sessionsWithVisitRenderConflicts: Predicate<VisitSessionDto> = Predicate { session: VisitSessionDto ->
     session.sessionConflicts.any {
       listOf(NON_ASSOCIATION, PRISON_DATE_BLOCKED, SESSION_DATE_BLOCKED).contains(it.sessionConflict)

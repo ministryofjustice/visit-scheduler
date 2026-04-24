@@ -417,35 +417,24 @@ class ApplicationService(
     }
   }
 
-  fun hasActiveApplicationsForDate(nonAssociationPrisonerIds: List<String>, sessionSlotDate: LocalDate, prisonId: Long): Boolean = applicationRepository.hasActiveApplicationsForDate(
-    nonAssociationPrisonerIds,
-    sessionSlotDate,
-    prisonId,
-    getExpiredApplicationDateAndTime(),
-  )
-
   fun hasReservations(prisonerId: String, sessionSlotId: Long, excludedApplicationReference: String?, usernameToExcludeFromReservedApplications: String?): Boolean {
     val expiredDateAndTime = getExpiredApplicationDateAndTime()
 
     return if (usernameToExcludeFromReservedApplications != null) {
-      val x = applicationRepository.hasReservations(
+      applicationRepository.hasReservations(
         prisonerId = prisonerId,
         sessionSlotId = sessionSlotId,
         expiredDateAndTime,
         excludedApplicationReference = excludedApplicationReference,
         usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications,
       )
-
-      x
     } else {
-      val x = applicationRepository.hasReservations(
+      applicationRepository.hasReservations(
         prisonerId = prisonerId,
         sessionSlotId = sessionSlotId,
         expiredDateAndTime,
         excludedApplicationReference = excludedApplicationReference,
       )
-
-      x
     }
   }
 
@@ -499,8 +488,8 @@ class ApplicationService(
     return applicationEntity
   }
 
-  fun getInProgressApplicationsForPrisonerAndDates(prisonerId: String, sessionDates: List<LocalDate>, prisonId: Long): List<Application> = applicationRepository.getInProgressApplicationsForPrisonerAndDates(
-    prisonerId,
+  fun getInProgressApplicationsForPrisonersAndDates(prisonerIds: List<String>, sessionDates: List<LocalDate>, prisonId: Long): List<Application> = applicationRepository.getInProgressApplicationsForPrisonersAndDates(
+    prisonerIds,
     sessionDates,
     prisonId,
     getExpiredApplicationDateAndTime(),

@@ -50,29 +50,14 @@ interface VisitRepository :
 
   @Query(
     "SELECT v FROM Visit v left join SessionSlot sl on v.sessionSlot.id = sl.id " +
-      "WHERE v.prisonerId = :prisonerId AND " +
+      "WHERE v.prisonerId in (:prisonerIds) AND " +
       "v.prisonId = :prisonId AND " +
       "sl.slotDate in (:sessionDates) AND " +
       "v.visitStatus = 'BOOKED'",
   )
-  fun getBookedVisitsForPrisonerAndDates(
-    prisonerId: String,
+  fun getBookedVisitsForPrisonersAndDates(
+    prisonerIds: List<String>,
     sessionDates: List<LocalDate>,
-    prisonId: Long,
-  ): List<Visit>
-
-  @Query(
-    "SELECT v FROM Visit v left join SessionSlot sl on v.sessionSlot.id = sl.id " +
-      "WHERE v.prisonerId = :prisonerId AND " +
-      "v.prisonId = :prisonId AND " +
-      "sl.slotDate in (:sessionDates) AND " +
-      "sl.sessionTemplateReference in (:sessionTemplateReferences) AND " +
-      "v.visitStatus = 'BOOKED'",
-  )
-  fun getBookedVisitsForPrisonerAndSessionTemplateReference(
-    prisonerId: String,
-    sessionDates: List<LocalDate>,
-    sessionTemplateReferences: List<String>,
     prisonId: Long,
   ): List<Visit>
 

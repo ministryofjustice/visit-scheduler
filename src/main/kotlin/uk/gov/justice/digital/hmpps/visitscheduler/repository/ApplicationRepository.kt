@@ -143,32 +143,16 @@ interface ApplicationRepository :
   ): Boolean
 
   @Query(
-    "SELECT count(*) > 0 FROM application a left join session_slot sl on a.session_slot_id = sl.id " +
-      "WHERE a.prisoner_id IN :prisonerIds AND " +
-      "a.prison_id = :prisonId AND " +
-      "sl.slot_date = :sessionDate AND " +
-      "a.modify_timestamp >= :expiredDateAndTime AND " +
-      "a.application_status = 'IN_PROGRESS' AND a.reserved_slot = true",
-    nativeQuery = true,
-  )
-  fun hasActiveApplicationsForDate(
-    prisonerIds: List<String>,
-    sessionDate: LocalDate,
-    prisonId: Long,
-    @Param("expiredDateAndTime") expiredDateAndTime: LocalDateTime,
-  ): Boolean
-
-  @Query(
     "SELECT a FROM Application a left join SessionSlot sl on a.sessionSlot.id = sl.id " +
-      "WHERE a.prisonerId = :prisonerId AND " +
+      "WHERE a.prisonerId in (:prisonerIds) AND " +
       "a.prisonId = :prisonId AND " +
       "sl.slotDate in (:sessionDates) AND " +
       "a.modifyTimestamp >= :expiredDateAndTime AND " +
       "a.applicationStatus = 'IN_PROGRESS' " +
       "AND a.reservedSlot = true",
   )
-  fun getInProgressApplicationsForPrisonerAndDates(
-    prisonerId: String,
+  fun getInProgressApplicationsForPrisonersAndDates(
+    prisonerIds: List<String>,
     sessionDates: List<LocalDate>,
     prisonId: Long,
     expiredDateAndTime: LocalDateTime,

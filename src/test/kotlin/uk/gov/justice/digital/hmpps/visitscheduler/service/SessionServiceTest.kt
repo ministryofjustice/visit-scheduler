@@ -588,7 +588,7 @@ class SessionServiceTest {
         userType = STAFF,
       )
 
-      whenever(visitRepository.getBookedVisitsForPrisonerAndDates(associationId, listOf(slotDate), prison.id))
+      whenever(visitRepository.getBookedVisitsForPrisonersAndDates(listOf(associationId), listOf(slotDate), prison.id))
         .thenReturn(
           listOf(nonAssociationVisit),
         )

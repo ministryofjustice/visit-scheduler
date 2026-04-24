@@ -97,26 +97,31 @@ data class VisitSessionDto(
 }
 
 data class SessionConflictDto(
-  @Schema(description = "Session Conflict", example = "NON_ASSOCIATION", required = true)
+  @param:Schema(description = "Session Conflict", example = "NON_ASSOCIATION", required = true)
   @field:NotNull
   val sessionConflict: SessionConflict,
 
-  @Schema(description = "Session Conflict attributes", required = false)
+  @param:Schema(description = "Session Conflict attributes", required = false)
   val additionalAttributes: List<List<AdditionalSessionConflictInfoDto>> = emptyList(),
 )
 
 data class AdditionalSessionConflictInfoDto(
-  @Schema(description = "Attribute Name", required = true)
+  @param:Schema(description = "Attribute Name", required = true)
   @field:NotBlank
   val attributeName: SessionConflictAttribute,
 
-  @Schema(description = "Attribute value", required = true)
+  @param:Schema(description = "Attribute value", required = true)
   @field:NotNull
   val attributeValue: String,
 )
 
-enum class SessionConflictAttribute(description: String) {
-  PRISONER_NUMBER("Prisoner Number"),
-  CONFLICT_TYPE("Application or Visit"),
-  REFERENCE("Application or Visit reference"),
+enum class SessionConflictAttribute {
+  @Schema(description = "Prisoner Number")
+  PRISONER_NUMBER,
+
+  @Schema(description = "Conflict type i.e In Progress Application or a booked Visit")
+  CONFLICT_TYPE,
+
+  @Schema(description = "In Progress Application Reference or a booked Visit reference")
+  REFERENCE,
 }
