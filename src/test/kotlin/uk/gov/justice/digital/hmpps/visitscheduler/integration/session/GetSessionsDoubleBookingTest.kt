@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_SESSION_CONTROLLER_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.ACCEPTED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.IN_PROGRESS
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.DOUBLE_BOOKING_OR_RESERVATION
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
@@ -65,7 +67,7 @@ class GetSessionsDoubleBookingTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
     assertThat(visitSessionResults.size).isEqualTo(1)
-    assertThat(visitSessionResults[0].sessionConflicts.contains(DOUBLE_BOOKING_OR_RESERVATION))
+    assertThat(visitSessionResults[0].sessionConflicts.map { it.sessionConflict }).contains(DOUBLE_BOOKING_OR_RESERVATION)
   }
 
   @Test
@@ -79,7 +81,7 @@ class GetSessionsDoubleBookingTest : IntegrationTestBase() {
       visitEnd = sessionTemplate.endTime,
       sessionTemplate = sessionTemplate,
       createdBy = "TEST-USER",
-      applicationStatus = ACCEPTED,
+      applicationStatus = IN_PROGRESS,
     )
 
     // When
@@ -89,7 +91,7 @@ class GetSessionsDoubleBookingTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
     assertThat(visitSessionResults.size).isEqualTo(1)
-    assertThat(visitSessionResults[0].sessionConflicts.contains(DOUBLE_BOOKING_OR_RESERVATION))
+    assertThat(visitSessionResults[0].sessionConflicts.map { it.sessionConflict }).contains(DOUBLE_BOOKING_OR_RESERVATION)
   }
 
   @Test
@@ -97,7 +99,7 @@ class GetSessionsDoubleBookingTest : IntegrationTestBase() {
     // Given
     val currentUser = "CURRENT-USER"
 
-    this.applicationEntityHelper.create(
+    val application = this.applicationEntityHelper.create(
       prisonerId = prisonerId,
       prisonCode = prisonCode,
       slotDate = visitDate,
@@ -105,8 +107,9 @@ class GetSessionsDoubleBookingTest : IntegrationTestBase() {
       visitEnd = sessionTemplate.endTime,
       sessionTemplate = sessionTemplate,
       createdBy = "TEST-USER",
-      applicationStatus = ACCEPTED,
+      applicationStatus = IN_PROGRESS,
     )
+    eventAuditEntityHelper.create(application, actionedByValue = application.createdBy, type = EventAuditType.RESERVED_VISIT)
 
     // When
     val responseSpec = callGetSessions(prisonCode, prisonerId, userName = currentUser, userType = STAFF, authHttpHeaders = authHttpHeaders)
@@ -115,7 +118,7 @@ class GetSessionsDoubleBookingTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
     assertThat(visitSessionResults.size).isEqualTo(1)
-    assertThat(visitSessionResults[0].sessionConflicts.contains(DOUBLE_BOOKING_OR_RESERVATION))
+    assertThat(visitSessionResults[0].sessionConflicts.map { it.sessionConflict }).contains(DOUBLE_BOOKING_OR_RESERVATION)
   }
 
   @Test

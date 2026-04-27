@@ -5,6 +5,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
@@ -24,6 +27,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.Permitt
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.SessionLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.UpdateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplateUserClient
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
@@ -150,6 +155,30 @@ fun sessionTemplate(
 
   return sessionTemplate
 }
+
+fun createVisit(
+  prison: Prison,
+  sessionSlot: SessionSlot,
+  prisonerId: String,
+  visitType: VisitType = VisitType.SOCIAL,
+  visitStatus: VisitStatus = VisitStatus.BOOKED,
+  visitSubStatus: VisitSubStatus = VisitSubStatus.AUTO_APPROVED,
+  visitRestriction: VisitRestriction = VisitRestriction.OPEN,
+  userType: UserType = UserType.STAFF,
+  visitRoom: String = "visit-room-1",
+): Visit = Visit(
+  prisonId = sessionSlot.prisonId,
+  prison = prison,
+  prisonerId = prisonerId,
+  sessionSlotId = sessionSlot.id,
+  sessionSlot = sessionSlot,
+  visitType = visitType,
+  visitRoom = visitRoom,
+  visitStatus = visitStatus,
+  visitSubStatus = visitSubStatus,
+  visitRestriction = visitRestriction,
+  userType = userType,
+)
 
 private fun addUserClients(
   sessionTemplate: SessionTemplate,

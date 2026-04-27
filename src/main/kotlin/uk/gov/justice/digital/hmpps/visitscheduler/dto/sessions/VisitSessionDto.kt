@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
-import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict
@@ -10,7 +9,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import java.time.LocalDateTime
 
 @Schema(description = "Visit Session")
-data class VisitSessionDto(
+class VisitSessionDto(
 
   @param:Schema(description = "Session Template Reference", example = "v9d.7ed.7u", required = true)
   @field:NotBlank
@@ -68,5 +67,61 @@ data class VisitSessionDto(
   val endTimestamp: LocalDateTime,
 
   @param:Schema(description = "Session conflicts", required = false)
-  val sessionConflicts: MutableSet<@Valid SessionConflict> = mutableSetOf(),
+  val sessionConflicts: MutableList<SessionConflictDto> = mutableListOf(),
+) {
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as VisitSessionDto
+
+    if (sessionTemplateReference != other.sessionTemplateReference) return false
+    if (visitRoom != other.visitRoom) return false
+    if (visitType != other.visitType) return false
+    if (prisonCode != other.prisonCode) return false
+    if (startTimestamp != other.startTimestamp) return false
+    if (endTimestamp != other.endTimestamp) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = sessionTemplateReference.hashCode()
+    result = 31 * result + visitRoom.hashCode()
+    result = 31 * result + visitType.hashCode()
+    result = 31 * result + prisonCode.hashCode()
+    result = 31 * result + startTimestamp.hashCode()
+    result = 31 * result + endTimestamp.hashCode()
+    return result
+  }
+}
+
+data class SessionConflictDto(
+  @param:Schema(description = "Session Conflict", example = "NON_ASSOCIATION", required = true)
+  @field:NotNull
+  val sessionConflict: SessionConflict,
+
+  @param:Schema(description = "Session Conflict attributes", required = false)
+  val additionalAttributes: List<List<AdditionalSessionConflictInfoDto>> = emptyList(),
 )
+
+data class AdditionalSessionConflictInfoDto(
+  @param:Schema(description = "Attribute Name", required = true)
+  @field:NotBlank
+  val attributeName: SessionConflictAttribute,
+
+  @param:Schema(description = "Attribute value", required = true)
+  @field:NotNull
+  val attributeValue: String,
+)
+
+enum class SessionConflictAttribute {
+  @Schema(description = "Prisoner Number")
+  PRISONER_NUMBER,
+
+  @Schema(description = "Conflict type i.e In Progress Application or a booked Visit")
+  CONFLICT_TYPE,
+
+  @Schema(description = "Booked Visit reference")
+  REFERENCE,
+}
