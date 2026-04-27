@@ -122,6 +122,6 @@ enum class SessionConflictAttribute {
   @Schema(description = "Conflict type i.e In Progress Application or a booked Visit")
   CONFLICT_TYPE,
 
-  @Schema(description = "In Progress Application Reference or a booked Visit reference")
+  @Schema(description = "Booked Visit reference")
   REFERENCE,
 }
