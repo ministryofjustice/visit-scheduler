@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Propagation.REQUIRES_NEW
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonUserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdatePrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
@@ -89,20 +90,26 @@ class PrisonEntityHelper(
     fun createPrison(
       prisonCode: String = "MDI",
       activePrison: Boolean = true,
-      policyNoticeDaysMin: Int = 2,
-      policyNoticeDaysMax: Int = 28,
       maxTotalVisitors: Int = 6,
       maxAdultVisitors: Int = 3,
       maxChildVisitors: Int = 3,
       adultAgeYears: Int = 18,
-    ): Prison = Prison(code = prisonCode, active = activePrison, policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears)
+    ): Prison = Prison(
+      code = prisonCode,
+      active = activePrison,
+      maxTotalVisitors = maxTotalVisitors,
+      maxAdultVisitors = maxAdultVisitors,
+      maxChildVisitors = maxChildVisitors,
+      adultAgeYears = adultAgeYears,
+    )
 
     fun createPrisonDto(
       prisonCode: String = "AWE",
       activePrison: Boolean = true,
-      clients: List<UserClientDto> = mutableListOf(),
-      policyNoticeDaysMin: Int = 2,
-      policyNoticeDaysMax: Int = 28,
+      clients: List<PrisonUserClientDto> = listOf(
+        PrisonUserClientDto(2, 28, STAFF, active = true),
+        PrisonUserClientDto(2, 28, PUBLIC, active = true),
+      ),
       maxTotalVisitors: Int = 6,
       maxAdultVisitors: Int = 3,
       maxChildVisitors: Int = 3,
@@ -110,8 +117,6 @@ class PrisonEntityHelper(
     ): PrisonDto = PrisonDto(
       code = prisonCode,
       active = activePrison,
-      policyNoticeDaysMin = policyNoticeDaysMin,
-      policyNoticeDaysMax = policyNoticeDaysMax,
       maxTotalVisitors = maxTotalVisitors,
       maxAdultVisitors = maxAdultVisitors,
       maxChildVisitors = maxChildVisitors,
@@ -120,13 +125,15 @@ class PrisonEntityHelper(
     )
 
     fun updatePrisonDto(
-      policyNoticeDaysMin: Int = 10,
-      policyNoticeDaysMax: Int = 20,
       maxTotalVisitors: Int = 4,
       maxAdultVisitors: Int = 2,
       maxChildVisitors: Int = 2,
       adultAgeYears: Int = 16,
-    ): UpdatePrisonDto = UpdatePrisonDto(policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears)
+      clients: List<PrisonUserClientDto> = mutableListOf(
+        PrisonUserClientDto(2, 28, STAFF, active = true),
+        PrisonUserClientDto(2, 28, PUBLIC, active = true),
+      ),
+    ): UpdatePrisonDto = UpdatePrisonDto(maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears, clients)
   }
 
   @Transactional(propagation = REQUIRES_NEW)
@@ -144,8 +151,6 @@ class PrisonEntityHelper(
         createPrison(
           prisonCode = prisonCode,
           activePrison = activePrison,
-          policyNoticeDaysMin = policyNoticeDaysMin,
-          policyNoticeDaysMax = policyNoticeDaysMax,
         ),
       )
 
@@ -154,6 +159,8 @@ class PrisonEntityHelper(
           createPrisonUserClient(
             prison = prison,
             active = true,
+            policyNoticeDaysMin = policyNoticeDaysMin,
+            policyNoticeDaysMax = policyNoticeDaysMax,
             userType = STAFF,
           ),
         )
@@ -162,6 +169,8 @@ class PrisonEntityHelper(
           createPrisonUserClient(
             prison = prison,
             active = true,
+            policyNoticeDaysMin = policyNoticeDaysMin,
+            policyNoticeDaysMax = policyNoticeDaysMax,
             userType = PUBLIC,
           ),
         )
@@ -175,8 +184,43 @@ class PrisonEntityHelper(
     return prison
   }
 
-  private fun createPrisonUserClient(prison: Prison, active: Boolean, userType: UserType): PrisonUserClient {
-    val prisonUserClient = PrisonUserClient(prison = prison, prisonId = prison.id, active = active, userType = userType)
+  fun create(
+    prisonCode: String = "MDI",
+    clients: List<PrisonUserClientDto>,
+  ): Prison {
+    var prison = prisonRepository.findByCode(prisonCode)
+    if (prison == null) {
+      prison = prisonRepository.saveAndFlush(
+        createPrison(
+          prisonCode = prisonCode,
+          activePrison = true,
+        ),
+      )
+
+      clients.forEach { client ->
+        prisonUserClientRepository.saveAndFlush(
+          createPrisonUserClient(
+            prison = prison,
+            active = client.active,
+            policyNoticeDaysMin = client.policyNoticeDaysMin,
+            policyNoticeDaysMax = client.policyNoticeDaysMax,
+            userType = client.userType,
+          ),
+        )
+      }
+    }
+
+    return prison!!
+  }
+
+  private fun createPrisonUserClient(
+    prison: Prison,
+    active: Boolean,
+    policyNoticeDaysMin: Int,
+    policyNoticeDaysMax: Int,
+    userType: UserType,
+  ): PrisonUserClient {
+    val prisonUserClient = PrisonUserClient(prison = prison, prisonId = prison.id, active = active, userType = userType, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax)
     prison.clients.add(prisonUserClient)
     return prisonUserClient
   }

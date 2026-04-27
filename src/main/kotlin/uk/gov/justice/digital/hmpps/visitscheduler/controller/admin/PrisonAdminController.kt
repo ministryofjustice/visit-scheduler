@@ -19,8 +19,8 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonUserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdatePrisonDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonConfigService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonsService
@@ -273,7 +273,7 @@ class PrisonAdminController(
     @Schema(description = "type", example = "STAFF", required = true)
     @PathVariable
     type: UserType,
-  ): UserClientDto = prisonConfigService.activatePrisonClient(prisonCode, type)
+  ): PrisonUserClientDto = prisonConfigService.activatePrisonClient(prisonCode, type)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @PutMapping(DEACTIVATE_PRISON_CLIENT)
@@ -309,5 +309,5 @@ class PrisonAdminController(
     @Schema(description = "type", example = "STAFF", required = true)
     @PathVariable
     type: UserType,
-  ): UserClientDto = prisonConfigService.deActivatePrisonClient(prisonCode, type)
+  ): PrisonUserClientDto = prisonConfigService.deActivatePrisonClient(prisonCode, type)
 }
