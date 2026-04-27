@@ -9,7 +9,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import java.time.LocalDateTime
 
 @Schema(description = "Visit Session")
-data class VisitSessionDto(
+class VisitSessionDto(
 
   @param:Schema(description = "Session Template Reference", example = "v9d.7ed.7u", required = true)
   @field:NotBlank

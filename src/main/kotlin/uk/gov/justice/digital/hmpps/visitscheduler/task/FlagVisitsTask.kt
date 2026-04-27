@@ -34,6 +34,9 @@ class FlagVisitsTask(
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
     private const val DEFAULT_VISIT_FLAG_REASON = "session not suitable"
+
+    // list of session conflicts that are needed on the report
+    private val REPORT_SESSION_CONFLICTS = listOf(NON_ASSOCIATION, PRISON_DATE_BLOCKED, SESSION_DATE_BLOCKED)
   }
 
   @Scheduled(cron = "\${task.flag-visits.cron:0 0 3 * * ?}")
@@ -68,7 +71,7 @@ class FlagVisitsTask(
           }
         }
 
-        // finally run the retry visits loop once
+        // finally, run the retry visits loop once
         retryVisits.forEach {
           flagVisit(it, i, true)
         }
@@ -132,10 +135,9 @@ class FlagVisitsTask(
 
   private fun getVisitNotifications(visitReference: String): List<NotificationEventType> = visitNotificationEventService.getNotificationsTypesForBookingReference(visitReference)
 
-  // filters out only the sessions that are needed on the report
   private val sessionsWithVisitRenderConflicts: Predicate<VisitSessionDto> = Predicate { session: VisitSessionDto ->
     session.sessionConflicts.any {
-      listOf(NON_ASSOCIATION, PRISON_DATE_BLOCKED, SESSION_DATE_BLOCKED).contains(it.sessionConflict)
+      REPORT_SESSION_CONFLICTS.contains(it.sessionConflict)
     }
   }
 }
