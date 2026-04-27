@@ -48,4 +48,7 @@ data class SessionVisitCountsDto(
 
   @param:Schema(description = "count of closed visits cancelled on the session for that day", example = "1", required = false)
   var closedCancelledCount: Int? = 0,
+
+  @param:Schema(description = "Visit Room name, if available", example = "Visit Room 1", required = false)
+  var visitRoom: String? = null,
 )

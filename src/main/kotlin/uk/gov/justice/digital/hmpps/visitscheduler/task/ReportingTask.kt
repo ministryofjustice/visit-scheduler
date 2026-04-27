@@ -20,7 +20,7 @@ class ReportingTask(
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
-  @Scheduled(cron = "\${task.visit-counts-report.cron:0 0 1 * * ?}")
+  @Scheduled(cron = "\${task.reporting.visit-counts-report.cron:0 0 1 * * ?}")
   @SchedulerLock(
     name = "VSIP Reporting - sessions and book count",
     lockAtLeastFor = ReportingTaskConfiguration.LOCK_AT_LEAST_FOR,
