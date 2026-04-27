@@ -219,9 +219,12 @@ class SessionService(
       val doubleBookingOrReservationSessions = getDoubleBookingOrReservationSessions(visitSessions, sessionSlots, prisonerId, excludedApplicationReference, usernameToExcludeFromReservedApplications)
 
       val prisonExcludeDates = prison.excludeDates.map { it.excludeDate }
-      val sessionsExcludeDates = sessionTemplates.flatMap { it.excludeDates }
+      val sessionExcludedDatesByReference = sessionTemplates
+        .flatMap { it.excludeDates }
+        .groupBy { it.sessionTemplate.reference }
+        .mapValues { (_, excludeDates) -> excludeDates.map { it.excludeDate } }
       visitSessions.forEach { session ->
-        val excludedDatesForSession = sessionsExcludeDates.filter { (it.sessionTemplate.reference == session.sessionTemplateReference) }.map { it.excludeDate }
+        val excludedDatesForSession = sessionExcludedDatesByReference[session.sessionTemplateReference].orEmpty()
         sessionConflictsUtil.addSessionConflicts(session, nonAssociationConflictSessions, doubleBookingOrReservationSessions, prisonExcludeDates, excludedDatesForSession)
       }
     }
