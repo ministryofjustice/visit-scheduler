@@ -49,7 +49,7 @@ interface VisitRepository :
   ): Boolean
 
   @Query(
-    "SELECT v FROM Visit v left join SessionSlot sl on v.sessionSlot.id = sl.id " +
+    "SELECT v FROM Visit v join v.sessionSlot sl " +
       "WHERE v.prisonerId in (:prisonerIds) AND " +
       "v.prisonId = :prisonId AND " +
       "sl.slotDate in (:sessionDates) AND " +

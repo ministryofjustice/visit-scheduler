@@ -143,7 +143,7 @@ interface ApplicationRepository :
   ): Boolean
 
   @Query(
-    "SELECT a FROM Application a left join SessionSlot sl on a.sessionSlot.id = sl.id " +
+    "SELECT a FROM Application a join a.sessionSlot sl " +
       "WHERE a.prisonerId in (:prisonerIds) AND " +
       "a.prisonId = :prisonId AND " +
       "sl.slotDate in (:sessionDates) AND " +
