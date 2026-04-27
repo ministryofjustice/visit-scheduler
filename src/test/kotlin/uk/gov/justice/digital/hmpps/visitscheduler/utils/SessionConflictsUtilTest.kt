@@ -49,10 +49,9 @@ class SessionConflictsUtilTest {
     visitDate: LocalDate,
   ): DoubleBookedConflictSessionDto = DoubleBookedConflictSessionDto(reference = reference, conflictType = sessionConflictType, visitSubStatus = visitSubStatus, sessionTemplateReference = sessionTemplateReference, sessionDate = visitDate)
 
-  val session = createVisitSessionDto(visitDate)
-
   @Test
   fun `when non associations exists then session is marked with non-association session conflict`() {
+    val session = createVisitSessionDto(visitDate)
     val nonAssociationSessionsList = listOf(
       NonAssociationConflictSessionDto("non-association-1", SessionConflictType.VISIT, "ref2", visitDate),
     )
@@ -72,6 +71,7 @@ class SessionConflictsUtilTest {
 
   @Test
   fun `when non associations exists but not for same date then session is not marked with non-association session conflict`() {
+    val session = createVisitSessionDto(visitDate)
     val nonAssociationSessionsList = listOf(
       NonAssociationConflictSessionDto("non-association-1", SessionConflictType.VISIT, "ref2", visitDate.plusDays(1)),
     )
@@ -81,6 +81,7 @@ class SessionConflictsUtilTest {
 
   @Test
   fun `when non associations do not exist then session is not marked with non-association session conflict`() {
+    val session = createVisitSessionDto(visitDate)
     val nonAssociationSessionsList = emptyList<NonAssociationConflictSessionDto>()
     sessionConflictsUtil.addSessionConflicts(session, nonAssociationSessionsList, emptyList(), emptyList(), emptyList())
     assertThat(session.sessionConflicts.size).isEqualTo(0)
@@ -88,6 +89,7 @@ class SessionConflictsUtilTest {
 
   @Test
   fun `when booking for session does not exist then session is not marked with double booking session conflict`() {
+    val session = createVisitSessionDto(visitDate)
     val doubleBookingSessionList = emptyList<DoubleBookedConflictSessionDto>()
     sessionConflictsUtil.addSessionConflicts(session, emptyList(), doubleBookingSessionList, emptyList(), emptyList())
     assertThat(session.sessionConflicts.size).isEqualTo(0)
@@ -95,12 +97,14 @@ class SessionConflictsUtilTest {
 
   @Test
   fun `when booking exists for session but not for same date then session is not marked with double booking session conflict`() {
+    val session = createVisitSessionDto(visitDate)
     sessionConflictsUtil.addSessionConflicts(session, emptyList(), emptyList(), emptyList(), emptyList())
     assertThat(session.sessionConflicts.size).isEqualTo(0)
   }
 
   @Test
   fun `when booking for session exists then session is marked with double booking session conflict`() {
+    val session = createVisitSessionDto(visitDate)
     val doubleBookingSessionList = listOf(
       createDoubleBookedConflictSessionDto(
         reference = "visit-1",
@@ -123,6 +127,7 @@ class SessionConflictsUtilTest {
 
   @Test
   fun `when date is not blocked by prison then session is not marked with prison blocked session conflict`() {
+    val session = createVisitSessionDto(visitDate)
     val prisonBlockedList = emptyList<LocalDate>()
     sessionConflictsUtil.addSessionConflicts(session, emptyList(), emptyList(), prisonBlockedList, emptyList())
     assertThat(session.sessionConflicts.size).isEqualTo(0)
@@ -130,6 +135,7 @@ class SessionConflictsUtilTest {
 
   @Test
   fun `when same date is not blocked by prison then session is not marked with prison blocked session conflict`() {
+    val session = createVisitSessionDto(visitDate)
     val prisonBlockedList = listOf<LocalDate>(visitDate.plusDays(1))
     sessionConflictsUtil.addSessionConflicts(session, emptyList(), emptyList(), prisonBlockedList, emptyList())
     assertThat(session.sessionConflicts.size).isEqualTo(0)
@@ -137,6 +143,7 @@ class SessionConflictsUtilTest {
 
   @Test
   fun `when date is blocked for by prison then session is marked with prison blocked session conflict`() {
+    val session = createVisitSessionDto(visitDate)
     val prisonBlockedList = listOf(visitDate)
     sessionConflictsUtil.addSessionConflicts(session, emptyList(), emptyList(), prisonBlockedList, emptyList())
     assertThat(session.sessionConflicts.size).isEqualTo(1)
@@ -145,6 +152,7 @@ class SessionConflictsUtilTest {
 
   @Test
   fun `when session is not blocked then session is not marked with session blocked session conflict`() {
+    val session = createVisitSessionDto(visitDate)
     val sessionBlockedList = emptyList<LocalDate>()
     sessionConflictsUtil.addSessionConflicts(session, emptyList(), emptyList(), emptyList(), sessionBlockedList)
     assertThat(session.sessionConflicts.size).isEqualTo(0)
@@ -152,6 +160,7 @@ class SessionConflictsUtilTest {
 
   @Test
   fun `when session is not blocked for same date then session is not marked with session blocked session conflict`() {
+    val session = createVisitSessionDto(visitDate)
     val sessionBlockedList = listOf<LocalDate>(visitDate.plusDays(1))
     sessionConflictsUtil.addSessionConflicts(session, emptyList(), emptyList(), emptyList(), sessionBlockedList)
     assertThat(session.sessionConflicts.size).isEqualTo(0)
@@ -159,6 +168,7 @@ class SessionConflictsUtilTest {
 
   @Test
   fun `when session is blocked for same date then session is marked with session blocked session conflict`() {
+    val session = createVisitSessionDto(visitDate)
     val sessionBlockedList = listOf(visitDate)
     sessionConflictsUtil.addSessionConflicts(session, emptyList(), emptyList(), emptyList(), sessionBlockedList)
     assertThat(session.sessionConflicts.size).isEqualTo(1)
@@ -167,6 +177,7 @@ class SessionConflictsUtilTest {
 
   @Test
   fun `when multiple session conflicts then session is marked with all flagged session conflicts`() {
+    val session = createVisitSessionDto(visitDate)
     val nonAssociationSessionsList = listOf(
       NonAssociationConflictSessionDto("non-association-1", SessionConflictType.VISIT, "ref2", visitDate),
     )
