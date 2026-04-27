@@ -211,7 +211,11 @@ class SessionService(
     val sessionSlotDates = visitSessions.map { it.startTimestamp.toLocalDate() }.distinct()
     if (sessionSlotDates.isNotEmpty()) {
       val nonAssociationPrisonerIds = getNonAssociationPrisonerIds(prisonerService.getPrisonerNonAssociationList(prisonerId))
-      val nonAssociationConflictSessions = getNonAssociationVisitsOrApplications(sessionSlotDates, nonAssociationPrisonerIds, prison)
+      val nonAssociationConflictSessions = if (nonAssociationPrisonerIds.isEmpty()) {
+        emptyList()
+      } else {
+        getNonAssociationVisitsOrApplications(sessionSlotDates, nonAssociationPrisonerIds, prison)
+      }
       val doubleBookingOrReservationSessions = getDoubleBookingOrReservationSessions(visitSessions, sessionSlots, prisonerId, excludedApplicationReference, usernameToExcludeFromReservedApplications)
 
       val prisonExcludeDates = prison.excludeDates.map { it.excludeDate }
