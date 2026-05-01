@@ -98,8 +98,10 @@ class ReportVisitCountsTaskTelemetryTest : IntegrationTestBase() {
       openCapacity = "100",
       closedCapacity = "35",
       openBookedCount = "1",
-      openCancelledCount = "1",
+      openBookedVisitorsCount = "0",
       closedBookedCount = "1",
+      closedBookedVisitorsCount = "0",
+      openCancelledCount = "1",
       closedCancelledCount = "1",
     )
   }
@@ -114,7 +116,9 @@ class ReportVisitCountsTaskTelemetryTest : IntegrationTestBase() {
     openCapacity: String,
     closedCapacity: String,
     openBookedCount: String,
+    openBookedVisitorsCount: String,
     closedBookedCount: String,
+    closedBookedVisitorsCount: String,
     openCancelledCount: String,
     closedCancelledCount: String,
   ) {
@@ -130,7 +134,9 @@ class ReportVisitCountsTaskTelemetryTest : IntegrationTestBase() {
         Assertions.assertThat(event["openCapacity"]).isEqualTo(openCapacity)
         Assertions.assertThat(event["closedCapacity"]).isEqualTo(closedCapacity)
         Assertions.assertThat(event["openBooked"]).isEqualTo(openBookedCount)
+        Assertions.assertThat(event["openBookedVisitors"]).isEqualTo(openBookedVisitorsCount)
         Assertions.assertThat(event["closedBooked"]).isEqualTo(closedBookedCount)
+        Assertions.assertThat(event["closedBookedVisitors"]).isEqualTo(closedBookedVisitorsCount)
         Assertions.assertThat(event["openCancelled"]).isEqualTo(openCancelledCount)
         Assertions.assertThat(event["closedCancelled"]).isEqualTo(closedCancelledCount)
       },
