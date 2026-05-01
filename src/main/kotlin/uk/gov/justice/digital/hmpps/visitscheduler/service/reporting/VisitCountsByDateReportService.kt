@@ -135,9 +135,7 @@ class VisitCountsByDateReportService(
   private fun getVisitCountsBySession(sessionTemplateReference: String, visitDate: LocalDate): List<VisitCountStats> {
     val sessionSlotId = sessionSlotService.getSessionSlot(sessionTemplateReference, visitDate)?.id
     return sessionSlotId?.let {
-      val x = visitRepository.getVisitCountsBySession(it)
-      println("x |+ $x")
-      return x
+      visitRepository.getVisitCountsBySession(it)
     } ?: emptyList()
   }
 

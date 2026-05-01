@@ -33,15 +33,14 @@ class OverbookedSessionsReportService(
   ) {
     null
   } else {
-    with(sessionVisitCountsByDateDto) {
-      OverbookedSessionsDto(
-        sessionDate = reportDate,
-        prisonCode = prisonCode,
-        sessionTimeSlot = visitCountBySession?.sessionTimeSlot!!,
-        sessionCapacity = visitCountBySession?.sessionCapacity!!,
-        openCount = visitCountBySession?.openBookedCount ?: 0,
-        closedCount = visitCountBySession?.closedBookedCount ?: 0,
-      )
-    }
+    val visitCountsBySession = sessionVisitCountsByDateDto.visitCountBySession!!
+    OverbookedSessionsDto(
+      sessionDate = sessionVisitCountsByDateDto.reportDate,
+      prisonCode = sessionVisitCountsByDateDto.prisonCode,
+      sessionTimeSlot = visitCountsBySession.sessionTimeSlot,
+      sessionCapacity = visitCountsBySession.sessionCapacity,
+      openCount = visitCountsBySession.openBookedCount,
+      closedCount = visitCountsBySession.closedBookedCount,
+    )
   }
 }
