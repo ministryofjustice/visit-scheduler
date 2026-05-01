@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.LastApprovedDateByVisitor
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitCountStats
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -78,6 +79,19 @@ interface VisitRepository :
     nativeQuery = true,
   )
   fun getCountOfBookedSessionVisitsForOpenOrClosedRestriction(sessionSlotId: Long): List<VisitRestrictionStats>
+
+  @Query(
+    "SELECT v.visit_restriction AS visitRestriction, " +
+      "v.visit_status as visitStatus, " +
+      "count(distinct v.id) as visitCount, " +
+      "count(distinct vv.nomis_person_id ) as visitorCount " +
+      "from visit v left outer join visit_visitor vv on v.id = vv.visit_id " +
+      "WHERE v.session_slot_id = :sessionSlotId AND " +
+      "v.visit_restriction in ('OPEN','CLOSED') " +
+      "GROUP BY v.visit_restriction, v.visit_status",
+    nativeQuery = true,
+  )
+  fun getVisitCountsBySession(sessionSlotId: Long): List<VisitCountStats>
 
   @Query(
     "SELECT COUNT(*) AS count  FROM visit v " +

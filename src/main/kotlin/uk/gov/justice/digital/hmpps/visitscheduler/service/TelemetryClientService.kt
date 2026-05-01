@@ -36,7 +36,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_SLOT_RESERVED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting.OverbookedSessionsDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting.SessionVisitCountsDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting.SessionVisitCountsByDateDto
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -158,7 +158,7 @@ class TelemetryClientService(
     trackEvent(UNFLAGGED_VISIT_EVENT, data)
   }
 
-  fun trackVisitCountsEvent(sessionReport: SessionVisitCountsDto) {
+  fun trackVisitCountsEvent(sessionReport: SessionVisitCountsByDateDto) {
     val event = createVisitCountTelemetryData(sessionReport)
     trackEvent(TelemetryVisitEvents.VISIT_COUNTS_REPORT, event)
   }
@@ -230,7 +230,7 @@ class TelemetryClientService(
   }
 
   private fun createVisitCountTelemetryData(
-    sessionReport: SessionVisitCountsDto,
+    sessionReport: SessionVisitCountsByDateDto,
   ): Map<String, String> {
     val reportEvent = mutableMapOf<String, String>()
     reportEvent["reportDate"] = formatDateToString(sessionReport.reportDate)
@@ -238,31 +238,21 @@ class TelemetryClientService(
     reportEvent["blockedDate"] = sessionReport.isBlockedDate.toString()
     reportEvent["hasSessions"] = sessionReport.hasSessionsOnDate.toString()
 
-    sessionReport.sessionTimeSlot?.let {
-      reportEvent["sessionStart"] = formatTimeToString(it.startTime)
-      reportEvent["sessionEnd"] = formatTimeToString(it.endTime)
-    }
-    sessionReport.sessionCapacity?.let {
-      reportEvent["openCapacity"] = it.open.toString()
-      reportEvent["closedCapacity"] = it.closed.toString()
-    }
-    sessionReport.visitType?.let {
-      reportEvent["visitType"] = it.toString()
-    }
-    sessionReport.openBookedCount?.let {
-      reportEvent["openBooked"] = it.toString()
-    }
-    sessionReport.closedBookedCount?.let {
-      reportEvent["closedBooked"] = it.toString()
-    }
-    sessionReport.openCancelledCount?.let {
-      reportEvent["openCancelled"] = it.toString()
-    }
-    sessionReport.closedCancelledCount?.let {
-      reportEvent["closedCancelled"] = it.toString()
-    }
-    sessionReport.visitRoom?.let {
-      reportEvent["visitRoom"] = it
+    sessionReport.visitCountBySession?.let { visitCountBySession ->
+      with(visitCountBySession) {
+        reportEvent["sessionStart"] = formatTimeToString(sessionTimeSlot.startTime)
+        reportEvent["sessionEnd"] = formatTimeToString(sessionTimeSlot.endTime)
+        reportEvent["openCapacity"] = sessionCapacity.open.toString()
+        reportEvent["closedCapacity"] = sessionCapacity.closed.toString()
+        reportEvent["visitType"] = visitType.toString()
+        reportEvent["openBooked"] = openBookedCount.toString()
+        reportEvent["openBookedVisitors"] = openBookedVisitorsCount.toString()
+        reportEvent["closedBooked"] = closedBookedCount.toString()
+        reportEvent["closedBookedVisitors"] = closedBookedVisitorsCount.toString()
+        reportEvent["openCancelled"] = openCancelledCount.toString()
+        reportEvent["closedCancelled"] = closedCancelledCount.toString()
+        reportEvent["visitRoom"] = visitRoom
+      }
     }
 
     return reportEvent.toMap()
