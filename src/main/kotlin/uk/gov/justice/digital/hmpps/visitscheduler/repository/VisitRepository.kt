@@ -84,7 +84,7 @@ interface VisitRepository :
     "SELECT v.visit_restriction AS visitRestriction, " +
       "v.visit_status as visitStatus, " +
       "count(distinct v.id) as visitCount, " +
-      "count(distinct vv.nomis_person_id ) as visitorCount " +
+      "count( vv.nomis_person_id ) as visitorCount " +
       "from visit v left outer join visit_visitor vv on v.id = vv.visit_id " +
       "WHERE v.session_slot_id = :sessionSlotId AND " +
       "v.visit_restriction in ('OPEN','CLOSED') " +

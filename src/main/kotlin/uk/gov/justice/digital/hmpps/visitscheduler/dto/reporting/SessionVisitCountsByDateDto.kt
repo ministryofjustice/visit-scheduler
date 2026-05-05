@@ -18,7 +18,7 @@ data class SessionVisitCountsByDateDto(
   @field:NotNull
   val isBlockedDate: Boolean,
 
-  @param:Schema(description = "False if no sessions on the date for prison, false otherwise", example = "true", required = true)
+  @param:Schema(description = "False if no sessions on the date for prison, true otherwise", example = "true", required = true)
   @field:NotNull
   val hasSessionsOnDate: Boolean,
 
