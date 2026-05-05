@@ -131,7 +131,7 @@ class ReportVisitCountsTaskTest : IntegrationTestBase() {
     visitEntityHelper.createVisitor(visit = visit, nomisPersonId = 1021L, visitContact = true)
     visitEntityHelper.save(visit)
 
-    // visit 3 against sessionTemplate7Prison1 - but previous week - not included in count
+    // visit 3 against sessionTemplate7Prison1
     visit = visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplate7Prison1, slotDate = reportDate.plusWeeks(1))
     visitEntityHelper.createVisitor(visit = visit, nomisPersonId = 1121L, visitContact = true)
     visitEntityHelper.save(visit)
