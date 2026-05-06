@@ -57,7 +57,7 @@ class ReportVisitCountsTaskTelemetryTest : IntegrationTestBase() {
     Assertions.assertThat(sessionsReport.size).isEqualTo(1)
 
     verify(telemetryClient, times(1)).trackEvent(eq("visit-counts-report"), any(), isNull())
-    assertReportingEvent(
+    assertReportingEventWhenNoSessions(
       reportDate = reportDate.format(DateTimeFormatter.ISO_DATE),
       prisonCode = sessionTemplateDefault.prison.code,
       isBlockedDate = "false",
@@ -98,56 +98,65 @@ class ReportVisitCountsTaskTelemetryTest : IntegrationTestBase() {
       openCapacity = "100",
       closedCapacity = "35",
       openBookedCount = "1",
-      openCancelledCount = "1",
+      openBookedVisitorsCount = "0",
       closedBookedCount = "1",
+      closedBookedVisitorsCount = "0",
+      openCancelledCount = "1",
       closedCancelledCount = "1",
     )
   }
 
   private fun assertReportingEvent(
     reportDate: String,
-    prisonCode: String? = null,
-    isBlockedDate: String? = null,
-    hasSessionsOnDate: String? = null,
-    sessionStart: String? = null,
-    sessionEnd: String? = null,
-    openCapacity: String? = null,
-    closedCapacity: String? = null,
-    openBookedCount: String = "0",
-    closedBookedCount: String = "0",
-    openCancelledCount: String = "0",
-    closedCancelledCount: String = "0",
+    prisonCode: String,
+    isBlockedDate: String,
+    hasSessionsOnDate: String,
+    sessionStart: String,
+    sessionEnd: String,
+    openCapacity: String,
+    closedCapacity: String,
+    openBookedCount: String,
+    openBookedVisitorsCount: String,
+    closedBookedCount: String,
+    closedBookedVisitorsCount: String,
+    openCancelledCount: String,
+    closedCancelledCount: String,
   ) {
     verify(telemetryClient).trackEvent(
       eq("visit-counts-report"),
       org.mockito.kotlin.check { event ->
         Assertions.assertThat(event["reportDate"]).isEqualTo(reportDate)
-        prisonCode?.let {
-          Assertions.assertThat(event["prisonCode"]).isEqualTo(prisonCode)
-        }
-        isBlockedDate?.let {
-          Assertions.assertThat(event["blockedDate"]).isEqualTo(isBlockedDate)
-        }
-        hasSessionsOnDate?.let {
-          Assertions.assertThat(event["hasSessions"]).isEqualTo(hasSessionsOnDate)
-        }
-        sessionStart?.let {
-          Assertions.assertThat(event["sessionStart"]).isEqualTo(sessionStart)
-        }
-        sessionEnd?.let {
-          Assertions.assertThat(event["sessionEnd"]).isEqualTo(sessionEnd)
-        }
-        openCapacity?.let {
-          Assertions.assertThat(event["openCapacity"]).isEqualTo(openCapacity)
-        }
-        closedCapacity?.let {
-          Assertions.assertThat(event["closedCapacity"]).isEqualTo(closedCapacity)
-        }
-
+        Assertions.assertThat(event["prisonCode"]).isEqualTo(prisonCode)
+        Assertions.assertThat(event["blockedDate"]).isEqualTo(isBlockedDate)
+        Assertions.assertThat(event["hasSessions"]).isEqualTo(hasSessionsOnDate)
+        Assertions.assertThat(event["sessionStart"]).isEqualTo(sessionStart)
+        Assertions.assertThat(event["sessionEnd"]).isEqualTo(sessionEnd)
+        Assertions.assertThat(event["openCapacity"]).isEqualTo(openCapacity)
+        Assertions.assertThat(event["closedCapacity"]).isEqualTo(closedCapacity)
         Assertions.assertThat(event["openBooked"]).isEqualTo(openBookedCount)
+        Assertions.assertThat(event["openBookedVisitors"]).isEqualTo(openBookedVisitorsCount)
         Assertions.assertThat(event["closedBooked"]).isEqualTo(closedBookedCount)
+        Assertions.assertThat(event["closedBookedVisitors"]).isEqualTo(closedBookedVisitorsCount)
         Assertions.assertThat(event["openCancelled"]).isEqualTo(openCancelledCount)
         Assertions.assertThat(event["closedCancelled"]).isEqualTo(closedCancelledCount)
+      },
+      isNull(),
+    )
+  }
+
+  private fun assertReportingEventWhenNoSessions(
+    reportDate: String,
+    prisonCode: String,
+    isBlockedDate: String,
+    hasSessionsOnDate: String,
+  ) {
+    verify(telemetryClient).trackEvent(
+      eq("visit-counts-report"),
+      org.mockito.kotlin.check { event ->
+        Assertions.assertThat(event["reportDate"]).isEqualTo(reportDate)
+        Assertions.assertThat(event["prisonCode"]).isEqualTo(prisonCode)
+        Assertions.assertThat(event["blockedDate"]).isEqualTo(isBlockedDate)
+        Assertions.assertThat(event["hasSessions"]).isEqualTo(hasSessionsOnDate)
       },
       isNull(),
     )
