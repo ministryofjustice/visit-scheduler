@@ -12,7 +12,7 @@ springdoc:
   swagger-ui:
     tagsSorter: alpha
     enabled: false
-    version: 5.32.1
+    version: 5.32.2
   writer-with-order-by-keys: true
 
 spring:
