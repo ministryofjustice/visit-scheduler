@@ -196,8 +196,8 @@ class VisitNotificationEventService(
   }
 
   @Transactional
-  fun handlePrisonerAlertUpsertedNotification(notificationDto: PrisonerAlertUpsertedNotificationDto) {
-    LOG.info("handlePrisonerAlertUpsertedNotification notification received : {}", notificationDto)
+  fun handlePrisonerAlertUpdatedNotification(notificationDto: PrisonerAlertUpsertedNotificationDto) {
+    LOG.info("handlePrisonerAlertUpdatedNotification notification received : {}", notificationDto)
     processAlertUpdated(notificationDto)
   }
 

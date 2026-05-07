@@ -322,7 +322,7 @@ class VisitNotificationController(
     dto: PrisonerAlertUpsertedNotificationDto,
   ): ResponseEntity<HttpStatus> {
     LOG.debug("Entered notifyVSiPThatPrisonerAlertUpdated {}", dto)
-    visitNotificationEventService.handlePrisonerAlertUpsertedNotification(dto)
+    visitNotificationEventService.handlePrisonerAlertUpdatedNotification(dto)
     return ResponseEntity(HttpStatus.OK)
   }
 

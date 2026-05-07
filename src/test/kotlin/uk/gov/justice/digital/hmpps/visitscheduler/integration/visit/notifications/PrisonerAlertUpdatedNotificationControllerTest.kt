@@ -12,7 +12,7 @@ import org.mockito.kotlin.verify
 import org.springframework.http.HttpHeaders
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_ALERTS_UPDATED_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_ALERT_UPDATED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
@@ -34,7 +34,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionT
 import java.time.LocalDate
 
 @Transactional(propagation = SUPPORTS)
-@DisplayName("POST $VISIT_NOTIFICATION_PRISONER_ALERTS_UPDATED_PATH")
+@DisplayName("POST $VISIT_NOTIFICATION_PRISONER_ALERT_UPDATED_PATH")
 class PrisonerAlertUpdatedNotificationControllerTest : NotificationTestBase() {
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
