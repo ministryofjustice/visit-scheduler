@@ -106,7 +106,7 @@ class PrisonerAlertAddedNotificationControllerTest : NotificationTestBase() {
       sessionTemplate = sessionTemplate1,
     )
 
-    // canceled visit -should not be flagged
+    // canceled visit - should not be flagged
     createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().plusDays(1),
@@ -115,7 +115,7 @@ class PrisonerAlertAddedNotificationControllerTest : NotificationTestBase() {
       sessionTemplate = sessionTemplate1,
     )
 
-    // canceled visit -should not be flagged
+    // canceled visit - should not be flagged
     createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().plusDays(1),
@@ -240,7 +240,7 @@ class PrisonerAlertAddedNotificationControllerTest : NotificationTestBase() {
       sessionTemplate = sessionTemplate1,
     )
 
-    // canceled visit -should not be flagged
+    // canceled visit - should not be flagged
     createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().plusDays(1),
@@ -249,7 +249,7 @@ class PrisonerAlertAddedNotificationControllerTest : NotificationTestBase() {
       sessionTemplate = sessionTemplate1,
     )
 
-    // canceled visit -should not be flagged
+    // canceled visit - should not be flagged
     createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().plusDays(1),
