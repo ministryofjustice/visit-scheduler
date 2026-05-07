@@ -40,6 +40,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.Contact
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.CourtVideoAppointmentNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonDateBlockedDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertAddedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertCreatedUpdatedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerContactRestrictionUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
@@ -188,6 +189,12 @@ class VisitNotificationEventService(
     }
   }
 
+  @Transactional
+  fun handlePrisonerAlertAddedNotification(notificationDto: PrisonerAlertAddedNotificationDto) {
+    LOG.info("handlePrisonerAlertAddedNotification notification received : {}", notificationDto)
+    processAlertAdded(notificationDto)
+  }
+
   private fun processAlertsAdded(notificationDto: PrisonerAlertCreatedUpdatedNotificationDto) {
     LOG.info("Entered handlePrisonerAlertCreatedUpdated processAlertsAdded")
 
@@ -195,6 +202,19 @@ class VisitNotificationEventService(
     val affectedVisits = visitService.getFutureBookedVisits(notificationDto.prisonerNumber, prisonCode)
 
     val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, PRISONER_ALERTS_UPDATED_EVENT, null)
+    processVisitsWithNotifications(processVisitNotificationDto)
+  }
+
+  private fun processAlertAdded(notificationDto: PrisonerAlertAddedNotificationDto) {
+    LOG.debug("Entered processAlertAdded, alert code {}, prisoner number - {}", notificationDto.alertCode, notificationDto.prisonerNumber)
+
+    val affectedVisits = visitService.getFutureBookedVisits(notificationDto.prisonerNumber)
+    val notificationAttributes = hashMapOf(
+      NotificationEventAttributeType.ALERT_CODE to notificationDto.alertCode,
+      NotificationEventAttributeType.ALERT_UUID to notificationDto.alertUuid,
+    )
+
+    val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, NotificationEventType.PRISONER_ALERT_ADDED_EVENT, notificationAttributes)
     processVisitsWithNotifications(processVisitNotificationDto)
   }
 
