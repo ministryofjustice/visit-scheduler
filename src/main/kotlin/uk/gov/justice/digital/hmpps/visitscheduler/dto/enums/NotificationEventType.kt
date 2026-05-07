@@ -9,6 +9,7 @@ enum class NotificationEventType(val reviewType: String, val description: String
   PRISONER_RECEIVED_EVENT("Prisoner-received", "prisoner transferred"),
   PRISONER_ALERTS_UPDATED_EVENT("Prisoner-alerts-updated", "prisoner alerts changed"),
   PRISONER_ALERT_ADDED_EVENT("Prisoner-alert-added", "new prisoner alert added"),
+  PRISONER_ALERT_UPDATED_EVENT("Prisoner-alert-updated", "new prisoner alert updated"),
   PERSON_RESTRICTION_UPSERTED_EVENT("Person-restriction-upserted", "visitor restriction changed"),
   VISITOR_RESTRICTION_UPSERTED_EVENT("Visitor-restriction-upserted", "visitor restriction changed"),
   VISITOR_UNAPPROVED_EVENT("Visitor-unapproved", "visitor unapproved"),
