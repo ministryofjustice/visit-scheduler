@@ -206,7 +206,7 @@ class VisitNotificationEventService(
   }
 
   private fun processAlertAdded(notificationDto: PrisonerAlertAddedNotificationDto) {
-    LOG.debug("Entered processAlertsAdded")
+    LOG.debug("Entered processAlertAdded, alert code {}, prisoner number - {}", notificationDto.alertCode, notificationDto.prisonerNumber)
 
     val affectedVisits = visitService.getFutureBookedVisits(notificationDto.prisonerNumber)
     val notificationAttributes = hashMapOf(
