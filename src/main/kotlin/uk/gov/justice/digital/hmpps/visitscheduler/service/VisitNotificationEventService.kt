@@ -190,9 +190,9 @@ class VisitNotificationEventService(
   }
 
   @Transactional
-  fun handlePrisonerAlertAddedNotification(notificationDto: PrisonerAlertNotificationDto) {
-    LOG.info("handlePrisonerAlertAddedNotification notification received : {}", notificationDto)
-    processAlertAdded(notificationDto)
+  fun handlePrisonerAlertCreatedNotification(notificationDto: PrisonerAlertNotificationDto) {
+    LOG.info("handlePrisonerAlertCreatedNotification notification received : {}", notificationDto)
+    processAlertCreated(notificationDto)
   }
 
   @Transactional
@@ -217,9 +217,9 @@ class VisitNotificationEventService(
     processVisitsWithNotifications(processVisitNotificationDto)
   }
 
-  private fun processAlertAdded(notificationDto: PrisonerAlertNotificationDto) {
-    LOG.debug("Entered processAlertAdded, alert code {}, prisoner number - {}", notificationDto.alertCode, notificationDto.prisonerNumber)
-    processAlertUpserted(notificationDto, NotificationEventType.PRISONER_ALERT_ADDED_EVENT)
+  private fun processAlertCreated(notificationDto: PrisonerAlertNotificationDto) {
+    LOG.debug("Entered processAlertCreated, alert code {}, prisoner number - {}", notificationDto.alertCode, notificationDto.prisonerNumber)
+    processAlertUpserted(notificationDto, NotificationEventType.PRISONER_ALERT_CREATED_EVENT)
   }
 
   private fun processAlertUpdated(notificationDto: PrisonerAlertNotificationDto) {
@@ -248,7 +248,7 @@ class VisitNotificationEventService(
       prisonerNumber = notificationDto.prisonerNumber,
       alertUuid = notificationDto.alertUuid,
       notificationEventTypes = listOf(
-        NotificationEventType.PRISONER_ALERT_ADDED_EVENT.name,
+        NotificationEventType.PRISONER_ALERT_CREATED_EVENT.name,
         NotificationEventType.PRISONER_ALERT_UPDATED_EVENT.name,
       ),
     )
