@@ -12,11 +12,11 @@ import org.mockito.kotlin.verify
 import org.springframework.http.HttpHeaders
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_ALERT_ADDED_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_ALERT_UPDATED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.PRISONER_ALERT_ADDED_EVENT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.PRISONER_ALERT_UPDATED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventAttributeType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
@@ -25,7 +25,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertUpsertedNotificationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatPrisonerAlertHasBeenAdded
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatPrisonerAlertHasBeenUpdated
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
@@ -34,8 +34,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionT
 import java.time.LocalDate
 
 @Transactional(propagation = SUPPORTS)
-@DisplayName("POST $VISIT_NOTIFICATION_PRISONER_ALERT_ADDED_PATH")
-class PrisonerAlertAddedNotificationControllerTest : NotificationTestBase() {
+@DisplayName("POST $VISIT_NOTIFICATION_PRISONER_ALERT_UPDATED_PATH")
+class PrisonerAlertUpdatedNotificationControllerTest : NotificationTestBase() {
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
   val prisonerId = "AA11BCC"
@@ -58,13 +58,13 @@ class PrisonerAlertAddedNotificationControllerTest : NotificationTestBase() {
   }
 
   @Test
-  fun `when prisoner has had an alert added then only associated future booked visits for the prisoner are flagged`() {
+  fun `when prisoner has had an alert updated then only associated future booked visits for the prisoner are flagged`() {
     // Given
     val notificationDto = PrisonerAlertUpsertedNotificationDto(
       prisonerNumber = prisonerId,
       alertCode = "C1",
       alertUuid = "1234-5678-abcd",
-      description = "alert added",
+      description = "alert updated",
     )
 
     val expectedEventAttributes = mapOf(
@@ -125,7 +125,7 @@ class PrisonerAlertAddedNotificationControllerTest : NotificationTestBase() {
     )
 
     // When
-    val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenAdded(
+    val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenUpdated(
       webTestClient,
       roleVisitSchedulerHttpHeaders,
       notificationDto,
@@ -139,22 +139,22 @@ class PrisonerAlertAddedNotificationControllerTest : NotificationTestBase() {
     assertThat(visitNotifications).hasSize(1)
     assertNotificationEvent(visitNotifications[0], visit1, expectedEventAttributes)
 
-    val auditEvents = testEventAuditRepository.getAuditByType(PRISONER_ALERT_ADDED_EVENT)
+    val auditEvents = testEventAuditRepository.getAuditByType(PRISONER_ALERT_UPDATED_EVENT)
     assertThat(auditEvents).hasSize(1)
-    assertAuditEvent(auditEvents[0], visit = visit1, eventType = PRISONER_ALERT_ADDED_EVENT)
+    assertAuditEvent(auditEvents[0], visit = visit1, eventType = PRISONER_ALERT_UPDATED_EVENT)
 
-    assertFlaggedVisitEvent(listOf(visit1), NotificationEventType.PRISONER_ALERT_ADDED_EVENT)
+    assertFlaggedVisitEvent(listOf(visit1), NotificationEventType.PRISONER_ALERT_UPDATED_EVENT)
     verify(telemetryClient, times(1)).trackEvent(eq("flagged-visit-event"), any(), isNull())
   }
 
   @Test
-  fun `when prisoner has had an alert added then associated future booked visits across prisons for the prisoner are flagged`() {
+  fun `when prisoner has had an alert updated then associated future booked visits across prisons for the prisoner are flagged`() {
     // Given
     val notificationDto = PrisonerAlertUpsertedNotificationDto(
       prisonerNumber = prisonerId,
       alertCode = "C1",
       alertUuid = "1234-5678-abcd",
-      description = "alert added",
+      description = "alert updated",
     )
 
     val expectedEventAttributes = mapOf(
@@ -181,7 +181,7 @@ class PrisonerAlertAddedNotificationControllerTest : NotificationTestBase() {
     eventAuditEntityHelper.create(visit2)
 
     // When
-    val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenAdded(
+    val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenUpdated(
       webTestClient,
       roleVisitSchedulerHttpHeaders,
       notificationDto,
@@ -196,23 +196,23 @@ class PrisonerAlertAddedNotificationControllerTest : NotificationTestBase() {
     assertNotificationEvent(visitNotifications[0], visit1, expectedEventAttributes)
     assertNotificationEvent(visitNotifications[1], visit2, expectedEventAttributes)
 
-    val auditEvents = testEventAuditRepository.getAuditByType(PRISONER_ALERT_ADDED_EVENT)
+    val auditEvents = testEventAuditRepository.getAuditByType(PRISONER_ALERT_UPDATED_EVENT)
     assertThat(auditEvents).hasSize(2)
-    assertAuditEvent(auditEvents[0], visit = visit1, eventType = PRISONER_ALERT_ADDED_EVENT)
-    assertAuditEvent(auditEvents[1], visit = visit2, eventType = PRISONER_ALERT_ADDED_EVENT)
+    assertAuditEvent(auditEvents[0], visit = visit1, eventType = PRISONER_ALERT_UPDATED_EVENT)
+    assertAuditEvent(auditEvents[1], visit = visit2, eventType = PRISONER_ALERT_UPDATED_EVENT)
 
-    assertFlaggedVisitEvent(listOf(visit1, visit2), NotificationEventType.PRISONER_ALERT_ADDED_EVENT)
+    assertFlaggedVisitEvent(listOf(visit1, visit2), NotificationEventType.PRISONER_ALERT_UPDATED_EVENT)
     verify(telemetryClient, times(2)).trackEvent(eq("flagged-visit-event"), any(), isNull())
   }
 
   @Test
-  fun `when prisoner has had an alert added but no future booked visits then no visits are flagged`() {
+  fun `when prisoner has had an alert updated but no future booked visits then no visits are flagged`() {
     // Given
     val notificationDto = PrisonerAlertUpsertedNotificationDto(
       prisonerNumber = prisonerId,
       alertCode = "C1",
       alertUuid = "1234-5678-abcd",
-      description = "alert added",
+      description = "alert updated",
     )
 
     // this visit should not be flagged as it's in the past
@@ -259,7 +259,7 @@ class PrisonerAlertAddedNotificationControllerTest : NotificationTestBase() {
     )
 
     // When
-    val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenAdded(
+    val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenUpdated(
       webTestClient,
       roleVisitSchedulerHttpHeaders,
       notificationDto,
@@ -272,7 +272,7 @@ class PrisonerAlertAddedNotificationControllerTest : NotificationTestBase() {
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(0)
 
-    val auditEvents = testEventAuditRepository.getAuditByType(PRISONER_ALERT_ADDED_EVENT)
+    val auditEvents = testEventAuditRepository.getAuditByType(PRISONER_ALERT_UPDATED_EVENT)
     assertThat(auditEvents).hasSize(0)
     verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), any(), isNull())
   }

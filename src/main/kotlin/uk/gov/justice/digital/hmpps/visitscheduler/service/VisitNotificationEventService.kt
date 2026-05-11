@@ -40,8 +40,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.Contact
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.CourtVideoAppointmentNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonDateBlockedDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertAddedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertCreatedUpdatedNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerContactRestrictionUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
@@ -190,9 +190,15 @@ class VisitNotificationEventService(
   }
 
   @Transactional
-  fun handlePrisonerAlertAddedNotification(notificationDto: PrisonerAlertAddedNotificationDto) {
+  fun handlePrisonerAlertAddedNotification(notificationDto: PrisonerAlertUpsertedNotificationDto) {
     LOG.info("handlePrisonerAlertAddedNotification notification received : {}", notificationDto)
     processAlertAdded(notificationDto)
+  }
+
+  @Transactional
+  fun handlePrisonerAlertUpdatedNotification(notificationDto: PrisonerAlertUpsertedNotificationDto) {
+    LOG.info("handlePrisonerAlertUpdatedNotification notification received : {}", notificationDto)
+    processAlertUpdated(notificationDto)
   }
 
   private fun processAlertsAdded(notificationDto: PrisonerAlertCreatedUpdatedNotificationDto) {
@@ -205,16 +211,24 @@ class VisitNotificationEventService(
     processVisitsWithNotifications(processVisitNotificationDto)
   }
 
-  private fun processAlertAdded(notificationDto: PrisonerAlertAddedNotificationDto) {
+  private fun processAlertAdded(notificationDto: PrisonerAlertUpsertedNotificationDto) {
     LOG.debug("Entered processAlertAdded, alert code {}, prisoner number - {}", notificationDto.alertCode, notificationDto.prisonerNumber)
+    processAlertUpserted(notificationDto, NotificationEventType.PRISONER_ALERT_ADDED_EVENT)
+  }
 
+  private fun processAlertUpdated(notificationDto: PrisonerAlertUpsertedNotificationDto) {
+    LOG.debug("Entered processAlertUpdated, alert code {}, prisoner number - {}", notificationDto.alertCode, notificationDto.prisonerNumber)
+    processAlertUpserted(notificationDto, NotificationEventType.PRISONER_ALERT_UPDATED_EVENT)
+  }
+
+  private fun processAlertUpserted(notificationDto: PrisonerAlertUpsertedNotificationDto, notificationEventType: NotificationEventType) {
     val affectedVisits = visitService.getFutureBookedVisits(notificationDto.prisonerNumber)
     val notificationAttributes = hashMapOf(
       NotificationEventAttributeType.ALERT_CODE to notificationDto.alertCode,
       NotificationEventAttributeType.ALERT_UUID to notificationDto.alertUuid,
     )
 
-    val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, NotificationEventType.PRISONER_ALERT_ADDED_EVENT, notificationAttributes)
+    val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, notificationEventType, notificationAttributes)
     processVisitsWithNotifications(processVisitNotificationDto)
   }
 
