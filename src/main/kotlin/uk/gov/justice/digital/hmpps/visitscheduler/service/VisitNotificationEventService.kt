@@ -229,7 +229,7 @@ class VisitNotificationEventService(
 
   private fun processAlertDeleted(notificationDto: PrisonerAlertNotificationDto) {
     LOG.debug("Entered processAlertDeleted, alert code {}, prisoner number - {}", notificationDto.alertCode, notificationDto.prisonerNumber)
-    processAlertDeleted(notificationDto, NotificationEventType.PRISONER_ALERT_DELETED_EVENT, UnFlagEventReason.PRISONER_ALERT_DELETED)
+    processAlertDeleted(notificationDto, UnFlagEventReason.PRISONER_ALERT_DELETED)
   }
 
   private fun processAlertUpserted(notificationDto: PrisonerAlertNotificationDto, notificationEventType: NotificationEventType) {
@@ -243,7 +243,7 @@ class VisitNotificationEventService(
     processVisitsWithNotifications(processVisitNotificationDto)
   }
 
-  private fun processAlertDeleted(notificationDto: PrisonerAlertNotificationDto, notificationEventType: NotificationEventType, unFlagEventReason: UnFlagEventReason) {
+  private fun processAlertDeleted(notificationDto: PrisonerAlertNotificationDto, unFlagEventReason: UnFlagEventReason) {
     val currentAlertUuidNotifications = visitNotificationEventRepository.getEventsByAlertUuid(
       prisonerNumber = notificationDto.prisonerNumber,
       alertUuid = notificationDto.alertUuid,
@@ -253,9 +253,11 @@ class VisitNotificationEventService(
       ),
     )
 
+    val notificationEventUnflaggedTypes = currentAlertUuidNotifications.map { it.type }.distinct()
+
     deleteNotificationsThatAreNoLongerValid(
       currentAlertUuidNotifications,
-      notificationEventType,
+      notificationEventUnflaggedTypes,
       unFlagEventReason,
     )
   }
@@ -558,6 +560,17 @@ class VisitNotificationEventService(
   ) {
     visitNotificationEvents.forEach {
       visitNotificationFlaggingService.unFlagTrackEvents(it.visit.reference, listOf(notificationEventType), reason, null)
+    }
+    visitNotificationEventRepository.deleteAll(visitNotificationEvents)
+  }
+
+  private fun deleteNotificationsThatAreNoLongerValid(
+    visitNotificationEvents: List<VisitNotificationEvent>,
+    notificationEventTypes: List<NotificationEventType>,
+    reason: UnFlagEventReason,
+  ) {
+    visitNotificationEvents.forEach {
+      visitNotificationFlaggingService.unFlagTrackEvents(it.visit.reference, notificationEventTypes, reason, null)
     }
     visitNotificationEventRepository.deleteAll(visitNotificationEvents)
   }

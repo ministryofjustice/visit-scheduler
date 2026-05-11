@@ -57,7 +57,7 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
       " JOIN visit v on v.id  = vne.visit_id  " +
       " JOIN session_slot ss on ss.id  = v.session_slot_id " +
       " JOIN visit_notification_event_attribute vnea on vnea.visit_notification_event_id = vne.id " +
-      " WHERE ss.slot_date >= NOW() " +
+      " WHERE ss.slot_date >= CURRENT_DATE " +
       " AND v.prisoner_id = :prisonerNumber " +
       " AND vne.type IN (:notificationEventTypes)" +
       " AND vnea.attribute_name = 'ALERT_UUID' " +
