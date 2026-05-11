@@ -31,7 +31,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.CourtVi
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NotificationCountDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertCreatedUpdatedNotificationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertUpsertedNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerContactRestrictionUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
@@ -50,6 +50,7 @@ const val VISIT_NOTIFICATION_PRISONER_RESTRICTION_CHANGE_PATH: String = "$VISIT_
 const val VISIT_NOTIFICATION_PRISONER_ALERTS_UPDATED_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/prisoner/alerts/updated"
 const val VISIT_NOTIFICATION_PRISONER_ALERT_ADDED_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/prisoner/alert/added"
 const val VISIT_NOTIFICATION_PRISONER_ALERT_UPDATED_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/prisoner/alert/updated"
+const val VISIT_NOTIFICATION_PRISONER_ALERT_DELETED_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/prisoner/alert/deleted"
 const val VISIT_NOTIFICATION_VISITOR_APPROVED_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/visitor/approved"
 const val VISIT_NOTIFICATION_VISITOR_UNAPPROVED_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/visitor/unapproved"
 const val VISIT_NOTIFICATION_COURT_VIDEO_APPOINTMENT_CREATED_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/court-video-appointment/created"
@@ -283,7 +284,7 @@ class VisitNotificationController(
   )
   fun notifyVSiPThatPrisonerAlertAdded(
     @RequestBody @Valid
-    dto: PrisonerAlertUpsertedNotificationDto,
+    dto: PrisonerAlertNotificationDto,
   ): ResponseEntity<HttpStatus> {
     LOG.debug("Entered notifyVSiPThatPrisonerAlertAdded {}", dto)
     visitNotificationEventService.handlePrisonerAlertAddedNotification(dto)
@@ -319,10 +320,46 @@ class VisitNotificationController(
   )
   fun notifyVSiPThatPrisonerAlertUpdated(
     @RequestBody @Valid
-    dto: PrisonerAlertUpsertedNotificationDto,
+    dto: PrisonerAlertNotificationDto,
   ): ResponseEntity<HttpStatus> {
     LOG.debug("Entered notifyVSiPThatPrisonerAlertUpdated {}", dto)
     visitNotificationEventService.handlePrisonerAlertUpdatedNotification(dto)
+    return ResponseEntity(HttpStatus.OK)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PostMapping(VISIT_NOTIFICATION_PRISONER_ALERT_DELETED_PATH)
+  @ResponseStatus(HttpStatus.OK)
+  @Operation(
+    summary = "To notify VSiP that a prisoner alert has been deleted",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "notification has completed successfully",
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Incorrect request to notify VSiP of alert",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to notify VSiP of alert",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun notifyVSiPThatPrisonerAlertDeleted(
+    @RequestBody @Valid
+    dto: PrisonerAlertNotificationDto,
+  ): ResponseEntity<HttpStatus> {
+    LOG.debug("Entered notifyVSiPThatPrisonerAlertDeleted {}", dto)
+    visitNotificationEventService.handlePrisonerAlertDeletedNotification(dto)
     return ResponseEntity(HttpStatus.OK)
   }
 
