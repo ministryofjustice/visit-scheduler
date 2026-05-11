@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NotificationCountDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitNotificationEventDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitNotificationEventHelper
@@ -93,6 +94,20 @@ abstract class NotificationTestBase : IntegrationTestBase() {
       }
       assertThat(data["source"]).isEqualTo(eventAudit.actionedBy.userType.name)
       assertThat(data["applicationMethodType"]).isEqualTo(eventAudit.applicationMethodType.name)
+    }
+  }
+
+  fun assertUnflaggedVisitEvent(visits: List<Visit>, reason: UnFlagEventReason, types: List<NotificationEventType>) {
+    verify(telemetryClient, times(visits.size)).trackEvent(eq("unflagged-visit-event"), mapCapture.capture(), isNull())
+
+    val allData = mapCapture.allValues
+
+    visits.forEachIndexed { index, visit ->
+      val data = allData[index]
+      assertThat(data["reference"]).isEqualTo(visit.reference)
+      assertThat(data["reason"]).isEqualTo(reason.desc)
+      //assertThat(data["reviewTypes"]).containsAll(NotificationEventType)
+      assertThat(data["text"]).isNull()
     }
   }
 

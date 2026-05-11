@@ -201,6 +201,12 @@ class VisitNotificationEventService(
     processAlertUpdated(notificationDto)
   }
 
+  @Transactional
+  fun handlePrisonerAlertDeletedNotification(notificationDto: PrisonerAlertUpsertedNotificationDto) {
+    LOG.info("handlePrisonerAlertDeletedNotification notification received : {}", notificationDto)
+    processAlertDeleted(notificationDto)
+  }
+
   private fun processAlertsAdded(notificationDto: PrisonerAlertCreatedUpdatedNotificationDto) {
     LOG.info("Entered handlePrisonerAlertCreatedUpdated processAlertsAdded")
 
@@ -221,6 +227,11 @@ class VisitNotificationEventService(
     processAlertUpserted(notificationDto, NotificationEventType.PRISONER_ALERT_UPDATED_EVENT)
   }
 
+  private fun processAlertDeleted(notificationDto: PrisonerAlertUpsertedNotificationDto) {
+    LOG.debug("Entered processAlertDeleted, alert code {}, prisoner number - {}", notificationDto.alertCode, notificationDto.prisonerNumber)
+    processAlertDeletedOrInactivated(notificationDto, NotificationEventType.PRISONER_ALERT_DELETED_EVENT, UnFlagEventReason.PRISONER_ALERT_DELETED)
+  }
+
   private fun processAlertUpserted(notificationDto: PrisonerAlertUpsertedNotificationDto, notificationEventType: NotificationEventType) {
     val affectedVisits = visitService.getFutureBookedVisits(notificationDto.prisonerNumber)
     val notificationAttributes = hashMapOf(
@@ -231,6 +242,24 @@ class VisitNotificationEventService(
     val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, notificationEventType, notificationAttributes)
     processVisitsWithNotifications(processVisitNotificationDto)
   }
+
+  private fun processAlertDeletedOrInactivated(notificationDto: PrisonerAlertUpsertedNotificationDto, notificationEventType: NotificationEventType, unFlagEventReason: UnFlagEventReason) {
+      val currentAlertUuidNotifications = visitNotificationEventRepository.getEventsByAlertUuid(
+        prisonerNumber = notificationDto.prisonerNumber,
+        alertUuid = notificationDto.alertUuid,
+        notificationEventTypes = listOf(
+          NotificationEventType.PRISONER_ALERT_ADDED_EVENT.name,
+          NotificationEventType.PRISONER_ALERT_UPDATED_EVENT.name,
+        )
+      )
+
+      deleteNotificationsThatAreNoLongerValid(
+        currentAlertUuidNotifications,
+        notificationEventType,
+        unFlagEventReason,
+      )
+  }
+
 
   private fun processAlertsRemoved(notificationDto: PrisonerAlertCreatedUpdatedNotificationDto) {
     LOG.info("Entered handlePrisonerAlertCreatedUpdated processAlertsRemoved")
