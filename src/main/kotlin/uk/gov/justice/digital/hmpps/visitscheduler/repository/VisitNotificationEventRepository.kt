@@ -52,8 +52,6 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
     notificationEvent: NotificationEventType,
   ): List<VisitNotificationEvent>
 
-
-
   @Query(
     "SELECT vne.* FROM visit_notification_event vne " +
       " JOIN visit v on v.id  = vne.visit_id  " +

@@ -31,7 +31,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.CourtVi
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NotificationCountDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertCreatedUpdatedNotificationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertUpsertedNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerContactRestrictionUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
@@ -284,7 +284,7 @@ class VisitNotificationController(
   )
   fun notifyVSiPThatPrisonerAlertAdded(
     @RequestBody @Valid
-    dto: PrisonerAlertUpsertedNotificationDto,
+    dto: PrisonerAlertNotificationDto,
   ): ResponseEntity<HttpStatus> {
     LOG.debug("Entered notifyVSiPThatPrisonerAlertAdded {}", dto)
     visitNotificationEventService.handlePrisonerAlertAddedNotification(dto)
@@ -320,13 +320,12 @@ class VisitNotificationController(
   )
   fun notifyVSiPThatPrisonerAlertUpdated(
     @RequestBody @Valid
-    dto: PrisonerAlertUpsertedNotificationDto,
+    dto: PrisonerAlertNotificationDto,
   ): ResponseEntity<HttpStatus> {
     LOG.debug("Entered notifyVSiPThatPrisonerAlertUpdated {}", dto)
     visitNotificationEventService.handlePrisonerAlertUpdatedNotification(dto)
     return ResponseEntity(HttpStatus.OK)
   }
-
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @PostMapping(VISIT_NOTIFICATION_PRISONER_ALERT_DELETED_PATH)
@@ -357,7 +356,7 @@ class VisitNotificationController(
   )
   fun notifyVSiPThatPrisonerAlertDeleted(
     @RequestBody @Valid
-    dto: PrisonerAlertUpsertedNotificationDto,
+    dto: PrisonerAlertNotificationDto,
   ): ResponseEntity<HttpStatus> {
     LOG.debug("Entered notifyVSiPThatPrisonerAlertDeleted {}", dto)
     visitNotificationEventService.handlePrisonerAlertDeletedNotification(dto)

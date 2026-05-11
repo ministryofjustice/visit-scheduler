@@ -13,25 +13,13 @@ import org.springframework.http.HttpHeaders
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_ALERT_ADDED_PATH
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.PRISONER_ALERT_ADDED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventAttributeType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertUpsertedNotificationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatPrisonerAlertHasBeenAdded
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatPrisonerAlertHasBeenDeleted
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEventAttribute
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import java.time.LocalDate
 
@@ -63,7 +51,7 @@ class PrisonerAlertDeletedNotificationControllerTest : NotificationTestBase() {
   fun `when prisoner has had an alert deleted then any associated future booked visits flagged for the same UUID are unflagged`() {
     // Given
     val alertUUID = "123456-12345678-1234-4567"
-    val notificationDto = PrisonerAlertUpsertedNotificationDto(
+    val notificationDto = PrisonerAlertNotificationDto(
       prisonerNumber = prisonerId,
       alertCode = "C1",
       alertUuid = alertUUID,
@@ -78,9 +66,18 @@ class PrisonerAlertDeletedNotificationControllerTest : NotificationTestBase() {
       sessionTemplate = sessionTemplate1,
     )
     eventAuditEntityHelper.create(visit1)
-
     val notificationEventAttributes = mutableMapOf(NotificationEventAttributeType.ALERT_UUID to alertUUID)
     visitNotificationEventHelper.create(visit = visit1, notificationEventType = NotificationEventType.PRISONER_ALERT_ADDED_EVENT, notificationAttributes = notificationEventAttributes)
+
+    // this visit has a PRISONER_ALERT_UPDATED_EVENT event for the same UUID
+    val visit2 = createApplicationAndVisit(
+      prisonerId = notificationDto.prisonerNumber,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate1,
+    )
+    eventAuditEntityHelper.create(visit2)
+    visitNotificationEventHelper.create(visit = visit2, notificationEventType = NotificationEventType.PRISONER_ALERT_UPDATED_EVENT, notificationAttributes = notificationEventAttributes)
 
     // When
     val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenDeleted(
@@ -96,26 +93,22 @@ class PrisonerAlertDeletedNotificationControllerTest : NotificationTestBase() {
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(0)
 
-    assertUnflaggedVisitEvent(listOf(visit1), NotificationEventType.PRISONER_ALERT_DELETED_EVENT)
-    verify(telemetryClient, times(1)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
+    assertUnflaggedVisitEvent(listOf(visit1, visit2), UnFlagEventReason.PRISONER_ALERT_DELETED, NotificationEventType.PRISONER_ALERT_DELETED_EVENT.reviewType)
+    verify(telemetryClient, times(2)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
   }
 
   @Test
   fun `when prisoner has had an alert deleted then associated future booked visits across prisons for the prisoner are flagged`() {
     // Given
-    val notificationDto = PrisonerAlertUpsertedNotificationDto(
+    val alertUUID = "123456-12345678-1234-4567"
+    val notificationDto = PrisonerAlertNotificationDto(
       prisonerNumber = prisonerId,
       alertCode = "C1",
-      alertUuid = "1234-5678-abcd",
+      alertUuid = alertUUID,
       description = "alert deleted",
     )
 
-    val expectedEventAttributes = mapOf(
-      NotificationEventAttributeType.ALERT_CODE to notificationDto.alertCode,
-      NotificationEventAttributeType.ALERT_UUID to notificationDto.alertUuid,
-    )
-
-    // this visit should be flagged - future booked
+    // this visit has a PRISONER_ALERT_ADDED_EVENT event for the same UUID - in prison1
     val visit1 = createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().plusDays(1),
@@ -123,18 +116,31 @@ class PrisonerAlertDeletedNotificationControllerTest : NotificationTestBase() {
       sessionTemplate = sessionTemplate1,
     )
     eventAuditEntityHelper.create(visit1)
+    val notificationEventAttributes = mutableMapOf(NotificationEventAttributeType.ALERT_UUID to alertUUID)
+    visitNotificationEventHelper.create(visit = visit1, notificationEventType = NotificationEventType.PRISONER_ALERT_ADDED_EVENT, notificationAttributes = notificationEventAttributes)
 
-    // this visit should be flagged - future booked different prison
+    // this visit has a PRISONER_ALERT_UPDATED_EVENT event for the same UUID - in prison2
     val visit2 = createApplicationAndVisit(
+      prisonerId = notificationDto.prisonerNumber,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate1,
+    )
+    eventAuditEntityHelper.create(visit2)
+    visitNotificationEventHelper.create(visit = visit2, notificationEventType = NotificationEventType.PRISONER_ALERT_UPDATED_EVENT, notificationAttributes = notificationEventAttributes)
+
+    // this visit has a PRISONER_ALERT_ADDED_EVENT event for the same UUID - in prison2
+    val visit3 = createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
       sessionTemplate = sessionTemplate2,
     )
-    eventAuditEntityHelper.create(visit2)
+    eventAuditEntityHelper.create(visit1)
+    visitNotificationEventHelper.create(visit = visit3, notificationEventType = NotificationEventType.PRISONER_ALERT_ADDED_EVENT, notificationAttributes = notificationEventAttributes)
 
     // When
-    val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenAdded(
+    val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenDeleted(
       webTestClient,
       roleVisitSchedulerHttpHeaders,
       notificationDto,
@@ -142,77 +148,39 @@ class PrisonerAlertDeletedNotificationControllerTest : NotificationTestBase() {
 
     // Then
     responseSpec.expectStatus().isOk
-    verify(visitNotificationEventRepository, times(2)).saveAndFlush(any<VisitNotificationEvent>())
+    verify(visitNotificationEventRepository, times(1)).deleteAll(any())
 
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
-    assertThat(visitNotifications).hasSize(2)
-    assertNotificationEvent(visitNotifications[0], visit1, expectedEventAttributes)
-    assertNotificationEvent(visitNotifications[1], visit2, expectedEventAttributes)
+    assertThat(visitNotifications).hasSize(0)
 
-    val auditEvents = testEventAuditRepository.getAuditByType(PRISONER_ALERT_ADDED_EVENT)
-    assertThat(auditEvents).hasSize(2)
-    assertAuditEvent(auditEvents[0], visit = visit1, eventType = PRISONER_ALERT_ADDED_EVENT)
-    assertAuditEvent(auditEvents[1], visit = visit2, eventType = PRISONER_ALERT_ADDED_EVENT)
-
-    assertFlaggedVisitEvent(listOf(visit1, visit2), NotificationEventType.PRISONER_ALERT_ADDED_EVENT)
-    verify(telemetryClient, times(2)).trackEvent(eq("flagged-visit-event"), any(), isNull())
+    assertUnflaggedVisitEvent(listOf(visit1, visit2, visit3), UnFlagEventReason.PRISONER_ALERT_DELETED, NotificationEventType.PRISONER_ALERT_DELETED_EVENT.reviewType)
+    verify(telemetryClient, times(3)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
   }
 
   @Test
   fun `when prisoner has had an alert deleted but no future booked visits then no visits are flagged`() {
     // Given
-    val notificationDto = PrisonerAlertUpsertedNotificationDto(
+    val alertUUID = "123456-12345678-1234-4567"
+    val notificationDto = PrisonerAlertNotificationDto(
       prisonerNumber = prisonerId,
       alertCode = "C1",
-      alertUuid = "1234-5678-abcd",
+      alertUuid = alertUUID,
       description = "alert deleted",
     )
 
-    // this visit should not be flagged as it's in the past
-    createApplicationAndVisit(
+    // this visit has a PRISONER_ALERT_ADDED_EVENT event for the same UUID - in the past
+    val visit1 = createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().minusDays(1),
       visitStatus = BOOKED,
       sessionTemplate = sessionTemplate1,
     )
-
-    // this visit should not be flagged as it's in the past and is CANCELLED
-    createApplicationAndVisit(
-      prisonerId = notificationDto.prisonerNumber,
-      slotDate = LocalDate.now().minusDays(1),
-      visitStatus = CANCELLED,
-      visitSubStatus = VisitSubStatus.CANCELLED,
-      sessionTemplate = sessionTemplate1,
-    )
-
-    // this visit should not be flagged as it's not for the same prisoner
-    createApplicationAndVisit(
-      prisonerId = "ANOTHERPRISONER",
-      slotDate = LocalDate.now().plusDays(1),
-      visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate1,
-    )
-
-    // canceled visit - should not be flagged
-    createApplicationAndVisit(
-      prisonerId = notificationDto.prisonerNumber,
-      slotDate = LocalDate.now().plusDays(1),
-      visitStatus = CANCELLED,
-      visitSubStatus = VisitSubStatus.CANCELLED,
-      sessionTemplate = sessionTemplate1,
-    )
-
-    // canceled visit - should not be flagged
-    createApplicationAndVisit(
-      prisonerId = notificationDto.prisonerNumber,
-      slotDate = LocalDate.now().plusDays(1),
-      visitStatus = CANCELLED,
-      visitSubStatus = VisitSubStatus.CANCELLED,
-      sessionTemplate = sessionTemplate1,
-    )
+    eventAuditEntityHelper.create(visit1)
+    val notificationEventAttributes = mutableMapOf(NotificationEventAttributeType.ALERT_UUID to alertUUID)
+    visitNotificationEventHelper.create(visit = visit1, notificationEventType = NotificationEventType.PRISONER_ALERT_ADDED_EVENT, notificationAttributes = notificationEventAttributes)
 
     // When
-    val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenAdded(
+    val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenDeleted(
       webTestClient,
       roleVisitSchedulerHttpHeaders,
       notificationDto,
@@ -220,45 +188,52 @@ class PrisonerAlertDeletedNotificationControllerTest : NotificationTestBase() {
 
     // Then
     responseSpec.expectStatus().isOk
-    verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
+    verify(visitNotificationEventRepository, times(1)).deleteAll(any())
 
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
-    assertThat(visitNotifications).hasSize(0)
+    assertThat(visitNotifications).hasSize(1)
 
-    val auditEvents = testEventAuditRepository.getAuditByType(PRISONER_ALERT_ADDED_EVENT)
-    assertThat(auditEvents).hasSize(0)
-    verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), any(), isNull())
+    verify(telemetryClient, times(0)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
   }
 
-  private fun assertNotificationEvent(
-    visitNotificationEvent: VisitNotificationEvent,
-    visit: Visit,
-    expectedEventAttributes: Map<NotificationEventAttributeType, String>,
-  ) {
-    assertThat(visitNotificationEvent.bookingReference).isEqualTo(visit.reference)
-    val eventAttributes = visitNotificationEvent.visitNotificationEventAttributes.associate { it.attributeName to it.attributeValue }
-    assertThat(visitNotificationEvent.visitNotificationEventAttributes).hasSize(2)
-    assertThat(eventAttributes).containsExactlyInAnyOrderEntriesOf(expectedEventAttributes)
-  }
+  @Test
+  fun `when prisoner has had an alert deleted but no future booked visits with same alert UUID then no visits are flagged`() {
+    // Given
+    val alertUUID = "123456-12345678-1234-4567"
+    val existingNotificationAlertUuid = "333333-12345678-1234-4568"
 
-  private fun assertAuditEvent(
-    eventAudit: EventAudit,
-    userName: String? = null,
-    bookerReference: String? = null,
-    userType: UserType = SYSTEM,
-    visit: Visit,
-    eventType: EventAuditType,
-    applicationMethodType: ApplicationMethodType = NOT_KNOWN,
-  ) {
-    with(eventAudit) {
-      assertThat(actionedBy.userName).isEqualTo(userName)
-      assertThat(actionedBy.bookerReference).isEqualTo(bookerReference)
-      assertThat(actionedBy.userType).isEqualTo(userType)
-      assertThat(bookingReference).isEqualTo(visit.reference)
-      assertThat(applicationReference).isEqualTo(visit.getLastApplication()?.reference)
-      assertThat(sessionTemplateReference).isEqualTo(visit.sessionSlot.sessionTemplateReference)
-      assertThat(type).isEqualTo(eventType)
-      assertThat(applicationMethodType).isEqualTo(applicationMethodType)
-    }
+    val notificationDto = PrisonerAlertNotificationDto(
+      prisonerNumber = prisonerId,
+      alertCode = "C1",
+      alertUuid = alertUUID,
+      description = "alert deleted",
+    )
+
+    // this visit has a PRISONER_ALERT_ADDED_EVENT event for a different UUID
+    val visit1 = createApplicationAndVisit(
+      prisonerId = notificationDto.prisonerNumber,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate1,
+    )
+    eventAuditEntityHelper.create(visit1)
+    val notificationEventAttributes = mutableMapOf(NotificationEventAttributeType.ALERT_UUID to existingNotificationAlertUuid)
+    visitNotificationEventHelper.create(visit = visit1, notificationEventType = NotificationEventType.PRISONER_ALERT_ADDED_EVENT, notificationAttributes = notificationEventAttributes)
+
+    // When
+    val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenDeleted(
+      webTestClient,
+      roleVisitSchedulerHttpHeaders,
+      notificationDto,
+    )
+
+    // Then
+    responseSpec.expectStatus().isOk
+    verify(visitNotificationEventRepository, times(1)).deleteAll(any())
+
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
+    assertThat(visitNotifications).hasSize(1)
+
+    verify(telemetryClient, times(0)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
   }
 }

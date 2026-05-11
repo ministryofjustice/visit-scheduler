@@ -97,7 +97,7 @@ abstract class NotificationTestBase : IntegrationTestBase() {
     }
   }
 
-  fun assertUnflaggedVisitEvent(visits: List<Visit>, reason: UnFlagEventReason, types: List<NotificationEventType>) {
+  fun assertUnflaggedVisitEvent(visits: List<Visit>, reason: UnFlagEventReason, reviewTypes: String) {
     verify(telemetryClient, times(visits.size)).trackEvent(eq("unflagged-visit-event"), mapCapture.capture(), isNull())
 
     val allData = mapCapture.allValues
@@ -106,7 +106,7 @@ abstract class NotificationTestBase : IntegrationTestBase() {
       val data = allData[index]
       assertThat(data["reference"]).isEqualTo(visit.reference)
       assertThat(data["reason"]).isEqualTo(reason.desc)
-      //assertThat(data["reviewTypes"]).containsAll(NotificationEventType)
+      assertThat(data["reviewTypes"]).isEqualTo(reviewTypes)
       assertThat(data["text"]).isNull()
     }
   }

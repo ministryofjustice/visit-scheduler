@@ -24,7 +24,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertUpsertedNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatPrisonerAlertHasBeenAdded
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
@@ -60,7 +60,7 @@ class PrisonerAlertAddedNotificationControllerTest : NotificationTestBase() {
   @Test
   fun `when prisoner has had an alert added then only associated future booked visits for the prisoner are flagged`() {
     // Given
-    val notificationDto = PrisonerAlertUpsertedNotificationDto(
+    val notificationDto = PrisonerAlertNotificationDto(
       prisonerNumber = prisonerId,
       alertCode = "C1",
       alertUuid = "1234-5678-abcd",
@@ -150,7 +150,7 @@ class PrisonerAlertAddedNotificationControllerTest : NotificationTestBase() {
   @Test
   fun `when prisoner has had an alert added then associated future booked visits across prisons for the prisoner are flagged`() {
     // Given
-    val notificationDto = PrisonerAlertUpsertedNotificationDto(
+    val notificationDto = PrisonerAlertNotificationDto(
       prisonerNumber = prisonerId,
       alertCode = "C1",
       alertUuid = "1234-5678-abcd",
@@ -208,7 +208,7 @@ class PrisonerAlertAddedNotificationControllerTest : NotificationTestBase() {
   @Test
   fun `when prisoner has had an alert added but no future booked visits then no visits are flagged`() {
     // Given
-    val notificationDto = PrisonerAlertUpsertedNotificationDto(
+    val notificationDto = PrisonerAlertNotificationDto(
       prisonerNumber = prisonerId,
       alertCode = "C1",
       alertUuid = "1234-5678-abcd",

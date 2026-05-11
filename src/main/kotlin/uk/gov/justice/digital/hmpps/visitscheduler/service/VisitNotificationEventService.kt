@@ -41,7 +41,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.CourtVi
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonDateBlockedDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertCreatedUpdatedNotificationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertUpsertedNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerContactRestrictionUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
@@ -190,19 +190,19 @@ class VisitNotificationEventService(
   }
 
   @Transactional
-  fun handlePrisonerAlertAddedNotification(notificationDto: PrisonerAlertUpsertedNotificationDto) {
+  fun handlePrisonerAlertAddedNotification(notificationDto: PrisonerAlertNotificationDto) {
     LOG.info("handlePrisonerAlertAddedNotification notification received : {}", notificationDto)
     processAlertAdded(notificationDto)
   }
 
   @Transactional
-  fun handlePrisonerAlertUpdatedNotification(notificationDto: PrisonerAlertUpsertedNotificationDto) {
+  fun handlePrisonerAlertUpdatedNotification(notificationDto: PrisonerAlertNotificationDto) {
     LOG.info("handlePrisonerAlertUpdatedNotification notification received : {}", notificationDto)
     processAlertUpdated(notificationDto)
   }
 
   @Transactional
-  fun handlePrisonerAlertDeletedNotification(notificationDto: PrisonerAlertUpsertedNotificationDto) {
+  fun handlePrisonerAlertDeletedNotification(notificationDto: PrisonerAlertNotificationDto) {
     LOG.info("handlePrisonerAlertDeletedNotification notification received : {}", notificationDto)
     processAlertDeleted(notificationDto)
   }
@@ -217,22 +217,22 @@ class VisitNotificationEventService(
     processVisitsWithNotifications(processVisitNotificationDto)
   }
 
-  private fun processAlertAdded(notificationDto: PrisonerAlertUpsertedNotificationDto) {
+  private fun processAlertAdded(notificationDto: PrisonerAlertNotificationDto) {
     LOG.debug("Entered processAlertAdded, alert code {}, prisoner number - {}", notificationDto.alertCode, notificationDto.prisonerNumber)
     processAlertUpserted(notificationDto, NotificationEventType.PRISONER_ALERT_ADDED_EVENT)
   }
 
-  private fun processAlertUpdated(notificationDto: PrisonerAlertUpsertedNotificationDto) {
+  private fun processAlertUpdated(notificationDto: PrisonerAlertNotificationDto) {
     LOG.debug("Entered processAlertUpdated, alert code {}, prisoner number - {}", notificationDto.alertCode, notificationDto.prisonerNumber)
     processAlertUpserted(notificationDto, NotificationEventType.PRISONER_ALERT_UPDATED_EVENT)
   }
 
-  private fun processAlertDeleted(notificationDto: PrisonerAlertUpsertedNotificationDto) {
+  private fun processAlertDeleted(notificationDto: PrisonerAlertNotificationDto) {
     LOG.debug("Entered processAlertDeleted, alert code {}, prisoner number - {}", notificationDto.alertCode, notificationDto.prisonerNumber)
-    processAlertDeletedOrInactivated(notificationDto, NotificationEventType.PRISONER_ALERT_DELETED_EVENT, UnFlagEventReason.PRISONER_ALERT_DELETED)
+    processAlertDeleted(notificationDto, NotificationEventType.PRISONER_ALERT_DELETED_EVENT, UnFlagEventReason.PRISONER_ALERT_DELETED)
   }
 
-  private fun processAlertUpserted(notificationDto: PrisonerAlertUpsertedNotificationDto, notificationEventType: NotificationEventType) {
+  private fun processAlertUpserted(notificationDto: PrisonerAlertNotificationDto, notificationEventType: NotificationEventType) {
     val affectedVisits = visitService.getFutureBookedVisits(notificationDto.prisonerNumber)
     val notificationAttributes = hashMapOf(
       NotificationEventAttributeType.ALERT_CODE to notificationDto.alertCode,
@@ -243,23 +243,22 @@ class VisitNotificationEventService(
     processVisitsWithNotifications(processVisitNotificationDto)
   }
 
-  private fun processAlertDeletedOrInactivated(notificationDto: PrisonerAlertUpsertedNotificationDto, notificationEventType: NotificationEventType, unFlagEventReason: UnFlagEventReason) {
-      val currentAlertUuidNotifications = visitNotificationEventRepository.getEventsByAlertUuid(
-        prisonerNumber = notificationDto.prisonerNumber,
-        alertUuid = notificationDto.alertUuid,
-        notificationEventTypes = listOf(
-          NotificationEventType.PRISONER_ALERT_ADDED_EVENT.name,
-          NotificationEventType.PRISONER_ALERT_UPDATED_EVENT.name,
-        )
-      )
+  private fun processAlertDeleted(notificationDto: PrisonerAlertNotificationDto, notificationEventType: NotificationEventType, unFlagEventReason: UnFlagEventReason) {
+    val currentAlertUuidNotifications = visitNotificationEventRepository.getEventsByAlertUuid(
+      prisonerNumber = notificationDto.prisonerNumber,
+      alertUuid = notificationDto.alertUuid,
+      notificationEventTypes = listOf(
+        NotificationEventType.PRISONER_ALERT_ADDED_EVENT.name,
+        NotificationEventType.PRISONER_ALERT_UPDATED_EVENT.name,
+      ),
+    )
 
-      deleteNotificationsThatAreNoLongerValid(
-        currentAlertUuidNotifications,
-        notificationEventType,
-        unFlagEventReason,
-      )
+    deleteNotificationsThatAreNoLongerValid(
+      currentAlertUuidNotifications,
+      notificationEventType,
+      unFlagEventReason,
+    )
   }
-
 
   private fun processAlertsRemoved(notificationDto: PrisonerAlertCreatedUpdatedNotificationDto) {
     LOG.info("Entered handlePrisonerAlertCreatedUpdated processAlertsRemoved")

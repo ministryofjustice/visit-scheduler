@@ -96,7 +96,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.Contact
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.CourtVideoAppointmentNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertCreatedUpdatedNotificationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertUpsertedNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerContactRestrictionUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
@@ -711,7 +711,7 @@ fun callNotifyVSiPThatPrisonerAlertHasBeenCreatedOrUpdated(
 fun callNotifyVSiPThatPrisonerAlertHasBeenAdded(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
-  dto: PrisonerAlertUpsertedNotificationDto? = null,
+  dto: PrisonerAlertNotificationDto? = null,
 ): ResponseSpec = callNotifyVSiPOfAEvent(
   webTestClient,
   authHttpHeaders,
@@ -722,7 +722,7 @@ fun callNotifyVSiPThatPrisonerAlertHasBeenAdded(
 fun callNotifyVSiPThatPrisonerAlertHasBeenUpdated(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
-  dto: PrisonerAlertUpsertedNotificationDto? = null,
+  dto: PrisonerAlertNotificationDto? = null,
 ): ResponseSpec = callNotifyVSiPOfAEvent(
   webTestClient,
   authHttpHeaders,
@@ -733,7 +733,7 @@ fun callNotifyVSiPThatPrisonerAlertHasBeenUpdated(
 fun callNotifyVSiPThatPrisonerAlertHasBeenDeleted(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
-  dto: PrisonerAlertUpsertedNotificationDto? = null,
+  dto: PrisonerAlertNotificationDto? = null,
 ): ResponseSpec = callNotifyVSiPOfAEvent(
   webTestClient,
   authHttpHeaders,
