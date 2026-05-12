@@ -42,6 +42,12 @@ activities:
     url: https://activities-api-dev.prison.service.justice.gov.uk
     timeout: 10s
 
+alerts:
+  api:
+    url: https://alerts-api-dev.prison.service.justice.gov.uk
+    timeout: 10s
+
+
 policy:
   session:
     booking-notice-period:

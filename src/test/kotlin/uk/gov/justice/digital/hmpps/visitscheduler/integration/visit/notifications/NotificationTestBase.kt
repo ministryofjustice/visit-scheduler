@@ -12,6 +12,7 @@ import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
+import uk.gov.justice.digital.hmpps.visitscheduler.client.AlertsApiClient
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NotificationCountDto
@@ -46,6 +47,9 @@ abstract class NotificationTestBase : IntegrationTestBase() {
 
   @MockitoSpyBean
   lateinit var visitNotificationEventRepository: VisitNotificationEventRepository
+
+  @MockitoSpyBean
+  lateinit var alertsApiClientSpy: AlertsApiClient
 
   @Captor
   lateinit var mapCapture: ArgumentCaptor<Map<String, String>>

@@ -10,9 +10,11 @@ import org.mockito.kotlin.isNull
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_ALERT_UPDATED_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.alerts.AlertDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
@@ -124,6 +126,8 @@ class PrisonerAlertUpdatedNotificationControllerTest : NotificationTestBase() {
       sessionTemplate = sessionTemplate1,
     )
 
+    alertsApiMockServer.stubGetAlertDetails(notificationDto.alertUuid, AlertDto(notificationDto.alertUuid, true))
+
     // When
     val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenUpdated(
       webTestClient,
@@ -145,6 +149,7 @@ class PrisonerAlertUpdatedNotificationControllerTest : NotificationTestBase() {
 
     assertFlaggedVisitEvent(listOf(visit1), NotificationEventType.PRISONER_ALERT_UPDATED_EVENT)
     verify(telemetryClient, times(1)).trackEvent(eq("flagged-visit-event"), any(), isNull())
+    verify(alertsApiClientSpy, times(1)).getAlertByUuid(notificationDto.alertUuid)
   }
 
   @Test
@@ -203,6 +208,7 @@ class PrisonerAlertUpdatedNotificationControllerTest : NotificationTestBase() {
 
     assertFlaggedVisitEvent(listOf(visit1, visit2), NotificationEventType.PRISONER_ALERT_UPDATED_EVENT)
     verify(telemetryClient, times(2)).trackEvent(eq("flagged-visit-event"), any(), isNull())
+    verify(alertsApiClientSpy, times(1)).getAlertByUuid(notificationDto.alertUuid)
   }
 
   @Test
@@ -275,6 +281,151 @@ class PrisonerAlertUpdatedNotificationControllerTest : NotificationTestBase() {
     val auditEvents = testEventAuditRepository.getAuditByType(PRISONER_ALERT_UPDATED_EVENT)
     assertThat(auditEvents).hasSize(0)
     verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), any(), isNull())
+    verify(alertsApiClientSpy, times(0)).getAlertByUuid(notificationDto.alertUuid)
+  }
+
+  @Test
+  fun `when prisoner has had an alert updated but alert is inactive then no future booked visits for the prisoner are flagged`() {
+    // Given
+    val notificationDto = PrisonerAlertNotificationDto(
+      prisonerNumber = prisonerId,
+      alertCode = "C1",
+      alertUuid = "1234-5678-abcd",
+      description = "alert updated",
+    )
+
+    // future booked visit
+    val visit1 = createApplicationAndVisit(
+      prisonerId = notificationDto.prisonerNumber,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate1,
+    )
+    eventAuditEntityHelper.create(visit1)
+
+    // the alert is inactive - so no visits should be flagged
+    alertsApiMockServer.stubGetAlertDetails(notificationDto.alertUuid, AlertDto(notificationDto.alertUuid, false))
+
+    // When
+    val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenUpdated(
+      webTestClient,
+      roleVisitSchedulerHttpHeaders,
+      notificationDto,
+    )
+
+    // Then
+    responseSpec.expectStatus().isOk
+    verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
+
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
+    assertThat(visitNotifications).hasSize(0)
+
+    val auditEvents = testEventAuditRepository.getAuditByType(PRISONER_ALERT_UPDATED_EVENT)
+    assertThat(auditEvents).hasSize(0)
+    verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), any(), isNull())
+    verify(alertsApiClientSpy, times(1)).getAlertByUuid(notificationDto.alertUuid)
+  }
+
+  @Test
+  fun `when prisoner has had an alert updated but alerts-api returns a NOT_FOUND then too any future booked visits for the prisoner are flagged`() {
+    // Given
+    val notificationDto = PrisonerAlertNotificationDto(
+      prisonerNumber = prisonerId,
+      alertCode = "C1",
+      alertUuid = "1234-5678-abcd",
+      description = "alert updated",
+    )
+
+    val expectedEventAttributes = mapOf(
+      NotificationEventAttributeType.ALERT_CODE to notificationDto.alertCode,
+      NotificationEventAttributeType.ALERT_UUID to notificationDto.alertUuid,
+    )
+
+    // future booked visit
+    val visit1 = createApplicationAndVisit(
+      prisonerId = notificationDto.prisonerNumber,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate1,
+    )
+    eventAuditEntityHelper.create(visit1)
+
+    // the alert is inactive - so no visits should be flagged
+    alertsApiMockServer.stubGetAlertDetails(notificationDto.alertUuid, null, HttpStatus.NOT_FOUND)
+
+    // When
+    val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenUpdated(
+      webTestClient,
+      roleVisitSchedulerHttpHeaders,
+      notificationDto,
+    )
+
+    // Then
+    responseSpec.expectStatus().isOk
+    verify(visitNotificationEventRepository, times(1)).saveAndFlush(any<VisitNotificationEvent>())
+
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
+    assertThat(visitNotifications).hasSize(1)
+    assertNotificationEvent(visitNotifications[0], visit1, expectedEventAttributes)
+
+    val auditEvents = testEventAuditRepository.getAuditByType(PRISONER_ALERT_UPDATED_EVENT)
+    assertThat(auditEvents).hasSize(1)
+    assertAuditEvent(auditEvents[0], visit = visit1, eventType = PRISONER_ALERT_UPDATED_EVENT)
+
+    assertFlaggedVisitEvent(listOf(visit1), NotificationEventType.PRISONER_ALERT_UPDATED_EVENT)
+    verify(telemetryClient, times(1)).trackEvent(eq("flagged-visit-event"), any(), isNull())
+    verify(alertsApiClientSpy, times(1)).getAlertByUuid(notificationDto.alertUuid)
+  }
+
+  @Test
+  fun `when prisoner has had an alert updated but alerts-api returns an INTERNAL_SERVER_ERROR then too future booked visits for the prisoner are flagged`() {
+    // Given
+    val notificationDto = PrisonerAlertNotificationDto(
+      prisonerNumber = prisonerId,
+      alertCode = "C1",
+      alertUuid = "1234-5678-abcd",
+      description = "alert updated",
+    )
+
+    val expectedEventAttributes = mapOf(
+      NotificationEventAttributeType.ALERT_CODE to notificationDto.alertCode,
+      NotificationEventAttributeType.ALERT_UUID to notificationDto.alertUuid,
+    )
+
+    // future booked visit
+    val visit1 = createApplicationAndVisit(
+      prisonerId = notificationDto.prisonerNumber,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate1,
+    )
+    eventAuditEntityHelper.create(visit1)
+
+    // the alert is inactive - so no visits should be flagged
+    alertsApiMockServer.stubGetAlertDetails(notificationDto.alertUuid, null, HttpStatus.INTERNAL_SERVER_ERROR)
+
+    // When
+    val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenUpdated(
+      webTestClient,
+      roleVisitSchedulerHttpHeaders,
+      notificationDto,
+    )
+
+    // Then
+    responseSpec.expectStatus().isOk
+    verify(visitNotificationEventRepository, times(1)).saveAndFlush(any<VisitNotificationEvent>())
+
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
+    assertThat(visitNotifications).hasSize(1)
+    assertNotificationEvent(visitNotifications[0], visit1, expectedEventAttributes)
+
+    val auditEvents = testEventAuditRepository.getAuditByType(PRISONER_ALERT_UPDATED_EVENT)
+    assertThat(auditEvents).hasSize(1)
+    assertAuditEvent(auditEvents[0], visit = visit1, eventType = PRISONER_ALERT_UPDATED_EVENT)
+
+    assertFlaggedVisitEvent(listOf(visit1), NotificationEventType.PRISONER_ALERT_UPDATED_EVENT)
+    verify(telemetryClient, times(1)).trackEvent(eq("flagged-visit-event"), any(), isNull())
+    verify(alertsApiClientSpy, times(1)).getAlertByUuid(notificationDto.alertUuid)
   }
 
   private fun assertNotificationEvent(
