@@ -350,7 +350,7 @@ class PrisonerAlertUpdatedNotificationControllerTest : NotificationTestBase() {
     )
     eventAuditEntityHelper.create(visit1)
 
-    // the alert is inactive - so no visits should be flagged
+    // the alert API returns a NOT_FOUND - still visits should be flagged
     alertsApiMockServer.stubGetAlertDetails(notificationDto.alertUuid, null, HttpStatus.NOT_FOUND)
 
     // When
@@ -378,7 +378,7 @@ class PrisonerAlertUpdatedNotificationControllerTest : NotificationTestBase() {
   }
 
   @Test
-  fun `when prisoner has had an alert updated but alerts-api returns an INTERNAL_SERVER_ERROR then too future booked visits for the prisoner are flagged`() {
+  fun `when prisoner has had an alert updated but alerts-api returns an INTERNAL_SERVER_ERROR then too any future booked visits for the prisoner are flagged`() {
     // Given
     val notificationDto = PrisonerAlertNotificationDto(
       prisonerNumber = prisonerId,
@@ -401,7 +401,7 @@ class PrisonerAlertUpdatedNotificationControllerTest : NotificationTestBase() {
     )
     eventAuditEntityHelper.create(visit1)
 
-    // the alert is inactive - so no visits should be flagged
+    // the alert API returns an INTERNAL_SERVER_ERROR - still visits should be flagged
     alertsApiMockServer.stubGetAlertDetails(notificationDto.alertUuid, null, HttpStatus.INTERNAL_SERVER_ERROR)
 
     // When

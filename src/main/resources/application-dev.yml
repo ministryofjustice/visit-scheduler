@@ -44,7 +44,7 @@ activities:
 
 alerts:
   api:
-    url: https://alerts-api-dev.prison.service.justice.gov.uk
+    url: https://alerts-api-dev.hmpps.service.justice.gov.uk
     timeout: 10s
 
 policy:

@@ -28,7 +28,7 @@ class AlertsApiClient(
     .bodyToMono(TYPE_FOR_ALERT_INSTANCE)
     .onErrorResume { e ->
       if (!isNotFoundError(e)) {
-        logger.info("getAlertByUuid Failed get request for alert Uuid $alertUuid")
+        logger.error("getAlertByUuid Failed get request for alert Uuid $alertUuid with error: ${e.message}")
         return@onErrorResume Mono.justOrEmpty(null)
       } else {
         logger.info("getAlertByUuid Not Found get request for alert Uuid $alertUuid")
