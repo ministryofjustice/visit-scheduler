@@ -25,7 +25,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_IGNORE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_NON_ASSOCIATION_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_ALERTS_UPDATED_PATH
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_ALERT_ADDED_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_ALERT_CREATED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_ALERT_DELETED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_ALERT_UPDATED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_CONTACT_RESTRICTION_UPSERTED_PATH
@@ -708,14 +708,14 @@ fun callNotifyVSiPThatPrisonerAlertHasBeenCreatedOrUpdated(
   dto,
 )
 
-fun callNotifyVSiPThatPrisonerAlertHasBeenAdded(
+fun callNotifyVSiPThatPrisonerAlertHasBeenCreated(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
   dto: PrisonerAlertNotificationDto? = null,
 ): ResponseSpec = callNotifyVSiPOfAEvent(
   webTestClient,
   authHttpHeaders,
-  VISIT_NOTIFICATION_PRISONER_ALERT_ADDED_PATH,
+  VISIT_NOTIFICATION_PRISONER_ALERT_CREATED_PATH,
   dto,
 )
 

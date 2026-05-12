@@ -58,7 +58,7 @@ class PrisonerAlertDeletedNotificationControllerTest : NotificationTestBase() {
       description = "alert deleted",
     )
 
-    // this visit has a PRISONER_ALERT_ADDED_EVENT event for the same UUID
+    // this visit has a PRISONER_ALERT_CREATED_EVENT event for the same UUID
     val visit1 = createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().plusDays(1),
@@ -67,7 +67,7 @@ class PrisonerAlertDeletedNotificationControllerTest : NotificationTestBase() {
     )
     eventAuditEntityHelper.create(visit1)
     val notificationEventAttributes = mutableMapOf(NotificationEventAttributeType.ALERT_UUID to alertUUID)
-    visitNotificationEventHelper.create(visit = visit1, notificationEventType = NotificationEventType.PRISONER_ALERT_ADDED_EVENT, notificationAttributes = notificationEventAttributes)
+    visitNotificationEventHelper.create(visit = visit1, notificationEventType = NotificationEventType.PRISONER_ALERT_CREATED_EVENT, notificationAttributes = notificationEventAttributes)
 
     // this visit has a PRISONER_ALERT_UPDATED_EVENT event for the same UUID
     val visit2 = createApplicationAndVisit(
@@ -93,7 +93,7 @@ class PrisonerAlertDeletedNotificationControllerTest : NotificationTestBase() {
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(0)
 
-    assertUnflaggedVisitEvent(listOf(visit1, visit2), UnFlagEventReason.PRISONER_ALERT_DELETED, "${NotificationEventType.PRISONER_ALERT_ADDED_EVENT.reviewType},${NotificationEventType.PRISONER_ALERT_UPDATED_EVENT.reviewType}")
+    assertUnflaggedVisitEvent(listOf(visit1, visit2), UnFlagEventReason.PRISONER_ALERT_DELETED, "${NotificationEventType.PRISONER_ALERT_CREATED_EVENT.reviewType},${NotificationEventType.PRISONER_ALERT_UPDATED_EVENT.reviewType}")
     verify(telemetryClient, times(2)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
   }
 
@@ -108,7 +108,7 @@ class PrisonerAlertDeletedNotificationControllerTest : NotificationTestBase() {
       description = "alert deleted",
     )
 
-    // this visit has a PRISONER_ALERT_ADDED_EVENT event for the same UUID - in prison1
+    // this visit has a PRISONER_ALERT_CREATED_EVENT event for the same UUID - in prison1
     val visit1 = createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().plusDays(1),
@@ -117,7 +117,7 @@ class PrisonerAlertDeletedNotificationControllerTest : NotificationTestBase() {
     )
     eventAuditEntityHelper.create(visit1)
     val notificationEventAttributes = mutableMapOf(NotificationEventAttributeType.ALERT_UUID to alertUUID)
-    visitNotificationEventHelper.create(visit = visit1, notificationEventType = NotificationEventType.PRISONER_ALERT_ADDED_EVENT, notificationAttributes = notificationEventAttributes)
+    visitNotificationEventHelper.create(visit = visit1, notificationEventType = NotificationEventType.PRISONER_ALERT_CREATED_EVENT, notificationAttributes = notificationEventAttributes)
 
     // this visit has a PRISONER_ALERT_UPDATED_EVENT event for the same UUID - in prison2
     val visit2 = createApplicationAndVisit(
@@ -129,7 +129,7 @@ class PrisonerAlertDeletedNotificationControllerTest : NotificationTestBase() {
     eventAuditEntityHelper.create(visit2)
     visitNotificationEventHelper.create(visit = visit2, notificationEventType = NotificationEventType.PRISONER_ALERT_UPDATED_EVENT, notificationAttributes = notificationEventAttributes)
 
-    // this visit has a PRISONER_ALERT_ADDED_EVENT event for the same UUID - in prison2
+    // this visit has a PRISONER_ALERT_CREATED_EVENT event for the same UUID - in prison2
     val visit3 = createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().plusDays(1),
@@ -137,7 +137,7 @@ class PrisonerAlertDeletedNotificationControllerTest : NotificationTestBase() {
       sessionTemplate = sessionTemplate2,
     )
     eventAuditEntityHelper.create(visit3)
-    visitNotificationEventHelper.create(visit = visit3, notificationEventType = NotificationEventType.PRISONER_ALERT_ADDED_EVENT, notificationAttributes = notificationEventAttributes)
+    visitNotificationEventHelper.create(visit = visit3, notificationEventType = NotificationEventType.PRISONER_ALERT_CREATED_EVENT, notificationAttributes = notificationEventAttributes)
 
     // When
     val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenDeleted(
@@ -153,7 +153,7 @@ class PrisonerAlertDeletedNotificationControllerTest : NotificationTestBase() {
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(0)
 
-    assertUnflaggedVisitEvent(listOf(visit1, visit2, visit3), UnFlagEventReason.PRISONER_ALERT_DELETED, "${NotificationEventType.PRISONER_ALERT_ADDED_EVENT.reviewType},${NotificationEventType.PRISONER_ALERT_UPDATED_EVENT.reviewType}")
+    assertUnflaggedVisitEvent(listOf(visit1, visit2, visit3), UnFlagEventReason.PRISONER_ALERT_DELETED, "${NotificationEventType.PRISONER_ALERT_CREATED_EVENT.reviewType},${NotificationEventType.PRISONER_ALERT_UPDATED_EVENT.reviewType}")
     verify(telemetryClient, times(3)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
   }
 
@@ -168,7 +168,7 @@ class PrisonerAlertDeletedNotificationControllerTest : NotificationTestBase() {
       description = "alert deleted",
     )
 
-    // this visit has a PRISONER_ALERT_ADDED_EVENT event for the same UUID - in the past
+    // this visit has a PRISONER_ALERT_CREATED_EVENT event for the same UUID - in the past
     val visit1 = createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().minusDays(1),
@@ -177,7 +177,7 @@ class PrisonerAlertDeletedNotificationControllerTest : NotificationTestBase() {
     )
     eventAuditEntityHelper.create(visit1)
     val notificationEventAttributes = mutableMapOf(NotificationEventAttributeType.ALERT_UUID to alertUUID)
-    visitNotificationEventHelper.create(visit = visit1, notificationEventType = NotificationEventType.PRISONER_ALERT_ADDED_EVENT, notificationAttributes = notificationEventAttributes)
+    visitNotificationEventHelper.create(visit = visit1, notificationEventType = NotificationEventType.PRISONER_ALERT_CREATED_EVENT, notificationAttributes = notificationEventAttributes)
 
     // When
     val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenDeleted(
@@ -209,7 +209,7 @@ class PrisonerAlertDeletedNotificationControllerTest : NotificationTestBase() {
       description = "alert deleted",
     )
 
-    // this visit has a PRISONER_ALERT_ADDED_EVENT event for a different UUID
+    // this visit has a PRISONER_ALERT_CREATED_EVENT event for a different UUID
     val visit1 = createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().plusDays(1),
@@ -218,7 +218,7 @@ class PrisonerAlertDeletedNotificationControllerTest : NotificationTestBase() {
     )
     eventAuditEntityHelper.create(visit1)
     val notificationEventAttributes = mutableMapOf(NotificationEventAttributeType.ALERT_UUID to existingNotificationAlertUuid)
-    visitNotificationEventHelper.create(visit = visit1, notificationEventType = NotificationEventType.PRISONER_ALERT_ADDED_EVENT, notificationAttributes = notificationEventAttributes)
+    visitNotificationEventHelper.create(visit = visit1, notificationEventType = NotificationEventType.PRISONER_ALERT_CREATED_EVENT, notificationAttributes = notificationEventAttributes)
 
     // When
     val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenDeleted(

@@ -48,7 +48,7 @@ const val VISIT_NOTIFICATION_PRISONER_RECEIVED_CHANGE_PATH: String = "$VISIT_NOT
 const val VISIT_NOTIFICATION_PRISONER_RELEASED_CHANGE_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/prisoner/released"
 const val VISIT_NOTIFICATION_PRISONER_RESTRICTION_CHANGE_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/prisoner/restriction/changed"
 const val VISIT_NOTIFICATION_PRISONER_ALERTS_UPDATED_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/prisoner/alerts/updated"
-const val VISIT_NOTIFICATION_PRISONER_ALERT_ADDED_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/prisoner/alert/added"
+const val VISIT_NOTIFICATION_PRISONER_ALERT_CREATED_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/prisoner/alert/created"
 const val VISIT_NOTIFICATION_PRISONER_ALERT_UPDATED_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/prisoner/alert/updated"
 const val VISIT_NOTIFICATION_PRISONER_ALERT_DELETED_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/prisoner/alert/deleted"
 const val VISIT_NOTIFICATION_VISITOR_APPROVED_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/visitor/approved"
@@ -256,7 +256,7 @@ class VisitNotificationController(
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @PostMapping(VISIT_NOTIFICATION_PRISONER_ALERT_ADDED_PATH)
+  @PostMapping(VISIT_NOTIFICATION_PRISONER_ALERT_CREATED_PATH)
   @ResponseStatus(HttpStatus.OK)
   @Operation(
     summary = "To notify VSiP that a prisoner alert has been added",
@@ -282,12 +282,12 @@ class VisitNotificationController(
       ),
     ],
   )
-  fun notifyVSiPThatPrisonerAlertAdded(
+  fun notifyVSiPThatPrisonerAlertCreated(
     @RequestBody @Valid
     dto: PrisonerAlertNotificationDto,
   ): ResponseEntity<HttpStatus> {
-    LOG.debug("Entered notifyVSiPThatPrisonerAlertAdded {}", dto)
-    visitNotificationEventService.handlePrisonerAlertAddedNotification(dto)
+    LOG.debug("Entered notifyVSiPThatPrisonerAlertCreated {}", dto)
+    visitNotificationEventService.handlePrisonerAlertCreatedNotification(dto)
     return ResponseEntity(HttpStatus.OK)
   }
 
