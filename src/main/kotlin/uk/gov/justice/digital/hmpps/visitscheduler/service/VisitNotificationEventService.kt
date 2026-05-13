@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.client.ActivitiesApiClient
+import uk.gov.justice.digital.hmpps.visitscheduler.client.AlertsApiClient
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonerContactRegistryClient
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.IgnoreVisitNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
@@ -41,6 +42,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.CourtVi
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonDateBlockedDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertCreatedUpdatedNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerContactRestrictionUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
@@ -72,8 +74,8 @@ class VisitNotificationEventService(
   private val pairedNotificationEventsUtil: PairedNotificationEventsUtil,
   private val prisonerContactRegistryClient: PrisonerContactRegistryClient,
   private val activitiesApiClient: ActivitiesApiClient,
+  private val alertsApiClient: AlertsApiClient,
 ) {
-
   @Autowired
   private lateinit var visitRepository: VisitRepository
 
@@ -188,6 +190,24 @@ class VisitNotificationEventService(
     }
   }
 
+  @Transactional
+  fun handlePrisonerAlertCreatedNotification(notificationDto: PrisonerAlertNotificationDto) {
+    LOG.info("handlePrisonerAlertCreatedNotification notification received : {}", notificationDto)
+    processAlertCreated(notificationDto)
+  }
+
+  @Transactional
+  fun handlePrisonerAlertUpdatedNotification(notificationDto: PrisonerAlertNotificationDto) {
+    LOG.info("handlePrisonerAlertUpdatedNotification notification received : {}", notificationDto)
+    processAlertUpdated(notificationDto)
+  }
+
+  @Transactional
+  fun handlePrisonerAlertDeletedNotification(notificationDto: PrisonerAlertNotificationDto) {
+    LOG.info("handlePrisonerAlertDeletedNotification notification received : {}", notificationDto)
+    processAlertDeleted(notificationDto)
+  }
+
   private fun processAlertsAdded(notificationDto: PrisonerAlertCreatedUpdatedNotificationDto) {
     LOG.info("Entered handlePrisonerAlertCreatedUpdated processAlertsAdded")
 
@@ -196,6 +216,85 @@ class VisitNotificationEventService(
 
     val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, PRISONER_ALERTS_UPDATED_EVENT, null)
     processVisitsWithNotifications(processVisitNotificationDto)
+  }
+
+  private fun processAlertCreated(notificationDto: PrisonerAlertNotificationDto) {
+    LOG.debug("Entered processAlertCreated, alert code {}, prisoner number - {}", notificationDto.alertCode, notificationDto.prisonerNumber)
+    processAlertCreated(notificationDto, NotificationEventType.PRISONER_ALERT_CREATED_EVENT)
+  }
+
+  private fun processAlertUpdated(notificationDto: PrisonerAlertNotificationDto) {
+    LOG.debug("Entered processAlertUpdated, alert code {}, prisoner number - {}", notificationDto.alertCode, notificationDto.prisonerNumber)
+    processAlertUpdated(notificationDto, NotificationEventType.PRISONER_ALERT_UPDATED_EVENT)
+  }
+
+  private fun processAlertDeleted(notificationDto: PrisonerAlertNotificationDto) {
+    LOG.debug("Entered processAlertDeleted, alert code {}, prisoner number - {}", notificationDto.alertCode, notificationDto.prisonerNumber)
+    processAlertDeleted(notificationDto, UnFlagEventReason.PRISONER_ALERT_DELETED)
+  }
+
+  private fun processAlertCreated(notificationDto: PrisonerAlertNotificationDto, notificationEventType: NotificationEventType) {
+    val affectedVisits = visitService.getFutureBookedVisits(notificationDto.prisonerNumber)
+    if (affectedVisits.isNotEmpty()) {
+      addAlertUpsertedNotificationEvents(
+        alertCode = notificationDto.alertCode,
+        alertUuid = notificationDto.alertUuid,
+        notificationEventType = notificationEventType,
+        affectedVisits = affectedVisits,
+      )
+    }
+  }
+
+  private fun processAlertUpdated(notificationDto: PrisonerAlertNotificationDto, notificationEventType: NotificationEventType) {
+    val affectedVisits = visitService.getFutureBookedVisits(notificationDto.prisonerNumber)
+    if (affectedVisits.isNotEmpty()) {
+      // retrieve alert
+      val alert = alertsApiClient.getAlertByUuid(notificationDto.alertUuid)
+
+      // if an alert is active, then we need to flag the visit as update events are also sent for deactivating an alert
+      // also adding an alert if an alert could not be retrieved
+      val isAlertNullOrActive = (alert == null || alert.active)
+      if (isAlertNullOrActive) {
+        addAlertUpsertedNotificationEvents(
+          alertCode = notificationDto.alertCode,
+          alertUuid = notificationDto.alertUuid,
+          notificationEventType = notificationEventType,
+          affectedVisits = affectedVisits,
+        )
+      } else {
+        LOG.info("Alert is not active, skipping alert update for alert Uuid {} and prisoner number {}", notificationDto.alertUuid, notificationDto.prisonerNumber)
+      }
+    }
+  }
+
+  private fun addAlertUpsertedNotificationEvents(affectedVisits: List<VisitDto>, alertCode: String, alertUuid: String, notificationEventType: NotificationEventType) {
+    val notificationAttributes = hashMapOf(
+      NotificationEventAttributeType.ALERT_CODE to alertCode,
+      NotificationEventAttributeType.ALERT_UUID to alertUuid,
+    )
+
+    val processVisitNotificationDto =
+      ProcessVisitNotificationDto(affectedVisits, notificationEventType, notificationAttributes)
+    processVisitsWithNotifications(processVisitNotificationDto)
+  }
+
+  private fun processAlertDeleted(notificationDto: PrisonerAlertNotificationDto, unFlagEventReason: UnFlagEventReason) {
+    val currentAlertUuidNotifications = visitNotificationEventRepository.getEventsByAlertUuid(
+      prisonerNumber = notificationDto.prisonerNumber,
+      alertUuid = notificationDto.alertUuid,
+      notificationEventTypes = listOf(
+        NotificationEventType.PRISONER_ALERT_CREATED_EVENT.name,
+        NotificationEventType.PRISONER_ALERT_UPDATED_EVENT.name,
+      ),
+    )
+
+    val notificationEventUnflaggedTypes = currentAlertUuidNotifications.map { it.type }.distinct()
+
+    deleteNotificationsThatAreNoLongerValid(
+      currentAlertUuidNotifications,
+      notificationEventUnflaggedTypes,
+      unFlagEventReason,
+    )
   }
 
   private fun processAlertsRemoved(notificationDto: PrisonerAlertCreatedUpdatedNotificationDto) {
@@ -496,6 +595,17 @@ class VisitNotificationEventService(
   ) {
     visitNotificationEvents.forEach {
       visitNotificationFlaggingService.unFlagTrackEvents(it.visit.reference, listOf(notificationEventType), reason, null)
+    }
+    visitNotificationEventRepository.deleteAll(visitNotificationEvents)
+  }
+
+  private fun deleteNotificationsThatAreNoLongerValid(
+    visitNotificationEvents: List<VisitNotificationEvent>,
+    notificationEventTypes: List<NotificationEventType>,
+    reason: UnFlagEventReason,
+  ) {
+    visitNotificationEvents.forEach {
+      visitNotificationFlaggingService.unFlagTrackEvents(it.visit.reference, notificationEventTypes, reason, null)
     }
     visitNotificationEventRepository.deleteAll(visitNotificationEvents)
   }
