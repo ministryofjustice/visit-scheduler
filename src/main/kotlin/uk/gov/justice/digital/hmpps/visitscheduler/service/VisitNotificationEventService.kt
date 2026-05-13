@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.client.ActivitiesApiClient
+import uk.gov.justice.digital.hmpps.visitscheduler.client.AlertsApiClient
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonerContactRegistryClient
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.IgnoreVisitNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
@@ -73,8 +74,8 @@ class VisitNotificationEventService(
   private val pairedNotificationEventsUtil: PairedNotificationEventsUtil,
   private val prisonerContactRegistryClient: PrisonerContactRegistryClient,
   private val activitiesApiClient: ActivitiesApiClient,
+  private val alertsApiClient: AlertsApiClient,
 ) {
-
   @Autowired
   private lateinit var visitRepository: VisitRepository
 
@@ -219,12 +220,12 @@ class VisitNotificationEventService(
 
   private fun processAlertCreated(notificationDto: PrisonerAlertNotificationDto) {
     LOG.debug("Entered processAlertCreated, alert code {}, prisoner number - {}", notificationDto.alertCode, notificationDto.prisonerNumber)
-    processAlertUpserted(notificationDto, NotificationEventType.PRISONER_ALERT_CREATED_EVENT)
+    processAlertCreated(notificationDto, NotificationEventType.PRISONER_ALERT_CREATED_EVENT)
   }
 
   private fun processAlertUpdated(notificationDto: PrisonerAlertNotificationDto) {
     LOG.debug("Entered processAlertUpdated, alert code {}, prisoner number - {}", notificationDto.alertCode, notificationDto.prisonerNumber)
-    processAlertUpserted(notificationDto, NotificationEventType.PRISONER_ALERT_UPDATED_EVENT)
+    processAlertUpdated(notificationDto, NotificationEventType.PRISONER_ALERT_UPDATED_EVENT)
   }
 
   private fun processAlertDeleted(notificationDto: PrisonerAlertNotificationDto) {
@@ -232,14 +233,48 @@ class VisitNotificationEventService(
     processAlertDeleted(notificationDto, UnFlagEventReason.PRISONER_ALERT_DELETED)
   }
 
-  private fun processAlertUpserted(notificationDto: PrisonerAlertNotificationDto, notificationEventType: NotificationEventType) {
+  private fun processAlertCreated(notificationDto: PrisonerAlertNotificationDto, notificationEventType: NotificationEventType) {
     val affectedVisits = visitService.getFutureBookedVisits(notificationDto.prisonerNumber)
+    if (affectedVisits.isNotEmpty()) {
+      addAlertUpsertedNotificationEvents(
+        alertCode = notificationDto.alertCode,
+        alertUuid = notificationDto.alertUuid,
+        notificationEventType = notificationEventType,
+        affectedVisits = affectedVisits,
+      )
+    }
+  }
+
+  private fun processAlertUpdated(notificationDto: PrisonerAlertNotificationDto, notificationEventType: NotificationEventType) {
+    val affectedVisits = visitService.getFutureBookedVisits(notificationDto.prisonerNumber)
+    if (affectedVisits.isNotEmpty()) {
+      // retrieve alert
+      val alert = alertsApiClient.getAlertByUuid(notificationDto.alertUuid)
+
+      // if an alert is active, then we need to flag the visit as update events are also sent for deactivating an alert
+      // also adding an alert if an alert could not be retrieved
+      val isAlertNullOrActive = (alert == null || alert.active)
+      if (isAlertNullOrActive) {
+        addAlertUpsertedNotificationEvents(
+          alertCode = notificationDto.alertCode,
+          alertUuid = notificationDto.alertUuid,
+          notificationEventType = notificationEventType,
+          affectedVisits = affectedVisits,
+        )
+      } else {
+        LOG.info("Alert is not active, skipping alert update for alert Uuid {} and prisoner number {}", notificationDto.alertUuid, notificationDto.prisonerNumber)
+      }
+    }
+  }
+
+  private fun addAlertUpsertedNotificationEvents(affectedVisits: List<VisitDto>, alertCode: String, alertUuid: String, notificationEventType: NotificationEventType) {
     val notificationAttributes = hashMapOf(
-      NotificationEventAttributeType.ALERT_CODE to notificationDto.alertCode,
-      NotificationEventAttributeType.ALERT_UUID to notificationDto.alertUuid,
+      NotificationEventAttributeType.ALERT_CODE to alertCode,
+      NotificationEventAttributeType.ALERT_UUID to alertUuid,
     )
 
-    val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, notificationEventType, notificationAttributes)
+    val processVisitNotificationDto =
+      ProcessVisitNotificationDto(affectedVisits, notificationEventType, notificationAttributes)
     processVisitsWithNotifications(processVisitNotificationDto)
   }
 

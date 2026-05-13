@@ -53,6 +53,11 @@ activities:
     url: http://localhost:8096
     timeout: 5s
 
+alerts:
+  api:
+    url: http://localhost:8097
+    timeout: 10s
+
 policy:
   session:
     non-association:
