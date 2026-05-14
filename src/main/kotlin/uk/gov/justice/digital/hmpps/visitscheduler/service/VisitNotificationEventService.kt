@@ -19,7 +19,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventAt
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.NON_ASSOCIATION_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PERSON_RESTRICTION_UPSERTED_EVENT
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_ALERTS_UPDATED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_RECEIVED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_RELEASED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT
@@ -30,7 +29,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.IGNORE_VISIT_NOTIFICATIONS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.NON_ASSOCIATION_REMOVED
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.PRISONER_ALERT_CODE_REMOVED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.PRISONER_RETURNED_TO_PRISON
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.PRISON_EXCLUDE_DATE_REMOVED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.SESSION_EXCLUDE_DATE_REMOVED
@@ -41,7 +39,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.Contact
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.CourtVideoAppointmentNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonDateBlockedDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertCreatedUpdatedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerContactRestrictionUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
@@ -176,21 +173,6 @@ class VisitNotificationEventService(
   }
 
   @Transactional
-  fun handlePrisonerAlertCreatedUpdatedNotification(notificationDto: PrisonerAlertCreatedUpdatedNotificationDto) {
-    LOG.info("handlePrisonerAlertCreatedUpdated notification received")
-
-    if (notificationDto.alertsAdded.isNotEmpty()) {
-      processAlertsAdded(notificationDto)
-    }
-
-    // An additional check is made on activeAlerts being empty, because if the activeAlerts
-    // is not empty, then we wouldn't want to un-flag any visits as the visit may be flagged for those active alerts.
-    if (notificationDto.alertsRemoved.isNotEmpty() && notificationDto.activeAlerts.isEmpty()) {
-      processAlertsRemoved(notificationDto)
-    }
-  }
-
-  @Transactional
   fun handlePrisonerAlertCreatedNotification(notificationDto: PrisonerAlertNotificationDto) {
     LOG.info("handlePrisonerAlertCreatedNotification notification received : {}", notificationDto)
     processAlertCreated(notificationDto)
@@ -206,16 +188,6 @@ class VisitNotificationEventService(
   fun handlePrisonerAlertDeletedNotification(notificationDto: PrisonerAlertNotificationDto) {
     LOG.info("handlePrisonerAlertDeletedNotification notification received : {}", notificationDto)
     processAlertDeleted(notificationDto)
-  }
-
-  private fun processAlertsAdded(notificationDto: PrisonerAlertCreatedUpdatedNotificationDto) {
-    LOG.info("Entered handlePrisonerAlertCreatedUpdated processAlertsAdded")
-
-    val prisonCode = prisonerService.getPrisonerPrisonCodeFromPrisonId(notificationDto.prisonerNumber)
-    val affectedVisits = visitService.getFutureBookedVisits(notificationDto.prisonerNumber, prisonCode)
-
-    val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, PRISONER_ALERTS_UPDATED_EVENT, null)
-    processVisitsWithNotifications(processVisitNotificationDto)
   }
 
   private fun processAlertCreated(notificationDto: PrisonerAlertNotificationDto) {
@@ -295,27 +267,6 @@ class VisitNotificationEventService(
       notificationEventUnflaggedTypes,
       unFlagEventReason,
     )
-  }
-
-  private fun processAlertsRemoved(notificationDto: PrisonerAlertCreatedUpdatedNotificationDto) {
-    LOG.info("Entered handlePrisonerAlertCreatedUpdated processAlertsRemoved")
-
-    val prisonerDetails = prisonerService.getPrisoner(notificationDto.prisonerNumber)
-    prisonerDetails?.let { prisoner ->
-      prisoner.prisonCode?.let {
-        val currentPrisonNotifications = visitNotificationEventRepository.getEventsBy(
-          notificationDto.prisonerNumber,
-          prisoner.prisonCode!!,
-          PRISONER_ALERTS_UPDATED_EVENT,
-        )
-
-        deleteNotificationsThatAreNoLongerValid(
-          currentPrisonNotifications,
-          PRISONER_ALERTS_UPDATED_EVENT,
-          PRISONER_ALERT_CODE_REMOVED,
-        )
-      }
-    }
   }
 
   @Transactional
