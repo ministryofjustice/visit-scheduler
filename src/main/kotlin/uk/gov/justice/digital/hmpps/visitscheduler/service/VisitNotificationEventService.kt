@@ -83,6 +83,7 @@ class VisitNotificationEventService(
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
     val visitorSupportedRestrictionTypes = VisitorSupportedRestrictionType.entries.map { it.name }.toSet()
+    val SOCIAL_CONTACT_TYPE: String = "S"
   }
 
   @Transactional
@@ -772,7 +773,7 @@ class VisitNotificationEventService(
 
   private fun doesSocialRelationshipForVisitorStillExist(prisonerId: String, visitorId: String): Boolean {
     val contactDetails = prisonerContactRegistryClient.searchContacts(contactIds = listOf(visitorId.toLong()), prisonerId = prisonerId, withRestrictions = false)?.firstOrNull()
-    return contactDetails?.contactId == visitorId.toLong() && contactDetails.contactType == "S" && contactDetails.approvedVisitor == true
+    return contactDetails?.contactId == visitorId.toLong() && contactDetails.contactType == SOCIAL_CONTACT_TYPE && contactDetails.approvedVisitor == true
   }
 
   private fun getActionedBy(actionedBy: ActionedBy?): ActionedByDto = actionedBy?.let {
