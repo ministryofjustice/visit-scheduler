@@ -15,6 +15,8 @@ import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.client.AlertsApiClient
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonercontactregistry.ContactWithOptionalPrisonerRelationshipDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonercontactregistry.RestrictionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NotificationCountDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitNotificationEventDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitNotificationEventHelper
@@ -27,9 +29,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonerService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryClientService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitRequestsApprovalRejectionService
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit.MINUTES
+import java.util.concurrent.ThreadLocalRandom
 
 abstract class NotificationTestBase : IntegrationTestBase() {
 
@@ -122,4 +126,30 @@ abstract class NotificationTestBase : IntegrationTestBase() {
   fun getNotificationCountDto(responseSpec: ResponseSpec): NotificationCountDto = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, NotificationCountDto::class.java)
 
   fun getVisitNotificationEvents(responseSpec: ResponseSpec): Array<VisitNotificationEventDto> = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<VisitNotificationEventDto>::class.java)
+
+  protected fun createContactWithOptionalPrisonerRelationshipDto(
+    personId: Long = ThreadLocalRandom.current().nextLong(),
+    firstName: String = "John",
+    middleName: String? = null,
+    lastName: String = "Smith",
+    dateOfBirth: LocalDate? = null,
+    relationshipCode: String? = "OTH",
+    relationshipDescription: String? = "Other",
+    contactType: String? = "S",
+    contactTypeDescription: String? = "Social",
+    restrictions: List<RestrictionDto> = emptyList(),
+    approvedVisitor: Boolean,
+  ): ContactWithOptionalPrisonerRelationshipDto = ContactWithOptionalPrisonerRelationshipDto(
+    contactId = personId,
+    firstName = firstName,
+    middleName = middleName,
+    lastName = lastName,
+    dateOfBirth = dateOfBirth,
+    relationshipCode = relationshipCode,
+    relationshipDescription = relationshipDescription,
+    contactType = contactType,
+    contactTypeDescription = contactTypeDescription,
+    restrictions = restrictions,
+    approvedVisitor = approvedVisitor,
+  )
 }
