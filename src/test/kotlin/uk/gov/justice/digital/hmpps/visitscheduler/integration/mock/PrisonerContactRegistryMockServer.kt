@@ -17,7 +17,7 @@ class PrisonerContactRegistryMockServer : WireMockServer(8095) {
     prisonerId: String? = null,
     withRestrictions: Boolean = true,
     contactsList: List<ContactWithOptionalPrisonerRelationshipDto>?,
-    httpStatus: HttpStatus = HttpStatus.NOT_FOUND,
+    httpStatus: HttpStatus = HttpStatus.INTERNAL_SERVER_ERROR,
   ) {
     val responseBuilder = aResponse()
       .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
