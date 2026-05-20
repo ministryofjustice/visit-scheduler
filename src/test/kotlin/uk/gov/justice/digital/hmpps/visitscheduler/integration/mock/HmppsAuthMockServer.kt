@@ -1,12 +1,11 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.mock
 
 import com.github.tomakehurst.wiremock.WireMockServer
-import com.github.tomakehurst.wiremock.client.WireMock
+import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.get
 import com.github.tomakehurst.wiremock.client.WireMock.post
-import com.github.tomakehurst.wiremock.http.HttpHeader
-import com.github.tomakehurst.wiremock.http.HttpHeaders
+import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
@@ -27,14 +26,14 @@ class HmppsAuthExtension :
 
   override fun beforeAll(context: ExtensionContext) {
     hmppsAuthApi.start()
+  }
+
+  override fun beforeEach(context: ExtensionContext) {
+    hmppsAuthApi.resetAll()
     hmppsAuthApi.stubGrantToken()
     hmppsAuthApi.stubGetUserDetails("created-user")
     hmppsAuthApi.stubGetUserDetails("updated-user")
     hmppsAuthApi.stubGetUserDetails("cancelled-user")
-  }
-
-  override fun beforeEach(context: ExtensionContext) {
-    hmppsAuthApi.resetRequests()
   }
 
   override fun afterAll(context: ExtensionContext) {
@@ -48,11 +47,13 @@ class HmppsAuthMockServer : WireMockServer(WIREMOCK_PORT) {
   }
 
   fun stubGrantToken() {
+    val responseBuilder = createJsonResponseBuilder()
+
     stubFor(
-      post(WireMock.urlEqualTo("/auth/oauth/token"))
+      post(urlEqualTo("/auth/oauth/token"))
         .willReturn(
-          aResponse()
-            .withHeaders(HttpHeaders(HttpHeader("Content-Type", "application/json")))
+          responseBuilder
+            .withStatus(HttpStatus.OK.value())
             .withBody(
               """
               {
@@ -87,5 +88,6 @@ class HmppsAuthMockServer : WireMockServer(WIREMOCK_PORT) {
   }
 }
 
-fun getJsonString(obj: Any): String = jacksonObjectMapper()
-  .writeValueAsString(obj)
+fun getJsonString(obj: Any): String = jacksonObjectMapper().writeValueAsString(obj)
+
+fun createJsonResponseBuilder(): ResponseDefinitionBuilder = aResponse().withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE).withHeader("Connection", "close")
