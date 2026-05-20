@@ -22,7 +22,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonercontactregistry.PrisonerContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorApprovedUnapprovedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatVisitorUnapproved
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
@@ -56,8 +55,19 @@ class VisitorUnapprovedVisitNotificationControllerTest : NotificationTestBase() 
   @Test
   fun `when visitor has been unapproved then future booked visits are flagged and saved`() {
     // Given
-    val currentApprovedPrisonerContacts = emptyList<PrisonerContactDto>()
-    prisonerContactRegistryMockServer.stubGetPrisonerApprovedSocialContacts(prisonerId, withAddress = false, withRestrictions = false, currentApprovedPrisonerContacts)
+    val contactSearchResponse = listOf(
+      createContactWithOptionalPrisonerRelationshipDto(
+        personId = visitorId.toLong(),
+        firstName = "John",
+        lastName = "Contact",
+        approvedVisitor = false,
+        contactType = null,
+        contactTypeDescription = null,
+        relationshipCode = null,
+        relationshipDescription = null,
+      ),
+    )
+    prisonerContactRegistryMockServer.stubSearchContacts(contactIds = listOf(visitorId.toLong()), prisonerId = prisonerId, withRestrictions = false, contactsList = contactSearchResponse)
 
     val notificationDto = VisitorApprovedUnapprovedNotificationDto(
       visitorId = visitorId,
@@ -109,7 +119,7 @@ class VisitorUnapprovedVisitNotificationControllerTest : NotificationTestBase() 
     responseSpec.expectStatus().isOk
     assertFlaggedVisitEvent(listOf(visit1), NotificationEventType.VISITOR_UNAPPROVED_EVENT)
 
-    verify(prisonerContactRegistryClientSpy, times(1)).getPrisonersApprovedSocialContacts(prisonerId, withAddress = false, withRestrictions = false)
+    verify(prisonerContactRegistryClientSpy, times(1)).searchContacts(contactIds = listOf(visitorId.toLong()), prisonerId = prisonerId, withRestrictions = false)
     verify(visitNotificationEventRepository, times(1)).saveAndFlush(any<VisitNotificationEvent>())
 
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
@@ -135,8 +145,15 @@ class VisitorUnapprovedVisitNotificationControllerTest : NotificationTestBase() 
   @Test
   fun `when visitor has been unapproved but the visitor id is still an approved SOCIAL contact on prison contact registry then future booked visits are not flagged`() {
     // Given
-    val currentApprovedPrisonerContacts = listOf(PrisonerContactDto(visitorId.toLong()))
-    prisonerContactRegistryMockServer.stubGetPrisonerApprovedSocialContacts(prisonerId, withAddress = false, withRestrictions = false, currentApprovedPrisonerContacts)
+    val contactSearchResponse = listOf(
+      createContactWithOptionalPrisonerRelationshipDto(
+        personId = visitorId.toLong(),
+        firstName = "John",
+        lastName = "Contact",
+        approvedVisitor = true,
+      ),
+    )
+    prisonerContactRegistryMockServer.stubSearchContacts(contactIds = listOf(visitorId.toLong()), prisonerId = prisonerId, withRestrictions = false, contactsList = contactSearchResponse)
 
     val notificationDto = VisitorApprovedUnapprovedNotificationDto(
       visitorId = visitorId,
@@ -187,7 +204,7 @@ class VisitorUnapprovedVisitNotificationControllerTest : NotificationTestBase() 
     // Then
     responseSpec.expectStatus().isOk
     verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
-    verify(prisonerContactRegistryClientSpy, times(1)).getPrisonersApprovedSocialContacts(prisonerId, withAddress = false, withRestrictions = false)
+    verify(prisonerContactRegistryClientSpy, times(1)).searchContacts(contactIds = listOf(visitorId.toLong()), prisonerId = prisonerId, withRestrictions = false)
 
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(0)
@@ -198,9 +215,6 @@ class VisitorUnapprovedVisitNotificationControllerTest : NotificationTestBase() 
   @Test
   fun `when no visits then no call is made to prison contact registry`() {
     // Given
-    val currentApprovedPrisonerContacts = listOf(PrisonerContactDto(1001))
-    prisonerContactRegistryMockServer.stubGetPrisonerApprovedSocialContacts(prisonerId, withAddress = false, withRestrictions = false, currentApprovedPrisonerContacts)
-
     val notificationDto = VisitorApprovedUnapprovedNotificationDto(
       visitorId = visitorId,
       prisonerNumber = prisonerId,
@@ -211,7 +225,7 @@ class VisitorUnapprovedVisitNotificationControllerTest : NotificationTestBase() 
     // Then
     responseSpec.expectStatus().isOk
     verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
-    verify(prisonerContactRegistryClientSpy, times(0)).getPrisonersApprovedSocialContacts(prisonerId, withAddress = false, withRestrictions = false)
+    verify(prisonerContactRegistryClientSpy, times(0)).searchContacts(any(), any(), any())
 
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(0)
@@ -220,87 +234,9 @@ class VisitorUnapprovedVisitNotificationControllerTest : NotificationTestBase() 
   }
 
   @Test
-  fun `when visitor has been unapproved but call to prisoner contact registry throws a NOT_FOUND error still any future booked visits are flagged and saved`() {
-    // Given
-    prisonerContactRegistryMockServer.stubGetPrisonerApprovedSocialContacts(prisonerId, withAddress = false, withRestrictions = false, null, HttpStatus.NOT_FOUND)
-
-    val notificationDto = VisitorApprovedUnapprovedNotificationDto(
-      visitorId = visitorId,
-      prisonerNumber = prisonerId,
-    )
-
-    val visit1 = createApplicationAndVisit(
-      slotDate = LocalDate.now().plusDays(1),
-      visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
-      prisonerId = prisonerId,
-    )
-
-    visit1.visitors.add(
-      VisitVisitor(
-        nomisPersonId = visitorId.toLong(),
-        visitId = visit1.id,
-        visit = visit1,
-        visitContact = true,
-      ),
-    )
-    visitEntityHelper.save(visit1)
-    eventAuditEntityHelper.create(visit1)
-
-    val visit2 = createApplicationAndVisit(
-      slotDate = LocalDate.now().plusDays(2),
-      visitStatus = CANCELLED,
-      visitSubStatus = VisitSubStatus.CANCELLED,
-      sessionTemplate = sessionTemplate,
-      prisonerId = prisonerId,
-    )
-
-    visit2.visitors.add(
-      VisitVisitor(
-        nomisPersonId = visitorId.toLong(),
-        visitId = visit2.id,
-        visit = visit2,
-        visitContact = true,
-      ),
-    )
-
-    visitEntityHelper.save(visit2)
-    eventAuditEntityHelper.create(visit2)
-
-    // When
-    val responseSpec = callNotifyVSiPThatVisitorUnapproved(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
-
-    // Then
-    responseSpec.expectStatus().isOk
-    assertFlaggedVisitEvent(listOf(visit1), NotificationEventType.VISITOR_UNAPPROVED_EVENT)
-
-    verify(prisonerContactRegistryClientSpy, times(1)).getPrisonersApprovedSocialContacts(prisonerId, withAddress = false, withRestrictions = false)
-    verify(visitNotificationEventRepository, times(1)).saveAndFlush(any<VisitNotificationEvent>())
-
-    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
-    assertThat(visitNotifications).hasSize(1)
-    assertThat(visitNotifications[0].visit.reference).isEqualTo(visit1.reference)
-    assertThat(visitNotifications[0].visitNotificationEventAttributes.size).isEqualTo(1)
-    assertThat(visitNotifications[0].visitNotificationEventAttributes[0].attributeName).isEqualTo(NotificationEventAttributeType.VISITOR_ID)
-
-    val auditEvents = testEventAuditRepository.getAuditByType(EventAuditType.VISITOR_UNAPPROVED_EVENT)
-    assertThat(auditEvents).hasSize(1)
-    with(auditEvents[0]) {
-      assertThat(bookingReference).isEqualTo(visit1.reference)
-      assertThat(applicationReference).isEqualTo(visit1.getLastApplication()?.reference)
-      assertThat(sessionTemplateReference).isEqualTo(visit1.sessionSlot.sessionTemplateReference)
-      assertThat(type).isEqualTo(EventAuditType.VISITOR_UNAPPROVED_EVENT)
-      assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
-      assertThat(actionedBy.userType).isEqualTo(SYSTEM)
-      assertThat(actionedBy.bookerReference).isNull()
-      assertThat(actionedBy.userName).isNull()
-    }
-  }
-
-  @Test
   fun `when visitor has been unapproved but call to prisoner contact registry throws a INTERNAL_SERVER_ERROR still any future booked visits are flagged and saved`() {
     // Given
-    prisonerContactRegistryMockServer.stubGetPrisonerApprovedSocialContacts(prisonerId, withAddress = false, withRestrictions = false, null, HttpStatus.INTERNAL_SERVER_ERROR)
+    prisonerContactRegistryMockServer.stubSearchContacts(contactIds = listOf(visitorId.toLong()), prisonerId = prisonerId, withRestrictions = false, contactsList = null, httpStatus = HttpStatus.INTERNAL_SERVER_ERROR)
 
     val notificationDto = VisitorApprovedUnapprovedNotificationDto(
       visitorId = visitorId,
@@ -352,7 +288,7 @@ class VisitorUnapprovedVisitNotificationControllerTest : NotificationTestBase() 
     responseSpec.expectStatus().isOk
     assertFlaggedVisitEvent(listOf(visit1), NotificationEventType.VISITOR_UNAPPROVED_EVENT)
 
-    verify(prisonerContactRegistryClientSpy, times(1)).getPrisonersApprovedSocialContacts(prisonerId, withAddress = false, withRestrictions = false)
+    verify(prisonerContactRegistryClientSpy, times(1)).searchContacts(contactIds = listOf(visitorId.toLong()), prisonerId = prisonerId, withRestrictions = false)
     verify(visitNotificationEventRepository, times(1)).saveAndFlush(any<VisitNotificationEvent>())
 
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
