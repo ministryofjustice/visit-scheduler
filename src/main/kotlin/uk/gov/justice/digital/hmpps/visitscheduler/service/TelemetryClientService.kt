@@ -59,13 +59,14 @@ class TelemetryClientService(
   private lateinit var visitEventAuditService: VisitEventAuditService
 
   fun trackUpdateBookingEvent(
-    visitDtoBeforeUpdate: VisitDto?,
-    bookedVisitDto: VisitDto,
-    eventAuditDto: EventAuditDto,
+    visitBeforeUpdate: VisitDto?,
+    visitAfterUpdate: VisitDto,
+    eventAudit: EventAuditDto,
+    bookingRequestDto: BookingRequestDto? = null,
   ) {
     trackEvent(
       VISIT_BOOKED_EVENT,
-      createBookedVisitTrackData(visitDtoBeforeUpdate, bookedVisitDto, eventAuditDto, true),
+      createBookedVisitTrackData(visitBeforeUpdate, visitAfterUpdate, eventAudit, true, bookingRequestDto?.visitorDetails),
     )
   }
 
