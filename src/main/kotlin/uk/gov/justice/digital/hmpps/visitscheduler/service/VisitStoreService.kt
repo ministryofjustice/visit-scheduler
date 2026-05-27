@@ -69,7 +69,7 @@ class VisitStoreService(
     return null
   }
 
-  fun checkBookingAlreadyMade(applicationReference: String): VisitDto? {
+  fun checkApplicationAlreadyComplete(applicationReference: String): VisitDto? {
     if (applicationService.isApplicationCompleted(applicationReference)) {
       LOG.debug("The application $applicationReference has already been booked!")
       // If already booked then just return object and do nothing more!
