@@ -418,6 +418,9 @@ class GetSessionScheduleTest : IntegrationTestBase() {
     Assertions.assertThat(sessionScheduleDto.capacity.closed).isEqualTo(sessionTemplate.closedCapacity)
     Assertions.assertThat(sessionScheduleDto.visitRoom).isEqualTo(sessionTemplate.visitRoom)
     Assertions.assertThat(sessionScheduleDto.isSessionExcluded).isEqualTo(isSessionExcluded)
+    Assertions.assertThat(sessionScheduleDto.areLocationGroupsInclusive).isEqualTo(sessionTemplate.includeLocationGroupType)
+    Assertions.assertThat(sessionScheduleDto.areCategoryGroupsInclusive).isEqualTo(sessionTemplate.includeCategoryGroupType)
+    Assertions.assertThat(sessionScheduleDto.areIncentiveGroupsInclusive).isEqualTo(sessionTemplate.includeIncentiveGroupType)
   }
 
   private fun assertSessionLocationGroups(
