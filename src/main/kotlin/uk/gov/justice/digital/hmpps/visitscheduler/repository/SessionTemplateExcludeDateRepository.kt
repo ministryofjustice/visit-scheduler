@@ -29,5 +29,5 @@ interface SessionTemplateExcludeDateRepository : JpaRepository<SessionTemplateEx
       "WHERE sted.sessionTemplate.reference IN (:sessionTemplateReferences) " +
       " AND sted.excludeDate = :sessionDate",
   )
-  fun getSessionsExcludedForDate(sessionDate: LocalDate, sessionTemplateReferences: List<String>): List<String>?
+  fun getSessionsExcludedForDate(sessionDate: LocalDate, sessionTemplateReferences: List<String>): List<String>
 }

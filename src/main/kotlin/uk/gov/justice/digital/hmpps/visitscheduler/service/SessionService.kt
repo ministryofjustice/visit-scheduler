@@ -553,9 +553,9 @@ class SessionService(
 
     sessionTemplates = filterSessionsTemplatesForDate(scheduleDate, sessionTemplates)
 
-    val excludedSessionTemplatesForDate = getExcludedSessionTemplatesForDate(scheduleDate, sessionTemplates.map { it.reference }.distinct())
+    val excludedSessionTemplatesForDate = getExcludedSessionTemplatesForDate(scheduleDate, sessionTemplates.map { it.reference }.distinct()).toHashSet()
     sessionTemplates.map { sessionTemplate ->
-      val isSessionExcluded = excludedSessionTemplatesForDate.any { it == sessionTemplate.reference }
+      val isSessionExcluded = excludedSessionTemplatesForDate.contains(sessionTemplate.reference)
       createSessionScheduleDto(sessionTemplate, isSessionExcluded)
     }.toList()
   }
@@ -563,7 +563,7 @@ class SessionService(
   private fun getExcludedSessionTemplatesForDate(sessionDate: LocalDate, sessionTemplateReferences: List<String>) = if (sessionTemplateReferences.isEmpty()) {
     emptyList()
   } else {
-    sessionTemplateExcludeDateRepository.getSessionsExcludedForDate(sessionDate, sessionTemplateReferences) ?: emptyList()
+    sessionTemplateExcludeDateRepository.getSessionsExcludedForDate(sessionDate, sessionTemplateReferences)
   }
 
   private fun createSessionScheduleDto(sessionTemplate: SessionTemplate, isSessionExcluded: Boolean): SessionScheduleDto = SessionScheduleDto(
