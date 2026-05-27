@@ -24,8 +24,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplateExcludeDate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionSlotRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateExcludeDateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionDatesUtil
@@ -45,6 +45,7 @@ class SessionService(
   private val sessionTemplateRepository: SessionTemplateRepository,
   private val visitRepository: VisitRepository,
   private val sessionSlotRepository: SessionSlotRepository,
+  private val sessionTemplateExcludeDateRepository: SessionTemplateExcludeDateRepository,
   private val prisonerService: PrisonerService,
   private val prisonerValidationService: PrisonerValidationService,
   private val prisonsService: PrisonsService,
@@ -551,10 +552,21 @@ class SessionService(
     )
 
     sessionTemplates = filterSessionsTemplatesForDate(scheduleDate, sessionTemplates)
-    sessionTemplates.map { sessionTemplate -> createSessionScheduleDto(sessionTemplate, scheduleDate) }.toList()
+
+    val excludedSessionTemplatesForDate = getExcludedSessionTemplatesForDate(scheduleDate, sessionTemplates.map { it.reference }.distinct())
+    sessionTemplates.map { sessionTemplate ->
+      val isSessionExcluded = excludedSessionTemplatesForDate.any { it == sessionTemplate.reference }
+      createSessionScheduleDto(sessionTemplate, isSessionExcluded)
+    }.toList()
   }
 
-  private fun createSessionScheduleDto(sessionTemplate: SessionTemplate, sessionDate: LocalDate): SessionScheduleDto = SessionScheduleDto(
+  private fun getExcludedSessionTemplatesForDate(sessionDate: LocalDate, sessionTemplateReferences: List<String>) = if (sessionTemplateReferences.isEmpty()) {
+    emptyList()
+  } else {
+    sessionTemplateExcludeDateRepository.getSessionsExcludedForDate(sessionDate, sessionTemplateReferences) ?: emptyList()
+  }
+
+  private fun createSessionScheduleDto(sessionTemplate: SessionTemplate, isSessionExcluded: Boolean): SessionScheduleDto = SessionScheduleDto(
     sessionTemplateReference = sessionTemplate.reference,
     sessionTimeSlot = SessionTimeSlotDto(startTime = sessionTemplate.startTime, endTime = sessionTemplate.endTime),
     capacity = SessionCapacityDto(sessionTemplate),
@@ -568,10 +580,8 @@ class SessionService(
     visitType = sessionTemplate.visitType,
     sessionDateRange = SessionDateRangeDto(validFromDate = sessionTemplate.validFromDate, validToDate = sessionTemplate.validToDate),
     visitRoom = sessionTemplate.visitRoom,
-    isSessionExcluded = isSessionExcluded(sessionTemplate.excludeDates, sessionDate),
+    isSessionExcluded = isSessionExcluded,
   )
-
-  private fun isSessionExcluded(excludedDates: List<SessionTemplateExcludeDate>, sessionDate: LocalDate): Boolean = excludedDates.map { it.excludeDate }.contains(sessionDate)
 
   private fun adjustDateByDayOfWeek(dayOfWeek: DayOfWeek, startDate: LocalDate): LocalDate {
     if (startDate.dayOfWeek != dayOfWeek) {
