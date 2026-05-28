@@ -132,7 +132,9 @@ class PrisonEntityHelper(
       maxAdultVisitors: Int = 2,
       maxChildVisitors: Int = 2,
       adultAgeYears: Int = 16,
-    ): UpdatePrisonDto = UpdatePrisonDto(policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears)
+      weekStartDay: DayOfWeek = DayOfWeek.SUNDAY,
+      remandVisitLimitPerWeek: Int = 2,
+    ): UpdatePrisonDto = UpdatePrisonDto(policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears, weekStartDay, remandVisitLimitPerWeek)
   }
 
   @Transactional(propagation = REQUIRES_NEW)
@@ -142,6 +144,7 @@ class PrisonEntityHelper(
     excludeDates: List<LocalDate> = listOf(),
     policyNoticeDaysMin: Int = 2,
     policyNoticeDaysMax: Int = 28,
+    remandVisitLimitPerWeek: Int = 3,
     dontMakeClient: Boolean = false,
   ): Prison {
     var prison = prisonRepository.findByCode(prisonCode)
@@ -152,6 +155,7 @@ class PrisonEntityHelper(
           activePrison = activePrison,
           policyNoticeDaysMin = policyNoticeDaysMin,
           policyNoticeDaysMax = policyNoticeDaysMax,
+          remandVisitLimitPerWeek = remandVisitLimitPerWeek,
         ),
       )
 

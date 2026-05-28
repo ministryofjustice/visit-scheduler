@@ -183,6 +183,8 @@ class PrisonConfigTest : IntegrationTestBase() {
     Assertions.assertThat(result.maxAdultVisitors).isNotEqualTo(prison.maxAdultVisitors)
     Assertions.assertThat(result.maxChildVisitors).isNotEqualTo(prison.maxChildVisitors)
     Assertions.assertThat(result.adultAgeYears).isNotEqualTo(prison.adultAgeYears)
+    Assertions.assertThat(result.weekStartDay).isNotEqualTo(prison.weekStartDay)
+    Assertions.assertThat(result.remandVisitLimitPerWeek).isNotEqualTo(prison.remandVisitLimitPerWeek)
 
     Assertions.assertThat(result.policyNoticeDaysMin).isEqualTo(updatePrisonRequest.policyNoticeDaysMin)
     Assertions.assertThat(result.policyNoticeDaysMax).isEqualTo(updatePrisonRequest.policyNoticeDaysMax)
@@ -190,6 +192,8 @@ class PrisonConfigTest : IntegrationTestBase() {
     Assertions.assertThat(result.maxAdultVisitors).isEqualTo(updatePrisonRequest.maxAdultVisitors)
     Assertions.assertThat(result.maxChildVisitors).isEqualTo(updatePrisonRequest.maxChildVisitors)
     Assertions.assertThat(result.adultAgeYears).isEqualTo(updatePrisonRequest.adultAgeYears)
+    Assertions.assertThat(result.weekStartDay).isEqualTo(updatePrisonRequest.weekStartDay)
+    Assertions.assertThat(result.remandVisitLimitPerWeek).isEqualTo(updatePrisonRequest.remandVisitLimitPerWeek)
   }
 
   @Test
