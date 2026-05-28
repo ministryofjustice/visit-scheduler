@@ -32,6 +32,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import java.time.DayOfWeek
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
@@ -91,6 +92,8 @@ internal class VisitStoreServiceTest {
         maxAdultVisitors = 1,
         maxChildVisitors = 1,
         adultAgeYears = 18,
+        weekStartDay = DayOfWeek.MONDAY,
+        remandVisitLimitPerWeek = 3,
       )
 
     private val sessionSlot = SessionSlot(
@@ -184,6 +187,8 @@ internal class VisitStoreServiceTest {
         maxAdultVisitors = 1,
         maxChildVisitors = 1,
         adultAgeYears = 18,
+        weekStartDay = DayOfWeek.MONDAY,
+        remandVisitLimitPerWeek = 3,
       )
 
     private val sessionSlot = SessionSlot(

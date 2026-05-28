@@ -43,7 +43,9 @@ fun prison(
   maxChildVisitors: Int = 3,
   adultAgeYears: Int = 18,
   isActive: Boolean = true,
-): Prison = Prison(code = prisonCode, active = isActive, policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears)
+  weekStartDay: DayOfWeek = DayOfWeek.MONDAY,
+  remandVisitLimitPerWeek: Int = 3,
+): Prison = Prison(code = prisonCode, active = isActive, policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears, weekStartDay, remandVisitLimitPerWeek)
 
 fun sessionTemplate(
   name: String = "sessionTemplate_",
@@ -115,6 +117,8 @@ fun sessionTemplate(
   maxAdultVisitors: Int = 3,
   maxChildVisitors: Int = 3,
   adultAgeYears: Int = 18,
+  weekStartDay: DayOfWeek = DayOfWeek.MONDAY,
+  remandVisitLimitPerWeek: Int = 3,
   isActive: Boolean = true,
   includeLocationGroupType: Boolean = true,
   includeCategoryGroupType: Boolean = true,
@@ -122,7 +126,7 @@ fun sessionTemplate(
   userTypes: List<UserType> = listOf(UserType.STAFF, UserType.PUBLIC),
   visitOrderRestrictionType: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
 ): SessionTemplate {
-  val prison = Prison(code = prisonCode, active = isActive, policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears)
+  val prison = Prison(code = prisonCode, active = isActive, policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears, weekStartDay, remandVisitLimitPerWeek)
 
   var sessionTemplate = SessionTemplate(
     name = name + dayOfWeek,
