@@ -95,7 +95,9 @@ class PrisonEntityHelper(
       maxAdultVisitors: Int = 3,
       maxChildVisitors: Int = 3,
       adultAgeYears: Int = 18,
-    ): Prison = Prison(code = prisonCode, active = activePrison, policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears)
+      weekStartDay: DayOfWeek = DayOfWeek.MONDAY,
+      remandVisitLimitPerWeek: Int = 3,
+    ): Prison = Prison(code = prisonCode, active = activePrison, policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears, weekStartDay, remandVisitLimitPerWeek)
 
     fun createPrisonDto(
       prisonCode: String = "AWE",
@@ -107,6 +109,8 @@ class PrisonEntityHelper(
       maxAdultVisitors: Int = 3,
       maxChildVisitors: Int = 3,
       adultAgeYears: Int = 18,
+      weekStartDay: DayOfWeek = DayOfWeek.MONDAY,
+      remandVisitLimitPerWeek: Int = 3,
     ): PrisonDto = PrisonDto(
       code = prisonCode,
       active = activePrison,
@@ -117,6 +121,8 @@ class PrisonEntityHelper(
       maxChildVisitors = maxChildVisitors,
       adultAgeYears = adultAgeYears,
       clients = clients,
+      weekStartDay = weekStartDay,
+      remandVisitLimitPerWeek = remandVisitLimitPerWeek,
     )
 
     fun updatePrisonDto(
