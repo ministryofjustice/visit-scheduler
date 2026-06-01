@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.notify.LanguagePreference
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
@@ -140,6 +141,7 @@ class VisitStoreService(
         visitContact.name = it.name
         visitContact.telephone = it.telephone
         visitContact.email = it.email
+        visitContact.languagePreference = it.languagePreference
       } ?: run {
         booking.visitContact = VisitContact(
           visit = booking,
@@ -380,6 +382,7 @@ class VisitStoreService(
       it.name = updateVisitFromExternalSystemDto.visitContact.name
       it.telephone = updateVisitFromExternalSystemDto.visitContact.telephone
       it.email = updateVisitFromExternalSystemDto.visitContact.email
+      it.languagePreference = LanguagePreference.EN
     } ?: updateVisitFromExternalSystemDto.visitContact.let {
       VisitContact(
         visitId = existingVisit.id,

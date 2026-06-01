@@ -606,9 +606,11 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     updateRequest.visitContact?.let {
       Assertions.assertThat(applicationDto.visitContact!!.name).isEqualTo(it.name)
       Assertions.assertThat(applicationDto.visitContact.telephone).isEqualTo(it.telephone)
+      Assertions.assertThat(applicationDto.visitContact.languagePreference).isEqualTo(it.languagePreference)
     } ?: run {
       Assertions.assertThat(applicationDto.visitContact!!.name).isEqualTo(originalApplication.visitContact?.name)
       Assertions.assertThat(applicationDto.visitContact.telephone).isEqualTo(originalApplication.visitContact?.telephone)
+      Assertions.assertThat(applicationDto.visitContact.languagePreference).isEqualTo(originalApplication.visitContact?.languagePreference)
     }
 
     val visitorsDtoList = applicationDto.visitors.toList()

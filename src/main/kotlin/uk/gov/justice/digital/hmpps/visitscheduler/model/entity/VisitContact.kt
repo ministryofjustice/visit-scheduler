@@ -40,7 +40,7 @@ class VisitContact(
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
-  val languagePreference: LanguagePreference,
+  var languagePreference: LanguagePreference,
 ) {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

@@ -112,7 +112,7 @@ class VisitDtoBuilderTest {
     visit.visitContact?.let {
       Assertions.assertThat(visitDto.visitContact.name).isEqualTo(it.name)
       Assertions.assertThat(visitDto.visitContact.telephone).isEqualTo(it.telephone)
-      Assertions.assertThat(visitDto.visitContact.telephone).isEqualTo(it.languagePreference)
+      Assertions.assertThat(visitDto.visitContact.languagePreference).isEqualTo(it.languagePreference)
     }
 
     visit.visitNotes.let { notes ->

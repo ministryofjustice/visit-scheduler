@@ -64,6 +64,7 @@ class AssertHelper {
         assertThat(it["visitType"]).isEqualTo(cancelledVisit.visitType.name)
         assertThat(it["visitRoom"]).isEqualTo(cancelledVisit.visitRoom)
         assertThat(it["hasPhoneNumber"]).isEqualTo(((cancelledVisit.visitContact.telephone != null).toString()))
+        assertThat(it["languagePreference"]).isEqualTo(cancelledVisit.visitContact.languagePreference.toString())
         assertThat(it["hasEmail"]).isEqualTo(((cancelledVisit.visitContact.email != null).toString()))
         assertThat(it["totalVisitors"]).isEqualTo(cancelledVisit.visitors.size.toString())
         assertThat(it["visitors"]).isEqualTo(objectMapper.writeValueAsString(visitors))
@@ -92,6 +93,7 @@ class AssertHelper {
       "visitRoom" to cancelledVisit.visitRoom,
       "hasPhoneNumber" to ((cancelledVisit.visitContact.telephone != null).toString()),
       "hasEmail" to ((cancelledVisit.visitContact.email != null).toString()),
+      "languagePreference" to visitDto.visitContact.languagePreference.toString(),
       "totalVisitors" to (cancelledVisit.visitors.size.toString()),
       "visitors" to objectMapper.writeValueAsString(visitors),
       "actionedBy" to actionedBy,
@@ -209,6 +211,7 @@ class AssertHelper {
         assertThat(it["visitType"]).isEqualTo(cancelledVisit.visitType.name)
         assertThat(it["visitRoom"]).isEqualTo(cancelledVisit.visitRoom)
         assertThat(it["hasPhoneNumber"]).isEqualTo(((cancelledVisit.visitContact.telephone != null).toString()))
+        assertThat(it["languagePreference"]).isEqualTo(cancelledVisit.visitContact.languagePreference.toString())
         assertThat(it["hasEmail"]).isEqualTo(((cancelledVisit.visitContact.email != null).toString()))
         assertThat(it["totalVisitors"]).isEqualTo(cancelledVisit.visitors.size.toString())
         assertThat(it["visitors"]).isEqualTo(objectMapper.writeValueAsString(visitors))
@@ -238,6 +241,7 @@ class AssertHelper {
       "visitRoom" to cancelledVisit.visitRoom,
       "hasPhoneNumber" to ((cancelledVisit.visitContact.telephone != null).toString()),
       "hasEmail" to ((cancelledVisit.visitContact.email != null).toString()),
+      "languagePreference" to cancelledVisit.visitContact.languagePreference.toString(),
       "totalVisitors" to (cancelledVisit.visitors.size.toString()),
       "visitors" to objectMapper.writeValueAsString(visitors),
       "actionedBy" to actionedBy,

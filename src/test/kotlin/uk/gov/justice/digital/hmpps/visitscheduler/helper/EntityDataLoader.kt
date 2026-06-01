@@ -319,7 +319,7 @@ class VisitEntityHelper(
 
     val savedVisit = visitRepository.saveAndFlush(notSaved)
     if (visitContact != null) {
-      createContact(visit = savedVisit, visitContact.name, visitContact.telephone, visitContact.email)
+      createContact(visit = savedVisit, visitContact.name, visitContact.telephone, visitContact.email, visitContact.languagePreference)
     }
 
     return if (createApplication) {

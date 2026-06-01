@@ -36,7 +36,7 @@ class ApplicationContact(
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
-  val languagePreference: LanguagePreference,
+  var languagePreference: LanguagePreference,
 
   @OneToOne
   @JoinColumn(name = "APPLICATION_ID", updatable = false, insertable = false)
