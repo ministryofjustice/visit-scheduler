@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.notify.LanguagePreference
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.ApplicationContact
@@ -152,6 +153,7 @@ class ApplicationEntityHelper(
     name: String,
     phone: String?,
     email: String?,
+    languagePreference: LanguagePreference = LanguagePreference.EN,
   ) {
     application.visitContact = ApplicationContact(
       applicationId = application.id,
@@ -159,6 +161,7 @@ class ApplicationEntityHelper(
       telephone = phone,
       email = email,
       application = application,
+      languagePreference = languagePreference,
     )
   }
 
@@ -172,6 +175,7 @@ class ApplicationEntityHelper(
       telephone = contact.telephone,
       email = contact.email,
       application = application,
+      languagePreference = contact.languagePreference,
     )
   }
 
