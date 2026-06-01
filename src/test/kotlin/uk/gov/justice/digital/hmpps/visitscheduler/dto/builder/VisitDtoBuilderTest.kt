@@ -18,6 +18,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.notify.LanguagePreference
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTimeSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.ApplicationEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
@@ -111,6 +112,7 @@ class VisitDtoBuilderTest {
     visit.visitContact?.let {
       Assertions.assertThat(visitDto.visitContact.name).isEqualTo(it.name)
       Assertions.assertThat(visitDto.visitContact.telephone).isEqualTo(it.telephone)
+      Assertions.assertThat(visitDto.visitContact.telephone).isEqualTo(it.languagePreference)
     }
 
     visit.visitNotes.let { notes ->
@@ -177,7 +179,7 @@ class VisitDtoBuilderTest {
     visit.support = VisitSupport(1, visit.id, "description", visit)
     visit.visitNotes.add(VisitNote(1, visit.id, VISIT_COMMENT, "text", visit))
     visit.visitors.add(VisitVisitor(1, visit.id, 123445, true, visit))
-    visit.visitContact = VisitContact(1, visit.id, "test", "0123456", "email@example.com", visit)
+    visit.visitContact = VisitContact(1, visit.id, "test", "0123456", "email@example.com", visit, LanguagePreference.EN)
 
     if (isFromExternalSystem && clientName != null && clientReference != null) {
       visit.visitExternalSystemDetails = VisitExternalSystemDetails(visit.id, clientName, clientReference, visit)

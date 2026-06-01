@@ -147,6 +147,7 @@ class VisitStoreService(
           name = it.name,
           telephone = it.telephone,
           email = it.email,
+          languagePreference = it.languagePreference,
         )
       }
     }
@@ -314,6 +315,7 @@ class VisitStoreService(
         telephone = it.telephone,
         email = it.email,
         visit = newVisit,
+        languagePreference = it.languagePreference,
       )
     }
 
@@ -384,6 +386,7 @@ class VisitStoreService(
         name = it.name,
         telephone = it.telephone,
         email = it.email,
+        languagePreference = it.languagePreference,
         visit = existingVisit,
       )
     }
