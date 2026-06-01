@@ -28,6 +28,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.notify.LanguagePreference
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.ActionedBy
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
@@ -210,7 +211,7 @@ class VisitEntityHelper(
     visit.addApplication(application)
 
     with(application.visitContact!!) {
-      visit.visitContact = VisitContact(visit = visit, visitId = visit.id, name = name, telephone = telephone, email = email)
+      visit.visitContact = VisitContact(visit = visit, visitId = visit.id, name = name, telephone = telephone, email = email, languagePreference = languagePreference)
     }
 
     application.support?.let {
@@ -320,7 +321,7 @@ class VisitEntityHelper(
 
     val savedVisit = visitRepository.saveAndFlush(notSaved)
     if (visitContact != null) {
-      createContact(visit = savedVisit, visitContact.name, visitContact.telephone, visitContact.email)
+      createContact(visit = savedVisit, visitContact.name, visitContact.telephone, visitContact.email, visitContact.languagePreference)
     }
 
     return if (createApplication) {
@@ -387,6 +388,7 @@ class VisitEntityHelper(
     name: String = "bob",
     phone: String? = "0123456789",
     email: String? = "email@example.com",
+    languagePreference: LanguagePreference = LanguagePreference.EN,
   ) {
     visit.visitContact = VisitContact(
       visitId = visit.id,
@@ -394,6 +396,7 @@ class VisitEntityHelper(
       telephone = phone,
       email = email,
       visit = visit,
+      languagePreference = languagePreference,
     )
   }
 

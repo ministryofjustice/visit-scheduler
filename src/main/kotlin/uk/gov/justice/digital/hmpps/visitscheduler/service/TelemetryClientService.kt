@@ -400,6 +400,7 @@ class TelemetryClientService(
     "visitRoom" to visitDto.visitRoom,
     "hasPhoneNumber" to (visitDto.visitContact.telephone != null).toString(),
     "hasEmail" to (visitDto.visitContact.email != null).toString(),
+    "languagePreference" to visitDto.visitContact.languagePreference.toString(),
     "totalVisitors" to visitDto.visitors.size.toString(),
     "visitors" to objectMapper.writeValueAsString(createVisitorData(visitDto.visitors, visitorDetails)),
   )

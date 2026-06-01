@@ -140,6 +140,7 @@ class VisitStoreService(
         visitContact.name = it.name
         visitContact.telephone = it.telephone
         visitContact.email = it.email
+        visitContact.languagePreference = it.languagePreference
       } ?: run {
         booking.visitContact = VisitContact(
           visit = booking,
@@ -147,6 +148,7 @@ class VisitStoreService(
           name = it.name,
           telephone = it.telephone,
           email = it.email,
+          languagePreference = it.languagePreference,
         )
       }
     }
@@ -314,6 +316,7 @@ class VisitStoreService(
         telephone = it.telephone,
         email = it.email,
         visit = newVisit,
+        languagePreference = it.languagePreference,
       )
     }
 
@@ -378,12 +381,14 @@ class VisitStoreService(
       it.name = updateVisitFromExternalSystemDto.visitContact.name
       it.telephone = updateVisitFromExternalSystemDto.visitContact.telephone
       it.email = updateVisitFromExternalSystemDto.visitContact.email
+      it.languagePreference = updateVisitFromExternalSystemDto.visitContact.languagePreference
     } ?: updateVisitFromExternalSystemDto.visitContact.let {
       VisitContact(
         visitId = existingVisit.id,
         name = it.name,
         telephone = it.telephone,
         email = it.email,
+        languagePreference = it.languagePreference,
         visit = existingVisit,
       )
     }
