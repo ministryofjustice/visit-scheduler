@@ -382,7 +382,7 @@ class VisitStoreService(
       it.name = updateVisitFromExternalSystemDto.visitContact.name
       it.telephone = updateVisitFromExternalSystemDto.visitContact.telephone
       it.email = updateVisitFromExternalSystemDto.visitContact.email
-      it.languagePreference = LanguagePreference.EN
+      it.languagePreference = updateVisitFromExternalSystemDto.visitContact.languagePreference
     } ?: updateVisitFromExternalSystemDto.visitContact.let {
       VisitContact(
         visitId = existingVisit.id,
