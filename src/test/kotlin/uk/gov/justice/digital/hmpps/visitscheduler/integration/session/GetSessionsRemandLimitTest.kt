@@ -97,24 +97,7 @@ class GetSessionsRemandLimitTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
     assertThat(visitSessionResults.size).isEqualTo(14)
-    val week1StartDate = startDate
-    val week1EndDate = startDate.with(TemporalAdjusters.next(DayOfWeek.SUNDAY))
-    val week2StartDate = week1StartDate.plusWeeks(1)
-    val week2EndDate = week1EndDate.plusWeeks(1)
-    val week3StartDate = week2StartDate.plusWeeks(1)
-    val week3EndDate = week2EndDate.plusWeeks(1)
-
-    val week1RemandVisits = visitSessionResults.filter { it.startTimestamp.toLocalDate() in week1StartDate..week1EndDate }
-      .filter { week1VisitDays.contains(it.startTimestamp.toLocalDate().dayOfWeek) }
-    assertThat(week1RemandVisits).noneMatch { it.sessionConflicts.contains(REMAND_VISITS_LIMIT_REACHED) }
-
-    val week2RemandVisits = visitSessionResults.filter { it.startTimestamp.toLocalDate() in week2StartDate..week2EndDate }
-      .filter { week2VisitDays.contains(it.startTimestamp.toLocalDate().dayOfWeek) }
-    assertThat(week2RemandVisits).noneMatch { it.sessionConflicts.contains(REMAND_VISITS_LIMIT_REACHED) }
-
-    val week3RemandVisits = visitSessionResults.filter { it.startTimestamp.toLocalDate() in week3StartDate..week3EndDate }
-      .filter { week3VisitDays.contains(it.startTimestamp.toLocalDate().dayOfWeek) }
-    assertThat(week3RemandVisits).noneMatch { it.sessionConflicts.contains(REMAND_VISITS_LIMIT_REACHED) }
+    assertThat(visitSessionResults).noneMatch { it.sessionConflicts.contains(REMAND_VISITS_LIMIT_REACHED) }
   }
 
   @Test

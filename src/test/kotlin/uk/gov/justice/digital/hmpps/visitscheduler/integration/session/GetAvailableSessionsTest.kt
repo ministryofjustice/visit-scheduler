@@ -42,7 +42,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
 
   private val remandPrisonerId = "B0000001"
 
-  val remandPrisonCode = "XYZ"
+  private val remandPrisonCode = "XYZ"
 
   private val prisonCode = "STC"
 
@@ -2891,7 +2891,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
   fun `when remand limit not reached then sessions are returned`() {
     // Given
     val nextAllowedDay = getNextAllowedDay()
-    val remandPrisonCode = "XYZ"
 
     // remand limit is 2 for the prison
     prisonEntityHelper.create(prisonCode = remandPrisonCode, remandVisitLimitPerWeek = 2)

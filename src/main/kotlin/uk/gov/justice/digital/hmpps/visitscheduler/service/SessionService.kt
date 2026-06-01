@@ -59,7 +59,7 @@ class SessionService(
 
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
-    private const val CONVICTED_STATUS = "Convicted"
+    private const val REMAND_STATUS = "Remand"
   }
 
   @Transactional(readOnly = true)
@@ -279,7 +279,7 @@ class SessionService(
     visitSessions: List<VisitSessionDto>,
     doubleBookingOrReservationSessions: List<VisitSessionDto>,
   ): List<VisitSessionDto> {
-    if (prisoner.convictedStatus.equals(CONVICTED_STATUS, ignoreCase = true)) {
+    if (!prisoner.convictedStatus.equals(REMAND_STATUS, ignoreCase = true)) {
       return emptyList()
     }
     val limitReachedSessions = mutableListOf<VisitSessionDto>()
@@ -299,7 +299,7 @@ class SessionService(
       val weekEndDate = weekStartDate.plusDays(6)
       val totalBookedVisits = visits.count { it.sessionSlot.slotDate in weekStartDate..weekEndDate }
 
-      // if there are more than the remand visit limit per week, add the session to the list of limit-reached sessions
+      // if the remand visit limit per week has been reached, add the session to the list of limit-reached sessions
       if (totalBookedVisits >= prison.remandVisitLimitPerWeek) {
         limitReachedSessions.addAll(
           visitSessions

@@ -76,7 +76,7 @@ class SessionServiceRemandLimitTest {
   }
 
   @Test
-  fun `when remand limit reached sessions then other sessions for the week contains REMAND_VISITS_LIMIT_REACHED conflict`() {
+  fun `when remand limit reached then all sessions for the week contain REMAND_VISITS_LIMIT_REACHED conflict`() {
     // Given
     val validFromDate = currentDate.plusDays(noticeDaysMin.toLong() + 1)
     val dayOfWeek = validFromDate.dayOfWeek
