@@ -93,7 +93,7 @@ class AssertHelper {
       "visitRoom" to cancelledVisit.visitRoom,
       "hasPhoneNumber" to ((cancelledVisit.visitContact.telephone != null).toString()),
       "hasEmail" to ((cancelledVisit.visitContact.email != null).toString()),
-      "languagePreference" to visitDto.visitContact.languagePreference.toString(),
+      "languagePreference" to cancelledVisit.visitContact.languagePreference.toString(),
       "totalVisitors" to (cancelledVisit.visitors.size.toString()),
       "visitors" to objectMapper.writeValueAsString(visitors),
       "actionedBy" to actionedBy,
