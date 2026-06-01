@@ -40,6 +40,10 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
 
   private val prisonerId = "A0000001"
 
+  private val remandPrisonerId = "B0000001"
+
+  val remandPrisonCode = "XYZ"
+
   private val prisonCode = "STC"
 
   private lateinit var authHttpHeaders: (HttpHeaders) -> Unit
@@ -49,6 +53,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     authHttpHeaders = setAuthorisation(roles = requiredRole)
     prison = prisonEntityHelper.create(prisonCode = prisonCode)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = remandPrisonerId, prisonCode = remandPrisonCode, convictedStatus = "Remand")
   }
 
   @Test
@@ -2821,6 +2826,128 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     assertThat(visitSessionResults.size).isEqualTo(2)
     assertSession(visitSessionResults[0], nextWeek, sessionTemplate1, OPEN)
     assertSession(visitSessionResults[1], nextWeek, sessionTemplate2, OPEN)
+  }
+
+  @Test
+  fun `when remand limit reached then sessions are not returned`() {
+    // Given
+    // remand limit is 1 for the prison
+    prisonEntityHelper.create(prisonCode = remandPrisonCode, remandVisitLimitPerWeek = 1)
+    val nextAllowedDay = getNextAllowedDay()
+
+    val sessionTemplate1 = sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      prisonCode = remandPrisonCode,
+    )
+
+    // session 2 on same day but no bookings here
+    sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("12:00"),
+      endTime = LocalTime.parse("13:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      prisonCode = remandPrisonCode,
+    )
+
+    sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("13:00"),
+      endTime = LocalTime.parse("14:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      prisonCode = remandPrisonCode,
+    )
+
+    // 1 booked visit for prisoner - so remand limit reached
+    this.visitEntityHelper.create(
+      prisonerId = remandPrisonerId,
+      sessionTemplate = sessionTemplate1,
+      slotDate = nextAllowedDay,
+      visitRestriction = VisitRestriction.OPEN,
+    )
+
+    // When
+    val responseSpec = callGetAvailableSessions(
+      prisonCode = remandPrisonCode,
+      prisonerId = remandPrisonerId,
+      sessionRestriction = OPEN,
+      authHttpHeaders = authHttpHeaders,
+    )
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk.expectBody()
+    val visitSessionResults = getResults(returnResult)
+
+    // no sessions are returned for the day as remand limit has been reached
+    assertThat(visitSessionResults.size).isEqualTo(0)
+  }
+
+  @Test
+  fun `when remand limit not reached then sessions are returned`() {
+    // Given
+    val nextAllowedDay = getNextAllowedDay()
+    val remandPrisonCode = "XYZ"
+
+    // remand limit is 2 for the prison
+    prisonEntityHelper.create(prisonCode = remandPrisonCode, remandVisitLimitPerWeek = 2)
+
+    val sessionTemplate1 = sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      prisonCode = remandPrisonCode,
+    )
+
+    // session 2 on same day but no bookings here
+    val sessionTemplate2 = sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("12:00"),
+      endTime = LocalTime.parse("13:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      prisonCode = remandPrisonCode,
+    )
+
+    val sessionTemplate3 = sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("13:00"),
+      endTime = LocalTime.parse("14:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      prisonCode = remandPrisonCode,
+    )
+
+    // only 1 booked visit - so under remand limit
+    this.visitEntityHelper.create(
+      prisonerId = remandPrisonerId,
+      sessionTemplate = sessionTemplate1,
+      slotDate = nextAllowedDay,
+      visitRestriction = VisitRestriction.OPEN,
+    )
+
+    // When
+    val responseSpec = callGetAvailableSessions(
+      prisonCode = remandPrisonCode,
+      prisonerId = remandPrisonerId,
+      sessionRestriction = OPEN,
+      authHttpHeaders = authHttpHeaders,
+    )
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk.expectBody()
+    val visitSessionResults = getResults(returnResult)
+
+    // sessions are returned for the day as remand limit has not been reached
+    assertThat(visitSessionResults.size).isEqualTo(2)
+    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate2, OPEN)
+    assertSession(visitSessionResults[1], nextAllowedDay, sessionTemplate3, OPEN)
   }
 
   private fun getNextAllowedDay(): LocalDate {
