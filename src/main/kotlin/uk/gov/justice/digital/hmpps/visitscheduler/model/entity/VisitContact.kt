@@ -52,5 +52,5 @@ class VisitContact(
 
   override fun hashCode(): Int = id.hashCode()
 
-  override fun toString(): String = this::class.simpleName + "(id=$id, name=$name, telephone=$telephone)"
+  override fun toString(): String = this::class.simpleName + "(id=$id, name=$name, telephone=$telephone), language preference=$languagePreference"
 }
