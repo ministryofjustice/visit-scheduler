@@ -6,6 +6,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
@@ -55,6 +56,7 @@ class SessionService(
 ) {
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
+    private const val REMAND_STATUS = "Remand"
   }
 
   @Transactional(readOnly = true)
@@ -149,7 +151,7 @@ class SessionService(
     }
 
     val sessionSlots = getSessionSlots(visitSessions)
-    addSessionConflicts(sessionTemplates, visitSessions, prisonerId, prison, sessionSlots, excludedApplicationReference, usernameToExcludeFromReservedApplications)
+    addSessionConflicts(sessionTemplates, visitSessions, prisoner, prison, sessionSlots, dateRange, excludedApplicationReference, usernameToExcludeFromReservedApplications)
 
     visitSessions = visitSessions.also {
       populateBookedCount(sessionSlots, it, excludedApplicationReference, usernameToExcludeFromReservedApplications, true)
@@ -202,21 +204,23 @@ class SessionService(
   private fun addSessionConflicts(
     sessionTemplates: List<SessionTemplate>,
     visitSessions: List<VisitSessionDto>,
-    prisonerId: String,
+    prisoner: PrisonerDto,
     prison: Prison,
     sessionSlots: List<SessionSlot>,
+    dateRange: DateRange,
     excludedApplicationReference: String?,
     usernameToExcludeFromReservedApplications: String?,
   ) {
     val sessionSlotDates = visitSessions.map { it.startTimestamp.toLocalDate() }.distinct()
     if (sessionSlotDates.isNotEmpty()) {
-      val nonAssociationPrisonerIds = getNonAssociationPrisonerIds(prisonerService.getPrisonerNonAssociationList(prisonerId))
+      val nonAssociationPrisonerIds = getNonAssociationPrisonerIds(prisonerService.getPrisonerNonAssociationList(prisoner.prisonerId))
       val nonAssociationConflictSessions = if (nonAssociationPrisonerIds.isEmpty()) {
         emptyList()
       } else {
         getNonAssociationVisitsOrApplications(sessionSlotDates, nonAssociationPrisonerIds, prison)
       }
-      val doubleBookingOrReservationSessions = getDoubleBookingOrReservationSessions(visitSessions, sessionSlots, prisonerId, excludedApplicationReference, usernameToExcludeFromReservedApplications)
+      val doubleBookingOrReservationSessions = getDoubleBookingOrReservationSessions(visitSessions, sessionSlots, prisoner.prisonerId, excludedApplicationReference, usernameToExcludeFromReservedApplications)
+      val limitReachedSessions = getLimitReachedSessions(dateRange, prisoner, prison, visitSessions)
 
       val prisonExcludeDates = prison.excludeDates.map { it.excludeDate }
       val sessionExcludedDatesByReference = sessionTemplates
@@ -225,7 +229,7 @@ class SessionService(
         .mapValues { (_, excludeDates) -> excludeDates.map { it.excludeDate } }
       visitSessions.forEach { session ->
         val excludedDatesForSession = sessionExcludedDatesByReference[session.sessionTemplateReference].orEmpty()
-        sessionConflictsUtil.addSessionConflicts(session, nonAssociationConflictSessions, doubleBookingOrReservationSessions, prisonExcludeDates, excludedDatesForSession)
+        sessionConflictsUtil.addSessionConflicts(session, nonAssociationConflictSessions, doubleBookingOrReservationSessions, limitReachedSessions, prisonExcludeDates, excludedDatesForSession)
       }
     }
   }
@@ -272,6 +276,45 @@ class SessionService(
       }
     }
     return doubleBookingOrReservationSessions
+  }
+
+  private fun getLimitReachedSessions(
+    dateRange: DateRange,
+    prisoner: PrisonerDto,
+    prison: Prison,
+    visitSessions: List<VisitSessionDto>,
+  ): List<VisitSessionDto> {
+    if (!prisoner.convictedStatus.equals(REMAND_STATUS, ignoreCase = true)) {
+      return emptyList()
+    }
+    val limitReachedSessions = mutableListOf<VisitSessionDto>()
+    // adjust start and end dates based on prison config
+    val adjustedStartDate = dateRange.fromDate.with(TemporalAdjusters.previousOrSame(prison.weekStartDay))
+    val adjustedToDate = dateRange.toDate.with(TemporalAdjusters.nextOrSame(prison.weekStartDay.plus(6)))
+
+    val visits = visitRepository.getBookedVisits(
+      prisonerId = prisoner.prisonerId,
+      prisonCode = prison.code,
+      startDateTime = adjustedStartDate.atStartOfDay(),
+      endDateTime = adjustedToDate.atTime(23, 59, 59),
+    )
+
+    var weekStartDate = adjustedStartDate
+    while (weekStartDate < adjustedToDate) {
+      val weekEndDate = weekStartDate.plusDays(6)
+      val totalBookedVisits = visits.count { it.sessionSlot.slotDate in weekStartDate..weekEndDate }
+
+      // if the remand visit limit per week has been reached, add the session to the list of limit-reached sessions
+      if (totalBookedVisits >= prison.remandVisitLimitPerWeek) {
+        limitReachedSessions.addAll(
+          visitSessions
+            .filter { it.startTimestamp.toLocalDate() in weekStartDate..weekEndDate },
+        )
+      }
+      weekStartDate = weekStartDate.plusWeeks(1)
+    }
+
+    return limitReachedSessions
   }
 
   private fun getSessionSlots(sessionTemplates: List<VisitSessionDto>): List<SessionSlot> {

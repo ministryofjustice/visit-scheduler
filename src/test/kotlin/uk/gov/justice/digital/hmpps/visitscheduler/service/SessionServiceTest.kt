@@ -484,8 +484,6 @@ class SessionServiceTest {
     @Test
     fun `session does not contain conflicts when a prisoner has no non-associations and no double bookings`() {
       // Given
-      val prisonerId = "A1234AA"
-
       val singleSession = sessionTemplate(
         validFromDate = currentDate,
         validToDate = currentDate.plusWeeks(1),
@@ -513,7 +511,6 @@ class SessionServiceTest {
     @Test
     fun `session does not contain conflicts when a prisoner has a valid non-association without bookings`() {
       // Given
-      val prisonerId = "A1234AA"
       val associationId = "B1234BB"
 
       val singleSession = sessionTemplate(
@@ -546,7 +543,6 @@ class SessionServiceTest {
     @Test
     fun `sessions contain conflicts when a prisoner has a valid non-association with a booking`() {
       // Given
-      val prisonerId = "A1234AA"
       val associationId = "B1234BB"
       val validFromDate = currentDate.plusDays(noticeDaysMin.toLong())
       val dayOfWeek = validFromDate.plusDays(1).dayOfWeek
@@ -617,8 +613,6 @@ class SessionServiceTest {
     @Test
     fun `sessions contain conflicts when a prisoner has a double booking`() {
       // Given
-      val prisonerId = "A1234AA"
-
       val validFromDate = currentDate.plusDays(noticeDaysMin.toLong())
       val slotDate = validFromDate.plusDays(1)
       val dayOfWeek = slotDate.dayOfWeek
@@ -665,8 +659,6 @@ class SessionServiceTest {
     @Test
     fun `session does not contain conflicts when a prisoner non-association NOT FOUND`() {
       // Given
-      val prisonerId = "A1234AA"
-
       val singleSession = sessionTemplate(
         validFromDate = currentDate,
         validToDate = currentDate.plusWeeks(1),
@@ -694,8 +686,6 @@ class SessionServiceTest {
     @Test
     fun `get sessions throws WebClientResponseException for BAD REQUEST`() {
       // Given
-      val prisonerId = "A1234AA"
-
       val singleSession = sessionTemplate(
         validFromDate = currentDate,
         startTime = LocalTime.parse("11:30"),
@@ -767,8 +757,6 @@ class SessionServiceTest {
     @Test
     fun `all sessions are returned when a prisoner has no non-associations and no double bookings`() {
       // Given
-      val prisonerId = "A1234AA"
-
       val singleSession = sessionTemplate(
         validFromDate = currentDate,
         validToDate = currentDate.plusWeeks(1),
@@ -793,7 +781,6 @@ class SessionServiceTest {
     @Test
     fun `only available sessions are returned when a prisoner has a valid non-association without bookings`() {
       // Given
-      val prisonerId = "A1234AA"
       val associationId = "B1234BB"
 
       val singleSession = sessionTemplate(
@@ -820,7 +807,6 @@ class SessionServiceTest {
     @Test
     fun `sessions are returned with appropriate flags when a prisoner has a valid non-association with a booking`() {
       // Given
-      val prisonerId = "A1234AA"
       val associationId = "B1234BB"
 
       val singleSession = sessionTemplate(
@@ -860,8 +846,6 @@ class SessionServiceTest {
     @Test
     fun `sessions are returned with appropriate flags when a prisoner has a double booking`() {
       // Given
-      val prisonerId = "A1234AA"
-
       val singleSession = sessionTemplate(
         validFromDate = currentDate,
         validToDate = currentDate.plusWeeks(1),
@@ -899,8 +883,6 @@ class SessionServiceTest {
     @Test
     fun `when multiple sessions prison api get prisoners is only called once`() {
       // Given
-      val prisonerId = "A1234AA"
-
       val firstSession = sessionTemplate(
         validFromDate = currentDate,
         validToDate = currentDate.plusWeeks(1),

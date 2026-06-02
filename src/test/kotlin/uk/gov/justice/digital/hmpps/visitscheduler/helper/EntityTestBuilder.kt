@@ -48,7 +48,9 @@ fun prison(
   maxChildVisitors: Int = 3,
   adultAgeYears: Int = 18,
   isActive: Boolean = true,
-): Prison = Prison(code = prisonCode, active = isActive, policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears)
+  weekStartDay: DayOfWeek = DayOfWeek.MONDAY,
+  remandVisitLimitPerWeek: Int = 3,
+): Prison = Prison(code = prisonCode, active = isActive, policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears, weekStartDay, remandVisitLimitPerWeek)
 
 fun sessionTemplate(
   name: String = "sessionTemplate_",
@@ -120,6 +122,8 @@ fun sessionTemplate(
   maxAdultVisitors: Int = 3,
   maxChildVisitors: Int = 3,
   adultAgeYears: Int = 18,
+  weekStartDay: DayOfWeek = DayOfWeek.MONDAY,
+  remandVisitLimitPerWeek: Int = 3,
   isActive: Boolean = true,
   includeLocationGroupType: Boolean = true,
   includeCategoryGroupType: Boolean = true,
@@ -127,7 +131,7 @@ fun sessionTemplate(
   userTypes: List<UserType> = listOf(UserType.STAFF, UserType.PUBLIC),
   visitOrderRestrictionType: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
 ): SessionTemplate {
-  val prison = Prison(code = prisonCode, active = isActive, policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears)
+  val prison = Prison(code = prisonCode, active = isActive, policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears, weekStartDay, remandVisitLimitPerWeek)
 
   var sessionTemplate = SessionTemplate(
     name = name + dayOfWeek,
@@ -154,6 +158,39 @@ fun sessionTemplate(
   sessionTemplate = addUserClients(sessionTemplate, userTypes)
 
   return sessionTemplate
+}
+
+fun visit(
+  prisonerId: String,
+  visitDate: LocalDate,
+  sessionTemplate: SessionTemplate,
+  visitRoom: String = "Visit Room 1",
+  visitStatus: VisitStatus = VisitStatus.BOOKED,
+  visitSubStatus: VisitSubStatus = VisitSubStatus.AUTO_APPROVED,
+  visitRestriction: VisitRestriction = VisitRestriction.OPEN,
+  userType: UserType = UserType.STAFF,
+): Visit {
+  val sessionSlot = SessionSlot(
+    sessionTemplateReference = sessionTemplate.reference,
+    prisonId = sessionTemplate.prisonId,
+    slotDate = visitDate,
+    slotStart = visitDate.atTime(sessionTemplate.startTime),
+    slotEnd = visitDate.atTime(sessionTemplate.endTime),
+  )
+
+  return Visit(
+    prisonId = sessionTemplate.prison.id,
+    prison = sessionTemplate.prison,
+    prisonerId = prisonerId,
+    sessionSlotId = sessionSlot.id,
+    sessionSlot = sessionSlot,
+    visitType = sessionTemplate.visitType,
+    visitRoom = visitRoom,
+    visitStatus = visitStatus,
+    visitSubStatus = visitSubStatus,
+    visitRestriction = visitRestriction,
+    userType = userType,
+  )
 }
 
 fun createVisit(

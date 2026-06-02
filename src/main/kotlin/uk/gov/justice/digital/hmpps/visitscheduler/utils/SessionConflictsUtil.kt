@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.DOUBLE_BOOKING_OR_RESERVATION
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.NON_ASSOCIATION
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.PRISON_DATE_BLOCKED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.REMAND_VISITS_LIMIT_REACHED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.SESSION_DATE_BLOCKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AdditionalSessionConflictInfoDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.DoubleBookedConflictSessionDto
@@ -13,13 +14,26 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionConflictD
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionConflictType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import java.time.LocalDate
+import java.util.function.BiPredicate
 
 @Component
 class SessionConflictsUtil {
+  private val isNotADoubleBookedSession =
+    BiPredicate<VisitSessionDto, List<DoubleBookedConflictSessionDto>> { visitSession, doubleBookedSessions ->
+      doubleBookedSessions.any { doubleBookedSession ->
+        (
+          visitSession.startTimestamp.toLocalDate() == doubleBookedSession.sessionDate &&
+            visitSession.sessionTemplateReference == doubleBookedSession.sessionTemplateReference &&
+            doubleBookedSession.conflictType == SessionConflictType.VISIT
+          )
+      }
+    }
+
   fun addSessionConflicts(
     session: VisitSessionDto,
     nonAssociationConflictSessions: List<NonAssociationConflictSessionDto>,
     doubleBookingConflictSessions: List<DoubleBookedConflictSessionDto>,
+    limitReachedSessions: List<VisitSessionDto>,
     prisonExcludeDates: List<LocalDate>,
     sessionExcludeDates: List<LocalDate>,
   ) {
@@ -27,6 +41,9 @@ class SessionConflictsUtil {
       session.sessionConflicts.add(it)
     }
     getDoubleBookingOrReservationSessionConflict(session, doubleBookingConflictSessions)?.let {
+      session.sessionConflicts.add(it)
+    }
+    getLimitReachedSessionConflict(session, limitReachedSessions, doubleBookingConflictSessions)?.let {
       session.sessionConflicts.add(it)
     }
     getPrisonDateExcludedSessionConflict(prisonExcludeDates, session)?.let {
@@ -62,6 +79,17 @@ class SessionConflictsUtil {
       return SessionConflictDto(DOUBLE_BOOKING_OR_RESERVATION, listOf(doubleBookingConflictAttributes))
     }
 
+    return null
+  }
+
+  private fun getLimitReachedSessionConflict(
+    session: VisitSessionDto,
+    limitReachedSessions: List<VisitSessionDto>,
+    doubleBookingConflicts: List<DoubleBookedConflictSessionDto>,
+  ): SessionConflictDto? {
+    if (limitReachedSessions.contains(session) && !isNotADoubleBookedSession.test(session, doubleBookingConflicts)) {
+      return SessionConflictDto(REMAND_VISITS_LIMIT_REACHED)
+    }
     return null
   }
 
