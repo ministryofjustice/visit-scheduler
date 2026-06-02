@@ -18,7 +18,14 @@ data class ContactDto(
   @param:Schema(description = "Contact Email Address", example = "email@example.com", required = false)
   @field:NullableNotBlank
   val email: String?,
-  @param:Schema(description = "Contact language preference", example = "CY", defaultValue = "EN", required = false)
+  @param:Schema(
+    name = "languagePreference",
+    description = "The language in which your correspondence will be sent",
+    defaultValue = "en",
+    required = false,
+    allowableValues = ["en", "cy"],
+    example = "en",
+  )
   val languagePreference: LanguagePreference = LanguagePreference.EN,
 ) {
   constructor(entity: VisitContact) : this(
