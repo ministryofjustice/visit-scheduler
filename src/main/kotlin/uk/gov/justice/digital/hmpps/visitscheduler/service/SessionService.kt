@@ -8,9 +8,9 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.DOUBLE_BOOKING_OR_RESERVATION
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.NON_ASSOCIATION
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.REMAND_VISITS_LIMIT_REACHED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
@@ -236,7 +236,7 @@ class SessionService(
       // set  conflict double booked flag
       if (doubleBookingOrReservationSessions.isNotEmpty() && hasDoubleBookingOrReservationSessions(doubleBookingOrReservationSessions, it)) it.sessionConflicts.add(DOUBLE_BOOKING_OR_RESERVATION)
       // set conflict limit reached flag
-      if (limitReachedSessions.isNotEmpty() && isLimitReachedSession(limitReachedSessions, it)) it.sessionConflicts.add(SessionConflict.REMAND_VISITS_LIMIT_REACHED)
+      if (limitReachedSessions.isNotEmpty() && isLimitReachedSession(limitReachedSessions, it)) it.sessionConflicts.add(REMAND_VISITS_LIMIT_REACHED)
     }
   }
 
