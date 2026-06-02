@@ -41,11 +41,12 @@ class PrisonConfigService(
       throw ValidationException(messageService.getMessage("validation.create.prison.found", prisonDto.code))
     }
     validatePrisonDetails(
-      prisonDto.code,
-      prisonDto.maxTotalVisitors,
-      prisonDto.maxAdultVisitors,
-      prisonDto.maxChildVisitors,
-      prisonDto.clients,
+      prisonCode = prisonDto.code,
+      maxTotalVisitors = prisonDto.maxTotalVisitors,
+      maxAdultVisitors = prisonDto.maxAdultVisitors,
+      maxChildVisitors = prisonDto.maxChildVisitors,
+      remandVisitLimitPerWeek = prisonDto.remandVisitLimitPerWeek,
+      clients = prisonDto.clients,
     )
 
     val newPrison = Prison(prisonDto)
@@ -64,12 +65,23 @@ class PrisonConfigService(
     val maxAdultVisitors = prisonDto.maxAdultVisitors ?: prison.maxAdultVisitors
     val maxChildVisitors = prisonDto.maxChildVisitors ?: prison.maxChildVisitors
     val adultAgeYears = prisonDto.adultAgeYears ?: prison.adultAgeYears
+    val weekStartDay = prisonDto.weekStartDay ?: prison.weekStartDay
+    val remandVisitLimitPerWeek = prisonDto.remandVisitLimitPerWeek ?: prison.remandVisitLimitPerWeek
 
-    validatePrisonDetails(prisonCode, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, prisonDto.clients)
+    validatePrisonDetails(
+      prisonCode = prisonCode,
+      maxTotalVisitors = maxTotalVisitors,
+      maxAdultVisitors = maxAdultVisitors,
+      maxChildVisitors = maxChildVisitors,
+      remandVisitLimitPerWeek = remandVisitLimitPerWeek,
+      clients = prisonDto.clients,
+    )
     prison.maxTotalVisitors = maxTotalVisitors
     prison.maxAdultVisitors = maxAdultVisitors
     prison.maxChildVisitors = maxChildVisitors
     prison.adultAgeYears = adultAgeYears
+    prison.weekStartDay = weekStartDay
+    prison.remandVisitLimitPerWeek = remandVisitLimitPerWeek
 
     if (prisonDto.clients != null) {
       prison.clients.clear()
@@ -165,10 +177,11 @@ class PrisonConfigService(
     maxTotalVisitors: Int,
     maxAdultVisitors: Int,
     maxChildVisitors: Int,
+    remandVisitLimitPerWeek: Int,
     clients: List<PrisonUserClientDto>?,
   ) {
     validateTotalVisitors(prisonCode, maxTotalVisitors = maxTotalVisitors, maxAdultVisitors = maxAdultVisitors, maxChildVisitors = maxChildVisitors)
-
+    validateRemandLimitPerWeek(remandVisitLimitPerWeek, prisonCode)
     if (!clients.isNullOrEmpty()) {
       validatePrisonClients(prisonCode = prisonCode, clients = clients)
     }
@@ -188,6 +201,21 @@ class PrisonConfigService(
           prisonCode,
           maxTotalVisitors.toString(),
           highestMax.toString(),
+        ),
+      )
+    }
+  }
+
+  private fun validateRemandLimitPerWeek(
+    remandVisitLimitPerWeek: Int,
+    prisonCode: String,
+  ) {
+    if (remandVisitLimitPerWeek < 1) {
+      throw ValidationException(
+        messageService.getMessage(
+          "validation.prison.remandlimit.invalid",
+          prisonCode,
+          remandVisitLimitPerWeek.toString(),
         ),
       )
     }

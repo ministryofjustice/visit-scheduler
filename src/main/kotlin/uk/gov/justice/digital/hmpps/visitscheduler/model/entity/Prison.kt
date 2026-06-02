@@ -3,6 +3,8 @@ package uk.gov.justice.digital.hmpps.visitscheduler.model.entity
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
@@ -12,6 +14,7 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
+import java.time.DayOfWeek
 import java.time.LocalDateTime
 
 @Entity
@@ -31,6 +34,11 @@ class Prison(
   var maxChildVisitors: Int,
   @Column(name = "adult_age_years")
   var adultAgeYears: Int,
+  @Column(name = "week_start_day")
+  @Enumerated(EnumType.STRING)
+  var weekStartDay: DayOfWeek,
+  @Column(name = "remand_visit_limit_per_week")
+  var remandVisitLimitPerWeek: Int,
 
   @CreationTimestamp
   @Column
@@ -71,5 +79,7 @@ class Prison(
     maxAdultVisitors = dto.maxAdultVisitors,
     maxChildVisitors = dto.maxChildVisitors,
     adultAgeYears = dto.adultAgeYears,
+    weekStartDay = dto.weekStartDay,
+    remandVisitLimitPerWeek = dto.remandVisitLimitPerWeek,
   )
 }

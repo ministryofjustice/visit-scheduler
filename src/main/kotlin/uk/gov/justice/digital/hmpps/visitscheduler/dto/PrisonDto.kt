@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
+import java.time.DayOfWeek
 
 @Schema(description = "Prison dto")
 data class PrisonDto(
@@ -22,17 +23,28 @@ data class PrisonDto(
   @field:NotNull
   @field:Min(1)
   val maxTotalVisitors: Int,
+
   @param:Schema(description = "Max number of adults")
   @field:NotNull
   @field:Min(1)
   val maxAdultVisitors: Int,
+
   @param:Schema(description = "Max number of children")
   @field:NotNull
   @field:Min(0)
   val maxChildVisitors: Int,
+
   @param:Schema(description = "Age of adults in years")
   @field:NotNull
   val adultAgeYears: Int,
+
+  @param:Schema(description = "The week day of which the prison week starts on. Enum value, any day of the week MONDAY - SUNDAY", defaultValue = "MONDAY")
+  var weekStartDay: DayOfWeek = DayOfWeek.MONDAY,
+
+  @param:Schema(description = "The limit per prison week, the number of remand visits that can be booked per week", defaultValue = "3")
+  @field:Min(1)
+  var remandVisitLimitPerWeek: Int = 3,
+
   @param:Schema(description = "prison user client", required = true)
   @field:NotEmpty
   val clients: List<@Valid PrisonUserClientDto> = mutableListOf(),
@@ -47,5 +59,7 @@ data class PrisonDto(
     clients = prisonEntity.clients.map { prisonUserClient ->
       PrisonUserClientDto(prisonUserClient)
     }.toList(),
+    weekStartDay = prisonEntity.weekStartDay,
+    remandVisitLimitPerWeek = prisonEntity.remandVisitLimitPerWeek,
   )
 }

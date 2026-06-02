@@ -66,7 +66,7 @@ class VisitService(
   }
 
   fun bookVisit(applicationReference: String, bookingRequestDto: BookingRequestDto): VisitDto {
-    val alreadyBookedVisit = visitStoreService.checkBookingAlreadyMade(applicationReference)
+    val alreadyBookedVisit = visitStoreService.checkApplicationAlreadyComplete(applicationReference)
     alreadyBookedVisit?.let {
       return alreadyBookedVisit
     }
@@ -82,22 +82,31 @@ class VisitService(
   }
 
   fun updateBookedVisit(applicationReference: String, bookingRequestDto: BookingRequestDto): VisitDto {
-    val alreadyBookedVisit = visitStoreService.checkBookingAlreadyMade(applicationReference)
-    alreadyBookedVisit?.let {
-      return alreadyBookedVisit
+    visitStoreService.checkApplicationAlreadyComplete(applicationReference)?.let {
+      return it
     }
 
     val existingVisit = visitStoreService.getBookingByApplicationReference(applicationReference)
-    val booking = visitStoreService.createOrUpdateBooking(applicationReference, bookingRequestDto)
-    return processUpdateBookingEvents(existingVisit, booking, bookingRequestDto)
+    val updatedVisit = visitStoreService.createOrUpdateBooking(applicationReference, bookingRequestDto)
+
+    processUpdateBookingEvents(
+      visitBeforeUpdate = existingVisit,
+      visitAfterUpdate = updatedVisit,
+      bookingRequestDto = bookingRequestDto,
+    )
+
+    return updatedVisit
   }
 
   @Transactional
   fun getBookedVisitByApplicationReference(applicationReference: String): VisitDto {
     val visit = visitRepository.findVisitByApplicationReference(applicationReference)
-    visit?.let {
-      return visitDtoBuilder.build(visit)
-    } ?: throw VisitNotFoundException("Visit not found for application reference")
+
+    if (visit == null) {
+      throw VisitNotFoundException("Visit not found for application reference")
+    }
+
+    return visitDtoBuilder.build(visit)
   }
 
   @Transactional
@@ -247,27 +256,25 @@ class VisitService(
   }
 
   private fun processUpdateBookingEvents(
-    visitDtoBeforeUpdate: VisitDto?,
-    bookedVisitDto: VisitDto,
+    visitBeforeUpdate: VisitDto?,
+    visitAfterUpdate: VisitDto,
     bookingRequestDto: BookingRequestDto,
-  ): VisitDto {
-    val updateText = visitDtoBeforeUpdate?.let {
-      updateVisitSummaryUtil.getDiff(visitDtoAfterUpdate = bookedVisitDto, visitDtoBeforeUpdate = visitDtoBeforeUpdate)
+  ) {
+    val updateText = visitBeforeUpdate?.let {
+      updateVisitSummaryUtil.getDiff(visitDtoAfterUpdate = visitAfterUpdate, visitDtoBeforeUpdate = visitBeforeUpdate)
     }
-    val updatedEventAuditDto = visitEventAuditService.updateVisitApplicationAndSaveEvent(bookedVisitDto, bookingRequestDto, EventAuditType.UPDATED_VISIT, text = updateText)
+    val updatedEventAuditDto = visitEventAuditService.updateVisitApplicationAndSaveEvent(visitAfterUpdate, bookingRequestDto, EventAuditType.UPDATED_VISIT, text = updateText)
 
-    telemetryClientService.trackUpdateBookingEvent(visitDtoBeforeUpdate, bookedVisitDto, updatedEventAuditDto)
+    telemetryClientService.trackUpdateBookingEvent(visitBeforeUpdate, visitAfterUpdate, updatedEventAuditDto, bookingRequestDto)
 
     val snsDomainEventPublishDto = SnsDomainEventPublishDto(
-      bookedVisitDto.reference,
-      bookedVisitDto.createdTimestamp,
-      bookedVisitDto.modifiedTimestamp,
-      bookedVisitDto.prisonerId,
+      visitAfterUpdate.reference,
+      visitAfterUpdate.createdTimestamp,
+      visitAfterUpdate.modifiedTimestamp,
+      visitAfterUpdate.prisonerId,
       updatedEventAuditDto.id,
     )
     snsService.sendChangedVisitBookedEvent(snsDomainEventPublishDto)
-
-    return bookedVisitDto
   }
 
   private fun processCancelEvents(

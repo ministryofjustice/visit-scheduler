@@ -35,6 +35,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.CL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.notify.LanguagePreference
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.VisitBalancesDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch.PrisonerSearchResultDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
@@ -299,7 +300,7 @@ class BookVisitTest : IntegrationTestBase() {
     )
 
     // contact details have name and phone number
-    val contact = ContactDto(name = "Aled Evans", telephone = "01348811539", email = "email@example.com")
+    val contact = ContactDto(name = "Aled Evans", telephone = "01348811539", email = "email@example.com", languagePreference = LanguagePreference.CY)
 
     applicationEntityHelper.createContact(application = applicationWithContact, contact)
     applicationEntityHelper.createVisitor(application = applicationWithContact, nomisPersonId = 123L, visitContact = true)
@@ -314,6 +315,7 @@ class BookVisitTest : IntegrationTestBase() {
     val visitDto = createVisitDtoFromResponse(responseSpec)
     assertThat(visitDto.visitContact.name).isEqualTo(applicationWithContact.visitContact!!.name)
     assertThat(visitDto.visitContact.telephone).isEqualTo(applicationWithContact.visitContact!!.telephone)
+    assertThat(visitDto.visitContact.languagePreference).isEqualTo(applicationWithContact.visitContact!!.languagePreference)
     assertVisitMatchesApplication(visitDto, applicationWithContact)
 
     val application = testApplicationRepository.findByReference(visitDto.applicationReference!!)
@@ -349,6 +351,7 @@ class BookVisitTest : IntegrationTestBase() {
     assertThat(visitDto.visitContact).isNotNull()
     assertThat(visitDto.visitContact.name).isEqualTo(contact.name)
     assertThat(visitDto.visitContact.telephone).isNull()
+    assertThat(visitDto.visitContact.languagePreference).isEqualTo(LanguagePreference.EN)
     assertVisitMatchesApplication(visitDto, applicationWithNoPhoneNumberNoEmail)
 
     val application = testApplicationRepository.findByReference(visitDto.applicationReference!!)
@@ -482,6 +485,7 @@ class BookVisitTest : IntegrationTestBase() {
     if (application.visitContact != null) {
       assertThat(visitDto.visitContact.name).isEqualTo(application.visitContact!!.name)
       assertThat(visitDto.visitContact.telephone).isEqualTo(application.visitContact!!.telephone)
+      assertThat(visitDto.visitContact.languagePreference).isEqualTo(application.visitContact!!.languagePreference)
     } else {
       assertThat(visitDto.visitContact).isNull()
     }

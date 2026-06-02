@@ -21,7 +21,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventAt
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonercontactregistry.PrisonerContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorApprovedUnapprovedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatVisitorApproved
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
@@ -54,9 +53,11 @@ class VisitorApprovedVisitNotificationControllerTest : NotificationTestBase() {
   @Test
   fun `when visitor is re-approved then flagged visits are un-flagged`() {
     // Given
-    val currentApprovedPrisonerContacts = listOf(PrisonerContactDto(personId = visitorId.toLong()))
+    val contactSearchResponse = listOf(
+      createContactWithOptionalPrisonerRelationshipDto(personId = visitorId.toLong(), firstName = "John", lastName = "Contact", approvedVisitor = true),
+    )
     val notificationDto = VisitorApprovedUnapprovedNotificationDto(visitorId = visitorId, prisonerNumber = prisonerId)
-    prisonerContactRegistryMockServer.stubGetPrisonerApprovedSocialContacts(prisonerId, withAddress = false, withRestrictions = false, currentApprovedPrisonerContacts)
+    prisonerContactRegistryMockServer.stubSearchContacts(contactIds = listOf(visitorId.toLong()), prisonerId = prisonerId, withRestrictions = false, contactsList = contactSearchResponse)
     val visit1 = createApplicationAndVisit(
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
@@ -97,16 +98,18 @@ class VisitorApprovedVisitNotificationControllerTest : NotificationTestBase() {
       isNull(),
     )
 
-    verify(prisonerContactRegistryClientSpy, times(1)).getPrisonersApprovedSocialContacts(prisonerId, withAddress = false, withRestrictions = false)
+    verify(prisonerContactRegistryClientSpy, times(1)).searchContacts(contactIds = listOf(visitorId.toLong()), prisonerId = prisonerId, withRestrictions = false)
     verify(telemetryClient, times(1)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
   }
 
   @Test
   fun `when visitor is re-approved then multiple flagged visits are un-flagged`() {
     // Given
-    val currentApprovedPrisonerContacts = listOf(PrisonerContactDto(personId = visitorId.toLong()))
+    val contactSearchResponse = listOf(
+      createContactWithOptionalPrisonerRelationshipDto(personId = visitorId.toLong(), firstName = "John", lastName = "Contact", approvedVisitor = true),
+    )
     val notificationDto = VisitorApprovedUnapprovedNotificationDto(visitorId = visitorId, prisonerNumber = prisonerId)
-    prisonerContactRegistryMockServer.stubGetPrisonerApprovedSocialContacts(prisonerId, withAddress = false, withRestrictions = false, currentApprovedPrisonerContacts)
+    prisonerContactRegistryMockServer.stubSearchContacts(contactIds = listOf(visitorId.toLong()), prisonerId = prisonerId, withRestrictions = false, contactsList = contactSearchResponse)
     val visit1 = createApplicationAndVisit(
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
@@ -158,7 +161,7 @@ class VisitorApprovedVisitNotificationControllerTest : NotificationTestBase() {
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(0)
 
-    verify(prisonerContactRegistryClientSpy, times(1)).getPrisonersApprovedSocialContacts(prisonerId, withAddress = false, withRestrictions = false)
+    verify(prisonerContactRegistryClientSpy, times(1)).searchContacts(contactIds = listOf(visitorId.toLong()), prisonerId = prisonerId, withRestrictions = false)
     verify(telemetryClient, times(2)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
   }
 
@@ -167,8 +170,10 @@ class VisitorApprovedVisitNotificationControllerTest : NotificationTestBase() {
     // Given
     val visitor1Id = "22"
     val visitor2Id = "33"
-    val currentApprovedPrisonerContacts = listOf(PrisonerContactDto(personId = visitor1Id.toLong()), PrisonerContactDto(personId = visitor2Id.toLong()))
-    prisonerContactRegistryMockServer.stubGetPrisonerApprovedSocialContacts(prisonerId, withAddress = false, withRestrictions = false, currentApprovedPrisonerContacts)
+    val contactSearchResponse = listOf(
+      createContactWithOptionalPrisonerRelationshipDto(personId = visitor1Id.toLong(), firstName = "John", lastName = "Contact", approvedVisitor = true),
+    )
+    prisonerContactRegistryMockServer.stubSearchContacts(contactIds = listOf(visitor1Id.toLong()), prisonerId = prisonerId, withRestrictions = false, contactsList = contactSearchResponse)
 
     // visit exists with 2 visitors
     val visit1 = createApplicationAndVisit(
@@ -235,7 +240,7 @@ class VisitorApprovedVisitNotificationControllerTest : NotificationTestBase() {
       isNull(),
     )
 
-    verify(prisonerContactRegistryClientSpy, times(1)).getPrisonersApprovedSocialContacts(prisonerId, withAddress = false, withRestrictions = false)
+    verify(prisonerContactRegistryClientSpy, times(1)).searchContacts(contactIds = listOf(visitor1Id.toLong()), prisonerId = prisonerId, withRestrictions = false)
     verify(telemetryClient, times(1)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
   }
 
@@ -273,7 +278,7 @@ class VisitorApprovedVisitNotificationControllerTest : NotificationTestBase() {
     responseSpec.expectStatus().isOk
 
     verify(visitNotificationEventRepository, times(0)).deleteAll()
-    verify(prisonerContactRegistryClientSpy, times(0)).getPrisonersApprovedSocialContacts(prisonerId, withAddress = false, withRestrictions = false)
+    verify(prisonerContactRegistryClientSpy, times(0)).searchContacts(any(), any(), any())
     verify(telemetryClient, times(0)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
   }
 
@@ -281,8 +286,10 @@ class VisitorApprovedVisitNotificationControllerTest : NotificationTestBase() {
   fun `when visitor is re-approved and visitor is on the prisoners social contact list then flagged visits are un-flagged`() {
     // Given
     val notificationDto = VisitorApprovedUnapprovedNotificationDto(visitorId = visitorId, prisonerNumber = prisonerId)
-    val currentApprovedPrisonerContacts = listOf(PrisonerContactDto(personId = visitorId.toLong()))
-    prisonerContactRegistryMockServer.stubGetPrisonerApprovedSocialContacts(prisonerId, withAddress = false, withRestrictions = false, currentApprovedPrisonerContacts)
+    val contactSearchResponse = listOf(
+      createContactWithOptionalPrisonerRelationshipDto(personId = visitorId.toLong(), firstName = "John", lastName = "Contact", approvedVisitor = true),
+    )
+    prisonerContactRegistryMockServer.stubSearchContacts(contactIds = listOf(visitorId.toLong()), prisonerId = prisonerId, withRestrictions = false, contactsList = contactSearchResponse)
 
     val visit1 = createApplicationAndVisit(
       slotDate = LocalDate.now().plusDays(1),
@@ -328,7 +335,7 @@ class VisitorApprovedVisitNotificationControllerTest : NotificationTestBase() {
       isNull(),
     )
 
-    verify(prisonerContactRegistryClientSpy, times(1)).getPrisonersApprovedSocialContacts(prisonerId, withAddress = false, withRestrictions = false)
+    verify(prisonerContactRegistryClientSpy, times(1)).searchContacts(contactIds = listOf(visitorId.toLong()), prisonerId = prisonerId, withRestrictions = false)
     verify(telemetryClient, times(1)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
   }
 
@@ -336,8 +343,10 @@ class VisitorApprovedVisitNotificationControllerTest : NotificationTestBase() {
   fun `when visitor is re-approved and visitor is not on the prisoners social contact list then flagged visits are not un-flagged`() {
     // Given
     val notificationDto = VisitorApprovedUnapprovedNotificationDto(visitorId = visitorId, prisonerNumber = prisonerId)
-    val currentApprovedPrisonerContacts = emptyList<PrisonerContactDto>()
-    prisonerContactRegistryMockServer.stubGetPrisonerApprovedSocialContacts(prisonerId, withAddress = false, withRestrictions = false, currentApprovedPrisonerContacts)
+    val contactSearchResponse = listOf(
+      createContactWithOptionalPrisonerRelationshipDto(personId = visitorId.toLong(), firstName = "John", lastName = "Contact", contactType = "O", approvedVisitor = true),
+    )
+    prisonerContactRegistryMockServer.stubSearchContacts(contactIds = listOf(visitorId.toLong()), prisonerId = prisonerId, withRestrictions = false, contactsList = contactSearchResponse)
 
     val visit1 = createApplicationAndVisit(
       slotDate = LocalDate.now().plusDays(1),
@@ -369,47 +378,7 @@ class VisitorApprovedVisitNotificationControllerTest : NotificationTestBase() {
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(1)
 
-    verify(prisonerContactRegistryClientSpy, times(1)).getPrisonersApprovedSocialContacts(prisonerId, withAddress = false, withRestrictions = false)
-    verify(telemetryClient, times(0)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
-  }
-
-  @Test
-  fun `when visitor is re-approved and call to prisoner contact registry returns a NOT_FOUND error then flagged visits are not un-flagged`() {
-    // Given
-    val notificationDto = VisitorApprovedUnapprovedNotificationDto(visitorId = visitorId, prisonerNumber = prisonerId)
-    prisonerContactRegistryMockServer.stubGetPrisonerApprovedSocialContacts(prisonerId, withAddress = false, withRestrictions = false, null, HttpStatus.NOT_FOUND)
-
-    val visit1 = createApplicationAndVisit(
-      slotDate = LocalDate.now().plusDays(1),
-      visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
-      prisonerId = prisonerId,
-    )
-    visit1.visitors.add(
-      VisitVisitor(
-        nomisPersonId = visitorId.toLong(),
-        visitId = visit1.id,
-        visit = visit1,
-        visitContact = true,
-      ),
-    )
-    val visit = visitEntityHelper.save(visit1)
-    eventAuditEntityHelper.create(visit1)
-
-    visitNotificationEventHelper.create(visit = visit, notificationEventType = NotificationEventType.VISITOR_UNAPPROVED_EVENT)
-
-    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
-    whenever(prisonerService.getPrisonerPrisonCodeFromPrisonId(prisonerId)).thenReturn(prisonCode)
-
-    // When
-    val responseSpec = callNotifyVSiPThatVisitorApproved(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
-
-    // Then
-    responseSpec.expectStatus().isOk
-    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
-    assertThat(visitNotifications).hasSize(1)
-
-    verify(prisonerContactRegistryClientSpy, times(1)).getPrisonersApprovedSocialContacts(prisonerId, withAddress = false, withRestrictions = false)
+    verify(prisonerContactRegistryClientSpy, times(1)).searchContacts(contactIds = listOf(visitorId.toLong()), prisonerId = prisonerId, withRestrictions = false)
     verify(telemetryClient, times(0)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
   }
 
@@ -417,7 +386,7 @@ class VisitorApprovedVisitNotificationControllerTest : NotificationTestBase() {
   fun `when visitor is re-approved and call to prisoner contact registry returns a INTERNAL_SERVER_ERROR error then flagged visits are not un-flagged`() {
     // Given
     val notificationDto = VisitorApprovedUnapprovedNotificationDto(visitorId = visitorId, prisonerNumber = prisonerId)
-    prisonerContactRegistryMockServer.stubGetPrisonerApprovedSocialContacts(prisonerId, withAddress = false, withRestrictions = false, null, HttpStatus.INTERNAL_SERVER_ERROR)
+    prisonerContactRegistryMockServer.stubSearchContacts(contactIds = listOf(visitorId.toLong()), prisonerId = prisonerId, withRestrictions = false, contactsList = null, httpStatus = HttpStatus.INTERNAL_SERVER_ERROR)
 
     val visit1 = createApplicationAndVisit(
       slotDate = LocalDate.now().plusDays(1),
@@ -449,7 +418,7 @@ class VisitorApprovedVisitNotificationControllerTest : NotificationTestBase() {
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(1)
 
-    verify(prisonerContactRegistryClientSpy, times(1)).getPrisonersApprovedSocialContacts(prisonerId, withAddress = false, withRestrictions = false)
+    verify(prisonerContactRegistryClientSpy, times(1)).searchContacts(contactIds = listOf(visitorId.toLong()), prisonerId = prisonerId, withRestrictions = false)
     verify(telemetryClient, times(0)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
   }
 }

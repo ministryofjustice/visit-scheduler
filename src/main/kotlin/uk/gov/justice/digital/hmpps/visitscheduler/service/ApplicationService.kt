@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.ApplicationDtoBui
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.IN_PROGRESS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.notify.LanguagePreference
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VSiPValidationException
@@ -128,9 +129,10 @@ class ApplicationService(
         visitContact.name = visitContactUpdate.name
         visitContact.telephone = visitContactUpdate.telephone
         visitContact.email = visitContactUpdate.email
+        visitContact.languagePreference = visitContactUpdate.languagePreference
       } ?: run {
         application.visitContact =
-          createApplicationContact(application, visitContactUpdate.name, visitContactUpdate.telephone, visitContactUpdate.email)
+          createApplicationContact(application, visitContactUpdate.name, visitContactUpdate.telephone, visitContactUpdate.email, visitContactUpdate.languagePreference)
       }
     }
 
@@ -205,7 +207,7 @@ class ApplicationService(
     )
 
     createApplicationDto.visitContact?.let {
-      applicationEntity.visitContact = createApplicationContact(applicationEntity, it.name, it.telephone, it.email)
+      applicationEntity.visitContact = createApplicationContact(applicationEntity, it.name, it.telephone, it.email, it.languagePreference)
     }
 
     createApplicationDto.visitors.forEach {
@@ -331,12 +333,13 @@ class ApplicationService(
     applicationRepository.completeApplication(applicationReference)
   }
 
-  private fun createApplicationContact(application: Application, name: String, telephone: String?, email: String?): ApplicationContact = ApplicationContact(
+  private fun createApplicationContact(application: Application, name: String, telephone: String?, email: String?, languagePreference: LanguagePreference): ApplicationContact = ApplicationContact(
     applicationId = application.id,
     application = application,
     name = name,
     telephone = telephone,
     email = email,
+    languagePreference = languagePreference,
   )
 
   private fun createApplicationVisitor(application: Application, personId: Long, contact: Boolean?): ApplicationVisitor = ApplicationVisitor(
@@ -483,6 +486,7 @@ class ApplicationService(
         },
         contact.telephone,
         email = null,
+        languagePreference = LanguagePreference.EN,
       )
     }
 

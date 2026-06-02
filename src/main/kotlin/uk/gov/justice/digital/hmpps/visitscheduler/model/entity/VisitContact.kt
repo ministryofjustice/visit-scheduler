@@ -9,6 +9,7 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import org.hibernate.Hibernate
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.notify.LanguagePreference
 
 @Entity
 @Table(name = "VISIT_CONTACT")
@@ -35,6 +36,8 @@ class VisitContact(
   @JoinColumn(name = "VISIT_ID", updatable = false, insertable = false)
   val visit: Visit,
 
+  @Column(nullable = false)
+  var languagePreference: LanguagePreference,
 ) {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -46,5 +49,5 @@ class VisitContact(
 
   override fun hashCode(): Int = id.hashCode()
 
-  override fun toString(): String = this::class.simpleName + "(id=$id, name=$name, telephone=$telephone)"
+  override fun toString(): String = this::class.simpleName + "(id=$id, name=$name, telephone=$telephone), language preference=$languagePreference"
 }
