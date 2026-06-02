@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.notify
 
 import jakarta.persistence.AttributeConverter
 import jakarta.persistence.Converter
-import kotlin.let
 
 @Converter(autoApply = true)
 class LanguagePreferenceConverter : AttributeConverter<LanguagePreference, String> {
