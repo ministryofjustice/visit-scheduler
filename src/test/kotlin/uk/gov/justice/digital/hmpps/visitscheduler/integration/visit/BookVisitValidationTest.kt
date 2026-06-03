@@ -759,8 +759,8 @@ class BookVisitValidationTest : IntegrationTestBase() {
   fun `when prisoner is on remand and booked visits exceeds the remand limit for the week an exception is thrown - public service`() {
     // Given
     prisonEntityHelper.create(prisonCode = remandPrisonCode, remandVisitLimitPerWeek = 2, weekStartDay = DayOfWeek.MONDAY)
-    val mondayVisitDate = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-    val applicationDate = LocalDate.now()
+    val today = LocalDate.now()
+    val mondayVisitDate = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = remandPrisonerId, prisonCode = remandPrisonCode, convictedStatus = "Remand")
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(remandPrisonerId)
@@ -769,7 +769,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonerId = remandPrisonerId,
       prisonCode = remandPrisonCode,
       userType = UserType.PUBLIC,
-      applicationDate = applicationDate,
+      applicationDate = today,
     )
 
     // 2 visits booked for the week
