@@ -116,7 +116,7 @@ class ApplicationValidationService(
     }
 
     // check if remand limit reached for a remand prisoner
-    checkRemandLimitReachedForWeek(prisoner = prisoner, prison = prison, sessionDate = application.sessionSlot.slotDate)?.also {
+    checkRemandLimitReachedForWeek(prisoner = prisoner, prison = prison, sessionDate = application.sessionSlot.slotDate, application.visit?.reference)?.also {
       errorCodes.add(it)
     }
 
@@ -243,15 +243,15 @@ class ApplicationValidationService(
     return null
   }
 
-  private fun checkRemandLimitReachedForWeek(prisoner: PrisonerDto, prison: Prison, sessionDate: LocalDate): ApplicationValidationErrorCodes? {
+  private fun checkRemandLimitReachedForWeek(prisoner: PrisonerDto, prison: Prison, sessionDate: LocalDate, applicationVisitReference: String?): ApplicationValidationErrorCodes? {
     // ignore if prisoner is not a REMAND prisoner
     if (!prisoner.convictedStatus.equals(REMAND_STATUS, ignoreCase = true)) {
       return null
     } else {
       // get the number of booked visits for the week
       val weekStartDate = sessionDate.with(TemporalAdjusters.previousOrSame(prison.weekStartDay))
-      val weekEndDate = sessionDate.with(TemporalAdjusters.nextOrSame(prison.weekStartDay + 6))
-      val totalBookedVisitsForWeek = visitRepository.getCountOfBookedVisits(prisonerId = prisoner.prisonerId, prisonCode = prison.code, startDate = weekStartDate, endDate = weekEndDate)
+      val weekEndDate = weekStartDate.plusDays(6)
+      val totalBookedVisitsForWeek = visitRepository.getCountOfBookedVisits(prisonerId = prisoner.prisonerId, prisonCode = prison.code, startDate = weekStartDate, endDate = weekEndDate, excludeVisitReference = applicationVisitReference)
 
       // if the remand visit limit per week has been reached return APPLICATION_INVALID_REMAND_VISIT_LIMIT_FOR_WEEK_REACHED
       if (totalBookedVisitsForWeek >= prison.remandVisitLimitPerWeek) {
