@@ -69,16 +69,14 @@ class SessionSlotEntityHelper(
   fun create(
     sessionTemplate: SessionTemplate,
     slotDate: LocalDate,
-    startTime: LocalTime = LocalTime.of(9, 0),
-    endTime: LocalTime = LocalTime.of(10, 0),
   ): SessionSlot = sessionSlotRepository.findSessionSlot(sessionTemplate.reference, slotDate) ?: run {
     save(
       SessionSlot(
         sessionTemplateReference = sessionTemplate.reference,
         prisonId = sessionTemplate.prisonId,
         slotDate = slotDate,
-        slotStart = slotDate.atTime(startTime),
-        slotEnd = slotDate.atTime(endTime),
+        slotStart = slotDate.atTime(sessionTemplate.startTime),
+        slotEnd = slotDate.atTime(sessionTemplate.endTime),
       ),
     )
   }

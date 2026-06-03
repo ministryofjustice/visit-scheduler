@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidati
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_SESSION_TEMPLATE_NOT_FOUND
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_USER_TYPE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_VISIT_ALREADY_BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ConvictionStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PRISONER
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
@@ -31,7 +32,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonExcludeDateR
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateExcludeDateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionService.Companion.REMAND_STATUS
 import java.time.LocalDate
 import java.time.temporal.TemporalAdjusters
 
@@ -245,7 +245,7 @@ class ApplicationValidationService(
 
   private fun checkRemandLimitReachedForWeek(prisoner: PrisonerDto, prison: Prison, sessionDate: LocalDate, applicationVisitReference: String?): ApplicationValidationErrorCodes? {
     // ignore if prisoner is not a REMAND prisoner
-    if (!prisoner.convictedStatus.equals(REMAND_STATUS, ignoreCase = true)) {
+    if (!ConvictionStatus.isRemand(prisoner.convictedStatus)) {
       return null
     } else {
       // get the number of booked visits for the week

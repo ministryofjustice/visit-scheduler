@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ConvictionStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.DOUBLE_BOOKING_OR_RESERVATION
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.NON_ASSOCIATION
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.REMAND_VISITS_LIMIT_REACHED
@@ -59,7 +60,6 @@ class SessionService(
 
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
-    const val REMAND_STATUS = "Remand"
   }
 
   @Transactional(readOnly = true)
@@ -279,7 +279,7 @@ class SessionService(
     visitSessions: List<VisitSessionDto>,
     doubleBookingOrReservationSessions: List<VisitSessionDto>,
   ): List<VisitSessionDto> {
-    if (!prisoner.convictedStatus.equals(REMAND_STATUS, ignoreCase = true)) {
+    if (!ConvictionStatus.isRemand(prisoner.convictedStatus)) {
       return emptyList()
     }
     val limitReachedSessions = mutableListOf<VisitSessionDto>()
