@@ -796,8 +796,8 @@ class BookVisitValidationTest : IntegrationTestBase() {
   fun `when prisoner is convicted and booked visits exceeds the remand limit for the week visit is booked successfully - public service`() {
     // Given
     prisonEntityHelper.create(prisonCode = remandPrisonCode, remandVisitLimitPerWeek = 2, weekStartDay = DayOfWeek.MONDAY)
-    val mondayVisitDate = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-    val applicationDate = LocalDate.now()
+    val today = LocalDate.now()
+    val mondayVisitDate = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
     val visitBalance = VisitBalancesDto(remainingVo = 5, remainingPvo = 5)
 
     // prisoner's conviction status has changed to Convicted
@@ -810,7 +810,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonerId = remandPrisonerId,
       prisonCode = remandPrisonCode,
       userType = UserType.PUBLIC,
-      applicationDate = applicationDate,
+      applicationDate = today,
     )
 
     // 2 visits booked for the week
@@ -833,9 +833,9 @@ class BookVisitValidationTest : IntegrationTestBase() {
   @Test
   fun `when prisoner is on remand and booked visits exceeds the remand limit for the week - visit is booked successfully - staff service`() {
     // Given
-    val applicationDate = LocalDate.now()
+    val today = LocalDate.now()
     prisonEntityHelper.create(prisonCode = remandPrisonCode, remandVisitLimitPerWeek = 2, weekStartDay = DayOfWeek.MONDAY)
-    val mondayVisitDate = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+    val mondayVisitDate = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = remandPrisonerId, prisonCode = remandPrisonCode, convictedStatus = "Remand")
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(remandPrisonerId)
     prisonApiMockServer.stubGetPrisonerHousingLocation(remandPrisonerId, "$remandPrisonCode-C-1-C001")
@@ -843,7 +843,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonerId = remandPrisonerId,
       prisonCode = remandPrisonCode,
       userType = UserType.STAFF,
-      applicationDate = applicationDate,
+      applicationDate = today,
     )
 
     // 2 visits booked for the week
@@ -866,9 +866,9 @@ class BookVisitValidationTest : IntegrationTestBase() {
   @Test
   fun `when prisoner is convicted and booked visits exceeds the remand limit for the week - visit is booked successfully - staff service`() {
     // Given
-    val applicationDate = LocalDate.now()
+    val today = LocalDate.now()
     prisonEntityHelper.create(prisonCode = remandPrisonCode, remandVisitLimitPerWeek = 2, weekStartDay = DayOfWeek.MONDAY)
-    val mondayVisitDate = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+    val mondayVisitDate = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
     val visitBalance = VisitBalancesDto(remainingVo = 5, remainingPvo = 5)
 
     // prisoner's conviction status has changed to Convicted
@@ -881,7 +881,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
       prisonerId = remandPrisonerId,
       prisonCode = remandPrisonCode,
       userType = UserType.STAFF,
-      applicationDate = applicationDate,
+      applicationDate = today,
     )
 
     // 2 visits booked for the week
@@ -904,9 +904,9 @@ class BookVisitValidationTest : IntegrationTestBase() {
   @Test
   fun `when prisoner is on remand and a visit is being updated and booked visits do not exceed the remand limit for the week visit is booked successfully - public service`() {
     // Given
-    val today = LocalDate.now()
     prisonEntityHelper.create(prisonCode = remandPrisonCode, remandVisitLimitPerWeek = 2, weekStartDay = DayOfWeek.MONDAY)
-    val mondayVisitDate = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+    val today = LocalDate.now()
+    val mondayVisitDate = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
     val futureVisitDate = today.plusWeeks(1)
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = remandPrisonerId, prisonCode = remandPrisonCode, convictedStatus = "Remand")
@@ -945,7 +945,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
     val today = LocalDate.now()
     val futureVisitDate = today.plusWeeks(1)
     prisonEntityHelper.create(prisonCode = remandPrisonCode, remandVisitLimitPerWeek = 2, weekStartDay = DayOfWeek.MONDAY)
-    val mondayVisitDate = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+    val mondayVisitDate = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
 
     val sessionTemplateToday = sessionTemplateEntityHelper.create(prisonCode = remandPrisonCode, dayOfWeek = today.dayOfWeek)
     val sessionSlotToday = sessionSlotEntityHelper.create(sessionTemplateToday, today)
@@ -993,7 +993,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
     val today = LocalDate.now()
     val futureVisitDate = today.plusWeeks(1)
     prisonEntityHelper.create(prisonCode = remandPrisonCode, remandVisitLimitPerWeek = 2, weekStartDay = DayOfWeek.MONDAY)
-    val mondayVisitDate = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+    val mondayVisitDate = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
     val visitBalance = VisitBalancesDto(remainingVo = 5, remainingPvo = 5)
 
     val sessionTemplateToday = sessionTemplateEntityHelper.create(prisonCode = remandPrisonCode, dayOfWeek = today.dayOfWeek)
@@ -1040,7 +1040,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
     val today = LocalDate.now()
     val futureVisitDate = today.plusWeeks(1)
     prisonEntityHelper.create(prisonCode = remandPrisonCode, remandVisitLimitPerWeek = 2, weekStartDay = DayOfWeek.MONDAY)
-    val mondayVisitDate = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+    val mondayVisitDate = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
 
     val sessionTemplateToday = sessionTemplateEntityHelper.create(prisonCode = remandPrisonCode, dayOfWeek = today.dayOfWeek)
     val sessionSlotToday = sessionSlotEntityHelper.create(sessionTemplateToday, today)
@@ -1084,7 +1084,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
     val today = LocalDate.now()
     val futureVisitDate = today.plusWeeks(1)
     prisonEntityHelper.create(prisonCode = remandPrisonCode, remandVisitLimitPerWeek = 2, weekStartDay = DayOfWeek.MONDAY)
-    val mondayVisitDate = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+    val mondayVisitDate = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
     val visitBalance = VisitBalancesDto(remainingVo = 5, remainingPvo = 5)
 
     val sessionTemplateToday = sessionTemplateEntityHelper.create(prisonCode = remandPrisonCode, dayOfWeek = today.dayOfWeek)
