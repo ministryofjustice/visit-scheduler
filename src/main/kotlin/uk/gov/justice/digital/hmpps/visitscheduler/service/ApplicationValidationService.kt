@@ -265,7 +265,7 @@ class ApplicationValidationService(
 
   private fun checkVOLimits(prisoner: PrisonerDto): ApplicationValidationErrorCodes? {
     // check VO limits if prisoner is not on Remand.
-    if (prisoner.convictedStatus != "Remand") {
+    if (!ConvictionStatus.isRemand(prisoner.convictedStatus)) {
       val remainingVisitBalance = prisonerService.getVisitBalance(prisonerId = prisoner.prisonerId)
       if (remainingVisitBalance <= 0) {
         LOG.info("not enough VO balance for prisoner - ${prisoner.prisonerId} to book visit")
