@@ -59,7 +59,7 @@ class SessionService(
 
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
-    private const val REMAND_STATUS = "Remand"
+    const val REMAND_STATUS = "Remand"
   }
 
   @Transactional(readOnly = true)
@@ -297,10 +297,10 @@ class SessionService(
     var weekStartDate = adjustedStartDate
     while (weekStartDate < adjustedToDate) {
       val weekEndDate = weekStartDate.plusDays(6)
-      val totalBookedVisits = visits.count { it.sessionSlot.slotDate in weekStartDate..weekEndDate }
+      val totalBookedVisitsForWeek = visits.count { it.sessionSlot.slotDate in weekStartDate..weekEndDate }
 
       // if the remand visit limit per week has been reached, add the session to the list of limit-reached sessions
-      if (totalBookedVisits >= prison.remandVisitLimitPerWeek) {
+      if (totalBookedVisitsForWeek >= prison.remandVisitLimitPerWeek) {
         limitReachedSessions.addAll(
           visitSessions
             .filter { it.startTimestamp.toLocalDate() in weekStartDate..weekEndDate }
