@@ -116,7 +116,7 @@ class ApplicationValidationService(
     }
 
     // check if remand limit reached for a remand prisoner
-    checkRemandLimitReachedForWeek(prisoner = prisoner, prison = prison, sessionDate = application.sessionSlot.slotDate, application.visit?.reference)?.also {
+    checkRemandLimitReachedForWeek(prisoner = prisoner, prison = prison, sessionDate = application.sessionSlot.slotDate, applicationVisitReference = application.visit?.reference)?.also {
       errorCodes.add(it)
     }
 
