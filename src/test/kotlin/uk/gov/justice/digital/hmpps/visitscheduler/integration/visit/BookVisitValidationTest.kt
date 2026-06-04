@@ -559,7 +559,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetVisitBalances(prisonerId, visitBalance)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
 
-    // visit for prisoner on same session has been canceled
+    // visit for prisoner on same session has been cancelled
     visitEntityHelper.create(
       sessionTemplate = sessionTemplateDefault,
       prisonerId = prisonerId,
@@ -585,7 +585,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetVisitBalances(prisonerId, visitBalance)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
 
-    // visit for prisoner on same session has been canceled
+    // visit for prisoner on same session has been cancelled
     visitEntityHelper.create(
       sessionTemplate = sessionTemplateDefault,
       prisonerId = prisonerId,
@@ -829,7 +829,6 @@ class BookVisitValidationTest : IntegrationTestBase() {
     responseSpec.expectStatus().isOk
   }
 
-  // TODO - test to ensure REMAND check is not enabled for STAFF service - should fail when check extended to STAFF service
   @Test
   fun `when prisoner is on remand and booked visits exceeds the remand limit for the week - visit is booked successfully - staff service`() {
     // Given
@@ -1153,7 +1152,6 @@ class BookVisitValidationTest : IntegrationTestBase() {
     responseSpec.expectStatus().isOk
   }
 
-  // TODO - test to ensure REMAND check is not enabled for STAFF service - should fail when check extended to STAFF service
   @Test
   fun `when prisoner is on remand and a visit is being updated and booked visits exceeds the remand limit for the week - visit is booked successfully - staff service`() {
     // Given
