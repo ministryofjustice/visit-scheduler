@@ -11,7 +11,7 @@ jobs:
       actions: read
       security-events: write
     name: Project security Snyk dependency check
-    uses: ministryofjustice/hmpps-github-actions/.github/workflows/security_snyk_scan.yml@a731b6134c799eb068c00886f87aab0ae2a6efa6 # v2
+    uses: ministryofjustice/hmpps-github-actions/.github/workflows/security_snyk_scan.yml@be0bda171344a1d3bd92fc8ce945a0204cbac33b # v2
     with:
       channel_id: ${{ vars.SECURITY_ALERTS_SLACK_CHANNEL_ID || 'NO_SLACK' }}
       subproject: ''

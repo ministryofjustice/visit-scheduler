@@ -278,6 +278,25 @@ interface VisitRepository :
   ): List<Visit>
 
   @Query(
+    """
+    SELECT count(distinct v.id) FROM Visit v 
+      WHERE v.sessionSlot.slotDate >= :startDate AND 
+      v.sessionSlot.slotDate <= :endDate AND 
+      v.prisonerId = :prisonerId AND 
+      v.prison.code = :prisonCode AND 
+      v.visitStatus = 'BOOKED' AND 
+      (:#{#excludeVisitReference} is null OR v.reference != :excludeVisitReference)
+      """,
+  )
+  fun getCountOfBookedVisits(
+    @Param("prisonerId") prisonerId: String,
+    @Param("prisonCode") prisonCode: String,
+    @Param("startDate") startDate: LocalDate,
+    @Param("endDate") endDate: LocalDate,
+    @Param("excludeVisitReference") excludeVisitReference: String?,
+  ): Long
+
+  @Query(
     "SELECT v  FROM Visit v " +
       "WHERE v.sessionSlot.slotStart >= :startDateTime AND " +
       "v.prisonerId = :prisonerId AND " +
