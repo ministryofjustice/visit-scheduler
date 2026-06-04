@@ -146,6 +146,7 @@ class PrisonEntityHelper(
     policyNoticeDaysMin: Int = 2,
     policyNoticeDaysMax: Int = 28,
     remandVisitLimitPerWeek: Int = 3,
+    weekStartDay: DayOfWeek = DayOfWeek.MONDAY,
     dontMakeClient: Boolean = false,
   ): Prison {
     var prison = prisonRepository.findByCode(prisonCode)
@@ -157,6 +158,7 @@ class PrisonEntityHelper(
           policyNoticeDaysMin = policyNoticeDaysMin,
           policyNoticeDaysMax = policyNoticeDaysMax,
           remandVisitLimitPerWeek = remandVisitLimitPerWeek,
+          weekStartDay = weekStartDay,
         ),
       )
 

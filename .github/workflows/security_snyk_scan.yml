@@ -11,7 +11,7 @@ jobs:
       actions: read
       security-events: write
     name: Project security Snyk dependency check
-    uses: ministryofjustice/hmpps-github-actions/.github/workflows/security_snyk_scan.yml@a731b6134c799eb068c00886f87aab0ae2a6efa6 # v2
+    uses: ministryofjustice/hmpps-github-actions/.github/workflows/security_snyk_scan.yml@be0bda171344a1d3bd92fc8ce945a0204cbac33b # v2
     with:
       channel_id: ${{ vars.SECURITY_ALERTS_SLACK_CHANNEL_ID || 'NO_SLACK' }}
       subproject: ''
@@ -21,5 +21,6 @@ jobs:
       slack_include_summary: true
       snyk_policy_path: '' # Optional path to a custom Snyk policy file
     secrets:
-      HMPPS_SNYK_API_KEY: ${{ secrets.HMPPS_SNYK_API_KEY }}
+      HMPPS_SNYK_CLIENT_SECRET: ${{ secrets.HMPPS_SNYK_CLIENT_SECRET }}
+      HMPPS_SNYK_CLIENT_ID: ${{ secrets.HMPPS_SNYK_CLIENT_ID }}
       HMPPS_SRE_SLACK_BOT_TOKEN: ${{ secrets.HMPPS_SRE_SLACK_BOT_TOKEN }}

@@ -2,8 +2,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.model.entity
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
-import jakarta.persistence.EnumType
-import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
@@ -38,7 +36,6 @@ class VisitContact(
   @JoinColumn(name = "VISIT_ID", updatable = false, insertable = false)
   val visit: Visit,
 
-  @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   var languagePreference: LanguagePreference,
 ) {
