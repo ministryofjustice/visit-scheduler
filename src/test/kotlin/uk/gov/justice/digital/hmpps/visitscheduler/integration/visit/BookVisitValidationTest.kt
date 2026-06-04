@@ -940,7 +940,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when prisoner is on remand and a visit is being updated and booked visits exceeds the remand limit for the week an exception is thrown - public service`() {
+  fun `when prisoner is on remand and a visit is being updated to a different week and booked visits exceeds the remand limit for the week an exception is thrown - public service`() {
     // Given
     val today = LocalDate.now()
     val futureVisitDate = today.plusWeeks(1)
@@ -976,6 +976,126 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     // 1 booked visit for last week - Sunday
     createVisit(remandPrisonerId, remandPrisonCode, mondayVisitDate.minusDays(1), VisitStatus.BOOKED)
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, updateVisitApplication.reference)
+
+    // Then
+    responseSpec.expectStatus().isEqualTo(UNPROCESSABLE_CONTENT.value())
+
+    val validationErrorResponse = getValidationErrorResponse(responseSpec)
+    assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
+    assertThat(validationErrorResponse.validationErrors).contains(APPLICATION_INVALID_REMAND_VISIT_LIMIT_FOR_WEEK_REACHED)
+  }
+
+  @Test
+  fun `when prisoner is on remand and a visit is being updated but session slot not changed and booked visits exceeds the remand limit the visit is still booked successfully - public service`() {
+    // Given
+    val today = LocalDate.now()
+    prisonEntityHelper.create(prisonCode = remandPrisonCode, remandVisitLimitPerWeek = 2, weekStartDay = DayOfWeek.MONDAY)
+    val mondayVisitDateNextWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).plusWeeks(1)
+
+    // visit is for today + 1 week
+    val visit = createVisit(remandPrisonerId, remandPrisonCode, today.plusWeeks(1), VisitStatus.BOOKED)
+    // 3 visits booked for the same week, exceeds the limit of 2
+    createVisit(remandPrisonerId, remandPrisonCode, mondayVisitDateNextWeek, VisitStatus.BOOKED)
+    createVisit(remandPrisonerId, remandPrisonCode, mondayVisitDateNextWeek.plusDays(1), VisitStatus.BOOKED)
+    createVisit(remandPrisonerId, remandPrisonCode, mondayVisitDateNextWeek.plusDays(2), VisitStatus.BOOKED)
+
+    // visit
+    var updateVisitApplication = applicationEntityHelper.create(visit, userType = UserType.PUBLIC)
+    updateVisitApplication.visitId = visit.id
+
+    // update visit but no change to session times
+    updateVisitApplication.sessionSlotId = visit.sessionSlotId
+    updateVisitApplication.applicationStatus = IN_PROGRESS
+    updateVisitApplication = applicationEntityHelper.save(updateVisitApplication)
+
+    // Remand prisoner
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = remandPrisonerId, prisonCode = remandPrisonCode, convictedStatus = "Remand")
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(remandPrisonerId)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(remandPrisonerId, "$remandPrisonCode-C-1-C001")
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, updateVisitApplication.reference)
+
+    // Then
+    responseSpec.expectStatus().isOk
+  }
+
+  @Test
+  fun `when prisoner is on remand and a visit is being updated but session slot changed and booked visits does not exceed the remand limit visit is booked successfully - public service`() {
+    // Given
+    val today = LocalDate.now()
+    prisonEntityHelper.create(prisonCode = remandPrisonCode, remandVisitLimitPerWeek = 2, weekStartDay = DayOfWeek.MONDAY)
+    val mondayVisitDateNextWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).plusWeeks(1)
+    val sessionTemplate = sessionTemplateEntityHelper.create(prisonCode = remandPrisonCode, dayOfWeek = today.dayOfWeek)
+    val sessionSlotNextWeek = sessionSlotEntityHelper.create(sessionTemplate, today.plusWeeks(1))
+
+    // visit is for today + 1 week
+    val visit = createVisit(remandPrisonerId, remandPrisonCode, today.plusWeeks(1), VisitStatus.BOOKED)
+    // 1 more visit booked for the week, remand limit is also 2, this + above visit makes it 2 for the week
+    createVisit(remandPrisonerId, remandPrisonCode, mondayVisitDateNextWeek, VisitStatus.BOOKED)
+
+    // visit
+    var updateVisitApplication = applicationEntityHelper.create(visit, userType = UserType.PUBLIC)
+    updateVisitApplication.visitId = visit.id
+
+    // update visit - changes session slot (same date but different session)
+    updateVisitApplication.sessionSlotId = sessionSlotNextWeek.id
+    updateVisitApplication.applicationStatus = IN_PROGRESS
+    updateVisitApplication = applicationEntityHelper.save(updateVisitApplication)
+
+    // Remand prisoner
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = remandPrisonerId, prisonCode = remandPrisonCode, convictedStatus = "Remand")
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(remandPrisonerId)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(remandPrisonerId, "$remandPrisonCode-C-1-C001")
+
+    // 1 canceled visit for the week
+    createVisit(remandPrisonerId, remandPrisonCode, mondayVisitDateNextWeek.plusDays(3), VisitStatus.CANCELLED)
+
+    // 1 booked visit for this week - Sunday
+    createVisit(remandPrisonerId, remandPrisonCode, mondayVisitDateNextWeek.minusDays(1), VisitStatus.BOOKED)
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, updateVisitApplication.reference)
+
+    // Then
+    responseSpec.expectStatus().isOk
+  }
+
+  @Test
+  fun `when prisoner is on remand and a visit is being updated but session slot changed and booked visits exceeds the remand limit an exception is thrown - public service`() {
+    // Given
+    val today = LocalDate.now()
+    prisonEntityHelper.create(prisonCode = remandPrisonCode, remandVisitLimitPerWeek = 2, weekStartDay = DayOfWeek.MONDAY)
+    val mondayVisitDateNextWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).plusWeeks(1)
+    val sessionTemplate = sessionTemplateEntityHelper.create(prisonCode = remandPrisonCode, dayOfWeek = today.dayOfWeek)
+    val sessionSlotNextWeek = sessionSlotEntityHelper.create(sessionTemplate, today.plusWeeks(1))
+
+    // visit is for today + 1 week
+    val visit = createVisit(remandPrisonerId, remandPrisonCode, today.plusWeeks(1), VisitStatus.BOOKED)
+    // 2 more visits booked for the week, remand limit is 2, this + above visit makes it 3 for the week
+    createVisit(remandPrisonerId, remandPrisonCode, mondayVisitDateNextWeek, VisitStatus.BOOKED)
+    createVisit(remandPrisonerId, remandPrisonCode, mondayVisitDateNextWeek.plusDays(1), VisitStatus.BOOKED)
+
+    // visit
+    var updateVisitApplication = applicationEntityHelper.create(visit, userType = UserType.PUBLIC)
+    updateVisitApplication.visitId = visit.id
+
+    // update visit - changes session slot (same date but different session)
+    updateVisitApplication.sessionSlotId = sessionSlotNextWeek.id
+    updateVisitApplication.applicationStatus = IN_PROGRESS
+    updateVisitApplication = applicationEntityHelper.save(updateVisitApplication)
+
+    // Remand prisoner
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = remandPrisonerId, prisonCode = remandPrisonCode, convictedStatus = "Remand")
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(remandPrisonerId)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(remandPrisonerId, "$remandPrisonCode-C-1-C001")
+
+    // 1 canceled visit for the week
+    createVisit(remandPrisonerId, remandPrisonCode, mondayVisitDateNextWeek.plusDays(3), VisitStatus.CANCELLED)
+
+    // 1 booked visit for this week - Sunday
+    createVisit(remandPrisonerId, remandPrisonCode, mondayVisitDateNextWeek.minusDays(1), VisitStatus.BOOKED)
     // When
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, updateVisitApplication.reference)
 
