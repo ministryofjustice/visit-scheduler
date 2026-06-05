@@ -211,6 +211,7 @@ class GetSessionsByUserTypeTest : IntegrationTestBase() {
     assertThat(visitSession.sessionDate).isEqualTo(expectedDate)
     assertThat(visitSession.sessionTimeSlot.startTime).isEqualTo(expectedSessionTemplate.startTime)
     assertThat(visitSession.sessionTimeSlot.endTime).isEqualTo(expectedSessionTemplate.endTime)
+    assertThat(visitSession.visitOrderRestriction).isEqualTo(expectedSessionTemplate.visitOrderRestriction)
   }
 
   private fun getVisitSessionResults(returnResult: BodyContentSpec): Array<VisitSessionDto> = objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)
