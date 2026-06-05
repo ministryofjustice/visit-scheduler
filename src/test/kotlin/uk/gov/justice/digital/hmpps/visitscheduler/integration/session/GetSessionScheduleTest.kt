@@ -62,6 +62,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
     Assertions.assertThat(sessionScheduleResults[0].prisonerCategoryGroupNames[0]).isEqualTo(sessionCategoryGroup.name)
     Assertions.assertThat(sessionScheduleResults[0].areLocationGroupsInclusive).isTrue()
     Assertions.assertThat(sessionScheduleResults[0].visitRoom).isEqualTo(sessionTemplate.visitRoom)
+    Assertions.assertThat(sessionScheduleResults[0].visitOrderRestriction).isEqualTo(sessionTemplate.visitOrderRestriction)
   }
 
   @Test
@@ -131,6 +132,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
     Assertions.assertThat(sessionScheduleResults[0].areCategoryGroupsInclusive).isFalse()
     Assertions.assertThat(sessionScheduleResults[0].areIncentiveGroupsInclusive).isFalse()
     Assertions.assertThat(sessionScheduleResults[0].visitRoom).isEqualTo("Visits Room 1")
+    Assertions.assertThat(sessionScheduleResults[0].visitOrderRestriction).isEqualTo(sessionTemplate4.visitOrderRestriction)
 
     Assertions.assertThat(sessionScheduleResults[1].sessionTimeSlot.startTime).isEqualTo(sessionTemplate3.startTime)
     Assertions.assertThat(sessionScheduleResults[1].sessionTimeSlot.endTime).isEqualTo(sessionTemplate3.endTime)
@@ -138,6 +140,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
     Assertions.assertThat(sessionScheduleResults[1].areCategoryGroupsInclusive).isTrue()
     Assertions.assertThat(sessionScheduleResults[1].areIncentiveGroupsInclusive).isTrue()
     Assertions.assertThat(sessionScheduleResults[1].visitRoom).isEqualTo("Visits Room 2")
+    Assertions.assertThat(sessionScheduleResults[1].visitOrderRestriction).isEqualTo(sessionTemplate3.visitOrderRestriction)
 
     Assertions.assertThat(sessionScheduleResults[2].sessionTimeSlot.startTime).isEqualTo(sessionTemplate1.startTime)
     Assertions.assertThat(sessionScheduleResults[2].sessionTimeSlot.endTime).isEqualTo(sessionTemplate1.endTime)
@@ -145,6 +148,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
     Assertions.assertThat(sessionScheduleResults[2].areCategoryGroupsInclusive).isTrue()
     Assertions.assertThat(sessionScheduleResults[2].areIncentiveGroupsInclusive).isFalse()
     Assertions.assertThat(sessionScheduleResults[2].visitRoom).isEqualTo("Visits Room 1")
+    Assertions.assertThat(sessionScheduleResults[2].visitOrderRestriction).isEqualTo(sessionTemplate1.visitOrderRestriction)
 
     Assertions.assertThat(sessionScheduleResults[3].sessionTimeSlot.startTime).isEqualTo(sessionTemplate2.startTime)
     Assertions.assertThat(sessionScheduleResults[3].sessionTimeSlot.endTime).isEqualTo(sessionTemplate2.endTime)
@@ -152,6 +156,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
     Assertions.assertThat(sessionScheduleResults[3].areCategoryGroupsInclusive).isFalse()
     Assertions.assertThat(sessionScheduleResults[3].areIncentiveGroupsInclusive).isTrue()
     Assertions.assertThat(sessionScheduleResults[3].visitRoom).isEqualTo("Visits Room 1")
+    Assertions.assertThat(sessionScheduleResults[3].visitOrderRestriction).isEqualTo(sessionTemplate2.visitOrderRestriction)
   }
 
   @Test
