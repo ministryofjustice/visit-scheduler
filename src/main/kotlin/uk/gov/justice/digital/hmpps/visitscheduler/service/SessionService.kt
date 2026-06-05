@@ -84,6 +84,7 @@ class SessionService(
         endTimestamp = LocalDateTime.of(sessionDate, sessionTemplate.endTime),
         visitRoom = sessionTemplate.visitRoom,
         visitType = sessionTemplate.visitType,
+        visitOrderRestriction = sessionTemplate.visitOrderRestriction,
       )
     }.also {
       val sessionSlots = getSessionSlots(it)
@@ -367,6 +368,7 @@ class SessionService(
             endTimestamp = LocalDateTime.of(date, sessionTemplate.endTime),
             visitRoom = sessionTemplate.visitRoom,
             visitType = sessionTemplate.visitType,
+            visitOrderRestriction = sessionTemplate.visitOrderRestriction,
           )
         }
         .toList()

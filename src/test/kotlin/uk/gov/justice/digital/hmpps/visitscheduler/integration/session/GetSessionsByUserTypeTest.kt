@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_SESSIONS_AVA
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_SESSION_CONTROLLER_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction.OPEN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
@@ -52,6 +53,7 @@ class GetSessionsByUserTypeTest : IntegrationTestBase() {
       prisonCode = prisonCode,
       clients = listOf(UserClientDto(STAFF, true)),
       visitRoom = "Visits Main Hall",
+      visitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.NONE,
     )
 
     // session available to PUBLIC only
@@ -197,6 +199,7 @@ class GetSessionsByUserTypeTest : IntegrationTestBase() {
     assertThat(visitSessionResult.endTimestamp).isEqualTo(testDate.atTime(expectedSessionTemplate.endTime))
     assertThat(visitSessionResult.startTimestamp.dayOfWeek).isEqualTo(expectedSessionTemplate.dayOfWeek)
     assertThat(visitSessionResult.endTimestamp.dayOfWeek).isEqualTo(expectedSessionTemplate.dayOfWeek)
+    assertThat(visitSessionResult.visitOrderRestriction).isEqualTo(expectedSessionTemplate.visitOrderRestriction)
   }
 
   private fun assertAvailableVisitSession(

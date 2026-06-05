@@ -554,6 +554,7 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     Assertions.assertThat(visitSessionResult.startTimestamp.dayOfWeek).isEqualTo(expectedSessionTemplate.dayOfWeek)
     Assertions.assertThat(visitSessionResult.endTimestamp.dayOfWeek).isEqualTo(expectedSessionTemplate.dayOfWeek)
     Assertions.assertThat(visitSessionResult.visitRoom).isEqualTo(expectedSessionTemplate.visitRoom)
+    Assertions.assertThat(visitSessionResult.visitOrderRestriction).isEqualTo(expectedSessionTemplate.visitOrderRestriction)
   }
 
   private fun getResults(returnResult: WebTestClient.BodyContentSpec): Array<VisitSessionDto> = objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)
