@@ -203,42 +203,42 @@ class TelemetryClientService(
 
     afterPrisonConfig.policyNoticeDaysMin?.let {
       eventProperties["beforePolicyNoticeDaysMin"] = beforePrisonConfig.policyNoticeDaysMin.toString()
-      eventProperties["AfterPolicyNoticeDaysMin"] = afterPrisonConfig.policyNoticeDaysMin.toString()
+      eventProperties["afterPolicyNoticeDaysMin"] = afterPrisonConfig.policyNoticeDaysMin.toString()
     }
 
     afterPrisonConfig.policyNoticeDaysMax?.let {
       eventProperties["beforePolicyNoticeDaysMax"] = beforePrisonConfig.policyNoticeDaysMax.toString()
-      eventProperties["AfterPolicyNoticeDaysMax"] = afterPrisonConfig.policyNoticeDaysMax.toString()
+      eventProperties["afterPolicyNoticeDaysMax"] = afterPrisonConfig.policyNoticeDaysMax.toString()
     }
 
     afterPrisonConfig.maxTotalVisitors?.let {
       eventProperties["beforeMaxTotalVisitors"] = beforePrisonConfig.maxTotalVisitors.toString()
-      eventProperties["AfterMaxTotalVisitors"] = afterPrisonConfig.maxTotalVisitors.toString()
+      eventProperties["afterMaxTotalVisitors"] = afterPrisonConfig.maxTotalVisitors.toString()
     }
 
     afterPrisonConfig.maxAdultVisitors?.let {
       eventProperties["beforeMaxAdultVisitor"] = beforePrisonConfig.maxAdultVisitors.toString()
-      eventProperties["AfterMaxAdultVisitor"] = afterPrisonConfig.maxAdultVisitors.toString()
+      eventProperties["afterMaxAdultVisitor"] = afterPrisonConfig.maxAdultVisitors.toString()
     }
 
     afterPrisonConfig.maxChildVisitors?.let {
       eventProperties["beforeMaxChildVisitors"] = beforePrisonConfig.maxChildVisitors.toString()
-      eventProperties["AfterMaxChildVisitors"] = afterPrisonConfig.maxChildVisitors.toString()
+      eventProperties["afterMaxChildVisitors"] = afterPrisonConfig.maxChildVisitors.toString()
     }
 
     afterPrisonConfig.adultAgeYears?.let {
       eventProperties["beforeAdultAgeYears"] = beforePrisonConfig.adultAgeYears.toString()
-      eventProperties["AfterAdultAgeYears"] = afterPrisonConfig.adultAgeYears.toString()
+      eventProperties["afterAdultAgeYears"] = afterPrisonConfig.adultAgeYears.toString()
     }
 
     afterPrisonConfig.weekStartDay?.let {
       eventProperties["beforeWeekStartDay"] = beforePrisonConfig.weekStartDay.toString()
-      eventProperties["AfterWeekStartDay"] = afterPrisonConfig.weekStartDay.toString()
+      eventProperties["afterWeekStartDay"] = afterPrisonConfig.weekStartDay.toString()
     }
 
     afterPrisonConfig.remandVisitLimitPerWeek?.let {
       eventProperties["beforeRemandVisitLimitPerWeek"] = beforePrisonConfig.remandVisitLimitPerWeek.toString()
-      eventProperties["AfterRemandVisitLimitPerWeek"] = afterPrisonConfig.remandVisitLimitPerWeek.toString()
+      eventProperties["afterRemandVisitLimitPerWeek"] = afterPrisonConfig.remandVisitLimitPerWeek.toString()
     }
 
     trackEvent(PRISON_CONFIG_UPDATED_EVENT, eventProperties)
