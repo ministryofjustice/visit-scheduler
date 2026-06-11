@@ -64,6 +64,8 @@ class PrisonConfigTest : IntegrationTestBase() {
     Assertions.assertThat(result.maxAdultVisitors).isEqualTo(prisonDto.maxAdultVisitors)
     Assertions.assertThat(result.maxChildVisitors).isEqualTo(prisonDto.maxChildVisitors)
     Assertions.assertThat(result.adultAgeYears).isEqualTo(prisonDto.adultAgeYears)
+    Assertions.assertThat(result.weekStartDay).isEqualTo(prisonDto.weekStartDay)
+    Assertions.assertThat(result.remandVisitLimitPerWeek).isEqualTo(prisonDto.remandVisitLimitPerWeek)
 
     verify(prisonConfigServiceSpy, times(1)).createPrison(any())
     verify(prisonRepositorySpy, times(1)).saveAndFlush(any())
@@ -181,6 +183,8 @@ class PrisonConfigTest : IntegrationTestBase() {
     Assertions.assertThat(result.maxAdultVisitors).isNotEqualTo(prison.maxAdultVisitors)
     Assertions.assertThat(result.maxChildVisitors).isNotEqualTo(prison.maxChildVisitors)
     Assertions.assertThat(result.adultAgeYears).isNotEqualTo(prison.adultAgeYears)
+    Assertions.assertThat(result.weekStartDay).isNotEqualTo(prison.weekStartDay)
+    Assertions.assertThat(result.remandVisitLimitPerWeek).isNotEqualTo(prison.remandVisitLimitPerWeek)
 
     Assertions.assertThat(result.policyNoticeDaysMin).isEqualTo(updatePrisonRequest.policyNoticeDaysMin)
     Assertions.assertThat(result.policyNoticeDaysMax).isEqualTo(updatePrisonRequest.policyNoticeDaysMax)
@@ -188,6 +192,8 @@ class PrisonConfigTest : IntegrationTestBase() {
     Assertions.assertThat(result.maxAdultVisitors).isEqualTo(updatePrisonRequest.maxAdultVisitors)
     Assertions.assertThat(result.maxChildVisitors).isEqualTo(updatePrisonRequest.maxChildVisitors)
     Assertions.assertThat(result.adultAgeYears).isEqualTo(updatePrisonRequest.adultAgeYears)
+    Assertions.assertThat(result.weekStartDay).isEqualTo(updatePrisonRequest.weekStartDay)
+    Assertions.assertThat(result.remandVisitLimitPerWeek).isEqualTo(updatePrisonRequest.remandVisitLimitPerWeek)
   }
 
   @Test
@@ -298,6 +304,8 @@ class PrisonConfigTest : IntegrationTestBase() {
     Assertions.assertThat(returnedPrison.active).isTrue
     Assertions.assertThat(returnedPrison.policyNoticeDaysMin).isEqualTo(prison.policyNoticeDaysMin)
     Assertions.assertThat(returnedPrison.policyNoticeDaysMax).isEqualTo(prison.policyNoticeDaysMax)
+    Assertions.assertThat(returnedPrison.weekStartDay).isEqualTo(prison.weekStartDay)
+    Assertions.assertThat(returnedPrison.remandVisitLimitPerWeek).isEqualTo(prison.remandVisitLimitPerWeek)
   }
 
   private fun getPrison(returnResult: WebTestClient.BodyContentSpec): PrisonDto = objectMapper.readValue(returnResult.returnResult().responseBody, PrisonDto::class.java)

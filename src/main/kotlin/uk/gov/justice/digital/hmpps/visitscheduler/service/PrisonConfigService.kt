@@ -23,6 +23,7 @@ class PrisonConfigService(
   private val messageService: MessageService,
   private val prisonsService: PrisonsService,
   private val excludeDateService: ExcludeDateService,
+  private val telemetryClientService: TelemetryClientService,
 ) {
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
@@ -43,6 +44,7 @@ class PrisonConfigService(
       prisonDto.maxTotalVisitors,
       prisonDto.maxAdultVisitors,
       prisonDto.maxChildVisitors,
+      prisonDto.remandVisitLimitPerWeek,
     )
 
     val newPrison = Prison(prisonDto)
@@ -64,8 +66,12 @@ class PrisonConfigService(
     val maxAdultVisitors = prisonDto.maxAdultVisitors ?: prison.maxAdultVisitors
     val maxChildVisitors = prisonDto.maxChildVisitors ?: prison.maxChildVisitors
     val adultAgeYears = prisonDto.adultAgeYears ?: prison.adultAgeYears
+    val weekStartDay = prisonDto.weekStartDay ?: prison.weekStartDay
+    val remandVisitLimitPerWeek = prisonDto.remandVisitLimitPerWeek ?: prison.remandVisitLimitPerWeek
 
-    validatePrisonDetails(policyNoticeDaysMin, policyNoticeDaysMax, prisonCode, maxTotalVisitors, maxAdultVisitors, maxChildVisitors)
+    validatePrisonDetails(policyNoticeDaysMin, policyNoticeDaysMax, prisonCode, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, remandVisitLimitPerWeek)
+
+    val originalPrisonConfig = prisonsService.mapEntityToDto(prison)
 
     prison.policyNoticeDaysMin = policyNoticeDaysMin
     prison.policyNoticeDaysMax = policyNoticeDaysMax
@@ -73,8 +79,13 @@ class PrisonConfigService(
     prison.maxAdultVisitors = maxAdultVisitors
     prison.maxChildVisitors = maxChildVisitors
     prison.adultAgeYears = adultAgeYears
+    prison.weekStartDay = weekStartDay
+    prison.remandVisitLimitPerWeek = remandVisitLimitPerWeek
 
     val savedPrison = prisonRepository.saveAndFlush(prison)
+
+    telemetryClientService.trackUpdatePrisonConfigEvent(originalPrisonConfig, prisonDto)
+
     return prisonsService.mapEntityToDto(savedPrison)
   }
 
@@ -152,6 +163,7 @@ class PrisonConfigService(
     maxTotalVisitors: Int,
     maxAdultVisitors: Int,
     maxChildVisitors: Int,
+    remandVisitLimitPerWeek: Int,
   ) {
     val highestMax = if (maxAdultVisitors > maxChildVisitors) maxAdultVisitors else maxChildVisitors
     if (maxTotalVisitors < highestMax) {
@@ -172,6 +184,16 @@ class PrisonConfigService(
           prisonCode,
           policyNoticeDaysMin.toString(),
           policyNoticeDaysMax.toString(),
+        ),
+      )
+    }
+
+    if (remandVisitLimitPerWeek < 1) {
+      throw ValidationException(
+        messageService.getMessage(
+          "validation.prison.remandlimit.invalid",
+          prisonCode,
+          remandVisitLimitPerWeek.toString(),
         ),
       )
     }

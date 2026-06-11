@@ -12,6 +12,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestVisitorDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ExcludeDateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdatePrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
@@ -24,6 +26,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.APPLICATION_DELETED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.APPLICATION_SLOT_CHANGED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.FLAGGED_VISIT_EVENT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.PRISON_CONFIG_UPDATED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.REMOVE_PRISON_EXCLUDE_DATE_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.REMOVE_SESSION_EXCLUDE_DATE_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.UNFLAGGED_VISIT_EVENT
@@ -59,13 +62,14 @@ class TelemetryClientService(
   private lateinit var visitEventAuditService: VisitEventAuditService
 
   fun trackUpdateBookingEvent(
-    visitDtoBeforeUpdate: VisitDto?,
-    bookedVisitDto: VisitDto,
-    eventAuditDto: EventAuditDto,
+    visitBeforeUpdate: VisitDto?,
+    visitAfterUpdate: VisitDto,
+    eventAudit: EventAuditDto,
+    bookingRequestDto: BookingRequestDto? = null,
   ) {
     trackEvent(
       VISIT_BOOKED_EVENT,
-      createBookedVisitTrackData(visitDtoBeforeUpdate, bookedVisitDto, eventAuditDto, true),
+      createBookedVisitTrackData(visitBeforeUpdate, visitAfterUpdate, eventAudit, true, bookingRequestDto?.visitorDetails),
     )
   }
 
@@ -191,6 +195,53 @@ class TelemetryClientService(
   fun trackRemoveSessionExcludeDateEvent(sessionTemplateReference: String, excludeDateDto: ExcludeDateDto) {
     val visitTrackEvent = createSessionExcludeDateEventData(sessionTemplateReference, excludeDateDto)
     trackEvent(REMOVE_SESSION_EXCLUDE_DATE_EVENT, visitTrackEvent)
+  }
+
+  fun trackUpdatePrisonConfigEvent(beforePrisonConfig: PrisonDto, afterPrisonConfig: UpdatePrisonDto) {
+    val eventProperties = mutableMapOf<String, String>()
+    eventProperties["prisonId"] = beforePrisonConfig.code
+
+    afterPrisonConfig.policyNoticeDaysMin?.let {
+      eventProperties["beforePolicyNoticeDaysMin"] = beforePrisonConfig.policyNoticeDaysMin.toString()
+      eventProperties["afterPolicyNoticeDaysMin"] = afterPrisonConfig.policyNoticeDaysMin.toString()
+    }
+
+    afterPrisonConfig.policyNoticeDaysMax?.let {
+      eventProperties["beforePolicyNoticeDaysMax"] = beforePrisonConfig.policyNoticeDaysMax.toString()
+      eventProperties["afterPolicyNoticeDaysMax"] = afterPrisonConfig.policyNoticeDaysMax.toString()
+    }
+
+    afterPrisonConfig.maxTotalVisitors?.let {
+      eventProperties["beforeMaxTotalVisitors"] = beforePrisonConfig.maxTotalVisitors.toString()
+      eventProperties["afterMaxTotalVisitors"] = afterPrisonConfig.maxTotalVisitors.toString()
+    }
+
+    afterPrisonConfig.maxAdultVisitors?.let {
+      eventProperties["beforeMaxAdultVisitor"] = beforePrisonConfig.maxAdultVisitors.toString()
+      eventProperties["afterMaxAdultVisitor"] = afterPrisonConfig.maxAdultVisitors.toString()
+    }
+
+    afterPrisonConfig.maxChildVisitors?.let {
+      eventProperties["beforeMaxChildVisitors"] = beforePrisonConfig.maxChildVisitors.toString()
+      eventProperties["afterMaxChildVisitors"] = afterPrisonConfig.maxChildVisitors.toString()
+    }
+
+    afterPrisonConfig.adultAgeYears?.let {
+      eventProperties["beforeAdultAgeYears"] = beforePrisonConfig.adultAgeYears.toString()
+      eventProperties["afterAdultAgeYears"] = afterPrisonConfig.adultAgeYears.toString()
+    }
+
+    afterPrisonConfig.weekStartDay?.let {
+      eventProperties["beforeWeekStartDay"] = beforePrisonConfig.weekStartDay.toString()
+      eventProperties["afterWeekStartDay"] = afterPrisonConfig.weekStartDay.toString()
+    }
+
+    afterPrisonConfig.remandVisitLimitPerWeek?.let {
+      eventProperties["beforeRemandVisitLimitPerWeek"] = beforePrisonConfig.remandVisitLimitPerWeek.toString()
+      eventProperties["afterRemandVisitLimitPerWeek"] = afterPrisonConfig.remandVisitLimitPerWeek.toString()
+    }
+
+    trackEvent(PRISON_CONFIG_UPDATED_EVENT, eventProperties)
   }
 
   fun trackVisitRequestApprovedOrRejectedEvent(
@@ -399,6 +450,7 @@ class TelemetryClientService(
     "visitRoom" to visitDto.visitRoom,
     "hasPhoneNumber" to (visitDto.visitContact.telephone != null).toString(),
     "hasEmail" to (visitDto.visitContact.email != null).toString(),
+    "languagePreference" to visitDto.visitContact.languagePreference.toString(),
     "totalVisitors" to visitDto.visitors.size.toString(),
     "visitors" to objectMapper.writeValueAsString(createVisitorData(visitDto.visitors, visitorDetails)),
   )

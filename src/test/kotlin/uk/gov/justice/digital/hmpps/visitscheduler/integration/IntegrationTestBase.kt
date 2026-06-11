@@ -347,7 +347,7 @@ abstract class IntegrationTestBase {
       visitRestriction = visitRestriction,
       userType = userType,
     )
-    applicationEntityHelper.createContact(application = applicationEntity, visitContact.name, visitContact.telephone, visitContact.email)
+    applicationEntityHelper.createContact(application = applicationEntity, visitContact.name, visitContact.telephone, visitContact.email, visitContact.languagePreference)
     applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 621L, visitContact = false)
     applicationEntityHelper.createSupport(application = applicationEntity, description = "Some More Text")

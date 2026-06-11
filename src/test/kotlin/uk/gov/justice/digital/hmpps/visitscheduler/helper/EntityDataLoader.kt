@@ -28,6 +28,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.notify.LanguagePreference
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.ActionedBy
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
@@ -95,7 +96,20 @@ class PrisonEntityHelper(
       maxAdultVisitors: Int = 3,
       maxChildVisitors: Int = 3,
       adultAgeYears: Int = 18,
-    ): Prison = Prison(code = prisonCode, active = activePrison, policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears)
+      weekStartDay: DayOfWeek = DayOfWeek.MONDAY,
+      remandVisitLimitPerWeek: Int = 3,
+    ): Prison = Prison(
+      code = prisonCode,
+      active = activePrison,
+      policyNoticeDaysMin = policyNoticeDaysMin,
+      policyNoticeDaysMax = policyNoticeDaysMax,
+      maxTotalVisitors = maxTotalVisitors,
+      maxAdultVisitors = maxAdultVisitors,
+      maxChildVisitors = maxChildVisitors,
+      adultAgeYears = adultAgeYears,
+      weekStartDay = weekStartDay,
+      remandVisitLimitPerWeek = remandVisitLimitPerWeek,
+    )
 
     fun createPrisonDto(
       prisonCode: String = "AWE",
@@ -107,6 +121,8 @@ class PrisonEntityHelper(
       maxAdultVisitors: Int = 3,
       maxChildVisitors: Int = 3,
       adultAgeYears: Int = 18,
+      weekStartDay: DayOfWeek = DayOfWeek.MONDAY,
+      remandVisitLimitPerWeek: Int = 3,
     ): PrisonDto = PrisonDto(
       code = prisonCode,
       active = activePrison,
@@ -117,6 +133,8 @@ class PrisonEntityHelper(
       maxChildVisitors = maxChildVisitors,
       adultAgeYears = adultAgeYears,
       clients = clients,
+      weekStartDay = weekStartDay,
+      remandVisitLimitPerWeek = remandVisitLimitPerWeek,
     )
 
     fun updatePrisonDto(
@@ -126,7 +144,9 @@ class PrisonEntityHelper(
       maxAdultVisitors: Int = 2,
       maxChildVisitors: Int = 2,
       adultAgeYears: Int = 16,
-    ): UpdatePrisonDto = UpdatePrisonDto(policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears)
+      weekStartDay: DayOfWeek = DayOfWeek.SUNDAY,
+      remandVisitLimitPerWeek: Int = 2,
+    ): UpdatePrisonDto = UpdatePrisonDto(policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears, weekStartDay, remandVisitLimitPerWeek)
   }
 
   @Transactional(propagation = REQUIRES_NEW)
@@ -136,6 +156,8 @@ class PrisonEntityHelper(
     excludeDates: List<LocalDate> = listOf(),
     policyNoticeDaysMin: Int = 2,
     policyNoticeDaysMax: Int = 28,
+    remandVisitLimitPerWeek: Int = 3,
+    weekStartDay: DayOfWeek = DayOfWeek.MONDAY,
     dontMakeClient: Boolean = false,
   ): Prison {
     var prison = prisonRepository.findByCode(prisonCode)
@@ -146,6 +168,8 @@ class PrisonEntityHelper(
           activePrison = activePrison,
           policyNoticeDaysMin = policyNoticeDaysMin,
           policyNoticeDaysMax = policyNoticeDaysMax,
+          remandVisitLimitPerWeek = remandVisitLimitPerWeek,
+          weekStartDay = weekStartDay,
         ),
       )
 
@@ -198,7 +222,7 @@ class VisitEntityHelper(
     visit.addApplication(application)
 
     with(application.visitContact!!) {
-      visit.visitContact = VisitContact(visit = visit, visitId = visit.id, name = name, telephone = telephone, email = email)
+      visit.visitContact = VisitContact(visit = visit, visitId = visit.id, name = name, telephone = telephone, email = email, languagePreference = languagePreference)
     }
 
     application.support?.let {
@@ -308,7 +332,7 @@ class VisitEntityHelper(
 
     val savedVisit = visitRepository.saveAndFlush(notSaved)
     if (visitContact != null) {
-      createContact(visit = savedVisit, visitContact.name, visitContact.telephone, visitContact.email)
+      createContact(visit = savedVisit, visitContact.name, visitContact.telephone, visitContact.email, visitContact.languagePreference)
     }
 
     return if (createApplication) {
@@ -375,6 +399,7 @@ class VisitEntityHelper(
     name: String = "bob",
     phone: String? = "0123456789",
     email: String? = "email@example.com",
+    languagePreference: LanguagePreference = LanguagePreference.EN,
   ) {
     visit.visitContact = VisitContact(
       visitId = visit.id,
@@ -382,6 +407,7 @@ class VisitEntityHelper(
       telephone = phone,
       email = email,
       visit = visit,
+      languagePreference = languagePreference,
     )
   }
 
