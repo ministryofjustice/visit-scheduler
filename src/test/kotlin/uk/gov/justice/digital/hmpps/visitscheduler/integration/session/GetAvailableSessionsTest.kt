@@ -2968,6 +2968,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     assertThat(visitSession.sessionTimeSlot.startTime).isEqualTo(expectedSessionTemplate.startTime)
     assertThat(visitSession.sessionTimeSlot.endTime).isEqualTo(expectedSessionTemplate.endTime)
     assertThat(visitSession.sessionRestriction).isEqualTo(sessionRestriction)
+    assertThat(visitSession.visitOrderRestriction).isEqualTo(expectedSessionTemplate.visitOrderRestriction)
   }
 
   private fun assertResponseLength(responseSpec: ResponseSpec, length: Int) {
