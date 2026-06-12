@@ -516,30 +516,20 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
 
     // none of the sessions on the day will be available
     Assertions.assertThat(visitSessionResults.size).isEqualTo(5)
-    Assertions.assertThat(visitSessionResults[0].sessionConflicts.size).isEqualTo(1)
-    Assertions.assertThat(visitSessionResults[0].sessionConflicts.map { it.sessionConflict }.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
-    assertThat(visitSessionResults[0].sessionConflicts.map { it.additionalAttributes }.flatten()).containsAll(
-      listOf(
-        listOf(
-          AdditionalSessionConflictInfoDto(PRISONER_NUMBER, associationId),
-          AdditionalSessionConflictInfoDto(CONFLICT_TYPE, "VISIT"),
-          AdditionalSessionConflictInfoDto(REFERENCE, visit.reference),
-        ),
-      ),
+
+    val expectedAdditionalAttributes = listOf(
+      AdditionalSessionConflictInfoDto(PRISONER_NUMBER, associationId),
+      AdditionalSessionConflictInfoDto(CONFLICT_TYPE, "VISIT"),
+      AdditionalSessionConflictInfoDto(REFERENCE, visit.reference),
     )
 
-    Assertions.assertThat(visitSessionResults[1].sessionConflicts.size).isEqualTo(1)
-    Assertions.assertThat(visitSessionResults[1].sessionConflicts.map { it.sessionConflict }.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
-    assertThat(visitSessionResults[1].sessionConflicts.map { it.additionalAttributes }.flatten()).containsAll(
-      listOf(
-        listOf(
-          AdditionalSessionConflictInfoDto(PRISONER_NUMBER, associationId),
-          AdditionalSessionConflictInfoDto(CONFLICT_TYPE, "VISIT"),
-          AdditionalSessionConflictInfoDto(REFERENCE, visit.reference),
-        ),
-      ),
-    )
-    Assertions.assertThat(visitSessionResults[2].sessionConflicts.size).isEqualTo(1)
+    visitSessionResults.take(3).forEach { visitSessionResult ->
+      Assertions.assertThat(visitSessionResult.sessionConflicts.size).isEqualTo(1)
+      Assertions.assertThat(visitSessionResult.sessionConflicts.map { it.sessionConflict }.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
+      assertThat(visitSessionResult.sessionConflicts.map { it.additionalAttributes }.flatten()).containsAll(
+        listOf(expectedAdditionalAttributes),
+      )
+    }
     Assertions.assertThat(visitSessionResults[2].sessionConflicts.map { it.sessionConflict }.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
     assertThat(visitSessionResults[2].sessionConflicts.map { it.additionalAttributes }.flatten()).containsAll(
       listOf(
