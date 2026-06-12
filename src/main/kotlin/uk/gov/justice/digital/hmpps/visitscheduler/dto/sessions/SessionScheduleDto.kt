@@ -47,4 +47,7 @@ data class SessionScheduleDto(
 
   @param:Schema(description = "visit room name", example = "Visits Room", required = true)
   val visitRoom: String,
+
+  @param:Schema(description = "Flag to indicate if the session is excluded for the date. True will indicate that the session is excluded.", required = true)
+  val isSessionExcluded: Boolean,
 )

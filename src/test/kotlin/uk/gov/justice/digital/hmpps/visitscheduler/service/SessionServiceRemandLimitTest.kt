@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionSlotRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateExcludeDateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionConflictsUtil
@@ -32,6 +33,7 @@ class SessionServiceRemandLimitTest {
   private val sessionTemplateRepository = mock<SessionTemplateRepository>()
   private val visitRepository = mock<VisitRepository>()
   private val sessionSlotRepository = mock<SessionSlotRepository>()
+  private val sessionTemplateExcludeDateRepository = mock<SessionTemplateExcludeDateRepository>()
   private val prisonerService = mock<PrisonerService>()
   private val prisonerValidationService = mock<PrisonerValidationService>()
   private val sessionDatesUtil = SessionDatesUtil()
@@ -67,6 +69,7 @@ class SessionServiceRemandLimitTest {
       sessionTemplateRepository = sessionTemplateRepository,
       visitRepository = visitRepository,
       sessionSlotRepository = sessionSlotRepository,
+      sessionTemplateExcludeDateRepository = sessionTemplateExcludeDateRepository,
       prisonerService = prisonerService,
       prisonerSessionValidationService = sessionValidationService,
       prisonerValidationService = prisonerValidationService,

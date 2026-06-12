@@ -48,6 +48,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.Visi
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionSlotRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateExcludeDateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionConflictsUtil
@@ -68,6 +69,7 @@ class SessionServiceTest {
   private val sessionTemplateRepository = mock<SessionTemplateRepository>()
   private val visitRepository = mock<VisitRepository>()
   private val sessionSlotRepository = mock<SessionSlotRepository>()
+  private val sessionTemplateExcludeDateRepository = mock<SessionTemplateExcludeDateRepository>()
   private val prisonerService = mock<PrisonerService>()
   private val prisonerValidationService = mock<PrisonerValidationService>()
   private val sessionDatesUtil = SessionDatesUtil()
@@ -180,6 +182,7 @@ class SessionServiceTest {
         applicationService = applicationService,
         prisonerSessionValidationService = sessionValidationService,
         sessionConflictsUtil = sessionConflictsUtil,
+        sessionTemplateExcludeDateRepository = sessionTemplateExcludeDateRepository,
       )
     }
 
@@ -478,6 +481,7 @@ class SessionServiceTest {
         prisonsService = prisonsService,
         applicationService = applicationService,
         sessionConflictsUtil = sessionConflictsUtil,
+        sessionTemplateExcludeDateRepository = sessionTemplateExcludeDateRepository,
       )
     }
 
@@ -750,6 +754,7 @@ class SessionServiceTest {
         prisonerValidationService = prisonerValidationService,
         prisonsService = prisonsService,
         applicationService = applicationService,
+        sessionTemplateExcludeDateRepository = sessionTemplateExcludeDateRepository,
         sessionConflictsUtil = sessionConflictsUtil,
       )
     }
