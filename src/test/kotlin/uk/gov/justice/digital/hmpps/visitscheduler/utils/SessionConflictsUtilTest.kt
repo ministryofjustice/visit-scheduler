@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.DOU
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.NON_ASSOCIATION
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.PRISON_DATE_BLOCKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.SESSION_DATE_BLOCKED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AdditionalSessionConflictInfoDto
@@ -39,6 +40,7 @@ class SessionConflictsUtilTest {
     startTimestamp = visitDate.atTime(10, 0),
     endTimestamp = visitDate.atTime(11, 0),
     sessionConflicts = mutableListOf(),
+    visitOrderRestriction = SessionTemplateVisitOrderRestrictionType.NONE,
   )
 
   fun createDoubleBookedConflictSessionDto(
