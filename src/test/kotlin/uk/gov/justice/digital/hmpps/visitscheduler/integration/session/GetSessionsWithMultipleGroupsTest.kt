@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryTyp
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType.A_PROVISIONAL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType.A_STANDARD
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType.B
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
@@ -80,6 +81,7 @@ class GetSessionsWithMultipleGroupsTest : IntegrationTestBase() {
       includeCategoryGroupType = true,
       permittedIncentiveLevels = mutableListOf(incentiveLevelGroup),
       includeIncentiveGroupType = true,
+      visitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.PVO,
     )
 
     // When
@@ -487,5 +489,6 @@ class GetSessionsWithMultipleGroupsTest : IntegrationTestBase() {
     assertThat(visitSessionResult.endTimestamp).isEqualTo(testDate.atTime(expectedSessionTemplate.endTime))
     assertThat(visitSessionResult.startTimestamp.dayOfWeek).isEqualTo(expectedSessionTemplate.dayOfWeek)
     assertThat(visitSessionResult.endTimestamp.dayOfWeek).isEqualTo(expectedSessionTemplate.dayOfWeek)
+    assertThat(visitSessionResult.visitOrderRestriction).isEqualTo(expectedSessionTemplate.visitOrderRestriction)
   }
 }

@@ -88,6 +88,7 @@ class SessionService(
         endTimestamp = LocalDateTime.of(sessionDate, sessionTemplate.endTime),
         visitRoom = sessionTemplate.visitRoom,
         visitType = sessionTemplate.visitType,
+        visitOrderRestriction = sessionTemplate.visitOrderRestriction,
       )
     }.also {
       val sessionSlots = getSessionSlots(it)
@@ -374,6 +375,7 @@ class SessionService(
             endTimestamp = LocalDateTime.of(date, sessionTemplate.endTime),
             visitRoom = sessionTemplate.visitRoom,
             visitType = sessionTemplate.visitType,
+            visitOrderRestriction = sessionTemplate.visitOrderRestriction,
           )
         }
         .toList()
@@ -638,6 +640,7 @@ class SessionService(
     visitType = sessionTemplate.visitType,
     sessionDateRange = SessionDateRangeDto(validFromDate = sessionTemplate.validFromDate, validToDate = sessionTemplate.validToDate),
     visitRoom = sessionTemplate.visitRoom,
+    visitOrderRestriction = sessionTemplate.visitOrderRestriction,
     isSessionExcluded = isSessionExcluded,
   )
 
