@@ -2,8 +2,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.utils
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.junit.jupiter.MockitoExtension
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.DOUBLE_BOOKING_OR_RESERVATION
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.NON_ASSOCIATION
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.PRISON_DATE_BLOCKED
@@ -21,9 +19,7 @@ import java.time.DayOfWeek.MONDAY
 import java.time.LocalDate
 import java.time.temporal.TemporalAdjusters
 
-@ExtendWith(MockitoExtension::class)
 class SessionConflictsUtilTest {
-
   val sessionConflictsUtil = SessionConflictsUtil()
 
   val visitDate: LocalDate = LocalDate.now().with(TemporalAdjusters.next(MONDAY))
