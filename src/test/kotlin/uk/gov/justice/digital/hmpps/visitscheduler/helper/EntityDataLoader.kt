@@ -695,7 +695,7 @@ class SessionTemplateEntityHelper(
     includeLocationGroupType: Boolean = true,
     includeCategoryGroupType: Boolean = true,
     includeIncentiveGroupType: Boolean = true,
-    excludeDates: MutableList<LocalDate> = mutableListOf(),
+    excludeDates: List<LocalDate> = listOf(),
     clients: List<UserClientDto> = listOf(UserClientDto(STAFF, true), UserClientDto(PUBLIC, true)),
     visitOrderRestrictionType: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
   ): SessionTemplate {
@@ -748,7 +748,7 @@ class SessionTemplateEntityHelper(
     includeLocationGroupType: Boolean = true,
     includeCategoryGroupType: Boolean = true,
     includeIncentiveGroupType: Boolean = true,
-    excludeDates: MutableList<LocalDate> = mutableListOf(),
+    excludeDates: List<LocalDate> = listOf(),
     clients: List<UserClientDto> = listOf(UserClientDto(STAFF, true), UserClientDto(PUBLIC, true)),
     visitOrderRestrictionType: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
   ): SessionTemplate {

@@ -1,9 +1,13 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.admin
 
+import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.check
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.isNull
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
@@ -19,6 +23,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.PRISON
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.PRISON_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonUserClientDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdatePrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
@@ -26,6 +31,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
+import java.time.DayOfWeek
 import java.time.LocalDate
 
 @Transactional
@@ -33,6 +39,9 @@ import java.time.LocalDate
 class AdminPrisonsTest : IntegrationTestBase() {
   @MockitoSpyBean
   private lateinit var spyPrisonRepository: PrisonRepository
+
+  @MockitoSpyBean
+  private lateinit var telemetryClient: TelemetryClient
 
   private val adminRole = listOf("ROLE_VISIT_SCHEDULER_CONFIG")
 
@@ -229,6 +238,128 @@ class AdminPrisonsTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `update prison config updates all fields and publishes telemetry`() {
+    // Given
+    prisonEntityHelper.create(prisonCode = "AWE")
+
+    val updatePrisonDto = UpdatePrisonDto(
+      maxTotalVisitors = 8,
+      maxAdultVisitors = 4,
+      maxChildVisitors = 4,
+      adultAgeYears = 17,
+      weekStartDay = DayOfWeek.SUNDAY,
+      remandVisitLimitPerWeek = 2,
+      clients = listOf(
+        PrisonUserClientDto(userType = PUBLIC, policyNoticeDaysMin = 2, policyNoticeDaysMax = 32, active = true),
+        PrisonUserClientDto(userType = STAFF, policyNoticeDaysMin = 2, policyNoticeDaysMax = 32, active = true),
+      ),
+    )
+
+    // When
+    val responseSpec = webTestClient.put().uri(PRISON.replace("{prisonCode}", "AWE"))
+      .headers(setAuthorisation(roles = adminRole))
+      .body(BodyInserters.fromValue(updatePrisonDto))
+      .exchange()
+
+    // Then
+    val dto = getPrisonResults(responseSpec)
+    assertPrisonDto(dto, prisonCode = "AWE", isActive = true, isStaffActive = true, isPublicActive = true)
+    assertPrisonConfig(dto, updatePrisonDto)
+    assertPrisonEntityConfig(prisonCode = "AWE", updatePrisonDto)
+
+    verify(telemetryClient).trackEvent(
+      eq("prison-config-updated"),
+      check {
+        assertThat(it).containsExactlyInAnyOrderEntriesOf(
+          mapOf(
+            "prisonId" to "AWE",
+            "beforeMaxTotalVisitors" to "6",
+            "afterMaxTotalVisitors" to "8",
+            "beforeMaxAdultVisitor" to "3",
+            "afterMaxAdultVisitor" to "4",
+            "beforeMaxChildVisitors" to "3",
+            "afterMaxChildVisitors" to "4",
+            "beforeAdultAgeYears" to "18",
+            "afterAdultAgeYears" to "17",
+            "beforeWeekStartDay" to "MONDAY",
+            "afterWeekStartDay" to "SUNDAY",
+            "beforeRemandVisitLimitPerWeek" to "3",
+            "afterRemandVisitLimitPerWeek" to "2",
+          ),
+        )
+      },
+      isNull(),
+    )
+  }
+
+  @Test
+  fun `update prison config preserves omitted fields and publishes telemetry for provided fields only`() {
+    // Given
+    prisonEntityHelper.create(prisonCode = "AWE")
+
+    val updatePrisonDto = UpdatePrisonDto(
+      maxTotalVisitors = null,
+      maxAdultVisitors = null,
+      maxChildVisitors = null,
+      adultAgeYears = null,
+      weekStartDay = DayOfWeek.FRIDAY,
+      remandVisitLimitPerWeek = null,
+      clients = listOf(
+        PrisonUserClientDto(userType = PUBLIC, policyNoticeDaysMin = 2, policyNoticeDaysMax = 32, active = true),
+        PrisonUserClientDto(userType = STAFF, policyNoticeDaysMin = 2, policyNoticeDaysMax = 32, active = true),
+      ),
+    )
+
+    // When
+    val responseSpec = webTestClient.put().uri(PRISON.replace("{prisonCode}", "AWE"))
+      .headers(setAuthorisation(roles = adminRole))
+      .body(BodyInserters.fromValue(updatePrisonDto))
+      .exchange()
+
+    // Then
+    val dto = getPrisonResults(responseSpec)
+    assertPrisonDto(dto, prisonCode = "AWE", isActive = true, isStaffActive = true, isPublicActive = true)
+    assertPrisonConfig(
+      dto,
+      UpdatePrisonDto(
+        maxTotalVisitors = 6,
+        maxAdultVisitors = 3,
+        maxChildVisitors = 3,
+        adultAgeYears = 18,
+        weekStartDay = DayOfWeek.FRIDAY,
+        remandVisitLimitPerWeek = 3,
+        clients = emptyList(),
+      ),
+    )
+    assertPrisonEntityConfig(
+      prisonCode = "AWE",
+      UpdatePrisonDto(
+        maxTotalVisitors = 6,
+        maxAdultVisitors = 3,
+        maxChildVisitors = 3,
+        adultAgeYears = 18,
+        weekStartDay = DayOfWeek.FRIDAY,
+        remandVisitLimitPerWeek = 3,
+        clients = emptyList(),
+      ),
+    )
+
+    verify(telemetryClient).trackEvent(
+      eq("prison-config-updated"),
+      check {
+        assertThat(it).containsExactlyInAnyOrderEntriesOf(
+          mapOf(
+            "prisonId" to "AWE",
+            "beforeWeekStartDay" to "MONDAY",
+            "afterWeekStartDay" to "FRIDAY",
+          ),
+        )
+      },
+      isNull(),
+    )
+  }
+
+  @Test
   fun `get prison by prison id-code`() {
     // Given
     val excludeDate = LocalDate.now()
@@ -320,6 +451,28 @@ class AdminPrisonsTest : IntegrationTestBase() {
           assertThat(excludeDate).isEqualTo(exceptedExcludeDate)
         }
       }
+    }
+  }
+
+  private fun assertPrisonConfig(prison: PrisonDto, expected: UpdatePrisonDto) {
+    assertThat(prison.maxTotalVisitors).isEqualTo(expected.maxTotalVisitors)
+    assertThat(prison.maxAdultVisitors).isEqualTo(expected.maxAdultVisitors)
+    assertThat(prison.maxChildVisitors).isEqualTo(expected.maxChildVisitors)
+    assertThat(prison.adultAgeYears).isEqualTo(expected.adultAgeYears)
+    assertThat(prison.weekStartDay).isEqualTo(expected.weekStartDay)
+    assertThat(prison.remandVisitLimitPerWeek).isEqualTo(expected.remandVisitLimitPerWeek)
+  }
+
+  private fun assertPrisonEntityConfig(prisonCode: String, expected: UpdatePrisonDto) {
+    val prisonEntity = testPrisonRepository.findByCode(prisonCode)
+    assertThat(prisonEntity).isNotNull
+    prisonEntity?.let { prison ->
+      assertThat(prison.maxTotalVisitors).isEqualTo(expected.maxTotalVisitors)
+      assertThat(prison.maxAdultVisitors).isEqualTo(expected.maxAdultVisitors)
+      assertThat(prison.maxChildVisitors).isEqualTo(expected.maxChildVisitors)
+      assertThat(prison.adultAgeYears).isEqualTo(expected.adultAgeYears)
+      assertThat(prison.weekStartDay).isEqualTo(expected.weekStartDay)
+      assertThat(prison.remandVisitLimitPerWeek).isEqualTo(expected.remandVisitLimitPerWeek)
     }
   }
 

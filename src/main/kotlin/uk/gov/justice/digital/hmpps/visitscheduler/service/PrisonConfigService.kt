@@ -24,6 +24,7 @@ class PrisonConfigService(
   private val messageService: MessageService,
   private val prisonsService: PrisonsService,
   private val excludeDateService: ExcludeDateService,
+  private val telemetryClientService: TelemetryClientService,
   private val validator: Validator,
 ) {
   companion object {
@@ -76,6 +77,8 @@ class PrisonConfigService(
       remandVisitLimitPerWeek = remandVisitLimitPerWeek,
       clients = prisonDto.clients,
     )
+
+    val originalPrisonConfig = prisonsService.mapEntityToDto(prison)
     prison.maxTotalVisitors = maxTotalVisitors
     prison.maxAdultVisitors = maxAdultVisitors
     prison.maxChildVisitors = maxChildVisitors
@@ -102,6 +105,9 @@ class PrisonConfigService(
     }
 
     val savedPrison = prisonRepository.saveAndFlush(prison)
+
+    telemetryClientService.trackUpdatePrisonConfigEvent(originalPrisonConfig, prisonDto)
+
     return prisonsService.mapEntityToDto(savedPrison)
   }
 
