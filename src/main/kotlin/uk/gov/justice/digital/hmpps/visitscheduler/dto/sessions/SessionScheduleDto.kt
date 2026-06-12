@@ -51,4 +51,7 @@ data class SessionScheduleDto(
 
   @param:Schema(description = "Session vo restriction", required = true)
   val visitOrderRestriction: SessionTemplateVisitOrderRestrictionType,
+
+  @param:Schema(description = "Flag to indicate if the session is excluded for the date. True will indicate that the session is excluded.", required = true)
+  val isSessionExcluded: Boolean,
 )
