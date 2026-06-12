@@ -600,7 +600,7 @@ class SessionServiceTest {
       assertThat(sessions).size().isEqualTo(1)
       assertDate(sessions[0].startTimestamp, saturdayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), dayOfWeek)
       assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
-      assertThat(sessions[0].sessionConflicts.map { it.sessionConflict }.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
+      assertThat(sessions[0].sessionConflicts.map { it.sessionConflict }).contains(SessionConflict.NON_ASSOCIATION)
       assertThat(sessions[0].sessionConflicts.flatMap { it.additionalAttributes }).containsAll(
         listOf(
           listOf(
