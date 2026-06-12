@@ -881,7 +881,7 @@ class SessionServiceTest {
       // Then
       assertThat(sessions).size().isEqualTo(1)
       assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
-      assertThat(sessions[0].sessionConflicts.map { it.sessionConflict }.first()).isEqualTo(SessionConflict.DOUBLE_BOOKING_OR_RESERVATION)
+      assertThat(sessions[0].sessionConflicts.map { it.sessionConflict }).contains(SessionConflict.DOUBLE_BOOKING_OR_RESERVATION)
       Mockito.verify(prisonerService, times(1)).getPrisonerNonAssociationList(prisonerId)
     }
 
