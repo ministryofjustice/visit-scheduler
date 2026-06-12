@@ -259,9 +259,9 @@ class SessionService(
     usernameToExcludeFromReservedApplications: String?,
   ): List<DoubleBookedConflictSessionDto> {
     val doubleBookingOrReservationSessions = mutableListOf<DoubleBookedConflictSessionDto>()
-    val sessionSlotsByKey = sessionSlots.associateBy { it.slotDate.toString() + it.sessionTemplateReference }
+    val sessionSlotsByKey = sessionSlots.associateBy { Pair(it.slotDate.toString(), it.sessionTemplateReference) }
     visitSessions.forEach { visitSession ->
-      val key = visitSession.startTimestamp.toLocalDate().toString() + visitSession.sessionTemplateReference
+      val key = Pair(visitSession.startTimestamp.toLocalDate().toString(), visitSession.sessionTemplateReference)
       if (sessionSlotsByKey.containsKey(key)) {
         val sessionSlot = sessionSlotsByKey[key]!!
         val bookedVisit = getBookedVisitForSessionSlot(sessionSlot, prisonerId)

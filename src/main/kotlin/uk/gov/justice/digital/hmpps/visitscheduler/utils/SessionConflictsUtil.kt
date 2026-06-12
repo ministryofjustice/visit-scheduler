@@ -60,7 +60,7 @@ class SessionConflictsUtil {
   ): SessionConflictDto? {
     val sessionDate = session.startTimestamp.toLocalDate()
     val nonAssociationConflictSessionsForDate = nonAssociationConflictSessions.filter { it.sessionDate == sessionDate }
-    if (nonAssociationConflictSessionsForDate.isNotEmpty()) { // removed && policyFilterNonAssociation) {
+    if (nonAssociationConflictSessionsForDate.isNotEmpty()) {
       val nonAssociationConflictAttributes = getNonAssociationConflictAttributes(nonAssociationConflictSessionsForDate)
       return SessionConflictDto(NON_ASSOCIATION, nonAssociationConflictAttributes)
     }
