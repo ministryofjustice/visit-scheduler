@@ -37,7 +37,7 @@ interface ActionedByRepository : JpaRepository<ActionedBy, Long> {
   @Query(
     "UPDATE ActionedBy a SET a.userName = :newPrisonerId " +
       "WHERE a.userName = :oldPrisonerId and a.userType = 'PRISONER' " +
-      "and not exists (select 1 from ActionedBy a2 where a2.userName = :newPrisonerId)",
+      "and not exists (select 1 from ActionedBy a2 where a2.userName = :newPrisonerId and a2.userType = 'PRISONER')",
   )
   fun updateActionedByUsername(oldPrisonerId: String, newPrisonerId: String)
 }

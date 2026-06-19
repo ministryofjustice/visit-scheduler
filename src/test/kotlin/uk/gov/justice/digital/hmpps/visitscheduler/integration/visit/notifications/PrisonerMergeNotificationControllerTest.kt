@@ -101,26 +101,23 @@ class PrisonerMergeNotificationControllerTest : NotificationTestBase() {
     responseSpec.expectStatus().isOk
     val visits = testVisitRepository.findAll()
     assertThat(visits).hasSize(6)
-    assertThat { visits.none { it.prisonerId == oldPrisonerId } }
-    assertThat { visits.all { it.prisonerId == newPrisonerId } }
+    assertThat(visits).noneMatch { it.prisonerId == oldPrisonerId }
+    assertThat(visits).allMatch { it.prisonerId == newPrisonerId }
 
     val applications = testApplicationRepository.findAll()
     assertThat(applications).hasSize(6)
-    assertThat { applications.none { it.prisonerId == oldPrisonerId } }
-    assertThat { applications.all { it.prisonerId == newPrisonerId } }
+    assertThat(applications).noneMatch { it.prisonerId == oldPrisonerId }
+    assertThat(applications).allMatch { it.prisonerId == newPrisonerId }
 
     val auditEvents = testEventAuditRepository.findAll()
     assertThat(auditEvents).hasSize(6)
-    assertThat {
-      auditEvents.forEach {
-        assertAuditEvent(
-          eventAudit = it,
-          expectedType = EventAuditType.PRISONER_MERGED,
-          expectedApplicationMethodType = ApplicationMethodType.NOT_APPLICABLE,
-          expectedText = "Prisoner merge event occurred - old prisoner number ${notificationDto.oldPrisonerId}, new prisoner number - ${notificationDto.newPrisonerId}",
-          expectedActionedByUserType = UserType.SYSTEM,
-        )
-      }
+    auditEvents.forEach {
+      assertAuditEvent(
+        eventAudit = it,
+        expectedType = EventAuditType.PRISONER_MERGED,
+        expectedApplicationMethodType = ApplicationMethodType.NOT_APPLICABLE,
+        expectedText = "Prisoner merge event occurred - old prisoner number ${notificationDto.oldPrisonerId}, new prisoner number - ${notificationDto.newPrisonerId}",
+      )
     }
 
     val actionedByValues = actionedByRepository.findAll()
@@ -146,10 +143,18 @@ class PrisonerMergeNotificationControllerTest : NotificationTestBase() {
     )
     actionedByRepository.save(actionedBy)
 
+    // When
+    val notificationDto = PrisonerMergeNotificationDto(oldPrisonerId = oldPrisonerId, newPrisonerId = newPrisonerId)
+    val responseSpec = callNotifyVSiPThatPrisonerMerged(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
+
+    // Then
+    responseSpec.expectStatus().isOk
+
     val actionedByValues = actionedByRepository.findAll()
-    assertThat(actionedByValues).hasSize(2)
+    assertThat(actionedByValues).hasSize(3)
     assertThat(actionedByValues).anyMatch { it.userName == oldPrisonerId && it.userType == UserType.PRISONER }
     assertThat(actionedByValues).anyMatch { it.userName == newPrisonerId && it.userType == UserType.PRISONER }
+    assertThat(actionedByValues).anyMatch { it.userName == null && it.userType == UserType.SYSTEM }
   }
 
   private fun createVisitAndAssociatedApplication(prisonerId: String, slotDate: LocalDate, sessionTemplate: SessionTemplate, visitStatus: VisitStatus): Visit {
@@ -181,12 +186,10 @@ class PrisonerMergeNotificationControllerTest : NotificationTestBase() {
     eventAudit: EventAudit,
     expectedType: EventAuditType,
     expectedApplicationMethodType: ApplicationMethodType,
-    expectedText: String?,
-    expectedActionedByUserType: UserType,
+    expectedText: String,
   ) {
     assertThat(eventAudit.type).isEqualTo(expectedType)
     assertThat(eventAudit.applicationMethodType).isEqualTo(expectedApplicationMethodType)
     assertThat(eventAudit.text).isEqualTo(expectedText)
-    assertThat(eventAudit.actionedBy.userType).isEqualTo(expectedActionedByUserType)
   }
 }

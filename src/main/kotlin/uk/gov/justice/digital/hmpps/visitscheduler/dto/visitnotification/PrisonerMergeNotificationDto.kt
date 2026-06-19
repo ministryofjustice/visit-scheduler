@@ -8,6 +8,7 @@ data class PrisonerMergeNotificationDto(
   @param:Schema(description = "New Prisoner ID post merge", example = "A1234BC", required = true)
   val newPrisonerId: String,
 
+  @field:NotBlank
   @param:Schema(description = "Removed Prisoner ID post merge", example = "A5678YZ", required = true)
   val oldPrisonerId: String,
 )
