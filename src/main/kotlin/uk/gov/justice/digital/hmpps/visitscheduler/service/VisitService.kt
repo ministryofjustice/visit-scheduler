@@ -424,4 +424,17 @@ class VisitService(
     LOG.debug("getLastApprovedVisitDatesByVisitor called for prisoner - {}, with visitorIds - {}, results - {}", prisonerId, visitorIds, lastApprovedDateByVisitorDatesList)
     return lastApprovedDateByVisitorDatesList
   }
+
+  @Transactional(readOnly = true)
+  fun getAllVisitsForPrisoner(prisonerId: String): List<VisitDto> {
+    LOG.debug("Get all visits for prisoner - {}", prisonerId)
+
+    // get all visits - past, present, booked or cancelled for a prisoner
+    return visitRepository.findByPrisonerId(prisonerId).map { visitDtoBuilder.build(it) }
+  }
+
+  fun updateVisitsPrisonerIdPostMerge(oldPrisonerId: String, newPrisonerId: String) {
+    // update all visits from oldPrisonerId to newPrisonerId post merge
+    visitRepository.updatePrisonerId(oldPrisonerId = oldPrisonerId, newPrisonerId = newPrisonerId)
+  }
 }

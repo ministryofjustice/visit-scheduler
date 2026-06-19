@@ -44,6 +44,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonD
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertCreatedUpdatedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerContactRestrictionUpsertedNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerMergeNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerRestrictionChangeNotificationDto
@@ -57,6 +58,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundExcept
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.ActionedBy
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEventAttribute
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.ActionedByRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.PairedNotificationEventsUtil
@@ -68,13 +70,15 @@ import java.time.format.DateTimeFormatter
 @Service
 class VisitNotificationEventService(
   private val visitService: VisitService,
-  private val visitNotificationEventRepository: VisitNotificationEventRepository,
   private val prisonerService: PrisonerService,
   private val visitNotificationFlaggingService: VisitNotificationFlaggingService,
-  private val pairedNotificationEventsUtil: PairedNotificationEventsUtil,
+  private val applicationService: ApplicationService,
   private val prisonerContactRegistryClient: PrisonerContactRegistryClient,
   private val activitiesApiClient: ActivitiesApiClient,
   private val alertsApiClient: AlertsApiClient,
+  private val visitNotificationEventRepository: VisitNotificationEventRepository,
+  private val actionedByRepository: ActionedByRepository,
+  private val pairedNotificationEventsUtil: PairedNotificationEventsUtil,
 ) {
   @Autowired
   private lateinit var visitRepository: VisitRepository
@@ -551,6 +555,28 @@ class VisitNotificationEventService(
         LOG.warn("Contact restriction with ID {} not found for visitor ID {}, skipping notification", notificationDto.restrictionId, notificationDto.contactId)
       }
     }
+  }
+
+  @Transactional
+  fun handlePrisonerMerge(notificationDto: PrisonerMergeNotificationDto) {
+    LOG.info("Prisoner merge notification received : {}", notificationDto)
+
+    // get all affected visits - past, present, future, BOOKED or CANCELLED for the old prisonerId
+    val affectedVisits = visitService.getAllVisitsForPrisoner(notificationDto.oldPrisonerId)
+
+    // update the prisoner ID on all visits
+    visitService.updateVisitsPrisonerIdPostMerge(oldPrisonerId = notificationDto.oldPrisonerId, newPrisonerId = notificationDto.newPrisonerId)
+
+    // add an event audit entry against all visits
+    visitEventAuditService.saveMergeEventAudits(visits = affectedVisits, oldPrisonerNumber = notificationDto.oldPrisonerId, newPrisonerNumber = notificationDto.newPrisonerId)
+
+    // update the prisoner ID on all applications
+    applicationService.updateApplicationsPrisonerIdPostMerge(oldPrisonerId = notificationDto.oldPrisonerId, newPrisonerId = notificationDto.newPrisonerId)
+    // TODO - to be removed after review - not creating audit entries for applications
+
+    // finally update the actionedBy Prisoner ID
+    // TODO - to be removed after review - only updating if the new prisoner ID does not exist
+    actionedByRepository.updateActionedByUsername(oldPrisonerId = notificationDto.oldPrisonerId, newPrisonerId = notificationDto.newPrisonerId)
   }
 
   private fun processVisitsWithNotifications(processVisitNotificationDto: ProcessVisitNotificationDto) {

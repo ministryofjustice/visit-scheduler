@@ -341,4 +341,24 @@ class VisitEventAuditService {
       ),
     )
   }
+
+  fun saveMergeEventAudits(visits: List<VisitDto>, oldPrisonerNumber: String, newPrisonerNumber: String) {
+    val actionedBy = createOrGetActionBy(null, SYSTEM)
+    val eventAudits = mutableListOf<EventAudit>()
+    visits.forEach { visit ->
+      eventAudits.add(
+        EventAudit(
+          actionedBy = actionedBy,
+          bookingReference = visit.reference,
+          applicationReference = visit.applicationReference,
+          sessionTemplateReference = visit.sessionTemplateReference,
+          type = EventAuditType.PRISONER_MERGED,
+          applicationMethodType = NOT_APPLICABLE,
+          text = "Prisoner merge event occurred - old prisoner number $oldPrisonerNumber, new prisoner number - $newPrisonerNumber",
+        ),
+      )
+    }
+
+    eventAuditRepository.saveAll(eventAudits)
+  }
 }

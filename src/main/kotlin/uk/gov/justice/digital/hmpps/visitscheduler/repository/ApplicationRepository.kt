@@ -157,4 +157,10 @@ interface ApplicationRepository :
     prisonId: Long,
     @Param("expiredDateAndTime") expiredDateAndTime: LocalDateTime,
   ): Boolean
+
+  @Modifying
+  @Query(
+    "update Application a SET a.prisonerId = :newPrisonerId WHERE a.prisonerId = :oldPrisonerId",
+  )
+  fun updateApplication(oldPrisonerId: String, newPrisonerId: String): Int
 }

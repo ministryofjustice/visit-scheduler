@@ -544,4 +544,17 @@ interface VisitRepository :
     @Param("prisonerId") prisonerId: String,
     @Param("nomisPersonIds") nomisPersonIds: List<Long>,
   ): List<LastApprovedDateByVisitor>
+
+  @Query(
+    "SELECT v FROM Visit v " +
+      "WHERE v.prisonerId = :prisonerId ",
+  )
+  fun findByPrisonerId(prisonerId: String): List<Visit>
+
+  @Transactional
+  @Modifying
+  @Query(
+    "UPDATE Visit v set v.prisonerId = :newPrisonerId WHERE v.prisonerId = :oldPrisonerId",
+  )
+  fun updatePrisonerId(oldPrisonerId: String, newPrisonerId: String): Int
 }

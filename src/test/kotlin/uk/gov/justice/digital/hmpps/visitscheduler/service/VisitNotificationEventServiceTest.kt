@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAss
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.ActionedByRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.PairedNotificationEventsUtil
 
@@ -33,6 +34,8 @@ class VisitNotificationEventServiceTest {
   private val pairedNotificationEventsUtil = mock<PairedNotificationEventsUtil>()
   private val activitiesApiClient = mock<ActivitiesApiClient>()
   private val alertsApiClient = mock<AlertsApiClient>()
+  private val actionedByRepository = mock<ActionedByRepository>()
+  private val applicationService = mock<ApplicationService>()
 
   private lateinit var visitNotificationEventService: VisitNotificationEventService
 
@@ -42,7 +45,18 @@ class VisitNotificationEventServiceTest {
 
   @BeforeEach
   fun beforeEachTestSetup() {
-    visitNotificationEventService = VisitNotificationEventService(visitService, visitNotificationEventRepository, prisonerService, visitNotificationFlaggingService, pairedNotificationEventsUtil, prisonerContactRegistryClient, activitiesApiClient, alertsApiClient)
+    visitNotificationEventService = VisitNotificationEventService(
+      visitService = visitService,
+      prisonerService = prisonerService,
+      visitNotificationFlaggingService = visitNotificationFlaggingService,
+      applicationService = applicationService,
+      pairedNotificationEventsUtil = pairedNotificationEventsUtil,
+      prisonerContactRegistryClient = prisonerContactRegistryClient,
+      alertsApiClient = alertsApiClient,
+      activitiesApiClient = activitiesApiClient,
+      visitNotificationEventRepository = visitNotificationEventRepository,
+      actionedByRepository = actionedByRepository,
+    )
 
     whenever(prisonerService.getPrisoner(primaryNonAssociationNumber)).thenReturn(
       PrisonerDto(

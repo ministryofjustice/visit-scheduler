@@ -33,6 +33,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.Notific
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertCreatedUpdatedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerContactRestrictionUpsertedNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerMergeNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerRestrictionChangeNotificationDto
@@ -62,6 +63,7 @@ const val VISIT_NOTIFICATION_EVENTS: String = "$VISIT_NOTIFICATION_CONTROLLER_PA
 const val VISIT_NOTIFICATION_IGNORE: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/visit/{reference}/ignore"
 const val VISIT_NOTIFICATION_PRISONER_CONTACT_RESTRICTION_UPSERTED_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/prisoner/contact/restriction/upserted"
 const val VISIT_NOTIFICATION_CONTACT_RESTRICTION_UPSERTED_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/contact/restriction/upserted"
+const val VISIT_NOTIFICATION_PRISONER_MERGE_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/prisoner/merge"
 
 @RestController
 @Validated
@@ -750,6 +752,42 @@ class VisitNotificationController(
   ): ResponseEntity<HttpStatus> {
     LOG.debug("Entered notifyVSiPThatContactRestrictionUpserted {}", dto)
     visitNotificationEventService.handleContactRestrictionNotification(dto)
+    return ResponseEntity(HttpStatus.OK)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PostMapping(VISIT_NOTIFICATION_PRISONER_MERGE_PATH)
+  @ResponseStatus(HttpStatus.OK)
+  @Operation(
+    summary = "To notify VSiP a prisoner merge event occurred",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "notification has completed successfully",
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Incorrect request to notify VSiP of change",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to notify VSiP of change",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun notifyVSiPOfPrisonerMerge(
+    @RequestBody @Valid
+    dto: PrisonerMergeNotificationDto,
+  ): ResponseEntity<HttpStatus> {
+    LOG.debug("Entered notifyVSiPOfPrisonerMerge {}", dto)
+    visitNotificationEventService.handlePrisonerMerge(dto)
     return ResponseEntity(HttpStatus.OK)
   }
 }

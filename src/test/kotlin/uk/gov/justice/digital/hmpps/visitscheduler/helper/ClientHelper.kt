@@ -29,6 +29,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_ALERT_DELETED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_ALERT_UPDATED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_CONTACT_RESTRICTION_UPSERTED_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_MERGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RECEIVED_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RELEASED_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RESTRICTION_CHANGE_PATH
@@ -98,6 +99,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAsso
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertCreatedUpdatedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerContactRestrictionUpsertedNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerMergeNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerRestrictionChangeNotificationDto
@@ -946,6 +948,17 @@ fun callUpdateVisitFromExternalSystem(
   reference: String,
   dto: UpdateVisitFromExternalSystemDto,
 ): ResponseSpec = callPut(dto, webTestClient, "$VISIT_CONTROLLER_PATH/external-system/$reference", authHttpHeaders)
+
+fun callNotifyVSiPThatPrisonerMerged(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  dto: PrisonerMergeNotificationDto,
+): ResponseSpec = callNotifyVSiPOfAEvent(
+  webTestClient,
+  authHttpHeaders,
+  VISIT_NOTIFICATION_PRISONER_MERGE_PATH,
+  dto,
+)
 
 fun callGet(
   webTestClient: WebTestClient,
