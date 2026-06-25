@@ -24,8 +24,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.RejectionReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRequestRejectionReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
@@ -71,7 +71,7 @@ class RejectVisitRequestTest : IntegrationTestBase() {
     val rejectVisitRequestBodyDto = ApproveRejectionVisitRequestBodyDto(
       visitReference = visitPrimary.reference,
       actionedBy = "user1",
-      rejectionReason = RejectionReason.NO_VISIT_ALLOWANCE,
+      visitRequestRejectionReason = VisitRequestRejectionReason.NO_VISIT_ALLOWANCE,
     )
 
     // When
@@ -92,7 +92,7 @@ class RejectVisitRequestTest : IntegrationTestBase() {
         EventAuditType.REQUESTED_VISIT_REJECTED,
       )
       assertThat(it.single { event -> event.type == EventAuditType.REQUESTED_VISIT_REJECTED }.text)
-        .isEqualTo(RejectionReason.NO_VISIT_ALLOWANCE.name)
+        .isEqualTo(VisitRequestRejectionReason.NO_VISIT_ALLOWANCE.name)
     }
 
     verify(telemetryClient).trackEvent(
@@ -101,7 +101,7 @@ class RejectVisitRequestTest : IntegrationTestBase() {
         assertThat(map["reference"]).isEqualTo(visitPrimary.reference)
         assertThat(map["visitStatus"]).isEqualTo(VisitStatus.CANCELLED.name)
         assertThat(map["visitSubStatus"]).isEqualTo(VisitSubStatus.REJECTED.name)
-        assertThat(map["rejectionReason"]).isEqualTo(RejectionReason.NO_VISIT_ALLOWANCE.name)
+        assertThat(map["rejectionReason"]).isEqualTo(VisitRequestRejectionReason.NO_VISIT_ALLOWANCE.name)
         true
       },
       isNull(),

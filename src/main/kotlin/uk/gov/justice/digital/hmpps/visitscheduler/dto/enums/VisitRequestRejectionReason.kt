@@ -1,6 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto.enums
 
-enum class RejectionReason {
+enum class VisitRequestRejectionReason {
   NO_VISIT_ALLOWANCE,
   ALERT_OR_RESTRICTION,
 }

@@ -44,7 +44,7 @@ class VisitRequestsApprovalRejectionService(
       approvalVisitRequestBodyDto.actionedBy,
       actionedVisitDto,
       isApproved,
-      approvalVisitRequestBodyDto.rejectionReason,
+      approvalVisitRequestBodyDto.visitRequestRejectionReason,
     )
 
     val unflagEventReason = if (isApproved) {

@@ -24,12 +24,12 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.MIGR
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.REQUESTED_VISIT_WITHDRAWN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.RESERVED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.RejectionReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PRISONER
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRequestRejectionReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.ActionedBy
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
@@ -301,7 +301,7 @@ class VisitEventAuditService {
     actionedByValue: String,
     visit: VisitDto,
     isApproved: Boolean,
-    rejectionReason: RejectionReason? = null,
+    visitRequestRejectionReason: VisitRequestRejectionReason? = null,
   ): EventAuditDto {
     val actionedBy = createOrGetActionBy(actionedByValue, STAFF)
 
@@ -320,7 +320,7 @@ class VisitEventAuditService {
           sessionTemplateReference = visit.sessionTemplateReference,
           eventType,
           applicationMethodType = ApplicationMethodType.WEBSITE,
-          text = if (isApproved) null else rejectionReason?.name,
+          text = if (isApproved) null else visitRequestRejectionReason?.name,
         ),
       ),
     )
