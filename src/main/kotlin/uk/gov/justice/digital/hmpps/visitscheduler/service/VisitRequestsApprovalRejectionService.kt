@@ -40,7 +40,12 @@ class VisitRequestsApprovalRejectionService(
 
     val actionedVisitDto = visitDtoBuilder.build(visitRepository.findByReference(visitReference)!!)
 
-    val eventAuditDto = visitEventAuditService.saveVisitRequestApprovedOrRejectedEventAudit(approvalVisitRequestBodyDto.actionedBy, actionedVisitDto, isApproved)
+    val eventAuditDto = visitEventAuditService.saveVisitRequestApprovedOrRejectedEventAudit(
+      approvalVisitRequestBodyDto.actionedBy,
+      actionedVisitDto,
+      isApproved,
+      approvalVisitRequestBodyDto.rejectionReason,
+    )
 
     val unflagEventReason = if (isApproved) {
       UnFlagEventReason.VISIT_REQUEST_APPROVED

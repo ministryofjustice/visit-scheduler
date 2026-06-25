@@ -24,6 +24,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.RejectionReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
@@ -67,7 +68,11 @@ class RejectVisitRequestTest : IntegrationTestBase() {
     val visitPrimary = createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitRestriction = VisitRestriction.OPEN, visitStatus = BOOKED, visitSubStatus = VisitSubStatus.REQUESTED)
     eventAuditEntityHelper.create(visitPrimary, type = EventAuditType.REQUESTED_VISIT)
 
-    val rejectVisitRequestBodyDto = ApproveRejectionVisitRequestBodyDto(visitReference = visitPrimary.reference, actionedBy = "user1")
+    val rejectVisitRequestBodyDto = ApproveRejectionVisitRequestBodyDto(
+      visitReference = visitPrimary.reference,
+      actionedBy = "user1",
+      rejectionReason = RejectionReason.NO_VISIT_ALLOWANCE,
+    )
 
     // When
     val responseSpec = callRejectVisitRequest(webTestClient, visitPrimary.reference, rejectVisitRequestBodyDto, roleVisitSchedulerHttpHeaders)
@@ -86,6 +91,8 @@ class RejectVisitRequestTest : IntegrationTestBase() {
         EventAuditType.REQUESTED_VISIT,
         EventAuditType.REQUESTED_VISIT_REJECTED,
       )
+      assertThat(it.single { event -> event.type == EventAuditType.REQUESTED_VISIT_REJECTED }.text)
+        .isEqualTo(RejectionReason.NO_VISIT_ALLOWANCE.name)
     }
 
     verify(telemetryClient).trackEvent(
@@ -94,6 +101,7 @@ class RejectVisitRequestTest : IntegrationTestBase() {
         assertThat(map["reference"]).isEqualTo(visitPrimary.reference)
         assertThat(map["visitStatus"]).isEqualTo(VisitStatus.CANCELLED.name)
         assertThat(map["visitSubStatus"]).isEqualTo(VisitSubStatus.REJECTED.name)
+        assertThat(map["rejectionReason"]).isEqualTo(RejectionReason.NO_VISIT_ALLOWANCE.name)
         true
       },
       isNull(),
@@ -129,6 +137,7 @@ class RejectVisitRequestTest : IntegrationTestBase() {
         EventAuditType.REQUESTED_VISIT,
         EventAuditType.REQUESTED_VISIT_REJECTED,
       )
+      assertThat(it.single { event -> event.type == EventAuditType.REQUESTED_VISIT_REJECTED }.text).isNull()
     }
 
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
@@ -143,6 +152,16 @@ class RejectVisitRequestTest : IntegrationTestBase() {
       isNull(),
     )
     verify(telemetryClient, times(1)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
+
+    verify(telemetryClient).trackEvent(
+      eq("visit-request-rejected"),
+      argThat { map ->
+        assertThat(map["reference"]).isEqualTo(visitPrimary.reference)
+        assertThat(map).doesNotContainKey("rejectionReason")
+        true
+      },
+      isNull(),
+    )
 
     assertVisitRequestRejectedDomainEvent(visitPrimary.reference)
   }
