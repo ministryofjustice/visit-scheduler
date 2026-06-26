@@ -39,7 +39,7 @@ class PrisonerMergeController(
   @PostMapping(VISIT_NOTIFICATION_PRISONER_MERGE_PATH)
   @ResponseStatus(HttpStatus.OK)
   @Operation(
-    summary = "To notify VSiP a prisoner merge event occurred",
+    summary = "Endpoint to handle a prisoner merge event.",
     responses = [
       ApiResponse(
         responseCode = "200",
@@ -47,7 +47,7 @@ class PrisonerMergeController(
       ),
       ApiResponse(
         responseCode = "400",
-        description = "Incorrect request to notify VSiP of change",
+        description = "Incorrect request to notify VSiP of a prisoner merge.",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
@@ -57,7 +57,7 @@ class PrisonerMergeController(
       ),
       ApiResponse(
         responseCode = "403",
-        description = "Incorrect permissions to notify VSiP of change",
+        description = "Incorrect permissions to notify VSiP of a prisoner merge.",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
