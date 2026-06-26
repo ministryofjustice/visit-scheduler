@@ -22,7 +22,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerMergeNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonerMergeService
 
-const val VISIT_NOTIFICATION_PRISONER_MERGE_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/prisoner/merge"
+const val VISIT_NOTIFICATION_PRISONER_MERGE_PATH: String = "$VISIT_CONTROLLER_PATH/prisoner/merge"
 
 @RestController
 @Validated
