@@ -42,7 +42,16 @@ class VisitNotificationEventServiceTest {
 
   @BeforeEach
   fun beforeEachTestSetup() {
-    visitNotificationEventService = VisitNotificationEventService(visitService, visitNotificationEventRepository, prisonerService, visitNotificationFlaggingService, pairedNotificationEventsUtil, prisonerContactRegistryClient, activitiesApiClient, alertsApiClient)
+    visitNotificationEventService = VisitNotificationEventService(
+      visitService = visitService,
+      prisonerService = prisonerService,
+      visitNotificationFlaggingService = visitNotificationFlaggingService,
+      pairedNotificationEventsUtil = pairedNotificationEventsUtil,
+      prisonerContactRegistryClient = prisonerContactRegistryClient,
+      alertsApiClient = alertsApiClient,
+      activitiesApiClient = activitiesApiClient,
+      visitNotificationEventRepository = visitNotificationEventRepository,
+    )
 
     whenever(prisonerService.getPrisoner(primaryNonAssociationNumber)).thenReturn(
       PrisonerDto(
