@@ -162,5 +162,5 @@ interface ApplicationRepository :
   @Query(
     "update Application a SET a.prisonerId = :newPrisonerId WHERE a.prisonerId = :oldPrisonerId",
   )
-  fun updateApplication(oldPrisonerId: String, newPrisonerId: String): Int
+  fun updatePrisonerId(oldPrisonerId: String, newPrisonerId: String): Int
 }

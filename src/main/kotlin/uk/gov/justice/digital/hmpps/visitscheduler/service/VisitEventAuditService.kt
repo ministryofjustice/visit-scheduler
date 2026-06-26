@@ -356,6 +356,7 @@ class VisitEventAuditService {
           sessionTemplateReference = visit.sessionTemplateReference,
           type = EventAuditType.PRISONER_MERGED,
           applicationMethodType = NOT_APPLICABLE,
+          // TODO - consider if this text needs updating
           text = "Prisoner merge event occurred - old prisoner number $oldPrisonerNumber, new prisoner number - $newPrisonerNumber",
         ),
       )

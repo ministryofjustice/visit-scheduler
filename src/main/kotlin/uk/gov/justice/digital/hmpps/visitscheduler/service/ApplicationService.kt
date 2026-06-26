@@ -502,6 +502,6 @@ class ApplicationService(
   @Transactional
   fun updateApplicationsPrisonerIdPostMerge(oldPrisonerId: String, newPrisonerId: String) {
     // update all applications from oldPrisonerId to newPrisonerId post merge
-    applicationRepository.updateApplication(oldPrisonerId = oldPrisonerId, newPrisonerId = newPrisonerId)
+    applicationRepository.updatePrisonerId(oldPrisonerId = oldPrisonerId, newPrisonerId = newPrisonerId)
   }
 }
