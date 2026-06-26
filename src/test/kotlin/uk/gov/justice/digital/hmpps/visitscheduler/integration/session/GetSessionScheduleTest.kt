@@ -58,6 +58,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
     assertSessionLocationGroups(sessionScheduleResults[0], sessionTemplate, listOf(sessionLocationGroup))
     assertSessionCategoryGroups(sessionScheduleResults[0], sessionTemplate, listOf(sessionCategoryGroup))
     Assertions.assertThat(sessionScheduleResults[0].prisonerIncentiveLevelGroupNames).isEmpty()
+    Assertions.assertThat(sessionScheduleResults[0].visitOrderRestriction).isEqualTo(sessionTemplate.visitOrderRestriction)
   }
 
   @Test
@@ -121,9 +122,41 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       .expectBody()
     val sessionScheduleResults = getResults(returnResult)
     Assertions.assertThat(sessionScheduleResults.size).isEqualTo(4)
+
+    Assertions.assertThat(sessionScheduleResults[0].sessionTimeSlot.startTime).isEqualTo(sessionTemplate4.startTime)
+    Assertions.assertThat(sessionScheduleResults[0].sessionTimeSlot.endTime).isEqualTo(sessionTemplate4.endTime)
+    Assertions.assertThat(sessionScheduleResults[0].areLocationGroupsInclusive).isFalse()
+    Assertions.assertThat(sessionScheduleResults[0].areCategoryGroupsInclusive).isFalse()
+    Assertions.assertThat(sessionScheduleResults[0].areIncentiveGroupsInclusive).isFalse()
+    Assertions.assertThat(sessionScheduleResults[0].visitRoom).isEqualTo("Visits Room 1")
+    Assertions.assertThat(sessionScheduleResults[0].visitOrderRestriction).isEqualTo(sessionTemplate4.visitOrderRestriction)
     assertSessionSchedule(sessionScheduleResults[0], sessionTemplate4, false)
+
+    Assertions.assertThat(sessionScheduleResults[1].sessionTimeSlot.startTime).isEqualTo(sessionTemplate3.startTime)
+    Assertions.assertThat(sessionScheduleResults[1].sessionTimeSlot.endTime).isEqualTo(sessionTemplate3.endTime)
+    Assertions.assertThat(sessionScheduleResults[1].areLocationGroupsInclusive).isTrue()
+    Assertions.assertThat(sessionScheduleResults[1].areCategoryGroupsInclusive).isTrue()
+    Assertions.assertThat(sessionScheduleResults[1].areIncentiveGroupsInclusive).isTrue()
+    Assertions.assertThat(sessionScheduleResults[1].visitRoom).isEqualTo("Visits Room 2")
+    Assertions.assertThat(sessionScheduleResults[1].visitOrderRestriction).isEqualTo(sessionTemplate3.visitOrderRestriction)
     assertSessionSchedule(sessionScheduleResults[1], sessionTemplate3, false)
+
+    Assertions.assertThat(sessionScheduleResults[2].sessionTimeSlot.startTime).isEqualTo(sessionTemplate1.startTime)
+    Assertions.assertThat(sessionScheduleResults[2].sessionTimeSlot.endTime).isEqualTo(sessionTemplate1.endTime)
+    Assertions.assertThat(sessionScheduleResults[2].areLocationGroupsInclusive).isFalse()
+    Assertions.assertThat(sessionScheduleResults[2].areCategoryGroupsInclusive).isTrue()
+    Assertions.assertThat(sessionScheduleResults[2].areIncentiveGroupsInclusive).isFalse()
+    Assertions.assertThat(sessionScheduleResults[2].visitRoom).isEqualTo("Visits Room 1")
+    Assertions.assertThat(sessionScheduleResults[2].visitOrderRestriction).isEqualTo(sessionTemplate1.visitOrderRestriction)
     assertSessionSchedule(sessionScheduleResults[2], sessionTemplate1, false)
+
+    Assertions.assertThat(sessionScheduleResults[3].sessionTimeSlot.startTime).isEqualTo(sessionTemplate2.startTime)
+    Assertions.assertThat(sessionScheduleResults[3].sessionTimeSlot.endTime).isEqualTo(sessionTemplate2.endTime)
+    Assertions.assertThat(sessionScheduleResults[3].areLocationGroupsInclusive).isTrue()
+    Assertions.assertThat(sessionScheduleResults[3].areCategoryGroupsInclusive).isFalse()
+    Assertions.assertThat(sessionScheduleResults[3].areIncentiveGroupsInclusive).isTrue()
+    Assertions.assertThat(sessionScheduleResults[3].visitRoom).isEqualTo("Visits Room 1")
+    Assertions.assertThat(sessionScheduleResults[3].visitOrderRestriction).isEqualTo(sessionTemplate2.visitOrderRestriction)
     assertSessionSchedule(sessionScheduleResults[3], sessionTemplate2, false)
   }
 

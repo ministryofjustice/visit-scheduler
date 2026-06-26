@@ -18,7 +18,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.AutoRejectionReason
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.REQUESTED_VISIT_AUTO_REJECTED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.REQUESTED_VISIT_REJECTED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.ADD_PRISON_EXCLUDE_DATE_EVENT
@@ -255,11 +256,10 @@ class TelemetryClientService(
   fun trackVisitRequestAutoRejectedEvent(
     bookedVisitDto: VisitDto,
     eventAuditDto: EventAuditDto,
-    rejectionReason: AutoRejectionReason,
   ) {
     trackEvent(
       TelemetryVisitEvents.VISIT_REQUEST_AUTO_REJECTED_EVENT,
-      createVisitRequestApprovedOrRejectedTrackData(bookedVisitDto, eventAuditDto, rejectionReason),
+      createVisitRequestApprovedOrRejectedTrackData(bookedVisitDto, eventAuditDto),
     )
   }
 
@@ -354,12 +354,15 @@ class TelemetryClientService(
   private fun createVisitRequestApprovedOrRejectedTrackData(
     visitDto: VisitDto,
     eventAudit: EventAuditDto,
-    rejectionReason: AutoRejectionReason? = null,
   ): MutableMap<String, String> {
     val data = createDefaultVisitData(visitDto)
 
-    if (rejectionReason != null) {
-      data["autoRejectionReason"] = rejectionReason.description
+    eventAudit.text?.let {
+      when (eventAudit.type) {
+        REQUESTED_VISIT_AUTO_REJECTED -> data["autoRejectionReason"] = it
+        REQUESTED_VISIT_REJECTED -> data["rejectionReason"] = it
+        else -> {}
+      }
     }
 
     createEventAuditData(eventAudit, data)

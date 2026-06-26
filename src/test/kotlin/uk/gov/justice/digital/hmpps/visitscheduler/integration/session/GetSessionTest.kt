@@ -53,6 +53,7 @@ class GetSessionTest : IntegrationTestBase() {
 
     Assertions.assertThat(visitSession.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
     Assertions.assertThat(visitSession.openVisitCapacity).isEqualTo(sessionTemplate.openCapacity)
+    Assertions.assertThat(visitSession.visitOrderRestriction).isEqualTo(sessionTemplate.visitOrderRestriction)
     Assertions.assertThat(visitSession.openVisitBookedCount).isEqualTo(1)
   }
 
@@ -117,6 +118,7 @@ class GetSessionTest : IntegrationTestBase() {
 
     Assertions.assertThat(visitSession.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
     Assertions.assertThat(visitSession.openVisitCapacity).isEqualTo(sessionTemplate.openCapacity)
+    Assertions.assertThat(visitSession.visitOrderRestriction).isEqualTo(sessionTemplate.visitOrderRestriction)
     Assertions.assertThat(visitSession.openVisitBookedCount).isEqualTo(1)
   }
 
