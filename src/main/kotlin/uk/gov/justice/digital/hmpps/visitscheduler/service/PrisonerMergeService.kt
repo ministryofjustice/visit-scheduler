@@ -24,18 +24,18 @@ class PrisonerMergeService(
     LOG.info("Prisoner merge notification received : {}", notificationDto)
 
     // get all affected visits - past, present, future, BOOKED or CANCELLED for the old prisonerId
-    val affectedVisits = visitService.getAllVisitsForPrisoner(notificationDto.oldPrisonerId)
+    val affectedVisits = visitService.getAllVisitsForPrisoner(notificationDto.oldPrisonerNumber)
 
     // update the prisoner ID on all visits
-    visitService.updateVisitsPrisonerIdPostMerge(oldPrisonerId = notificationDto.oldPrisonerId, newPrisonerId = notificationDto.newPrisonerId)
+    visitService.updateVisitsPrisonerIdPostMerge(oldPrisonerId = notificationDto.oldPrisonerNumber, newPrisonerId = notificationDto.newPrisonerNumber)
 
     // add an event audit entry against all visits
-    visitEventAuditService.saveMergeEventAudits(visits = affectedVisits, oldPrisonerNumber = notificationDto.oldPrisonerId, newPrisonerNumber = notificationDto.newPrisonerId)
+    visitEventAuditService.saveMergeEventAudits(visits = affectedVisits, oldPrisonerNumber = notificationDto.oldPrisonerNumber, newPrisonerNumber = notificationDto.newPrisonerNumber)
 
     // update the prisoner ID on all applications
-    applicationService.updateApplicationsPrisonerIdPostMerge(oldPrisonerId = notificationDto.oldPrisonerId, newPrisonerId = notificationDto.newPrisonerId)
+    applicationService.updateApplicationsPrisonerIdPostMerge(oldPrisonerId = notificationDto.oldPrisonerNumber, newPrisonerId = notificationDto.newPrisonerNumber)
 
     // finally update the actionedBy Prisoner ID
-    actionedByRepository.updateActionedByUsername(oldPrisonerId = notificationDto.oldPrisonerId, newPrisonerId = notificationDto.newPrisonerId)
+    actionedByRepository.updateActionedByUsername(oldPrisonerId = notificationDto.oldPrisonerNumber, newPrisonerId = notificationDto.newPrisonerNumber)
   }
 }
