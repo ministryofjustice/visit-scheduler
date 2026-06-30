@@ -43,8 +43,8 @@ class PrisonerMergeNotificationControllerTest : NotificationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
-  val oldPrisonerId = "A1234AA"
-  val newPrisonerId = "BB456DD"
+  val oldPrisonerNumber = "A1234AA"
+  val newPrisonerNumber = "BB456DD"
   val prisonCode = "ABC"
   val otherPrisonCode = "DEF"
 
@@ -71,43 +71,43 @@ class PrisonerMergeNotificationControllerTest : NotificationTestBase() {
     val actionedBy = ActionedBy(
       userType = UserType.PRISONER,
       bookerReference = null,
-      userName = oldPrisonerId,
+      userName = oldPrisonerNumber,
     )
     actionedByRepository.save(actionedBy)
 
     // today's BOOKED visit
-    createVisitAndAssociatedApplication(prisonerId = oldPrisonerId, slotDate = today, sessionTemplate = sessionTemplate1, visitStatus = BOOKED)
+    createVisitAndAssociatedApplication(prisonerId = oldPrisonerNumber, slotDate = today, sessionTemplate = sessionTemplate1, visitStatus = BOOKED)
 
     // future BOOKED visit
-    createVisitAndAssociatedApplication(prisonerId = oldPrisonerId, slotDate = today.plusDays(2), visitStatus = BOOKED, sessionTemplate = sessionTemplate1)
+    createVisitAndAssociatedApplication(prisonerId = oldPrisonerNumber, slotDate = today.plusDays(2), visitStatus = BOOKED, sessionTemplate = sessionTemplate1)
 
     // future BOOKED visit in different prison
-    createVisitAndAssociatedApplication(prisonerId = oldPrisonerId, slotDate = today.plusDays(4), visitStatus = BOOKED, sessionTemplate = otherPrisonSessionTemplate)
+    createVisitAndAssociatedApplication(prisonerId = oldPrisonerNumber, slotDate = today.plusDays(4), visitStatus = BOOKED, sessionTemplate = otherPrisonSessionTemplate)
 
     // future CANCELLED visit
-    createVisitAndAssociatedApplication(prisonerId = oldPrisonerId, slotDate = today.plusDays(2), visitStatus = CANCELLED, sessionTemplate = sessionTemplate1)
+    createVisitAndAssociatedApplication(prisonerId = oldPrisonerNumber, slotDate = today.plusDays(2), visitStatus = CANCELLED, sessionTemplate = sessionTemplate1)
 
     // past BOOKED visit
-    createVisitAndAssociatedApplication(prisonerId = oldPrisonerId, slotDate = today.minusDays(2), visitStatus = BOOKED, sessionTemplate = sessionTemplate1)
+    createVisitAndAssociatedApplication(prisonerId = oldPrisonerNumber, slotDate = today.minusDays(2), visitStatus = BOOKED, sessionTemplate = sessionTemplate1)
 
     // past CANCELLED visit
-    createVisitAndAssociatedApplication(prisonerId = oldPrisonerId, slotDate = today.minusDays(3), visitStatus = CANCELLED, sessionTemplate = sessionTemplate1)
+    createVisitAndAssociatedApplication(prisonerId = oldPrisonerNumber, slotDate = today.minusDays(3), visitStatus = CANCELLED, sessionTemplate = sessionTemplate1)
 
     // When
-    val notificationDto = PrisonerMergeNotificationDto(oldPrisonerId = oldPrisonerId, newPrisonerId = newPrisonerId)
+    val notificationDto = PrisonerMergeNotificationDto(oldPrisonerNumber = oldPrisonerNumber, newPrisonerNumber = newPrisonerNumber)
     val responseSpec = callNotifyVSiPThatPrisonerMerged(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
 
     // Then
     responseSpec.expectStatus().isOk
     val visits = testVisitRepository.findAll()
     assertThat(visits).hasSize(6)
-    assertThat(visits).noneMatch { it.prisonerId == oldPrisonerId }
-    assertThat(visits).allMatch { it.prisonerId == newPrisonerId }
+    assertThat(visits).noneMatch { it.prisonerId == oldPrisonerNumber }
+    assertThat(visits).allMatch { it.prisonerId == newPrisonerNumber }
 
     val applications = testApplicationRepository.findAll()
     assertThat(applications).hasSize(6)
-    assertThat(applications).noneMatch { it.prisonerId == oldPrisonerId }
-    assertThat(applications).allMatch { it.prisonerId == newPrisonerId }
+    assertThat(applications).noneMatch { it.prisonerId == oldPrisonerNumber }
+    assertThat(applications).allMatch { it.prisonerId == newPrisonerNumber }
 
     val auditEvents = testEventAuditRepository.findAll()
     assertThat(auditEvents).hasSize(6)
@@ -116,14 +116,14 @@ class PrisonerMergeNotificationControllerTest : NotificationTestBase() {
         eventAudit = it,
         expectedType = EventAuditType.PRISONER_MERGED,
         expectedApplicationMethodType = ApplicationMethodType.NOT_APPLICABLE,
-        expectedText = "Prisoner merge event occurred - old prisoner number ${notificationDto.oldPrisonerId}, new prisoner number - ${notificationDto.newPrisonerId}",
+        expectedText = "Prisoner merge event occurred - old prisoner number ${notificationDto.oldPrisonerNumber}, new prisoner number - ${notificationDto.newPrisonerNumber}",
       )
     }
 
     val actionedByValues = actionedByRepository.findAll()
     assertThat(actionedByValues).hasSize(2)
-    assertThat(actionedByValues).noneMatch { it.userName == oldPrisonerId && it.userType == UserType.PRISONER }
-    assertThat(actionedByValues).anyMatch { it.userName == newPrisonerId && it.userType == UserType.PRISONER }
+    assertThat(actionedByValues).noneMatch { it.userName == oldPrisonerNumber && it.userType == UserType.PRISONER }
+    assertThat(actionedByValues).anyMatch { it.userName == newPrisonerNumber && it.userType == UserType.PRISONER }
   }
 
   @Test
@@ -132,19 +132,19 @@ class PrisonerMergeNotificationControllerTest : NotificationTestBase() {
     var actionedBy = ActionedBy(
       userType = UserType.PRISONER,
       bookerReference = null,
-      userName = oldPrisonerId,
+      userName = oldPrisonerNumber,
     )
     actionedByRepository.save(actionedBy)
 
     actionedBy = ActionedBy(
       userType = UserType.PRISONER,
       bookerReference = null,
-      userName = newPrisonerId,
+      userName = newPrisonerNumber,
     )
     actionedByRepository.save(actionedBy)
 
     // When
-    val notificationDto = PrisonerMergeNotificationDto(oldPrisonerId = oldPrisonerId, newPrisonerId = newPrisonerId)
+    val notificationDto = PrisonerMergeNotificationDto(oldPrisonerNumber = oldPrisonerNumber, newPrisonerNumber = newPrisonerNumber)
     val responseSpec = callNotifyVSiPThatPrisonerMerged(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
 
     // Then
@@ -152,8 +152,8 @@ class PrisonerMergeNotificationControllerTest : NotificationTestBase() {
 
     val actionedByValues = actionedByRepository.findAll()
     assertThat(actionedByValues).hasSize(3)
-    assertThat(actionedByValues).anyMatch { it.userName == oldPrisonerId && it.userType == UserType.PRISONER }
-    assertThat(actionedByValues).anyMatch { it.userName == newPrisonerId && it.userType == UserType.PRISONER }
+    assertThat(actionedByValues).anyMatch { it.userName == oldPrisonerNumber && it.userType == UserType.PRISONER }
+    assertThat(actionedByValues).anyMatch { it.userName == newPrisonerNumber && it.userType == UserType.PRISONER }
     assertThat(actionedByValues).anyMatch { it.userName == null && it.userType == UserType.SYSTEM }
   }
 
