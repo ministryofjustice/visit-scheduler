@@ -135,7 +135,7 @@ class PrisonAdminController(
     prisonDto: PrisonDto,
   ): PrisonDto = prisonConfigService.createPrison(prisonDto)
 
-  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
+  @PreAuthorize("hasAnyRole('VISIT_SCHEDULER','VISIT_SCHEDULER_CONFIG')")
   @PutMapping(PRISON)
   @Operation(
     summary = "Update a prison",
