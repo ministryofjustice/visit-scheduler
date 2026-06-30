@@ -68,13 +68,13 @@ import java.time.format.DateTimeFormatter
 @Service
 class VisitNotificationEventService(
   private val visitService: VisitService,
-  private val visitNotificationEventRepository: VisitNotificationEventRepository,
   private val prisonerService: PrisonerService,
   private val visitNotificationFlaggingService: VisitNotificationFlaggingService,
-  private val pairedNotificationEventsUtil: PairedNotificationEventsUtil,
   private val prisonerContactRegistryClient: PrisonerContactRegistryClient,
   private val activitiesApiClient: ActivitiesApiClient,
   private val alertsApiClient: AlertsApiClient,
+  private val visitNotificationEventRepository: VisitNotificationEventRepository,
+  private val pairedNotificationEventsUtil: PairedNotificationEventsUtil,
 ) {
   @Autowired
   private lateinit var visitRepository: VisitRepository
