@@ -29,6 +29,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PRISONER
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRequestRejectionReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.ActionedBy
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
@@ -300,6 +301,7 @@ class VisitEventAuditService {
     actionedByValue: String,
     visit: VisitDto,
     isApproved: Boolean,
+    visitRequestRejectionReason: VisitRequestRejectionReason? = null,
   ): EventAuditDto {
     val actionedBy = createOrGetActionBy(actionedByValue, STAFF)
 
@@ -318,7 +320,7 @@ class VisitEventAuditService {
           sessionTemplateReference = visit.sessionTemplateReference,
           eventType,
           applicationMethodType = ApplicationMethodType.WEBSITE,
-          text = null,
+          text = if (isApproved) null else visitRequestRejectionReason?.name,
         ),
       ),
     )
@@ -340,5 +342,25 @@ class VisitEventAuditService {
         ),
       ),
     )
+  }
+
+  fun saveMergeEventAudits(visits: List<VisitDto>, oldPrisonerNumber: String, newPrisonerNumber: String) {
+    val actionedBy = createOrGetActionBy(null, SYSTEM)
+    val eventAudits = mutableListOf<EventAudit>()
+    visits.forEach { visit ->
+      eventAudits.add(
+        EventAudit(
+          actionedBy = actionedBy,
+          bookingReference = visit.reference,
+          applicationReference = visit.applicationReference,
+          sessionTemplateReference = visit.sessionTemplateReference,
+          type = EventAuditType.PRISONER_MERGED,
+          applicationMethodType = NOT_APPLICABLE,
+          text = "Prisoner merge event occurred - old prisoner number $oldPrisonerNumber, new prisoner number - $newPrisonerNumber",
+        ),
+      )
+    }
+
+    eventAuditRepository.saveAll(eventAudits)
   }
 }

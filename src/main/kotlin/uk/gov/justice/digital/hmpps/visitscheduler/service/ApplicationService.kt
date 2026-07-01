@@ -498,4 +498,10 @@ class ApplicationService(
     prisonId,
     getExpiredApplicationDateAndTime(),
   )
+
+  @Transactional
+  fun updateApplicationsPrisonerIdPostMerge(oldPrisonerId: String, newPrisonerId: String) {
+    // update all applications from oldPrisonerId to newPrisonerId post merge
+    applicationRepository.updatePrisonerId(oldPrisonerId = oldPrisonerId, newPrisonerId = newPrisonerId)
+  }
 }
