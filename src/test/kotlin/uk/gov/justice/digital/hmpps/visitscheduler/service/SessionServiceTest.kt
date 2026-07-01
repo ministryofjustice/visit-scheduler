@@ -32,13 +32,15 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OtherPrisonerDetails
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailsDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AdditionalSessionConflictInfoDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionConflictAttribute
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonerNotInSuppliedPrisonException
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionSlotEntityHelper
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.createVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.prison
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
@@ -49,6 +51,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionSlotReposit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateExcludeDateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionConflictsUtil
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionDatesUtil
 import java.time.DayOfWeek
 import java.time.DayOfWeek.FRIDAY
@@ -73,6 +76,7 @@ class SessionServiceTest {
   private val prisonsService = mock<PrisonsService>()
   private val applicationService = mock<ApplicationService>()
   private val sessionValidationService = mock<PrisonerSessionValidationService>()
+  private val sessionConflictsUtil = SessionConflictsUtil()
 
   private lateinit var sessionService: SessionService
 
@@ -94,7 +98,7 @@ class SessionServiceTest {
       ),
     )
 
-    whenever(prisonerService.getLevelsMapForPrisoner(any(), any())).thenReturn(mutableMapOf<PrisonerHousingLevels, String?>())
+    whenever(prisonerService.getLevelsMapForPrisoner(any(), any())).thenReturn(mutableMapOf())
     whenever(sessionValidationService.isSessionAvailableToPrisoner(any(), any(), any(), any())).thenReturn(true)
   }
 
@@ -173,12 +177,11 @@ class SessionServiceTest {
         visitRepository = visitRepository,
         sessionSlotRepository = sessionSlotRepository,
         prisonerService = prisonerService,
-        policyFilterDoubleBooking = false,
-        policyFilterNonAssociation = false,
         prisonerValidationService = prisonerValidationService,
         prisonsService = prisonsService,
         applicationService = applicationService,
         prisonerSessionValidationService = sessionValidationService,
+        sessionConflictsUtil = sessionConflictsUtil,
         sessionTemplateExcludeDateRepository = sessionTemplateExcludeDateRepository,
       )
     }
@@ -473,12 +476,11 @@ class SessionServiceTest {
         visitRepository = visitRepository,
         sessionSlotRepository = sessionSlotRepository,
         prisonerService = prisonerService,
-        policyFilterDoubleBooking = false,
-        policyFilterNonAssociation = false,
         prisonerSessionValidationService = sessionValidationService,
         prisonerValidationService = prisonerValidationService,
         prisonsService = prisonsService,
         applicationService = applicationService,
+        sessionConflictsUtil = sessionConflictsUtil,
         sessionTemplateExcludeDateRepository = sessionTemplateExcludeDateRepository,
       )
     }
@@ -486,8 +488,6 @@ class SessionServiceTest {
     @Test
     fun `session does not contain conflicts when a prisoner has no non-associations and no double bookings`() {
       // Given
-      val prisonerId = "A1234AA"
-
       val singleSession = sessionTemplate(
         validFromDate = currentDate,
         validToDate = currentDate.plusWeeks(1),
@@ -515,7 +515,6 @@ class SessionServiceTest {
     @Test
     fun `session does not contain conflicts when a prisoner has a valid non-association without bookings`() {
       // Given
-      val prisonerId = "A1234AA"
       val associationId = "B1234BB"
 
       val singleSession = sessionTemplate(
@@ -548,7 +547,6 @@ class SessionServiceTest {
     @Test
     fun `sessions contain conflicts when a prisoner has a valid non-association with a booking`() {
       // Given
-      val prisonerId = "A1234AA"
       val associationId = "B1234BB"
       val validFromDate = currentDate.plusDays(noticeDaysMin.toLong())
       val dayOfWeek = validFromDate.plusDays(1).dayOfWeek
@@ -565,15 +563,34 @@ class SessionServiceTest {
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
       mockGetPrisonerNonAssociation(prisonerId, associationId)
 
-      val expectedAssociations = listOf(associationId)
-
       mockSessionSlots(singleSession)
       val saturdayAfter = currentDate.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
       val slotDate = saturdayAfter.toLocalDate()
-      whenever(visitRepository.hasActiveVisitsForDate(expectedAssociations, slotDate, prison.id))
+
+      val sessionSlot = SessionSlot(
+        sessionTemplateReference = singleSession.reference,
+        prisonId = prison.id,
+        slotDate = slotDate,
+        slotStart = slotDate.atTime(singleSession.startTime),
+        slotEnd = slotDate.atTime(singleSession.endTime),
+      )
+      val nonAssociationVisit = Visit(
+        prisonerId = associationId,
+        prisonId = prison.id,
+        prison = prison,
+        sessionSlotId = sessionSlot.id,
+        sessionSlot = sessionSlot,
+        visitType = SOCIAL,
+        visitRoom = "A",
+        visitStatus = BOOKED,
+        visitSubStatus = VisitSubStatus.AUTO_APPROVED,
+        visitRestriction = OPEN,
+        userType = STAFF,
+      )
+
+      whenever(visitRepository.getBookedVisitsForPrisonersAndDates(listOf(associationId), listOf(slotDate), prison.id))
         .thenReturn(
-          true,
-          false,
+          listOf(nonAssociationVisit),
         )
 
       // When
@@ -583,17 +600,26 @@ class SessionServiceTest {
       assertThat(sessions).size().isEqualTo(1)
       assertDate(sessions[0].startTimestamp, saturdayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), dayOfWeek)
       assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
-      assertThat(sessions[0].sessionConflicts.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
+      assertThat(sessions[0].sessionConflicts.map { it.sessionConflict }).contains(SessionConflict.NON_ASSOCIATION)
+      assertThat(sessions[0].sessionConflicts.flatMap { it.additionalAttributes }).containsAll(
+        listOf(
+          listOf(
+            AdditionalSessionConflictInfoDto(SessionConflictAttribute.PRISONER_NUMBER, associationId),
+            AdditionalSessionConflictInfoDto(SessionConflictAttribute.CONFLICT_TYPE, "VISIT"),
+            AdditionalSessionConflictInfoDto(SessionConflictAttribute.REFERENCE, nonAssociationVisit.reference),
+          ),
+        ),
+      )
+
       Mockito.verify(prisonerService, times(1)).getPrisonerNonAssociationList(prisonerId)
     }
 
     @Test
     fun `sessions contain conflicts when a prisoner has a double booking`() {
       // Given
-      val prisonerId = "A1234AA"
-
       val validFromDate = currentDate.plusDays(noticeDaysMin.toLong())
-      val dayOfWeek = validFromDate.plusDays(1).dayOfWeek
+      val slotDate = validFromDate.plusDays(1)
+      val dayOfWeek = slotDate.dayOfWeek
 
       val singleSession = sessionTemplate(
         validFromDate = validFromDate,
@@ -602,6 +628,15 @@ class SessionServiceTest {
         endTime = LocalTime.parse("12:30"),
         dayOfWeek = dayOfWeek,
       )
+
+      val sessionSlot = SessionSlotEntityHelper.createSessionSlot(
+        prisonId = singleSession.prisonId,
+        sessionTemplateReference = singleSession.reference,
+        slotDate = slotDate,
+        slotTime = LocalTime.of(11, 30),
+        slotEndTime = LocalTime.of(12, 30),
+      )
+
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       mockSessionSlots(singleSession)
@@ -610,7 +645,8 @@ class SessionServiceTest {
         prisonerService.getPrisonerNonAssociationList(prisonerId),
       ).thenReturn(PrisonerNonAssociationDetailsDto().nonAssociations)
 
-      whenever(visitRepository.hasActiveVisitForSessionSlot(anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
+      val visit = createVisit(singleSession.prison, sessionSlot, prisonerId)
+      whenever(visitRepository.getActiveVisitForSessionSlot(anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(visit)
 
       // When
       val sessions = sessionService.getAllVisitSessions(prisonCode, prisonerId, userType = STAFF)
@@ -620,15 +656,13 @@ class SessionServiceTest {
       assertThat(sessions).size().isEqualTo(1)
       assertDate(sessions[0].startTimestamp, saturdayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), dayOfWeek)
       assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
-      assertThat(sessions[0].sessionConflicts.first()).isEqualTo(SessionConflict.DOUBLE_BOOKING_OR_RESERVATION)
+      assertThat(sessions[0].sessionConflicts.map { it.sessionConflict }.first()).isEqualTo(SessionConflict.DOUBLE_BOOKING_OR_RESERVATION)
       Mockito.verify(prisonerService, times(1)).getPrisonerNonAssociationList(prisonerId)
     }
 
     @Test
     fun `session does not contain conflicts when a prisoner non-association NOT FOUND`() {
       // Given
-      val prisonerId = "A1234AA"
-
       val singleSession = sessionTemplate(
         validFromDate = currentDate,
         validToDate = currentDate.plusWeeks(1),
@@ -656,8 +690,6 @@ class SessionServiceTest {
     @Test
     fun `get sessions throws WebClientResponseException for BAD REQUEST`() {
       // Given
-      val prisonerId = "A1234AA"
-
       val singleSession = sessionTemplate(
         validFromDate = currentDate,
         startTime = LocalTime.parse("11:30"),
@@ -718,21 +750,18 @@ class SessionServiceTest {
         visitRepository = visitRepository,
         sessionSlotRepository = sessionSlotRepository,
         prisonerService = prisonerService,
-        policyFilterDoubleBooking = true,
-        policyFilterNonAssociation = true,
         prisonerSessionValidationService = sessionValidationService,
         prisonerValidationService = prisonerValidationService,
         prisonsService = prisonsService,
         applicationService = applicationService,
         sessionTemplateExcludeDateRepository = sessionTemplateExcludeDateRepository,
+        sessionConflictsUtil = sessionConflictsUtil,
       )
     }
 
     @Test
     fun `all sessions are returned when a prisoner has no non-associations and no double bookings`() {
       // Given
-      val prisonerId = "A1234AA"
-
       val singleSession = sessionTemplate(
         validFromDate = currentDate,
         validToDate = currentDate.plusWeeks(1),
@@ -757,7 +786,6 @@ class SessionServiceTest {
     @Test
     fun `only available sessions are returned when a prisoner has a valid non-association without bookings`() {
       // Given
-      val prisonerId = "A1234AA"
       val associationId = "B1234BB"
 
       val singleSession = sessionTemplate(
@@ -771,7 +799,7 @@ class SessionServiceTest {
 
       mockGetPrisonerNonAssociation(prisonerId, associationId)
 
-      whenever(visitRepository.hasActiveVisitForSessionSlot(anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(false)
+      whenever(visitRepository.getActiveVisitForSessionSlot(anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(null)
 
       // When
       val sessions = sessionService.getAllVisitSessions(prisonCode, prisonerId, userType = STAFF)
@@ -782,9 +810,8 @@ class SessionServiceTest {
     }
 
     @Test
-    fun `only available sessions are returned when a prisoner has a valid non-association with a booking`() {
+    fun `sessions are returned with appropriate flags when a prisoner has a valid non-association with a booking`() {
       // Given
-      val prisonerId = "A1234AA"
       val associationId = "B1234BB"
 
       val singleSession = sessionTemplate(
@@ -808,21 +835,22 @@ class SessionServiceTest {
 
       mockSessionSlotRepositoryResponse(sessionSlot)
 
-      whenever(visitRepository.hasActiveVisitForSessionSlot(anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
+      val visit = createVisit(singleSession.prison, sessionSlot, prisonerId)
+      whenever(visitRepository.getActiveVisitForSessionSlot(anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(visit)
 
       // When
       val sessions = sessionService.getAllVisitSessions(prisonCode, prisonerId, userType = STAFF)
 
       // Then
-      assertThat(sessions).size().isEqualTo(0)
+      assertThat(sessions).size().isEqualTo(1)
+      assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
+      assertThat(sessions[0].sessionConflicts.map { it.sessionConflict }.first()).isEqualTo(SessionConflict.DOUBLE_BOOKING_OR_RESERVATION)
       Mockito.verify(prisonerService, times(1)).getPrisonerNonAssociationList(prisonerId)
     }
 
     @Test
-    fun `only available sessions are returned when a prisoner has a double booking`() {
+    fun `sessions are returned with appropriate flags when a prisoner has a double booking`() {
       // Given
-      val prisonerId = "A1234AA"
-
       val singleSession = sessionTemplate(
         validFromDate = currentDate,
         validToDate = currentDate.plusWeeks(1),
@@ -831,9 +859,8 @@ class SessionServiceTest {
         endTime = LocalTime.parse("12:30"),
       )
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
-
-      mockGetPrisonerNonAssociation(prisonerId, "associationID")
       val slotDate = currentDate.with(TemporalAdjusters.next(singleSession.dayOfWeek))
+
       val sessionSlot = SessionSlotEntityHelper.createSessionSlot(
         prisonId = singleSession.prisonId,
         sessionTemplateReference = singleSession.reference,
@@ -841,23 +868,26 @@ class SessionServiceTest {
         slotTime = LocalTime.of(11, 30),
         slotEndTime = LocalTime.of(12, 30),
       )
+      val visit = createVisit(singleSession.prison, sessionSlot, prisonerId)
+
+      mockGetPrisonerNonAssociation(prisonerId, "associationID")
       mockSessionSlotRepositoryResponse(sessionSlot)
 
-      whenever(visitRepository.hasActiveVisitForSessionSlot(anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
+      whenever(visitRepository.getActiveVisitForSessionSlot(anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(visit)
 
       // When
       val sessions = sessionService.getAllVisitSessions(prisonCode, prisonerId, userType = STAFF)
 
       // Then
-      assertThat(sessions).size().isEqualTo(0)
+      assertThat(sessions).size().isEqualTo(1)
+      assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
+      assertThat(sessions[0].sessionConflicts.map { it.sessionConflict }).contains(SessionConflict.DOUBLE_BOOKING_OR_RESERVATION)
       Mockito.verify(prisonerService, times(1)).getPrisonerNonAssociationList(prisonerId)
     }
 
     @Test
     fun `when multiple sessions prison api get prisoners is only called once`() {
       // Given
-      val prisonerId = "A1234AA"
-
       val firstSession = sessionTemplate(
         validFromDate = currentDate,
         validToDate = currentDate.plusWeeks(1),
