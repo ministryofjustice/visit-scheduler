@@ -8,15 +8,17 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonUserClient
 
 @Schema(description = "Prison / Session Template user client dto")
 data class PrisonUserClientDto(
+  // TODO - change to val later
   @param:Schema(description = "minimum number of days notice from the current date to booked a visit", example = "2", required = true)
   @field:NotNull
   @field:Min(0)
-  val policyNoticeDaysMin: Int,
+  var policyNoticeDaysMin: Int,
 
+  // TODO - change to val later
   @param:Schema(description = "maximum number of days notice from the current date to booked a visit", example = "28", required = true)
   @field:NotNull
   @field:Min(0)
-  val policyNoticeDaysMax: Int,
+  var policyNoticeDaysMax: Int,
 
   @param:Schema(description = "User type", example = "STAFF", required = true)
   @field:NotNull
