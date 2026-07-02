@@ -114,6 +114,8 @@ class PrisonEntityHelper(
     fun createPrisonDto(
       prisonCode: String = "AWE",
       activePrison: Boolean = true,
+      policyNoticeDaysMin: Int = 2,
+      policyNoticeDaysMax: Int = 28,
       clients: List<PrisonUserClientDto> = listOf(
         PrisonUserClientDto(2, 28, STAFF, active = true),
         PrisonUserClientDto(2, 28, PUBLIC, active = true),
@@ -127,6 +129,8 @@ class PrisonEntityHelper(
     ): PrisonDto = PrisonDto(
       code = prisonCode,
       active = activePrison,
+      policyNoticeDaysMin = policyNoticeDaysMin,
+      policyNoticeDaysMax = policyNoticeDaysMax,
       maxTotalVisitors = maxTotalVisitors,
       maxAdultVisitors = maxAdultVisitors,
       maxChildVisitors = maxChildVisitors,
@@ -137,6 +141,8 @@ class PrisonEntityHelper(
     )
 
     fun updatePrisonDto(
+      policyNoticeDaysMin: Int = 10,
+      policyNoticeDaysMax: Int = 20,
       maxTotalVisitors: Int = 4,
       maxAdultVisitors: Int = 2,
       maxChildVisitors: Int = 2,
@@ -147,7 +153,17 @@ class PrisonEntityHelper(
         PrisonUserClientDto(2, 28, STAFF, active = true),
         PrisonUserClientDto(2, 28, PUBLIC, active = true),
       ),
-    ): UpdatePrisonDto = UpdatePrisonDto(maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears, weekStartDay, remandVisitLimitPerWeek, clients)
+    ): UpdatePrisonDto = UpdatePrisonDto(
+      policyNoticeDaysMin = policyNoticeDaysMin,
+      policyNoticeDaysMax = policyNoticeDaysMax,
+      maxTotalVisitors = maxTotalVisitors,
+      maxAdultVisitors = maxAdultVisitors,
+      maxChildVisitors = maxChildVisitors,
+      adultAgeYears = adultAgeYears,
+      weekStartDay = weekStartDay,
+      clients = clients,
+      remandVisitLimitPerWeek = remandVisitLimitPerWeek,
+    )
   }
 
   @Transactional(propagation = REQUIRES_NEW)

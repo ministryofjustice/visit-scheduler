@@ -243,6 +243,8 @@ class AdminPrisonsTest : IntegrationTestBase() {
     prisonEntityHelper.create(prisonCode = "AWE")
 
     val updatePrisonDto = UpdatePrisonDto(
+      policyNoticeDaysMin = 4,
+      policyNoticeDaysMax = 32,
       maxTotalVisitors = 8,
       maxAdultVisitors = 4,
       maxChildVisitors = 4,
@@ -298,6 +300,8 @@ class AdminPrisonsTest : IntegrationTestBase() {
     prisonEntityHelper.create(prisonCode = "AWE")
 
     val updatePrisonDto = UpdatePrisonDto(
+      policyNoticeDaysMin = 5,
+      policyNoticeDaysMax = null,
       maxTotalVisitors = null,
       maxAdultVisitors = null,
       maxChildVisitors = null,
@@ -322,6 +326,8 @@ class AdminPrisonsTest : IntegrationTestBase() {
     assertPrisonConfig(
       dto,
       UpdatePrisonDto(
+        policyNoticeDaysMin = 5,
+        policyNoticeDaysMax = 28,
         maxTotalVisitors = 6,
         maxAdultVisitors = 3,
         maxChildVisitors = 3,
@@ -334,6 +340,8 @@ class AdminPrisonsTest : IntegrationTestBase() {
     assertPrisonEntityConfig(
       prisonCode = "AWE",
       UpdatePrisonDto(
+        policyNoticeDaysMin = 5,
+        policyNoticeDaysMax = 28,
         maxTotalVisitors = 6,
         maxAdultVisitors = 3,
         maxChildVisitors = 3,

@@ -7,6 +7,13 @@ import java.time.DayOfWeek
 
 @Schema(description = "Prison update dto")
 data class UpdatePrisonDto(
+  // TODO - we need to remove this later and pass it as client parameters
+  @param:Schema(description = "minimum number of days notice from the current date to booked a visit", example = "2", required = false)
+  @field:Min(0)
+  val policyNoticeDaysMin: Int?,
+  @param:Schema(description = "maximum number of days notice from the current date to booked a visit", example = "28", required = false)
+  @field:Min(0)
+  val policyNoticeDaysMax: Int?,
   @param:Schema(description = "Max number of total visitors")
   @field:Min(1)
   val maxTotalVisitors: Int?,

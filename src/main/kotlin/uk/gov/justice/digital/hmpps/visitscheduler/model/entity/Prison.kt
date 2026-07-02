@@ -28,15 +28,20 @@ class Prison(
 
   @Column(name = "max_total_visitors")
   var maxTotalVisitors: Int,
+
   @Column(name = "max_adult_visitors")
   var maxAdultVisitors: Int,
+
   @Column(name = "max_child_visitors")
   var maxChildVisitors: Int,
+
   @Column(name = "adult_age_years")
   var adultAgeYears: Int,
+
   @Column(name = "week_start_day")
   @Enumerated(EnumType.STRING)
   var weekStartDay: DayOfWeek,
+
   @Column(name = "remand_visit_limit_per_week")
   var remandVisitLimitPerWeek: Int,
 
