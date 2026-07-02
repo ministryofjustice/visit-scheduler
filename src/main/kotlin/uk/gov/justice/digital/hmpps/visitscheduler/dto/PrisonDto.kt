@@ -74,7 +74,7 @@ data class PrisonDto(
     weekStartDay = prisonEntity.weekStartDay,
     remandVisitLimitPerWeek = prisonEntity.remandVisitLimitPerWeek,
     // TODO - remove this once we use the client booking windows
-    policyNoticeDaysMin = prisonEntity.clients.firstOrNull { it.userType == UserType.STAFF }?.policyNoticeDaysMin ?: 2,
-    policyNoticeDaysMax = prisonEntity.clients.firstOrNull { it.userType == UserType.STAFF }?.policyNoticeDaysMax ?: 28,
+    policyNoticeDaysMin = prisonEntity.clients.first { it.userType == UserType.STAFF }.policyNoticeDaysMin,
+    policyNoticeDaysMax = prisonEntity.clients.first { it.userType == UserType.STAFF }.policyNoticeDaysMax,
   )
 }
