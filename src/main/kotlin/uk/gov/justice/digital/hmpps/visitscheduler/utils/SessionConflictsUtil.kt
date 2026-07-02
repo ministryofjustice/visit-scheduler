@@ -1,11 +1,13 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.utils
 
 import org.springframework.stereotype.Component
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.DOUBLE_BOOKING_OR_RESERVATION
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.NON_ASSOCIATION
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.PRISON_DATE_BLOCKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.REMAND_VISITS_LIMIT_REACHED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.SESSION_DATE_BLOCKED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AdditionalSessionConflictInfoDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.DoubleBookedConflictSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.NonAssociationConflictSessionDto
@@ -13,6 +15,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionConflictA
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionConflictDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionConflictType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visit.allocation.VisitOrderPrisonerBalanceDto
 import java.time.LocalDate
 import java.util.function.BiPredicate
 
@@ -36,6 +39,7 @@ class SessionConflictsUtil {
     limitReachedSessions: List<VisitSessionDto>,
     prisonExcludeDates: List<LocalDate>,
     sessionExcludeDates: List<LocalDate>,
+    voBalance: VisitOrderPrisonerBalanceDto?,
   ) {
     getNonAssociationSessionConflict(session, nonAssociationConflictSessions)?.let {
       session.sessionConflicts.add(it)
@@ -50,6 +54,9 @@ class SessionConflictsUtil {
       session.sessionConflicts.add(it)
     }
     getSessionDateExcludedSessionConflict(sessionExcludeDates, session)?.let {
+      session.sessionConflicts.add(it)
+    }
+    getVisitBalanceConflicts(voBalance, session)?.let {
       session.sessionConflicts.add(it)
     }
   }
@@ -146,5 +153,29 @@ class SessionConflictsUtil {
     }
 
     return doubleBookingConflictAttributes.toList()
+  }
+
+  private fun getVisitBalanceConflicts(voBalance: VisitOrderPrisonerBalanceDto?, session: VisitSessionDto): SessionConflictDto? {
+    if (voBalance == null) return null
+
+    val sessionConflict = when (session.visitOrderRestriction) {
+      SessionTemplateVisitOrderRestrictionType.VO if voBalance.voBalance == 0 -> {
+        SessionConflict.NO_VOS
+      }
+
+      SessionTemplateVisitOrderRestrictionType.PVO if voBalance.pvoBalance == 0 -> {
+        SessionConflict.NO_PVOS
+      }
+
+      SessionTemplateVisitOrderRestrictionType.VO_PVO if (voBalance.voBalance == 0 && voBalance.pvoBalance == 0) -> {
+        SessionConflict.NO_VO_OR_PVOS
+      }
+
+      else -> {
+        null
+      }
+    }
+
+    return if (sessionConflict == null) null else SessionConflictDto(sessionConflict)
   }
 }

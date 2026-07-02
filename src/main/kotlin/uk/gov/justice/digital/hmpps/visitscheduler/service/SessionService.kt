@@ -55,6 +55,7 @@ class SessionService(
   private val prisonsService: PrisonsService,
   private val applicationService: ApplicationService,
   private val prisonerSessionValidationService: PrisonerSessionValidationService,
+  private val visitOrderBalanceService: VisitOrderBalanceService,
   private val sessionConflictsUtil: SessionConflictsUtil,
 ) {
   companion object {
@@ -138,7 +139,6 @@ class SessionService(
     }!!
 
     var sessionTemplates = getAllSessionTemplatesForDateRange(prisonCode, dateRange).filter { sessionsByUserClientFilter(userType).test(it) }
-
     LOG.debug("Retrieved {} sessions before beginning filtering for prisoner {}, with date range {}", sessionTemplates.size, prisonerId, dateRange)
 
     val prisonerHousingLevels = prisonerService.getPrisonerHousingLevels(prisonerId = prisonerId, prisonCode = prisonCode, sessionTemplates = sessionTemplates)
@@ -154,7 +154,17 @@ class SessionService(
     }
 
     val sessionSlots = getSessionSlots(visitSessions)
-    addSessionConflicts(sessionTemplates, visitSessions, prisoner, prison, sessionSlots, dateRange, excludedApplicationReference, usernameToExcludeFromReservedApplications)
+
+    addSessionConflicts(
+      sessionTemplates = sessionTemplates,
+      visitSessions = visitSessions,
+      prisoner = prisoner,
+      prison = prison,
+      sessionSlots = sessionSlots,
+      dateRange = dateRange,
+      excludedApplicationReference = excludedApplicationReference,
+      usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications,
+    )
 
     visitSessions = visitSessions.also {
       populateBookedCount(sessionSlots, it, excludedApplicationReference, usernameToExcludeFromReservedApplications, true)
@@ -230,9 +240,20 @@ class SessionService(
         .flatMap { it.excludeDates }
         .groupBy { it.sessionTemplate.reference }
         .mapValues { (_, excludeDates) -> excludeDates.map { it.excludeDate } }
+
+      val voBalance = visitOrderBalanceService.getVOBalance(prisoner)
+
       visitSessions.forEach { session ->
         val excludedDatesForSession = sessionExcludedDatesByReference[session.sessionTemplateReference].orEmpty()
-        sessionConflictsUtil.addSessionConflicts(session, nonAssociationConflictSessions, doubleBookingOrReservationSessions, limitReachedSessions, prisonExcludeDates, excludedDatesForSession)
+        sessionConflictsUtil.addSessionConflicts(
+          session = session,
+          nonAssociationConflictSessions = nonAssociationConflictSessions,
+          doubleBookingConflictSessions = doubleBookingOrReservationSessions,
+          limitReachedSessions = limitReachedSessions,
+          prisonExcludeDates = prisonExcludeDates,
+          sessionExcludeDates = excludedDatesForSession,
+          voBalance = voBalance,
+        )
       }
     }
   }
