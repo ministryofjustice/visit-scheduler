@@ -202,16 +202,6 @@ class TelemetryClientService(
     val eventProperties = mutableMapOf<String, String>()
     eventProperties["prisonId"] = beforePrisonConfig.code
 
-    afterPrisonConfig.policyNoticeDaysMin?.let {
-      eventProperties["beforePolicyNoticeDaysMin"] = beforePrisonConfig.policyNoticeDaysMin.toString()
-      eventProperties["afterPolicyNoticeDaysMin"] = afterPrisonConfig.policyNoticeDaysMin.toString()
-    }
-
-    afterPrisonConfig.policyNoticeDaysMax?.let {
-      eventProperties["beforePolicyNoticeDaysMax"] = beforePrisonConfig.policyNoticeDaysMax.toString()
-      eventProperties["afterPolicyNoticeDaysMax"] = afterPrisonConfig.policyNoticeDaysMax.toString()
-    }
-
     afterPrisonConfig.maxTotalVisitors?.let {
       eventProperties["beforeMaxTotalVisitors"] = beforePrisonConfig.maxTotalVisitors.toString()
       eventProperties["afterMaxTotalVisitors"] = afterPrisonConfig.maxTotalVisitors.toString()
@@ -242,6 +232,7 @@ class TelemetryClientService(
       eventProperties["afterRemandVisitLimitPerWeek"] = afterPrisonConfig.remandVisitLimitPerWeek.toString()
     }
 
+    // TODO - look at client update telemetry events
     trackEvent(PRISON_CONFIG_UPDATED_EVENT, eventProperties)
   }
 
