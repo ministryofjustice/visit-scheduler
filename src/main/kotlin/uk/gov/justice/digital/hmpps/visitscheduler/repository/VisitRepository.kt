@@ -200,6 +200,17 @@ interface VisitRepository :
   ): Visit?
 
   @Query(
+    "SELECT v FROM Visit v " +
+      "WHERE v.visitStatus = 'BOOKED'  AND " +
+      "(v.prisonerId = :prisonerId) AND " +
+      "(v.sessionSlot.id IN (:sessionSlotIds))",
+  )
+  fun getActiveVisitsForSessionSlots(
+    @Param("prisonerId") prisonerId: String,
+    @Param("sessionSlotIds") sessionSlotIds: List<Long>,
+  ): List<Visit>
+
+  @Query(
     "SELECT v  FROM Visit v " +
       "WHERE v.visitStatus = 'BOOKED' AND " +
       "v.prisonerId = :prisonerId AND " +
