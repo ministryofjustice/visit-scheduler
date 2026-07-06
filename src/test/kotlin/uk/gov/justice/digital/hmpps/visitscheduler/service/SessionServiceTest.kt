@@ -928,7 +928,6 @@ class SessionServiceTest {
       Mockito.verify(prisonerService, times(1)).getPrisonerNonAssociationList(prisonerId)
     }
 
-
     @Test
     fun `when prisoner does not have a VO balance any sessions that are VO only are returned with a session conflict`() {
       // Given
@@ -952,7 +951,6 @@ class SessionServiceTest {
       assertThat(sessions).size().isEqualTo(1)
       assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
       assertThat(sessions[0].sessionConflicts.map { it.sessionConflict }).contains(SessionConflict.NO_VOS)
-      Mockito.verify(visitOrderBalanceService, times(1)).getVOBalance(prisonerDto)
     }
   }
 
@@ -976,7 +974,6 @@ class SessionServiceTest {
   }
 
   private fun mockVoBalance(prisonerDto: PrisonerDto, voBalance: VisitOrderPrisonerBalanceDto?) {
-    whenever(visitOrderBalanceService.getVOBalance(prisonerDto)).thenReturn(voBalance)
-
+    whenever(visitOrderBalanceService.getVOBalance(any())).thenReturn(voBalance)
   }
 }

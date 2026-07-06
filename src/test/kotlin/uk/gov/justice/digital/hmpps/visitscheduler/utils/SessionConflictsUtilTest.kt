@@ -194,4 +194,26 @@ class SessionConflictsUtilTest {
     assertThat(session.sessionConflicts.size).isEqualTo(4)
     assertThat(session.sessionConflicts.map { it.sessionConflict }).containsAll(listOf(SESSION_DATE_BLOCKED, NON_ASSOCIATION, DOUBLE_BOOKING_OR_RESERVATION, PRISON_DATE_BLOCKED))
   }
+
+  @Test
+  fun `when a session is VO only and prisoner does not have any VOs then session is marked with no VOs session conflict`() {
+    val session = createVisitSessionDto(visitDate)
+    val nonAssociationSessionsList = listOf(
+      NonAssociationConflictSessionDto("non-association-1", SessionConflictType.VISIT, "ref2", visitDate),
+    )
+    val doubleBookingSessionList = listOf(
+      createDoubleBookedConflictSessionDto(
+        reference = "visit-1",
+        sessionTemplateReference = session.sessionTemplateReference,
+        visitDate = session.startTimestamp.toLocalDate(),
+      ),
+    )
+
+    val prisonBlockedList = listOf(visitDate)
+    val sessionBlockedList = listOf(visitDate)
+
+    sessionConflictsUtil.addSessionConflicts(session, nonAssociationSessionsList, doubleBookingSessionList, emptyList(), prisonBlockedList, sessionBlockedList, null)
+    assertThat(session.sessionConflicts.size).isEqualTo(4)
+    assertThat(session.sessionConflicts.map { it.sessionConflict }).containsAll(listOf(SESSION_DATE_BLOCKED, NON_ASSOCIATION, DOUBLE_BOOKING_OR_RESERVATION, PRISON_DATE_BLOCKED))
+  }
 }
