@@ -64,7 +64,7 @@ class SessionTemplateAdminController(
   private val objectMapper: ObjectMapper,
 ) {
 
-  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
+  @PreAuthorize("hasAnyRole('VISIT_SCHEDULER_CONFIG', 'VISIT_SCHEDULER')")
   @GetMapping(ADMIN_SESSION_TEMPLATES_PATH)
   @Operation(
     summary = "Get session templates",
