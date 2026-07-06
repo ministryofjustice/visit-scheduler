@@ -646,7 +646,7 @@ class SessionServiceTest {
       ).thenReturn(PrisonerNonAssociationDetailsDto().nonAssociations)
 
       val visit = createVisit(singleSession.prison, sessionSlot, prisonerId)
-      whenever(visitRepository.getActiveVisitForSessionSlot(anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(visit)
+      whenever(visitRepository.getActiveVisitsForSessionSlots(anyOrNull(), anyOrNull())).thenReturn(listOf(visit))
 
       // When
       val sessions = sessionService.getAllVisitSessions(prisonCode, prisonerId, userType = STAFF)
@@ -836,8 +836,7 @@ class SessionServiceTest {
       mockSessionSlotRepositoryResponse(sessionSlot)
 
       val visit = createVisit(singleSession.prison, sessionSlot, prisonerId)
-      whenever(visitRepository.getActiveVisitForSessionSlot(anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(visit)
-
+      whenever(visitRepository.getActiveVisitsForSessionSlots(anyOrNull(), anyOrNull())).thenReturn(listOf(visit))
       // When
       val sessions = sessionService.getAllVisitSessions(prisonCode, prisonerId, userType = STAFF)
 
@@ -873,7 +872,7 @@ class SessionServiceTest {
       mockGetPrisonerNonAssociation(prisonerId, "associationID")
       mockSessionSlotRepositoryResponse(sessionSlot)
 
-      whenever(visitRepository.getActiveVisitForSessionSlot(anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(visit)
+      whenever(visitRepository.getActiveVisitsForSessionSlots(anyOrNull(), anyOrNull())).thenReturn(listOf(visit))
 
       // When
       val sessions = sessionService.getAllVisitSessions(prisonCode, prisonerId, userType = STAFF)

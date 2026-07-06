@@ -260,11 +260,13 @@ class SessionService(
   ): List<DoubleBookedConflictSessionDto> {
     val doubleBookingOrReservationSessions = mutableListOf<DoubleBookedConflictSessionDto>()
     val sessionSlotsByKey = sessionSlots.associateBy { Pair(it.slotDate.toString(), it.sessionTemplateReference) }
+    val bookedVisits = getBookedVisitsForSessionSlots(sessionSlots, prisonerId)
     visitSessions.forEach { visitSession ->
       val key = Pair(visitSession.startTimestamp.toLocalDate().toString(), visitSession.sessionTemplateReference)
       if (sessionSlotsByKey.containsKey(key)) {
         val sessionSlot = sessionSlotsByKey[key]!!
-        val bookedVisit = getBookedVisitForSessionSlot(sessionSlot, prisonerId)
+        val bookedVisit = bookedVisits.firstOrNull { it.sessionSlot.id == sessionSlot.id }
+
         if (bookedVisit != null) {
           sessionSlot.sessionTemplateReference?.let { sessionTemplateReference ->
             doubleBookingOrReservationSessions.add(DoubleBookedConflictSessionDto(reference = bookedVisit.reference, conflictType = SessionConflictType.VISIT, visitSubStatus = bookedVisit.visitSubStatus, sessionDate = bookedVisit.sessionSlot.slotStart.toLocalDate(), sessionTemplateReference = sessionTemplateReference))
@@ -476,12 +478,12 @@ class SessionService(
     usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications,
   )
 
-  private fun getBookedVisitForSessionSlot(
-    sessionSlot: SessionSlot,
+  private fun getBookedVisitsForSessionSlots(
+    sessionSlots: List<SessionSlot>,
     prisonerId: String,
-  ): Visit? = visitRepository.getActiveVisitForSessionSlot(
+  ): List<Visit> = visitRepository.getActiveVisitsForSessionSlots(
     prisonerId = prisonerId,
-    sessionSlotId = sessionSlot.id,
+    sessionSlotIds = sessionSlots.map { it.id },
   )
 
   private fun getVisitRestrictionStats(
