@@ -252,15 +252,41 @@ interface VisitRepository :
   ): List<Visit>
 
   @Query(
+    "SELECT v.* FROM visit v " +
+      "JOIN session_slot sl ON v.session_slot_id = sl.id " +
+      "JOIN prison p ON v.prison_id = p.id " +
+      "LEFT JOIN session_template st ON sl.session_template_reference = st.reference " +
+      "WHERE sl.slot_start >= :startDateTime AND " +
+      "v.prisoner_id = :prisonerId AND " +
+      "(:prisonCode is null OR p.code = :prisonCode) AND " +
+      "v.visit_status = 'BOOKED' AND " +
+      "(cast(:endDateTime as date) is null OR sl.slot_end < :endDateTime) AND " +
+      "(st.visit_order_restriction IS NULL OR st.visit_order_restriction != 'NONE') " +
+      "ORDER BY sl.slot_start, v.id",
+    nativeQuery = true,
+  )
+  fun getBookedVisitsThatCountTowardsRemandLimit(
+    @Param("prisonerId") prisonerId: String,
+    @Param("prisonCode") prisonCode: String?,
+    @Param("startDateTime") startDateTime: LocalDateTime,
+    @Param("endDateTime") endDateTime: LocalDateTime? = null,
+  ): List<Visit>
+
+  @Query(
     """
-    SELECT count(distinct v.id) FROM Visit v 
-      WHERE v.sessionSlot.slotDate >= :startDate AND 
-      v.sessionSlot.slotDate <= :endDate AND 
-      v.prisonerId = :prisonerId AND 
-      v.prison.code = :prisonCode AND 
-      v.visitStatus = 'BOOKED' AND 
-      (:#{#excludeVisitReference} is null OR v.reference != :excludeVisitReference)
+    SELECT count(distinct v.id) FROM visit v
+      JOIN session_slot sl ON v.session_slot_id = sl.id
+      JOIN prison p ON v.prison_id = p.id
+      LEFT JOIN session_template st ON sl.session_template_reference = st.reference
+      WHERE sl.slot_date >= :startDate AND
+      sl.slot_date <= :endDate AND
+      v.prisoner_id = :prisonerId AND
+      p.code = :prisonCode AND
+      v.visit_status = 'BOOKED' AND
+      (:excludeVisitReference is null OR v.reference != :excludeVisitReference) AND
+      (st.visit_order_restriction IS NULL OR st.visit_order_restriction != 'NONE')
       """,
+    nativeQuery = true,
   )
   fun getCountOfBookedVisits(
     @Param("prisonerId") prisonerId: String,
