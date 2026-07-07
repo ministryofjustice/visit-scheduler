@@ -24,6 +24,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidati
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_VISIT_DATE_BLOCKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType.NONE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
@@ -748,6 +750,54 @@ class BookVisitValidationTest : IntegrationTestBase() {
     createVisit(remandPrisonerId, remandPrisonCode, mondayVisitDate.plusDays(1), VisitStatus.CANCELLED)
     // 1 booked visit for last week - Sunday
     createVisit(remandPrisonerId, remandPrisonCode, mondayVisitDate.minusDays(1), VisitStatus.BOOKED)
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, remandPrisonerApplicationInProgress.reference)
+
+    // Then
+    responseSpec.expectStatus().isOk
+  }
+
+  @Test
+  fun `when prisoner is on remand and booked NONE visits would exceed the remand limit for the week visit is booked successfully - public service`() {
+    // Given
+    val today = LocalDate.now()
+    prisonEntityHelper.create(prisonCode = remandPrisonCode, remandVisitLimitPerWeek = 2, weekStartDay = DayOfWeek.MONDAY)
+    val mondayVisitDate = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = remandPrisonerId, prisonCode = remandPrisonCode, convictedStatus = "Remand")
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(remandPrisonerId)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(remandPrisonerId, "$remandPrisonCode-C-1-C001")
+    val remandPrisonerApplicationInProgress = createApplication(prisonerId = remandPrisonerId, prisonCode = remandPrisonCode, userType = UserType.PUBLIC, applicationDate = today)
+
+    createVisit(remandPrisonerId, remandPrisonCode, mondayVisitDate, VisitStatus.BOOKED)
+    createVisit(remandPrisonerId, remandPrisonCode, mondayVisitDate.plusDays(1), VisitStatus.BOOKED, visitOrderRestrictionType = NONE)
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, remandPrisonerApplicationInProgress.reference)
+
+    // Then
+    responseSpec.expectStatus().isOk
+  }
+
+  @Test
+  fun `when prisoner is on remand and target session has no visit order restriction then remand limit is ignored - public service`() {
+    // Given
+    val today = LocalDate.now()
+    prisonEntityHelper.create(prisonCode = remandPrisonCode, remandVisitLimitPerWeek = 2, weekStartDay = DayOfWeek.MONDAY)
+    val mondayVisitDate = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = remandPrisonerId, prisonCode = remandPrisonCode, convictedStatus = "Remand")
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(remandPrisonerId)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(remandPrisonerId, "$remandPrisonCode-C-1-C001")
+    val remandPrisonerApplicationInProgress = createApplication(
+      prisonerId = remandPrisonerId,
+      prisonCode = remandPrisonCode,
+      userType = UserType.PUBLIC,
+      applicationDate = today,
+      visitOrderRestrictionType = NONE,
+    )
+
+    createVisit(remandPrisonerId, remandPrisonCode, mondayVisitDate, VisitStatus.BOOKED)
+    createVisit(remandPrisonerId, remandPrisonCode, mondayVisitDate.plusDays(1), VisitStatus.BOOKED)
+
     // When
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, remandPrisonerApplicationInProgress.reference)
 
@@ -2121,8 +2171,14 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
   fun getValidationErrorResponse(responseSpec: WebTestClient.ResponseSpec): ApplicationValidationErrorResponse = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, ApplicationValidationErrorResponse::class.java)
 
-  private fun createApplication(prisonerId: String, prisonCode: String, applicationDate: LocalDate, userType: UserType): Application {
-    val sessionTemplate = sessionTemplateEntityHelper.create(prisonCode = prisonCode, dayOfWeek = applicationDate.dayOfWeek)
+  private fun createApplication(
+    prisonerId: String,
+    prisonCode: String,
+    applicationDate: LocalDate,
+    userType: UserType,
+    visitOrderRestrictionType: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
+  ): Application {
+    val sessionTemplate = sessionTemplateEntityHelper.create(prisonCode = prisonCode, dayOfWeek = applicationDate.dayOfWeek, visitOrderRestrictionType = visitOrderRestrictionType)
 
     var application = applicationEntityHelper.create(
       prisonerId = prisonerId,
@@ -2139,8 +2195,14 @@ class BookVisitValidationTest : IntegrationTestBase() {
     return application
   }
 
-  private fun createVisit(prisonerId: String, prisonCode: String, visitDate: LocalDate, visitStatus: VisitStatus): Visit {
-    val sessionTemplate = sessionTemplateEntityHelper.create(prisonCode = prisonCode, dayOfWeek = visitDate.dayOfWeek)
+  private fun createVisit(
+    prisonerId: String,
+    prisonCode: String,
+    visitDate: LocalDate,
+    visitStatus: VisitStatus,
+    visitOrderRestrictionType: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
+  ): Visit {
+    val sessionTemplate = sessionTemplateEntityHelper.create(prisonCode = prisonCode, dayOfWeek = visitDate.dayOfWeek, visitOrderRestrictionType = visitOrderRestrictionType)
     val visitSubStatus = if (visitStatus == VisitStatus.BOOKED) VisitSubStatus.AUTO_APPROVED else VisitSubStatus.CANCELLED
 
     val visit = visitEntityHelper.create(

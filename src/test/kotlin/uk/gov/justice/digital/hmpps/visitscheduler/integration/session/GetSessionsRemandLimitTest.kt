@@ -81,6 +81,31 @@ class GetSessionsRemandLimitTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `when remand limit is reached then sessions with no visit order restriction are not flagged as limit reached`() {
+    // Given
+    val startDate = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+    createVisits(remandPrisonerId, listOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY), startDate)
+
+    val noneVisitOrderSessionTemplate = sessionTemplateEntityHelper.create(
+      validFromDate = LocalDate.now().minusMonths(1),
+      dayOfWeek = DayOfWeek.WEDNESDAY,
+      prisonCode = prisonCode,
+      visitOrderRestrictionType = NONE,
+    )
+
+    // When
+    val responseSpec = callGetSessions(prisonCode, remandPrisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk.expectBody()
+    val visitSessionResults = getResults(returnResult)
+    val noneVisitOrderSessions = visitSessionResults.filter { it.sessionTemplateReference == noneVisitOrderSessionTemplate.reference }
+
+    assertThat(noneVisitOrderSessions).isNotEmpty
+    assertThat(noneVisitOrderSessions).noneMatch { it.sessionConflicts.contains(REMAND_VISITS_LIMIT_REACHED) }
+  }
+
+  @Test
   fun `when remand prisoner has visits booked but weekly limit has not been reached then REMAND_VISITS_LIMIT_REACHED flag is not set for non booked sessions`() {
     // Given
     val startDate = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))

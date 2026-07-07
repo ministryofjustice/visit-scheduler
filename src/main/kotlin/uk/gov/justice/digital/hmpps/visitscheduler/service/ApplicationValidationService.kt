@@ -18,6 +18,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidati
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_USER_TYPE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_VISIT_ALREADY_BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ConvictionStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType.NONE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PRISONER
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
@@ -253,6 +254,10 @@ class ApplicationValidationService(
         return null
       }
 
+      if (isNoVisitOrderSession(application)) {
+        return null
+      }
+
       // get the number of booked visits for the week
       val sessionDate = application.sessionSlot.slotDate
       val weekStartDate = sessionDate.with(TemporalAdjusters.previousOrSame(prison.weekStartDay))
@@ -268,6 +273,10 @@ class ApplicationValidationService(
 
     return null
   }
+
+  private fun isNoVisitOrderSession(application: Application): Boolean = application.sessionSlot.sessionTemplateReference
+    ?.let { sessionTemplateRepository.findByReference(it)?.visitOrderRestriction == NONE }
+    ?: false
 
   private fun checkVOLimits(prisoner: PrisonerDto): ApplicationValidationErrorCodes? {
     // check VO limits if prisoner is not on Remand.
