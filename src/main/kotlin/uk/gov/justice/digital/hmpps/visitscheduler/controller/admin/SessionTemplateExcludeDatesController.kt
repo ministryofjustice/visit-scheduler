@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ExcludeDateDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionSchedulesWithDateExclusionsDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionScheduleWithDateExclusionsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionTemplateService
 import java.time.LocalDate
 
@@ -144,12 +144,12 @@ class SessionTemplateExcludeDatesController(
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(SESSION_TEMPLATE_FUTURE_EXCLUDE_DATES_FOR_PRISON_PATH)
   @Operation(
-    summary = "Get all future exclude dates by session for a prison.",
-    description = "Get all future exclude dates by session for a prison. Returns only sessions that are blocked in the future.",
+    summary = "Get all current or future exclude dates by session for a prison.",
+    description = "Get all current or future exclude dates by session for a prison. Returns only sessions that are blocked in the future.",
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "All sessions that are blocked in the future are returned, returns an empty list if no sessions are blocked in the future",
+        description = "All sessions that are blocked - current or future are returned, returns an empty list if no sessions are blocked in the future (including today's sessions)",
       ),
       ApiResponse(
         responseCode = "401",
@@ -167,5 +167,5 @@ class SessionTemplateExcludeDatesController(
     @Schema(description = "prison code", example = "BHI", required = true)
     @PathVariable
     prisonCode: String,
-  ): List<SessionSchedulesWithDateExclusionsDto> = sessionTemplateService.getFutureExcludedSessionsForPrison(prisonCode)
+  ): List<SessionScheduleWithDateExclusionsDto> = sessionTemplateService.getFutureExcludedSessionsForPrison(prisonCode)
 }

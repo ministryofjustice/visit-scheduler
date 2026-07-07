@@ -31,7 +31,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitNotificat
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitNotificationEventService
 import java.time.LocalDate
 
-@DisplayName("Tests fot $SESSION_TEMPLATE_EXCLUDE_DATE_PATH")
+@DisplayName("Tests for $SESSION_TEMPLATE_EXCLUDE_DATE_PATH")
 class SessionTemplateExcludeDatesTest : IntegrationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit

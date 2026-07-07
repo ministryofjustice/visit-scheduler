@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.HttpHeaders
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMPLATE_FUTURE_EXCLUDE_DATES_FOR_PRISON_PATH
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionSchedulesWithDateExclusionsDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionScheduleWithDateExclusionsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGetSessionTemplateFutureExcludeDatesForPrison
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import java.time.LocalDate
@@ -84,5 +84,5 @@ class PrisonSessionTemplateFutureExcludeDatesTest : IntegrationTestBase() {
     responseSpec.expectStatus().isUnauthorized
   }
 
-  private fun getSessionSchedulesWithDateExclusions(returnResult: BodyContentSpec): Array<SessionSchedulesWithDateExclusionsDto> = objectMapper.readValue(returnResult.returnResult().responseBody, Array<SessionSchedulesWithDateExclusionsDto>::class.java)
+  private fun getSessionSchedulesWithDateExclusions(returnResult: BodyContentSpec): Array<SessionScheduleWithDateExclusionsDto> = objectMapper.readValue(returnResult.returnResult().responseBody, Array<SessionScheduleWithDateExclusionsDto>::class.java)
 }

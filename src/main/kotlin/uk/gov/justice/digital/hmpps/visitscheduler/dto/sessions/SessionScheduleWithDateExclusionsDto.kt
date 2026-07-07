@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotEmpty
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ExcludeDateDto
 
 @Schema(description = "Session schedule that has future date exclusions")
-data class SessionSchedulesWithDateExclusionsDto(
+data class SessionScheduleWithDateExclusionsDto(
   @param:Schema(description = "Session schedule details that have future date exclusions", required = true)
   val sessionScheduleDto: SessionScheduleDto,
 

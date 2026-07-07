@@ -21,7 +21,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.RequestSessionTe
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionScheduleDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionSchedulesWithDateExclusionsDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionScheduleWithDateExclusionsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateVisitCountsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateVisitStatsDto
@@ -626,15 +626,15 @@ class SessionTemplateService(
   }
 
   @Transactional(readOnly = true)
-  fun getFutureExcludedSessionsForPrison(prisonCode: String): List<SessionSchedulesWithDateExclusionsDto> {
-    LOG.debug("Getting all excluded sessions for prison - {}", prisonCode)
+  fun getFutureExcludedSessionsForPrison(prisonCode: String): List<SessionScheduleWithDateExclusionsDto> {
+    LOG.debug("Getting sessions with exclude dates from today onwards for prison - {}", prisonCode)
     val today = LocalDate.now()
     val sessionSchedulesWithDateExclusions = sessionTemplateRepository.findCurrentAndFutureSessionTemplates(prisonCode).map { sessionTemplate ->
       val sessionSchedule = SessionScheduleDto(sessionTemplate, false)
       val futureExcludeDates = sessionTemplate.excludeDates.filter { it.excludeDate >= today }.map {
         ExcludeDateDto(it.excludeDate, it.actionedBy)
       }
-      SessionSchedulesWithDateExclusionsDto(sessionSchedule, futureExcludeDates)
+      SessionScheduleWithDateExclusionsDto(sessionSchedule, futureExcludeDates)
     }
 
     // return only those sessions that have future exclude dates
