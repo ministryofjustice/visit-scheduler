@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.DOU
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.NON_ASSOCIATION
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.REMAND_VISITS_LIMIT_REACHED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType.NONE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailDto
@@ -288,7 +289,7 @@ class SessionService(
     val adjustedStartDate = dateRange.fromDate.with(TemporalAdjusters.previousOrSame(prison.weekStartDay))
     val adjustedToDate = dateRange.toDate.with(TemporalAdjusters.nextOrSame(prison.weekStartDay.plus(6)))
 
-    val visits = visitRepository.getBookedVisits(
+    val visits = visitRepository.getBookedVisitsThatCountTowardsRemandLimit(
       prisonerId = prisoner.prisonerId,
       prisonCode = prison.code,
       startDateTime = adjustedStartDate.atStartOfDay(),
@@ -305,6 +306,7 @@ class SessionService(
         limitReachedSessions.addAll(
           visitSessions
             .filter { it.startTimestamp.toLocalDate() in weekStartDate..weekEndDate }
+            .filter { it.visitOrderRestriction != NONE }
             .filter { !doubleBookingOrReservationSessions.contains(it) },
         )
       }
