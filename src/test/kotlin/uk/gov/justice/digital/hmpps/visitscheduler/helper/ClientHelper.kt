@@ -63,6 +63,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REFERENCE_LO
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REFERENCE_SESSION_TEMPLATE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REMOVE_PRISON_EXCLUDE_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REMOVE_SESSION_TEMPLATE_EXCLUDE_DATE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMPLATE_FUTURE_EXCLUDE_DATES_FOR_PRISON_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMPLATE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMPLATE_VISIT_STATS
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.migration.MIGRATE_CANCEL
@@ -583,6 +584,8 @@ fun getRemoveSessionTemplateExcludeDateUrl(sessionTemplateReference: String): St
 
 fun getGetSessionTemplateExcludeDatesUrl(sessionTemplateReference: String): String = getReferenceUrl(GET_SESSION_TEMPLATE_EXCLUDE_DATES, sessionTemplateReference)
 
+fun getGetSessionTemplateExcludedForPrisonUrl(prisonCode: String): String = getPrisonIdUrl(SESSION_TEMPLATE_FUTURE_EXCLUDE_DATES_FOR_PRISON_PATH, prisonCode)
+
 fun callCreatePrison(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
@@ -685,6 +688,16 @@ fun callGetSessionTemplateExcludeDates(
 ): ResponseSpec = callGet(
   webTestClient,
   getGetSessionTemplateExcludeDatesUrl(sessionTemplateReference),
+  authHttpHeaders,
+)
+
+fun callGetSessionTemplateExcludeDatesForPrison(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  prisonCode: String,
+): ResponseSpec = callGet(
+  webTestClient,
+  getGetSessionTemplateExcludedForPrisonUrl(prisonCode),
   authHttpHeaders,
 )
 

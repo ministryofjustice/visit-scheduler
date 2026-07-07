@@ -17,10 +17,12 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ExcludeDateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionSchedulesWithDateExclusionsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionTemplateService
 import java.time.LocalDate
 
 const val SESSION_TEMPLATE_EXCLUDE_DATE_PATH: String = "$SESSION_TEMPLATE_PATH/{reference}/exclude-date"
+const val SESSION_TEMPLATE_FUTURE_EXCLUDE_DATES_FOR_PRISON_PATH: String = "$ADMIN_SESSION_TEMPLATES_PATH/{prisonCode}/exclude-dates/future"
 
 const val ADD_SESSION_TEMPLATE_EXCLUDE_DATE: String = "$SESSION_TEMPLATE_EXCLUDE_DATE_PATH/add"
 
@@ -133,9 +135,37 @@ class SessionTemplateExcludeDatesController(
       ),
     ],
   )
-  fun getPrisonExcludeDates(
+  fun getSessionExcludeDates(
     @Schema(description = "session template reference", example = "abc-def-ghi", required = true)
     @PathVariable
     reference: String,
   ): List<ExcludeDateDto> = sessionTemplateService.getExcludeDates(reference)
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @GetMapping(SESSION_TEMPLATE_FUTURE_EXCLUDE_DATES_FOR_PRISON_PATH)
+  @Operation(
+    summary = "Get all future exclude dates by session for a prison.",
+    description = "Get all future exclude dates by session for a prison. Returns only sessions that are blocked in the future.",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "All sessions that are blocked in the future are returned, returns an empty list if no sessions are blocked in the future",
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to get sessions that are blocked in the future",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun getFutureExcludedSessionsForPrison(
+    @Schema(description = "prison id", example = "BHI", required = true)
+    @PathVariable
+    prisonCode: String,
+  ): List<SessionSchedulesWithDateExclusionsDto> = sessionTemplateService.getFutureExcludedSessionsForPrison(prisonCode)
 }
