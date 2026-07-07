@@ -164,7 +164,7 @@ class SessionTemplateExcludeDatesController(
     ],
   )
   fun getFutureExcludedSessionsForPrison(
-    @Schema(description = "prison id", example = "BHI", required = true)
+    @Schema(description = "prison code", example = "BHI", required = true)
     @PathVariable
     prisonCode: String,
   ): List<SessionSchedulesWithDateExclusionsDto> = sessionTemplateService.getFutureExcludedSessionsForPrison(prisonCode)

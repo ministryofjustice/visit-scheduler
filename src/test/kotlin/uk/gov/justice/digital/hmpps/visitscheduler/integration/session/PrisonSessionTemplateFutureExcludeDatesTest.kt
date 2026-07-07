@@ -8,7 +8,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMPLATE_FUTURE_EXCLUDE_DATES_FOR_PRISON_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionSchedulesWithDateExclusionsDto
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGetSessionTemplateExcludeDatesForPrison
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGetSessionTemplateFutureExcludeDatesForPrison
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import java.time.LocalDate
 
@@ -41,7 +41,7 @@ class PrisonSessionTemplateFutureExcludeDatesTest : IntegrationTestBase() {
     // session 2 has no excluded dates
     sessionTemplateEntityHelper.create(prisonCode = prisonCode, excludeDates = emptyList())
 
-    val getResponseSpec = callGetSessionTemplateExcludeDatesForPrison(webTestClient, roleVisitSchedulerHttpHeaders, prisonCode = prison.code)
+    val getResponseSpec = callGetSessionTemplateFutureExcludeDatesForPrison(webTestClient, roleVisitSchedulerHttpHeaders, prisonCode = prison.code)
     val result = getResponseSpec.expectStatus().isOk.expectBody()
     val excludedSessions = getSessionSchedulesWithDateExclusions(result)
     Assertions.assertThat(excludedSessions).isNotEmpty
@@ -51,7 +51,7 @@ class PrisonSessionTemplateFutureExcludeDatesTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when no sessions exist with with excluded dates in the future an empty list is returned`() {
+  fun `when no sessions exist with excluded dates in the future an empty list is returned`() {
     // Given
     val today = LocalDate.now()
     val pastExcludeDate = today.minusDays(1)
@@ -61,7 +61,7 @@ class PrisonSessionTemplateFutureExcludeDatesTest : IntegrationTestBase() {
     // session 2 has no past excluded dates
     sessionTemplateEntityHelper.create(prisonCode = prisonCode, excludeDates = emptyList())
 
-    val getResponseSpec = callGetSessionTemplateExcludeDatesForPrison(webTestClient, roleVisitSchedulerHttpHeaders, prisonCode = prison.code)
+    val getResponseSpec = callGetSessionTemplateFutureExcludeDatesForPrison(webTestClient, roleVisitSchedulerHttpHeaders, prisonCode = prison.code)
     val result = getResponseSpec.expectStatus().isOk.expectBody()
     val excludedSessions = getSessionSchedulesWithDateExclusions(result)
     Assertions.assertThat(excludedSessions).isEmpty()
@@ -70,7 +70,7 @@ class PrisonSessionTemplateFutureExcludeDatesTest : IntegrationTestBase() {
   @Test
   fun `access forbidden when no role`() {
     // When
-    val responseSpec = callGetSessionTemplateExcludeDatesForPrison(webTestClient, setAuthorisation(roles = listOf()), prisonCode = "QQQ")
+    val responseSpec = callGetSessionTemplateFutureExcludeDatesForPrison(webTestClient, setAuthorisation(roles = listOf()), prisonCode = "QQQ")
 
     // Then
     responseSpec.expectStatus().isForbidden

@@ -584,7 +584,7 @@ fun getRemoveSessionTemplateExcludeDateUrl(sessionTemplateReference: String): St
 
 fun getGetSessionTemplateExcludeDatesUrl(sessionTemplateReference: String): String = getReferenceUrl(GET_SESSION_TEMPLATE_EXCLUDE_DATES, sessionTemplateReference)
 
-fun getGetSessionTemplateExcludedForPrisonUrl(prisonCode: String): String = getPrisonIdUrl(SESSION_TEMPLATE_FUTURE_EXCLUDE_DATES_FOR_PRISON_PATH, prisonCode)
+fun getGetSessionTemplateFutureExcludeDatesForPrisonUrl(prisonCode: String): String = getPrisonIdUrl(SESSION_TEMPLATE_FUTURE_EXCLUDE_DATES_FOR_PRISON_PATH, prisonCode)
 
 fun callCreatePrison(
   webTestClient: WebTestClient,
@@ -691,13 +691,13 @@ fun callGetSessionTemplateExcludeDates(
   authHttpHeaders,
 )
 
-fun callGetSessionTemplateExcludeDatesForPrison(
+fun callGetSessionTemplateFutureExcludeDatesForPrison(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
   prisonCode: String,
 ): ResponseSpec = callGet(
   webTestClient,
-  getGetSessionTemplateExcludedForPrisonUrl(prisonCode),
+  getGetSessionTemplateFutureExcludeDatesForPrisonUrl(prisonCode),
   authHttpHeaders,
 )
 
