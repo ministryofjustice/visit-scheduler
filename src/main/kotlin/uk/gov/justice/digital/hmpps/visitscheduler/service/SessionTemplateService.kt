@@ -629,16 +629,18 @@ class SessionTemplateService(
   fun getFutureExcludedSessionsForPrison(prisonCode: String): List<SessionScheduleWithDateExclusionsDto> {
     LOG.debug("Getting sessions with exclude dates from today onwards for prison - {}", prisonCode)
     val today = LocalDate.now()
-    val sessionSchedulesWithDateExclusions = sessionTemplateRepository.findCurrentAndFutureSessionTemplates(prisonCode).map { sessionTemplate ->
-      val sessionSchedule = SessionScheduleDto(sessionTemplate, false)
-      val futureExcludeDates = sessionTemplate.excludeDates.filter { it.excludeDate >= today }.map {
-        ExcludeDateDto(it.excludeDate, it.actionedBy)
+    val sessionSchedulesWithDateExclusions = mutableListOf<SessionScheduleWithDateExclusionsDto>()
+
+    sessionTemplateRepository.findCurrentAndFutureSessionTemplates(prisonCode).map { sessionTemplate ->
+      val futureExcludeDates = sessionTemplate.excludeDates.filter { it.excludeDate >= today }
+      if (futureExcludeDates.isNotEmpty()) {
+        val sessionSchedule = SessionScheduleDto(sessionTemplate, false)
+        sessionSchedulesWithDateExclusions.add(SessionScheduleWithDateExclusionsDto(sessionSchedule, futureExcludeDates.map { ExcludeDateDto(it.excludeDate, it.actionedBy) }))
       }
-      SessionScheduleWithDateExclusionsDto(sessionSchedule, futureExcludeDates)
     }
 
     // return only those sessions that have future exclude dates
-    return sessionSchedulesWithDateExclusions.filter { it.excludeDates.isNotEmpty() }
+    return sessionSchedulesWithDateExclusions.filter { it.excludeDates.isNotEmpty() }.toList()
   }
 
   @Transactional
