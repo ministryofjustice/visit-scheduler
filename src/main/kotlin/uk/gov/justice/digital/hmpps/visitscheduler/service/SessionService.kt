@@ -290,7 +290,7 @@ class SessionService(
     val adjustedStartDate = dateRange.fromDate.with(TemporalAdjusters.previousOrSame(prison.weekStartDay))
     val adjustedToDate = dateRange.toDate.with(TemporalAdjusters.nextOrSame(prison.weekStartDay.plus(6)))
 
-    val visits = visitRepository.getBookedVisits(
+    val visits = visitRepository.getBookedVisitsThatCountTowardsRemandLimit(
       prisonerId = prisoner.prisonerId,
       prisonCode = prison.code,
       startDateTime = adjustedStartDate.atStartOfDay(),

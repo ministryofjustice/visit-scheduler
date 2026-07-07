@@ -259,7 +259,7 @@ class ApplicationValidationService(
       val weekEndDate = weekStartDate.plusDays(6)
       val totalBookedVisitsForWeek = visitRepository.getCountOfBookedVisits(prisonerId = prisoner.prisonerId, prisonCode = prison.code, startDate = weekStartDate, endDate = weekEndDate, excludeVisitReference = existingBooking?.reference)
 
-      // if the remand visit limit per week has been reached return APPLICATION_INVALID_REMAND_VISIT_LIMIT_FOR_WEEK_REACHED
+      // if the remand visit limit per week has been reached, return APPLICATION_INVALID_REMAND_VISIT_LIMIT_FOR_WEEK_REACHED
       if (totalBookedVisitsForWeek >= prison.remandVisitLimitPerWeek.toLong()) {
         LOG.info("{} visit(s) already booked for REMAND prisoner - {} on week starting on - {}, so visit for {} cannot be booked.", totalBookedVisitsForWeek, prisoner.prisonerId, weekStartDate, sessionDate)
         return APPLICATION_INVALID_REMAND_VISIT_LIMIT_FOR_WEEK_REACHED
