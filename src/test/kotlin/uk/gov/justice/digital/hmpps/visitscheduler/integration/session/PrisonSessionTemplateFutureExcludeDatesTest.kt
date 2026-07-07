@@ -46,7 +46,7 @@ class PrisonSessionTemplateFutureExcludeDatesTest : IntegrationTestBase() {
     val excludedSessions = getSessionSchedulesWithDateExclusions(result)
     Assertions.assertThat(excludedSessions).isNotEmpty
     Assertions.assertThat(excludedSessions.size).isEqualTo(1)
-    Assertions.assertThat(excludedSessions[0].sessionScheduleDto.sessionTemplateReference).isEqualTo(sessionTemplate1.reference)
+    Assertions.assertThat(excludedSessions[0].sessionSchedule.sessionTemplateReference).isEqualTo(sessionTemplate1.reference)
     Assertions.assertThat(excludedSessions[0].excludeDates.map { it.excludeDate }).containsExactlyInAnyOrder(today, futureExcludeDate1, futureExcludeDate2)
   }
 
