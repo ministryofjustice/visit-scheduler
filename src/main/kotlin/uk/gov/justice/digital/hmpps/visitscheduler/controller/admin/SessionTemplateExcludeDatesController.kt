@@ -21,8 +21,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionScheduleW
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionTemplateService
 import java.time.LocalDate
 
+private const val SESSION_TEMPLATES_PATH: String = "/session-templates"
 const val SESSION_TEMPLATE_EXCLUDE_DATE_PATH: String = "$SESSION_TEMPLATE_PATH/{reference}/exclude-date"
-const val SESSION_TEMPLATE_FUTURE_EXCLUDE_DATES_FOR_PRISON_PATH: String = "$ADMIN_SESSION_TEMPLATES_PATH/{prisonCode}/exclude-dates/future"
+const val SESSION_TEMPLATE_FUTURE_EXCLUDE_DATES_FOR_PRISON_PATH: String = "$SESSION_TEMPLATES_PATH/{prisonCode}/exclude-dates/future"
 
 const val ADD_SESSION_TEMPLATE_EXCLUDE_DATE: String = "$SESSION_TEMPLATE_EXCLUDE_DATE_PATH/add"
 
