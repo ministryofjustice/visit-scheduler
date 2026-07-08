@@ -6,7 +6,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADMIN_SESSION_TEMPLATES_PATH
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMPLATE_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADMIN_SESSION_TEMPLATE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType.A_EXCEPTIONAL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType.A_HIGH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType.A_PROVISIONAL
@@ -158,7 +158,7 @@ class AdminGetSessionTemplateTest(
     )
 
     // When
-    val responseSpec = webTestClient.get().uri("$SESSION_TEMPLATE_PATH/${sessionTemplate.reference}")
+    val responseSpec = webTestClient.get().uri("$ADMIN_SESSION_TEMPLATE_PATH/${sessionTemplate.reference}")
       .headers(setAuthorisation(roles = adminRole))
       .exchange()
 
@@ -182,7 +182,7 @@ class AdminGetSessionTemplateTest(
     repository.save(sessionTemplate)
 
     // When
-    val responseSpec = webTestClient.get().uri("$SESSION_TEMPLATE_PATH/${sessionTemplate.reference}")
+    val responseSpec = webTestClient.get().uri("$ADMIN_SESSION_TEMPLATE_PATH/${sessionTemplate.reference}")
       .headers(setAuthorisation(roles = adminRole))
       .exchange()
 

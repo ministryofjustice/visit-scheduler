@@ -6,13 +6,13 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpHeaders
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMPLATE_FUTURE_EXCLUDE_DATES_FOR_PRISON_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.GET_SESSION_EXCLUDE_DATES
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionScheduleWithDateExclusionsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGetSessionTemplateFutureExcludeDatesForPrison
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import java.time.LocalDate
 
-@DisplayName("Tests for $SESSION_TEMPLATE_FUTURE_EXCLUDE_DATES_FOR_PRISON_PATH")
+@DisplayName("Tests for $GET_SESSION_EXCLUDE_DATES")
 class PrisonSessionTemplateFutureExcludeDatesTest : IntegrationTestBase() {
   private val prisonCode = "MDI"
 
