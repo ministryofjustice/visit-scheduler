@@ -20,10 +20,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.ExcludeDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionTemplateService
 import java.time.LocalDate
 
-const val SESSION_TEMPLATE_EXCLUDE_DATE_PATH: String = "$SESSION_TEMPLATE_PATH/{reference}/exclude-date"
-
+private const val SESSION_TEMPLATES_PATH: String = "/session-templates"
+const val SESSION_TEMPLATE_EXCLUDE_DATE_PATH: String = "$SESSION_TEMPLATES_PATH/{reference}/exclude-date"
 const val ADD_SESSION_TEMPLATE_EXCLUDE_DATE: String = "$SESSION_TEMPLATE_EXCLUDE_DATE_PATH/add"
-
 const val REMOVE_SESSION_TEMPLATE_EXCLUDE_DATE: String = "$SESSION_TEMPLATE_EXCLUDE_DATE_PATH/remove"
 const val GET_SESSION_TEMPLATE_EXCLUDE_DATES: String = SESSION_TEMPLATE_EXCLUDE_DATE_PATH
 
@@ -133,7 +132,7 @@ class SessionTemplateExcludeDatesController(
       ),
     ],
   )
-  fun getPrisonExcludeDates(
+  fun getSessionExcludeDates(
     @Schema(description = "session template reference", example = "abc-def-ghi", required = true)
     @PathVariable
     reference: String,

@@ -37,14 +37,14 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTem
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionTemplateService
 
 const val ADMIN_SESSION_TEMPLATES_PATH: String = "/admin/session-templates"
-const val SESSION_TEMPLATE_PATH: String = "$ADMIN_SESSION_TEMPLATES_PATH/template"
-const val FIND_MATCHING_SESSION_TEMPLATES_ON_CREATE: String = "$SESSION_TEMPLATE_PATH/matching/"
-const val FIND_MATCHING_SESSION_TEMPLATES_ON_UPDATE: String = "$SESSION_TEMPLATE_PATH/{reference}/matching/"
+const val ADMIN_SESSION_TEMPLATE_PATH: String = "$ADMIN_SESSION_TEMPLATES_PATH/template"
+const val FIND_MATCHING_SESSION_TEMPLATES_ON_CREATE: String = "$ADMIN_SESSION_TEMPLATE_PATH/matching/"
+const val FIND_MATCHING_SESSION_TEMPLATES_ON_UPDATE: String = "$ADMIN_SESSION_TEMPLATE_PATH/{reference}/matching/"
 const val MOVE_VISITS: String = "$ADMIN_SESSION_TEMPLATES_PATH/move/"
-const val REFERENCE_SESSION_TEMPLATE_PATH: String = "$SESSION_TEMPLATE_PATH/{reference}"
-const val SESSION_TEMPLATE_VISIT_STATS: String = "$SESSION_TEMPLATE_PATH/{reference}/stats"
-const val ACTIVATE_SESSION_TEMPLATE: String = "$SESSION_TEMPLATE_PATH/{reference}/activate"
-const val DEACTIVATE_SESSION_TEMPLATE: String = "$SESSION_TEMPLATE_PATH/{reference}/deactivate"
+const val REFERENCE_SESSION_TEMPLATE_PATH: String = "$ADMIN_SESSION_TEMPLATE_PATH/{reference}"
+const val SESSION_TEMPLATE_VISIT_STATS: String = "$ADMIN_SESSION_TEMPLATE_PATH/{reference}/stats"
+const val ACTIVATE_SESSION_TEMPLATE: String = "$ADMIN_SESSION_TEMPLATE_PATH/{reference}/activate"
+const val DEACTIVATE_SESSION_TEMPLATE: String = "$ADMIN_SESSION_TEMPLATE_PATH/{reference}/deactivate"
 const val ACTIVATE_SESSION_TEMPLATE_CLIENT: String = "$REFERENCE_SESSION_TEMPLATE_PATH/client/{type}/activate"
 const val DEACTIVATE_SESSION_TEMPLATE_CLIENT: String = "$REFERENCE_SESSION_TEMPLATE_PATH/client/{type}/deactivate"
 
@@ -64,7 +64,7 @@ class SessionTemplateAdminController(
   private val objectMapper: ObjectMapper,
 ) {
 
-  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
+  @PreAuthorize("hasAnyRole('VISIT_SCHEDULER_CONFIG', 'VISIT_SCHEDULER')")
   @GetMapping(ADMIN_SESSION_TEMPLATES_PATH)
   @Operation(
     summary = "Get session templates",
@@ -136,7 +136,7 @@ class SessionTemplateAdminController(
   ): SessionTemplateDto = sessionTemplateService.getSessionTemplates(reference)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
-  @PostMapping(SESSION_TEMPLATE_PATH)
+  @PostMapping(ADMIN_SESSION_TEMPLATE_PATH)
   @Operation(
     summary = "Create a session template",
     description = "Create a session templates",

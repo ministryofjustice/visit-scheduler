@@ -8,6 +8,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_SESSION_CONTROLLER_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.REMAND_VISITS_LIMIT_REACHED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType.NONE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
@@ -80,6 +81,31 @@ class GetSessionsRemandLimitTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `when remand limit is reached then sessions with no visit order restriction are not flagged as limit reached`() {
+    // Given
+    val startDate = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+    createVisits(remandPrisonerId, listOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY), startDate)
+
+    val noneVisitOrderSessionTemplate = sessionTemplateEntityHelper.create(
+      validFromDate = LocalDate.now().minusMonths(1),
+      dayOfWeek = DayOfWeek.WEDNESDAY,
+      prisonCode = prisonCode,
+      visitOrderRestrictionType = NONE,
+    )
+
+    // When
+    val responseSpec = callGetSessions(prisonCode, remandPrisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk.expectBody()
+    val visitSessionResults = getResults(returnResult)
+    val noneVisitOrderSessions = visitSessionResults.filter { it.sessionTemplateReference == noneVisitOrderSessionTemplate.reference }
+
+    assertThat(noneVisitOrderSessions).isNotEmpty
+    assertThat(noneVisitOrderSessions).noneMatch { it.sessionConflicts.contains(REMAND_VISITS_LIMIT_REACHED) }
+  }
+
+  @Test
   fun `when remand prisoner has visits booked but weekly limit has not been reached then REMAND_VISITS_LIMIT_REACHED flag is not set for non booked sessions`() {
     // Given
     val startDate = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
@@ -89,6 +115,41 @@ class GetSessionsRemandLimitTest : IntegrationTestBase() {
     createVisits(remandPrisonerId, week1VisitDays, startDate)
     createVisits(remandPrisonerId, week2VisitDays, startDate.plusWeeks(1))
     createVisits(remandPrisonerId, week3VisitDays, startDate.plusWeeks(2))
+
+    // When
+    val responseSpec = callGetSessions(prisonCode, remandPrisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk.expectBody()
+    val visitSessionResults = getResults(returnResult)
+    assertThat(visitSessionResults.size).isEqualTo(14)
+    assertThat(visitSessionResults).noneMatch { it.sessionConflicts.contains(REMAND_VISITS_LIMIT_REACHED) }
+  }
+
+  @Test
+  fun `when remand prisoner has visits booked on sessions with no visit order restriction then they do not count towards weekly limit`() {
+    // Given
+    val startDate = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+    createVisits(remandPrisonerId, listOf(DayOfWeek.MONDAY), startDate)
+
+    val noneVisitOrderSessionTemplate = sessionTemplateEntityHelper.create(
+      validFromDate = LocalDate.now().minusMonths(1),
+      dayOfWeek = DayOfWeek.TUESDAY,
+      prisonCode = prisonCode,
+      isActive = false,
+      visitOrderRestrictionType = NONE,
+    )
+    val noneVisitOrderVisitDate = startDate.with(TemporalAdjusters.nextOrSame(DayOfWeek.TUESDAY))
+    visitEntityHelper.create(
+      prisonerId = remandPrisonerId,
+      prisonCode = prisonCode,
+      visitRoom = noneVisitOrderSessionTemplate.visitRoom,
+      slotDate = noneVisitOrderVisitDate,
+      visitStart = noneVisitOrderSessionTemplate.startTime,
+      visitEnd = noneVisitOrderSessionTemplate.endTime,
+      visitStatus = VisitStatus.BOOKED,
+      sessionTemplate = noneVisitOrderSessionTemplate,
+    )
 
     // When
     val responseSpec = callGetSessions(prisonCode, remandPrisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
