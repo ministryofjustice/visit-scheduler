@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ConvictionStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType.NONE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailDto
@@ -17,9 +18,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.DoubleBookedConf
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.NonAssociationConflictSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionConflictType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionDateRangeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionScheduleDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTimeSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.CapacityNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
@@ -297,7 +296,7 @@ class SessionService(
     val adjustedStartDate = dateRange.fromDate.with(TemporalAdjusters.previousOrSame(prison.weekStartDay))
     val adjustedToDate = dateRange.toDate.with(TemporalAdjusters.nextOrSame(prison.weekStartDay.plus(6)))
 
-    val visits = visitRepository.getBookedVisits(
+    val visits = visitRepository.getBookedVisitsThatCountTowardsRemandLimit(
       prisonerId = prisoner.prisonerId,
       prisonCode = prison.code,
       startDateTime = adjustedStartDate.atStartOfDay(),
@@ -313,7 +312,8 @@ class SessionService(
       if (totalBookedVisitsForWeek >= prison.remandVisitLimitPerWeek) {
         limitReachedSessions.addAll(
           visitSessions
-            .filter { it.startTimestamp.toLocalDate() in weekStartDate..weekEndDate },
+            .filter { it.startTimestamp.toLocalDate() in weekStartDate..weekEndDate }
+            .filter { it.visitOrderRestriction != NONE },
         )
       }
       weekStartDate = weekStartDate.plusWeeks(1)
@@ -562,7 +562,7 @@ class SessionService(
     val excludedSessionTemplatesForDate = getExcludedSessionTemplatesForDate(scheduleDate, sessionTemplates.map { it.reference }.distinct()).toHashSet()
     sessionTemplates.map { sessionTemplate ->
       val isSessionExcluded = excludedSessionTemplatesForDate.contains(sessionTemplate.reference)
-      createSessionScheduleDto(sessionTemplate, isSessionExcluded)
+      SessionScheduleDto(sessionTemplate, isSessionExcluded)
     }.toList()
   }
 
@@ -571,24 +571,6 @@ class SessionService(
   } else {
     sessionTemplateExcludeDateRepository.getSessionsExcludedForDate(sessionDate, sessionTemplateReferences)
   }
-
-  private fun createSessionScheduleDto(sessionTemplate: SessionTemplate, isSessionExcluded: Boolean): SessionScheduleDto = SessionScheduleDto(
-    sessionTemplateReference = sessionTemplate.reference,
-    sessionTimeSlot = SessionTimeSlotDto(startTime = sessionTemplate.startTime, endTime = sessionTemplate.endTime),
-    capacity = SessionCapacityDto(sessionTemplate),
-    areLocationGroupsInclusive = sessionTemplate.includeLocationGroupType,
-    prisonerLocationGroupNames = sessionTemplate.permittedSessionLocationGroups.map { it.name }.toList(),
-    areCategoryGroupsInclusive = sessionTemplate.includeCategoryGroupType,
-    prisonerCategoryGroupNames = sessionTemplate.permittedSessionCategoryGroups.map { it.name }.toList(),
-    areIncentiveGroupsInclusive = sessionTemplate.includeIncentiveGroupType,
-    prisonerIncentiveLevelGroupNames = sessionTemplate.permittedSessionIncentiveLevelGroups.map { it.name }.toList(),
-    weeklyFrequency = sessionTemplate.weeklyFrequency,
-    visitType = sessionTemplate.visitType,
-    sessionDateRange = SessionDateRangeDto(validFromDate = sessionTemplate.validFromDate, validToDate = sessionTemplate.validToDate),
-    visitRoom = sessionTemplate.visitRoom,
-    visitOrderRestriction = sessionTemplate.visitOrderRestriction,
-    isSessionExcluded = isSessionExcluded,
-  )
 
   private fun adjustDateByDayOfWeek(dayOfWeek: DayOfWeek, startDate: LocalDate): LocalDate {
     if (startDate.dayOfWeek != dayOfWeek) {

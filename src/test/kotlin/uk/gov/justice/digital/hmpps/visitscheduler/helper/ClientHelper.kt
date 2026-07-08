@@ -42,12 +42,14 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ACTIVATE_SES
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ACTIVATE_SESSION_TEMPLATE_CLIENT
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADD_PRISON_EXCLUDE_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADD_SESSION_TEMPLATE_EXCLUDE_DATE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADMIN_SESSION_TEMPLATE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.CATEGORY_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.DEACTIVATE_SESSION_TEMPLATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.DEACTIVATE_SESSION_TEMPLATE_CLIENT
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.FIND_MATCHING_SESSION_TEMPLATES_ON_CREATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.FIND_MATCHING_SESSION_TEMPLATES_ON_UPDATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.GET_PRISON_EXCLUDE_DATES
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.GET_SESSION_EXCLUDE_DATES
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.GET_SESSION_TEMPLATE_EXCLUDE_DATES
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.INCENTIVE_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.LOCATION_GROUP_ADMIN_PATH
@@ -63,7 +65,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REFERENCE_LO
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REFERENCE_SESSION_TEMPLATE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REMOVE_PRISON_EXCLUDE_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REMOVE_SESSION_TEMPLATE_EXCLUDE_DATE
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMPLATE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMPLATE_VISIT_STATS
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.migration.MIGRATE_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApproveRejectionVisitRequestBodyDto
@@ -270,7 +271,7 @@ fun callCreateSessionTemplate(
 ): ResponseSpec = callPost(
   dto,
   webTestClient,
-  SESSION_TEMPLATE_PATH,
+  ADMIN_SESSION_TEMPLATE_PATH,
   authHttpHeaders,
 )
 
@@ -583,6 +584,8 @@ fun getRemoveSessionTemplateExcludeDateUrl(sessionTemplateReference: String): St
 
 fun getGetSessionTemplateExcludeDatesUrl(sessionTemplateReference: String): String = getReferenceUrl(GET_SESSION_TEMPLATE_EXCLUDE_DATES, sessionTemplateReference)
 
+fun getGetSessionTemplateFutureExcludeDatesForPrisonUrl(prisonCode: String): String = getPrisonIdUrl(GET_SESSION_EXCLUDE_DATES, prisonCode)
+
 fun callCreatePrison(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
@@ -685,6 +688,16 @@ fun callGetSessionTemplateExcludeDates(
 ): ResponseSpec = callGet(
   webTestClient,
   getGetSessionTemplateExcludeDatesUrl(sessionTemplateReference),
+  authHttpHeaders,
+)
+
+fun callGetSessionTemplateFutureExcludeDatesForPrison(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  prisonCode: String,
+): ResponseSpec = callGet(
+  webTestClient,
+  getGetSessionTemplateFutureExcludeDatesForPrisonUrl(prisonCode),
   authHttpHeaders,
 )
 

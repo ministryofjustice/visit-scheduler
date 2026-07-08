@@ -129,7 +129,7 @@ class SessionServiceRemandLimitTest {
       prisonerService.getPrisonerNonAssociationList(prisonerId),
     ).thenReturn(emptyList())
 
-    whenever(visitRepository.getBookedVisits(any(), anyOrNull(), any(), anyOrNull())).thenReturn(listOf(visit1))
+    whenever(visitRepository.getBookedVisitsThatCountTowardsRemandLimit(any(), anyOrNull(), any(), anyOrNull())).thenReturn(listOf(visit1))
 
     // When
     val sessions = sessionService.getAllVisitSessions(prisonCode, prisonerId, userType = STAFF)
@@ -198,7 +198,7 @@ class SessionServiceRemandLimitTest {
     ).thenReturn(emptyList())
 
     whenever(visitRepository.hasActiveVisitForSessionSlot(any(), any(), anyOrNull())).thenReturn(false)
-    whenever(visitRepository.getBookedVisits(any(), anyOrNull(), any(), anyOrNull())).thenReturn(listOf(visit1))
+    whenever(visitRepository.getBookedVisitsThatCountTowardsRemandLimit(any(), anyOrNull(), any(), anyOrNull())).thenReturn(listOf(visit1))
 
     // When
     val sessions = sessionService.getAllVisitSessions(prisonCode, prisonerId, userType = STAFF)
@@ -268,7 +268,7 @@ class SessionServiceRemandLimitTest {
     ).thenReturn(emptyList())
 
     whenever(visitRepository.hasActiveVisitForSessionSlot(any(), any(), anyOrNull())).thenReturn(false)
-    whenever(visitRepository.getBookedVisits(any(), anyOrNull(), any(), anyOrNull())).thenReturn(listOf(visit1, visit2))
+    whenever(visitRepository.getBookedVisitsThatCountTowardsRemandLimit(any(), anyOrNull(), any(), anyOrNull())).thenReturn(listOf(visit1, visit2))
 
     // When
     val sessions = sessionService.getAllVisitSessions(prisonCode, prisonerId, userType = STAFF)
@@ -335,7 +335,7 @@ class SessionServiceRemandLimitTest {
     ).thenReturn(emptyList())
 
     whenever(visitRepository.hasActiveVisitForSessionSlot(any(), any(), anyOrNull())).thenReturn(false)
-    whenever(visitRepository.getBookedVisits(any(), anyOrNull(), any(), anyOrNull())).thenReturn(listOf(visit1))
+    whenever(visitRepository.getBookedVisitsThatCountTowardsRemandLimit(any(), anyOrNull(), any(), anyOrNull())).thenReturn(listOf(visit1))
 
     // When
     val sessions = sessionService.getAllVisitSessions(prisonCode, prisonerId, userType = STAFF)
