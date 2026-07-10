@@ -29,7 +29,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionT
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateExcludeDateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitNotificationEventService
+import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.temporal.TemporalAdjusters
 
 @DisplayName("Tests for $SESSION_TEMPLATE_EXCLUDE_DATE_PATH")
 class SessionTemplateExcludeDatesTest : IntegrationTestBase() {
@@ -49,7 +51,7 @@ class SessionTemplateExcludeDatesTest : IntegrationTestBase() {
   lateinit var testVisitNotificationEventRepository: TestVisitNotificationEventRepository
 
   @Autowired
-  protected lateinit var visitNotificationEventHelper: VisitNotificationEventHelper
+  private lateinit var visitNotificationEventHelper: VisitNotificationEventHelper
 
   @BeforeEach
   internal fun setUp() {
@@ -125,8 +127,10 @@ class SessionTemplateExcludeDatesTest : IntegrationTestBase() {
   @Test
   fun `when add exclude date called with a date not already added then exclude date is successfully added`() {
     // Given
-    val sessionTemplate = sessionTemplateEntityHelper.create()
-    val excludeDate = LocalDate.now().plusDays(10)
+    val today = LocalDate.now()
+    val excludeDate = today.with(DayOfWeek.MONDAY).plusWeeks(1)
+
+    val sessionTemplate = sessionTemplateEntityHelper.create(dayOfWeek = DayOfWeek.MONDAY, validFromDate = today.minusMonths(1), validToDate = null)
 
     // When
     val responseSpec = callAddSessionTemplateExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, sessionTemplateReference = sessionTemplate.reference, excludeDate, actionedBy = TEST_USER)
@@ -147,10 +151,11 @@ class SessionTemplateExcludeDatesTest : IntegrationTestBase() {
   @Test
   fun `when add exclude date called for session template with existing visits then exclude date is successfully added and visits are marked for review`() {
     // Given
-    val excludeDate = LocalDate.now().plusDays(10)
+    val today = LocalDate.now()
+    val excludeDate = today.with(DayOfWeek.MONDAY).plusWeeks(1)
 
-    val sessionTemplate1 = sessionTemplateEntityHelper.create()
-    val sessionTemplate2 = sessionTemplateEntityHelper.create()
+    val sessionTemplate1 = sessionTemplateEntityHelper.create(dayOfWeek = DayOfWeek.MONDAY, validFromDate = today.minusMonths(1), validToDate = null)
+    val sessionTemplate2 = sessionTemplateEntityHelper.create(dayOfWeek = DayOfWeek.MONDAY, validFromDate = today.minusMonths(1), validToDate = null)
 
     // existing visit for excludeDate for same session
     val bookedVisitForSameSession = createApplicationAndVisit(sessionTemplate = sessionTemplate1, visitStatus = VisitStatus.BOOKED, slotDate = excludeDate)
@@ -219,6 +224,78 @@ class SessionTemplateExcludeDatesTest : IntegrationTestBase() {
       .jsonPath("$.developerMessage").isEqualTo("Cannot add exclude date $excludeDate to session template - ${sessionTemplate.reference} as it already exists")
     verify(sessionTemplateExcludeDateRepositorySpy, times(0)).save(SessionTemplateExcludeDate(sessionTemplate.id, sessionTemplate, excludeDate, actionedBy = TEST_USER))
     verify(telemetryClient, times(0)).trackEvent(eq("add-exclude-date"), any(), isNull())
+  }
+
+  @Test
+  fun `when add exclude date called with an invalid weekday the date is not added and BAD_REQUEST is returned`() {
+    // Given
+    val today = LocalDate.now()
+    val sessionTemplate = sessionTemplateEntityHelper.create(dayOfWeek = DayOfWeek.MONDAY, validFromDate = today.minusMonths(1), validToDate = null)
+
+    // exclude date is on a TUESDAY While session is for a MONDAY
+    val excludeDate = today.with(TemporalAdjusters.next(DayOfWeek.TUESDAY))
+
+    // When
+    val responseSpec = callAddSessionTemplateExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, sessionTemplateReference = sessionTemplate.reference, excludeDate, actionedBy = TEST_USER)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest.expectBody().jsonPath("$.developerMessage").isEqualTo("Cannot add exclude date $excludeDate to session template - ${sessionTemplate.reference} as it is not a valid session date")
+    verify(sessionTemplateExcludeDateRepositorySpy, times(0)).saveAndFlush(any())
+    verify(telemetryClient, times(0)).trackEvent(eq("add-session-exclude-date"), any(), isNull())
+  }
+
+  @Test
+  fun `when add exclude date called with a date before the session valid from date the date is not added and BAD_REQUEST is returned`() {
+    // Given
+    val today = LocalDate.now()
+    val sessionTemplate = sessionTemplateEntityHelper.create(dayOfWeek = DayOfWeek.MONDAY, validFromDate = today.plusMonths(1), validToDate = null)
+
+    // exclude date is a week before validFromDate
+    val excludeDate = sessionTemplate.validFromDate.with(sessionTemplate.dayOfWeek).minusWeeks(1)
+
+    // When
+    val responseSpec = callAddSessionTemplateExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, sessionTemplateReference = sessionTemplate.reference, excludeDate, actionedBy = TEST_USER)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest.expectBody().jsonPath("$.developerMessage").isEqualTo("Cannot add exclude date $excludeDate to session template - ${sessionTemplate.reference} as it is not a valid session date")
+    verify(sessionTemplateExcludeDateRepositorySpy, times(0)).saveAndFlush(any())
+    verify(telemetryClient, times(0)).trackEvent(eq("add-session-exclude-date"), any(), isNull())
+  }
+
+  @Test
+  fun `when add exclude date called with a date after the session valid to date the date is not added and BAD_REQUEST is returned`() {
+    // Given
+    val today = LocalDate.now()
+    val sessionTemplate = sessionTemplateEntityHelper.create(dayOfWeek = DayOfWeek.MONDAY, validFromDate = today.minusMonths(1), validToDate = today.plusMonths(2))
+
+    // exclude date is a month after validToDate
+    val excludeDate = sessionTemplate.validToDate!!.with(sessionTemplate.dayOfWeek).plusMonths(1)
+
+    // When
+    val responseSpec = callAddSessionTemplateExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, sessionTemplateReference = sessionTemplate.reference, excludeDate, actionedBy = TEST_USER)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest.expectBody().jsonPath("$.developerMessage").isEqualTo("Cannot add exclude date $excludeDate to session template - ${sessionTemplate.reference} as it is not a valid session date")
+    verify(sessionTemplateExcludeDateRepositorySpy, times(0)).saveAndFlush(any())
+    verify(telemetryClient, times(0)).trackEvent(eq("add-session-exclude-date"), any(), isNull())
+  }
+
+  @Test
+  fun `when weekly frequency is 2 and add exclude date called with a date that does not fall in the recurring window is not added and BAD_REQUEST is returned`() {
+    // Given
+    val today = LocalDate.now()
+    val sessionTemplate = sessionTemplateEntityHelper.create(dayOfWeek = today.dayOfWeek, validFromDate = today, validToDate = null, weeklyFrequency = 2)
+
+    // exclude date is a week after today but the weekly frequency is 2 so the date is invalid
+    val excludeDate = today.plusWeeks(1)
+
+    // When
+    val responseSpec = callAddSessionTemplateExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, sessionTemplateReference = sessionTemplate.reference, excludeDate, actionedBy = TEST_USER)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest.expectBody().jsonPath("$.developerMessage").isEqualTo("Cannot add exclude date $excludeDate to session template - ${sessionTemplate.reference} as it is not a valid session date")
+    verify(sessionTemplateExcludeDateRepositorySpy, times(0)).saveAndFlush(any())
+    verify(telemetryClient, times(0)).trackEvent(eq("add-session-exclude-date"), any(), isNull())
   }
 
   @Test
