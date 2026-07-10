@@ -240,8 +240,8 @@ class SessionTemplateExcludeDatesTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isBadRequest.expectBody().jsonPath("$.developerMessage").isEqualTo("Cannot add exclude date $excludeDate to session template - ${sessionTemplate.reference} as it is not a valid session date")
-    verify(sessionTemplateExcludeDateRepositorySpy, times(0)).save(SessionTemplateExcludeDate(sessionTemplate.id, sessionTemplate, excludeDate, actionedBy = TEST_USER))
-    verify(telemetryClient, times(0)).trackEvent(eq("add-exclude-date"), any(), isNull())
+    verify(sessionTemplateExcludeDateRepositorySpy, times(0)).saveAndFlush(any())
+    verify(telemetryClient, times(0)).trackEvent(eq("add-session-exclude-date"), any(), isNull())
   }
 
   @Test
@@ -258,8 +258,8 @@ class SessionTemplateExcludeDatesTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isBadRequest.expectBody().jsonPath("$.developerMessage").isEqualTo("Cannot add exclude date $excludeDate to session template - ${sessionTemplate.reference} as it is not a valid session date")
-    verify(sessionTemplateExcludeDateRepositorySpy, times(0)).save(SessionTemplateExcludeDate(sessionTemplate.id, sessionTemplate, excludeDate, actionedBy = TEST_USER))
-    verify(telemetryClient, times(0)).trackEvent(eq("add-exclude-date"), any(), isNull())
+    verify(sessionTemplateExcludeDateRepositorySpy, times(0)).saveAndFlush(any())
+    verify(telemetryClient, times(0)).trackEvent(eq("add-session-exclude-date"), any(), isNull())
   }
 
   @Test
@@ -276,8 +276,8 @@ class SessionTemplateExcludeDatesTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isBadRequest.expectBody().jsonPath("$.developerMessage").isEqualTo("Cannot add exclude date $excludeDate to session template - ${sessionTemplate.reference} as it is not a valid session date")
-    verify(sessionTemplateExcludeDateRepositorySpy, times(0)).save(SessionTemplateExcludeDate(sessionTemplate.id, sessionTemplate, excludeDate, actionedBy = TEST_USER))
-    verify(telemetryClient, times(0)).trackEvent(eq("add-exclude-date"), any(), isNull())
+    verify(sessionTemplateExcludeDateRepositorySpy, times(0)).saveAndFlush(any())
+    verify(telemetryClient, times(0)).trackEvent(eq("add-session-exclude-date"), any(), isNull())
   }
 
   @Test
@@ -294,8 +294,8 @@ class SessionTemplateExcludeDatesTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isBadRequest.expectBody().jsonPath("$.developerMessage").isEqualTo("Cannot add exclude date $excludeDate to session template - ${sessionTemplate.reference} as it is not a valid session date")
-    verify(sessionTemplateExcludeDateRepositorySpy, times(0)).save(SessionTemplateExcludeDate(sessionTemplate.id, sessionTemplate, excludeDate, actionedBy = TEST_USER))
-    verify(telemetryClient, times(0)).trackEvent(eq("add-exclude-date"), any(), isNull())
+    verify(sessionTemplateExcludeDateRepositorySpy, times(0)).saveAndFlush(any())
+    verify(telemetryClient, times(0)).trackEvent(eq("add-session-exclude-date"), any(), isNull())
   }
 
   @Test
