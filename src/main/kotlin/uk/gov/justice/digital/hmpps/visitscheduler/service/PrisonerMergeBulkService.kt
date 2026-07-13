@@ -35,12 +35,12 @@ class PrisonerMergeBulkService(
   private fun trackPrisonerMergeFailure(notificationDto: PrisonerMergeNotificationDto, exception: Exception) {
     try {
       telemetryClient.trackEvent(
-        TelemetryVisitEvents.PRISONER_MERGE_FAILURE_EVENT.eventName,
+        TelemetryVisitEvents.MANUAL_MERGE_EVENT_FAILED_FOR_PRISONER.eventName,
         mapOf(
           "oldPrisonerNumber" to notificationDto.oldPrisonerNumber,
           "newPrisonerNumber" to notificationDto.newPrisonerNumber,
-          "message" to (exception.message?.take(VisitSchedulerExceptionHandler.MAX_ERROR_LENGTH) ?: ""),
-          "exception" to exception::class.simpleName.orEmpty(),
+          "exceptionType" to exception::class.simpleName.orEmpty(),
+          "exceptionMessage" to (exception.message?.take(VisitSchedulerExceptionHandler.MAX_ERROR_LENGTH) ?: ""),
         ),
         null,
       )

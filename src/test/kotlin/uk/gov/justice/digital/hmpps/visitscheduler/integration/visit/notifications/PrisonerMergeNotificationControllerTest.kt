@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_MERGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.PRISONER_MERGE_FAILURE_EVENT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
@@ -252,12 +252,12 @@ class PrisonerMergeNotificationControllerTest : NotificationTestBase() {
       "Prisoner merge event occurred - old prisoner number $oldPrisonerNumber2, new prisoner number - $newPrisonerNumber2",
     )
 
-    verify(telemetryClient, times(1)).trackEvent(eq(PRISONER_MERGE_FAILURE_EVENT.eventName), mapCapture.capture(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq(TelemetryVisitEvents.MANUAL_MERGE_EVENT_FAILED_FOR_PRISONER.eventName), mapCapture.capture(), isNull())
     val telemetryData = mapCapture.value
     assertThat(telemetryData["oldPrisonerNumber"]).isEqualTo(oldPrisonerNumber)
     assertThat(telemetryData["newPrisonerNumber"]).isEqualTo(newPrisonerNumber)
-    assertThat(telemetryData["message"]).isEqualTo("merge failed")
-    assertThat(telemetryData["exception"]).isEqualTo("RuntimeException")
+    assertThat(telemetryData["exceptionMessage"]).isEqualTo("merge failed")
+    assertThat(telemetryData["exceptionType"]).isEqualTo("RuntimeException")
   }
 
   private fun createVisitAndAssociatedApplication(prisonerId: String, slotDate: LocalDate, sessionTemplate: SessionTemplate, visitStatus: VisitStatus): Visit {
