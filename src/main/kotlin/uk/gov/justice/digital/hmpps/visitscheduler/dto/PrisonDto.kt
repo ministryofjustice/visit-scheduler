@@ -1,8 +1,11 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto
 
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.Valid
 import jakarta.validation.constraints.Min
+import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import java.time.DayOfWeek
 
@@ -17,6 +20,7 @@ data class PrisonDto(
   @field:NotNull
   var active: Boolean = false,
 
+  // TODO - we need to remove this once we start using the client booking windows
   @param:Schema(description = "minimum number of days notice from the current date to booked a visit", example = "2", required = true)
   @field:NotNull
   @field:Min(0)
@@ -53,20 +57,24 @@ data class PrisonDto(
   @field:Min(1)
   var remandVisitLimitPerWeek: Int = 3,
 
-  @param:Schema(description = "prison user client", required = false)
-  val clients: List<UserClientDto> = mutableListOf(),
+  @param:Schema(description = "prison user client", required = true)
+  @field:NotEmpty
+  val clients: List<@Valid PrisonUserClientDto> = mutableListOf(),
 ) {
   constructor(prisonEntity: Prison) : this(
     code = prisonEntity.code,
     active = prisonEntity.active,
-    policyNoticeDaysMin = prisonEntity.policyNoticeDaysMin,
-    policyNoticeDaysMax = prisonEntity.policyNoticeDaysMax,
     maxTotalVisitors = prisonEntity.maxTotalVisitors,
     maxAdultVisitors = prisonEntity.maxAdultVisitors,
     maxChildVisitors = prisonEntity.maxChildVisitors,
     adultAgeYears = prisonEntity.adultAgeYears,
+    clients = prisonEntity.clients.map { prisonUserClient ->
+      PrisonUserClientDto(prisonUserClient)
+    }.toList(),
     weekStartDay = prisonEntity.weekStartDay,
     remandVisitLimitPerWeek = prisonEntity.remandVisitLimitPerWeek,
-    clients = prisonEntity.clients.map { UserClientDto(it.userType, it.active) }.toList(),
+    // TODO - remove this once we use the client booking windows
+    policyNoticeDaysMin = prisonEntity.clients.first { it.userType == UserType.STAFF }.policyNoticeDaysMin,
+    policyNoticeDaysMax = prisonEntity.clients.first { it.userType == UserType.STAFF }.policyNoticeDaysMax,
   )
 }
