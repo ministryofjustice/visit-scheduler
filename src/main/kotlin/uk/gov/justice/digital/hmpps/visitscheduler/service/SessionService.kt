@@ -259,22 +259,20 @@ class SessionService(
   ): List<DoubleBookedConflictSessionDto> {
     val doubleBookingOrReservationSessions = mutableListOf<DoubleBookedConflictSessionDto>()
     val sessionSlotsByKey = sessionSlots.associateBy { Pair(it.slotDate.toString(), it.sessionTemplateReference) }
-    val bookedVisits = getBookedVisitsForSessionSlots(sessionSlots, prisonerId)
+    val bookedVisitsBySlotId = getBookedVisitsForSessionSlots(sessionSlots, prisonerId).associateBy { it.sessionSlot.id }
     visitSessions.forEach { visitSession ->
       val key = Pair(visitSession.startTimestamp.toLocalDate().toString(), visitSession.sessionTemplateReference)
-      if (sessionSlotsByKey.containsKey(key)) {
-        val sessionSlot = sessionSlotsByKey[key]!!
-        val bookedVisit = bookedVisits.firstOrNull { it.sessionSlot.id == sessionSlot.id }
+      val sessionSlot = sessionSlotsByKey[key] ?: return@forEach
+      val bookedVisit = bookedVisitsBySlotId[sessionSlot.id]
 
-        if (bookedVisit != null) {
+      if (bookedVisit != null) {
+        sessionSlot.sessionTemplateReference?.let { sessionTemplateReference ->
+          doubleBookingOrReservationSessions.add(DoubleBookedConflictSessionDto(reference = bookedVisit.reference, conflictType = SessionConflictType.VISIT, visitSubStatus = bookedVisit.visitSubStatus, sessionDate = bookedVisit.sessionSlot.slotStart.toLocalDate(), sessionTemplateReference = sessionTemplateReference))
+        }
+      } else {
+        if (sessionHasDoubleBookedApplications(sessionSlot, prisonerId, excludedApplicationReference, usernameToExcludeFromReservedApplications)) {
           sessionSlot.sessionTemplateReference?.let { sessionTemplateReference ->
-            doubleBookingOrReservationSessions.add(DoubleBookedConflictSessionDto(reference = bookedVisit.reference, conflictType = SessionConflictType.VISIT, visitSubStatus = bookedVisit.visitSubStatus, sessionDate = bookedVisit.sessionSlot.slotStart.toLocalDate(), sessionTemplateReference = sessionTemplateReference))
-          }
-        } else {
-          if (sessionHasDoubleBookedApplications(sessionSlot, prisonerId, excludedApplicationReference, usernameToExcludeFromReservedApplications)) {
-            sessionSlot.sessionTemplateReference?.let { sessionTemplateReference ->
-              doubleBookingOrReservationSessions.add(DoubleBookedConflictSessionDto(conflictType = SessionConflictType.APPLICATION, sessionDate = sessionSlot.slotStart.toLocalDate(), sessionTemplateReference = sessionTemplateReference, reference = null, visitSubStatus = null))
-            }
+            doubleBookingOrReservationSessions.add(DoubleBookedConflictSessionDto(conflictType = SessionConflictType.APPLICATION, sessionDate = sessionSlot.slotStart.toLocalDate(), sessionTemplateReference = sessionTemplateReference, reference = null, visitSubStatus = null))
           }
         }
       }
