@@ -12,11 +12,14 @@ import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonUserClient
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionSlotRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateExcludeDateRepository
@@ -24,6 +27,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRep
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionConflictsUtil
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionDatesUtil
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -86,13 +90,7 @@ class SessionServiceRemandLimitTest {
     val dayOfWeek = validFromDate.dayOfWeek
 
     whenever(prisonsService.findPrisonByCode(prisonCode)).thenReturn(
-      PrisonEntityHelper.createPrison(
-        prisonCode = prisonCode,
-        policyNoticeDaysMin = noticeDaysMin,
-        policyNoticeDaysMax = noticeDaysMax,
-        remandVisitLimitPerWeek = 1,
-        weekStartDay = dayOfWeek,
-      ),
+      createPrison(dayOfWeek, 1),
     )
 
     whenever(prisonerService.getPrisoner(any())).thenReturn(
@@ -150,17 +148,8 @@ class SessionServiceRemandLimitTest {
     // Given
     val validFromDate = currentDate.plusDays(noticeDaysMin.toLong() + 1)
     val dayOfWeek = validFromDate.dayOfWeek
-
     // remand limit is 2
-    whenever(prisonsService.findPrisonByCode(prisonCode)).thenReturn(
-      PrisonEntityHelper.createPrison(
-        prisonCode = prisonCode,
-        policyNoticeDaysMin = noticeDaysMin,
-        policyNoticeDaysMax = noticeDaysMax,
-        remandVisitLimitPerWeek = 2,
-        weekStartDay = dayOfWeek,
-      ),
-    )
+    whenever(prisonsService.findPrisonByCode(prisonCode)).thenReturn(createPrison(dayOfWeek, 2))
 
     whenever(prisonerService.getPrisoner(any())).thenReturn(
       PrisonerDto(
@@ -220,13 +209,7 @@ class SessionServiceRemandLimitTest {
 
     // remand limit is 1
     whenever(prisonsService.findPrisonByCode(prisonCode)).thenReturn(
-      PrisonEntityHelper.createPrison(
-        prisonCode = prisonCode,
-        policyNoticeDaysMin = noticeDaysMin,
-        policyNoticeDaysMax = noticeDaysMax,
-        remandVisitLimitPerWeek = 1,
-        weekStartDay = dayOfWeek,
-      ),
+      createPrison(dayOfWeek, 1),
     )
 
     whenever(prisonerService.getPrisoner(any())).thenReturn(
@@ -302,13 +285,7 @@ class SessionServiceRemandLimitTest {
     )
 
     whenever(prisonsService.findPrisonByCode(prisonCode)).thenReturn(
-      PrisonEntityHelper.createPrison(
-        prisonCode = prisonCode,
-        policyNoticeDaysMin = noticeDaysMin,
-        policyNoticeDaysMax = noticeDaysMax,
-        remandVisitLimitPerWeek = 1,
-        weekStartDay = dayOfWeek,
-      ),
+      createPrison(dayOfWeek, 2),
     )
 
     val session1 = sessionTemplate(
@@ -353,5 +330,18 @@ class SessionServiceRemandLimitTest {
     whenever(
       sessionTemplateRepository.findSessionTemplateMinCapacityBy(any(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull()),
     ).thenReturn(response)
+  }
+
+  private fun createPrison(dayOfWeek: DayOfWeek, remandVisitLimitPerWeek: Int): Prison = PrisonEntityHelper.createPrison(
+    prisonCode = prisonCode,
+    remandVisitLimitPerWeek = remandVisitLimitPerWeek,
+    weekStartDay = dayOfWeek,
+  ).also {
+    it.clients.addAll(
+      listOf(
+        PrisonUserClient(prisonId = it.id, prison = it, userType = STAFF, policyNoticeDaysMin = noticeDaysMin, policyNoticeDaysMax = noticeDaysMax, active = true),
+        PrisonUserClient(prisonId = it.id, prison = it, userType = UserType.PUBLIC, policyNoticeDaysMin = noticeDaysMin, policyNoticeDaysMax = noticeDaysMax, active = true),
+      ),
+    )
   }
 }
