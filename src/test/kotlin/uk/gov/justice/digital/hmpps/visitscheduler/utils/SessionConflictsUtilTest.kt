@@ -22,7 +22,7 @@ import java.time.temporal.TemporalAdjusters
 class SessionConflictsUtilTest {
   val sessionConflictsUtil = SessionConflictsUtil()
 
-  val visitDate: LocalDate = LocalDate.now().with(TemporalAdjusters.next(MONDAY))
+  private val visitDate: LocalDate = LocalDate.of(2026, 1, 1).with(TemporalAdjusters.next(MONDAY))
 
   fun createVisitSessionDto(visitDate: LocalDate): VisitSessionDto = VisitSessionDto(
     sessionTemplateReference = "ref",
