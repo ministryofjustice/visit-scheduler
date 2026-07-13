@@ -83,7 +83,7 @@ class PrisonerMergeController(
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "Prisoner merges have completed successfully",
+        description = "Prisoner merges have been processed (individual failures are logged and do not stop processing)",
       ),
       ApiResponse(
         responseCode = "400",

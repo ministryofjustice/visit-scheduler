@@ -45,7 +45,7 @@ class PrisonerMergeBulkService(
         null,
       )
     } catch (e: RuntimeException) {
-      LOG.error("Error occurred in call to telemetry client to log event - $e.toString()")
+      LOG.error("Error occurred in call to telemetry client to log event", e)
     }
   }
 }

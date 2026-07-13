@@ -34,5 +34,5 @@ enum class TelemetryVisitEvents(val eventName: String) {
   OVERBOOKED_SESSION_REPORT("overbooked-sessions-report"),
 
   // Prisoner merges
-  MANUAL_MERGE_EVENT_FAILED_FOR_PRISONER("manual_prisoner_merge_event_failed"),
+  MANUAL_MERGE_EVENT_FAILED_FOR_PRISONER("manual-prisoner-merge-event-failed"),
 }
