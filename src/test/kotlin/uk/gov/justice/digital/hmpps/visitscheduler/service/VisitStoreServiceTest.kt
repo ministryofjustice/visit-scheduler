@@ -27,7 +27,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonNotFoundException
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
@@ -82,19 +82,16 @@ internal class VisitStoreServiceTest {
       ),
     )
 
-    private val prison =
-      Prison(
-        code = "1234",
-        active = true,
-        policyNoticeDaysMin = 1,
-        policyNoticeDaysMax = 2,
-        maxTotalVisitors = 2,
-        maxAdultVisitors = 1,
-        maxChildVisitors = 1,
-        adultAgeYears = 18,
-        weekStartDay = DayOfWeek.MONDAY,
-        remandVisitLimitPerWeek = 3,
-      )
+    private val prison = PrisonEntityHelper.createPrison(
+      prisonCode = "1234",
+      activePrison = true,
+      maxTotalVisitors = 2,
+      maxAdultVisitors = 1,
+      maxChildVisitors = 1,
+      adultAgeYears = 18,
+      weekStartDay = DayOfWeek.MONDAY,
+      remandVisitLimitPerWeek = 3,
+    )
 
     private val sessionSlot = SessionSlot(
       prisonId = prison.id,
@@ -177,19 +174,16 @@ internal class VisitStoreServiceTest {
       ),
     )
 
-    private val prison =
-      Prison(
-        code = "1234",
-        active = true,
-        policyNoticeDaysMin = 1,
-        policyNoticeDaysMax = 2,
-        maxTotalVisitors = 2,
-        maxAdultVisitors = 1,
-        maxChildVisitors = 1,
-        adultAgeYears = 18,
-        weekStartDay = DayOfWeek.MONDAY,
-        remandVisitLimitPerWeek = 3,
-      )
+    private val prison = PrisonEntityHelper.createPrison(
+      prisonCode = "1234",
+      activePrison = true,
+      maxTotalVisitors = 2,
+      maxAdultVisitors = 1,
+      maxChildVisitors = 1,
+      adultAgeYears = 18,
+      weekStartDay = DayOfWeek.MONDAY,
+      remandVisitLimitPerWeek = 3,
+    )
 
     private val sessionSlot = SessionSlot(
       prisonId = prison.id,

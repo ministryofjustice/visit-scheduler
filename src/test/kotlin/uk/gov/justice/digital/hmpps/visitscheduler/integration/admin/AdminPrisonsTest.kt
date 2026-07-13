@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.DEACTIVATE_P
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.PRISON
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.PRISON_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonUserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdatePrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
@@ -196,7 +197,12 @@ class AdminPrisonsTest : IntegrationTestBase() {
   @Test
   fun `create prison`() {
     // Given
-    val clients = listOf(UserClientDto(PUBLIC, true), UserClientDto(STAFF, false))
+    val min = 2
+    val max = 28
+    val clients = listOf(
+      PrisonUserClientDto(userType = PUBLIC, policyNoticeDaysMin = min, policyNoticeDaysMax = max, active = true),
+      PrisonUserClientDto(userType = STAFF, policyNoticeDaysMin = min, policyNoticeDaysMax = max, active = false),
+    )
     val prisonDto = PrisonEntityHelper.createPrisonDto("AWE", true, clients = clients)
 
     // When
@@ -245,6 +251,10 @@ class AdminPrisonsTest : IntegrationTestBase() {
       adultAgeYears = 17,
       weekStartDay = DayOfWeek.SUNDAY,
       remandVisitLimitPerWeek = 2,
+      clients = listOf(
+        PrisonUserClientDto(userType = PUBLIC, policyNoticeDaysMin = 2, policyNoticeDaysMax = 32, active = true),
+        PrisonUserClientDto(userType = STAFF, policyNoticeDaysMin = 2, policyNoticeDaysMax = 32, active = true),
+      ),
     )
 
     // When
@@ -265,10 +275,6 @@ class AdminPrisonsTest : IntegrationTestBase() {
         assertThat(it).containsExactlyInAnyOrderEntriesOf(
           mapOf(
             "prisonId" to "AWE",
-            "beforePolicyNoticeDaysMin" to "2",
-            "afterPolicyNoticeDaysMin" to "4",
-            "beforePolicyNoticeDaysMax" to "28",
-            "afterPolicyNoticeDaysMax" to "32",
             "beforeMaxTotalVisitors" to "6",
             "afterMaxTotalVisitors" to "8",
             "beforeMaxAdultVisitor" to "3",
@@ -302,6 +308,10 @@ class AdminPrisonsTest : IntegrationTestBase() {
       adultAgeYears = null,
       weekStartDay = DayOfWeek.FRIDAY,
       remandVisitLimitPerWeek = null,
+      clients = listOf(
+        PrisonUserClientDto(userType = PUBLIC, policyNoticeDaysMin = 2, policyNoticeDaysMax = 32, active = true),
+        PrisonUserClientDto(userType = STAFF, policyNoticeDaysMin = 2, policyNoticeDaysMax = 32, active = true),
+      ),
     )
 
     // When
@@ -324,6 +334,7 @@ class AdminPrisonsTest : IntegrationTestBase() {
         adultAgeYears = 18,
         weekStartDay = DayOfWeek.FRIDAY,
         remandVisitLimitPerWeek = 3,
+        clients = emptyList(),
       ),
     )
     assertPrisonEntityConfig(
@@ -337,6 +348,7 @@ class AdminPrisonsTest : IntegrationTestBase() {
         adultAgeYears = 18,
         weekStartDay = DayOfWeek.FRIDAY,
         remandVisitLimitPerWeek = 3,
+        clients = emptyList(),
       ),
     )
 
@@ -346,8 +358,6 @@ class AdminPrisonsTest : IntegrationTestBase() {
         assertThat(it).containsExactlyInAnyOrderEntriesOf(
           mapOf(
             "prisonId" to "AWE",
-            "beforePolicyNoticeDaysMin" to "2",
-            "afterPolicyNoticeDaysMin" to "5",
             "beforeWeekStartDay" to "MONDAY",
             "afterWeekStartDay" to "FRIDAY",
           ),
@@ -453,8 +463,6 @@ class AdminPrisonsTest : IntegrationTestBase() {
   }
 
   private fun assertPrisonConfig(prison: PrisonDto, expected: UpdatePrisonDto) {
-    assertThat(prison.policyNoticeDaysMin).isEqualTo(expected.policyNoticeDaysMin)
-    assertThat(prison.policyNoticeDaysMax).isEqualTo(expected.policyNoticeDaysMax)
     assertThat(prison.maxTotalVisitors).isEqualTo(expected.maxTotalVisitors)
     assertThat(prison.maxAdultVisitors).isEqualTo(expected.maxAdultVisitors)
     assertThat(prison.maxChildVisitors).isEqualTo(expected.maxChildVisitors)
@@ -467,8 +475,6 @@ class AdminPrisonsTest : IntegrationTestBase() {
     val prisonEntity = testPrisonRepository.findByCode(prisonCode)
     assertThat(prisonEntity).isNotNull
     prisonEntity?.let { prison ->
-      assertThat(prison.policyNoticeDaysMin).isEqualTo(expected.policyNoticeDaysMin)
-      assertThat(prison.policyNoticeDaysMax).isEqualTo(expected.policyNoticeDaysMax)
       assertThat(prison.maxTotalVisitors).isEqualTo(expected.maxTotalVisitors)
       assertThat(prison.maxAdultVisitors).isEqualTo(expected.maxAdultVisitors)
       assertThat(prison.maxChildVisitors).isEqualTo(expected.maxChildVisitors)
