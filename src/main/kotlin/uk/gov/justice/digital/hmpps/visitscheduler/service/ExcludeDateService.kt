@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplateExcludeDate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonExcludeDateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateExcludeDateRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionDatesUtil
 import java.time.LocalDate
 import java.util.stream.Collectors
 
@@ -26,6 +27,7 @@ class ExcludeDateService(
   private val telemetryClientService: TelemetryClientService,
   private val prisonExcludeDateRepository: PrisonExcludeDateRepository,
   private val sessionTemplateExcludeDateRepository: SessionTemplateExcludeDateRepository,
+  private val sessionDatesUtil: SessionDatesUtil,
 ) {
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
@@ -61,7 +63,7 @@ class ExcludeDateService(
     with(excludeDateDto) {
       val prisonCode = prison.code
       val existingExcludeDates = getExistingExcludeDates(prison)
-      validateAddExcludeDate(ExcludeDateEntity.PRISON, excludeDate, prisonCode, existingExcludeDates)
+      validateAddPrisonExcludeDate(excludeDate, prisonCode, existingExcludeDates)
 
       prisonExcludeDateRepository.saveAndFlush(PrisonExcludeDate(prison.id, prison, excludeDate, actionedBy))
       telemetryClientService.trackAddPrisonExcludeDateEvent(prisonCode, excludeDateDto)
@@ -75,7 +77,7 @@ class ExcludeDateService(
     with(excludeDateDto) {
       val sessionTemplateReference = sessionTemplate.reference
       val existingExcludeDates = getExistingExcludeDates(sessionTemplate)
-      validateAddExcludeDate(ExcludeDateEntity.SESSION_TEMPLATE, excludeDate, sessionTemplateReference, existingExcludeDates)
+      validateAddSessionExcludeDate(excludeDate, sessionTemplate, existingExcludeDates)
 
       sessionTemplateExcludeDateRepository.saveAndFlush(SessionTemplateExcludeDate(sessionTemplate.id, sessionTemplate, excludeDate, actionedBy))
       telemetryClientService.trackAddSessionExcludeDateEvent(sessionTemplateReference, excludeDateDto)
@@ -109,12 +111,27 @@ class ExcludeDateService(
     }
   }
 
-  private fun validateAddExcludeDate(excludeDateEntity: ExcludeDateEntity, excludeDate: LocalDate, prisonCode: String, existingExcludeDates: Set<LocalDate>) {
+  private fun validateAddPrisonExcludeDate(excludeDate: LocalDate, prisonCode: String, existingExcludeDates: Set<LocalDate>) {
+    val excludeDateEntity = ExcludeDateEntity.PRISON
+
     // validate if excluded date is in the past
     validatePastExcludeDate(excludeDateEntity, excludeDate, prisonCode)
 
     // validate if the exclude date has already been added
     validateAlreadyAddedExcludeDate(excludeDateEntity, existingExcludeDates, excludeDate, prisonCode)
+  }
+
+  private fun validateAddSessionExcludeDate(excludeDate: LocalDate, sessionTemplate: SessionTemplate, existingExcludeDates: Set<LocalDate>) {
+    val sessionTemplateReference = sessionTemplate.reference
+    val excludeDateEntity = ExcludeDateEntity.SESSION_TEMPLATE
+    // validate if excluded date is in the past
+    validatePastExcludeDate(excludeDateEntity, excludeDate, sessionTemplateReference)
+
+    // validate if the exclude date has already been added
+    validateAlreadyAddedExcludeDate(excludeDateEntity, existingExcludeDates, excludeDate, sessionTemplateReference)
+
+    // validate if the excluded date is a valid date for the session
+    validateIfValidSessionDate(excludeDate, sessionTemplate)
   }
 
   @kotlin.jvm.Throws(ValidationException::class)
@@ -131,6 +148,16 @@ class ExcludeDateService(
     if (existingExcludeDates.contains(excludeDate)) {
       LOG.info("failed to add exclude date - {} for {} - {} as exclude date already exists", excludeDate, excludeDateEntity.desc, code)
       val message = alreadyAddedExcludeDateMessage(excludeDateEntity, code, excludeDate)
+      throw ValidationException(message)
+    }
+  }
+
+  @kotlin.jvm.Throws(ValidationException::class)
+  private fun validateIfValidSessionDate(excludeDate: LocalDate, sessionTemplate: SessionTemplate) {
+    val sessionTemplateReference = sessionTemplate.reference
+    if (!sessionDatesUtil.isActiveForDate(excludeDate, sessionTemplate)) {
+      LOG.info("Exclude date {} is not valid for session template {}", excludeDate, sessionTemplateReference)
+      val message = notAValidSessionDateMessage(sessionTemplateReference, excludeDate)
       throw ValidationException(message)
     }
   }
@@ -158,6 +185,8 @@ class ExcludeDateService(
     ExcludeDateEntity.PRISON -> messageService.getMessage("validation.remove.prison.excludedate.doesnotexist", excludeDate.toString(), code)
     ExcludeDateEntity.SESSION_TEMPLATE -> messageService.getMessage("validation.remove.session.excludedate.doesnotexist", excludeDate.toString(), code)
   }
+
+  private fun notAValidSessionDateMessage(sessionTemplateReference: String, excludeDate: LocalDate): String? = messageService.getMessage("validation.add.session.excludedate.invalid", excludeDate.toString(), sessionTemplateReference)
 
   private fun getExistingExcludeDates(prison: Prison): Set<LocalDate> = prison.excludeDates.stream().map { it.excludeDate }.collect(Collectors.toSet())
 
