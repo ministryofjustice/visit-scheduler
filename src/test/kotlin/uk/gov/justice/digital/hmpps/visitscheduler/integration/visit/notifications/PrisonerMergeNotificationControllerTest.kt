@@ -4,6 +4,12 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.doThrow
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.isNull
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
@@ -11,13 +17,16 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_MERGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.PRISONER_MERGE_FAILURE_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerMergeNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerMergeNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatPrisonerMerged
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatPrisonersMerged
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.ActionedBy
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
@@ -45,6 +54,8 @@ class PrisonerMergeNotificationControllerTest : NotificationTestBase() {
 
   val oldPrisonerNumber = "A1234AA"
   val newPrisonerNumber = "BB456DD"
+  val oldPrisonerNumber2 = "C1234CC"
+  val newPrisonerNumber2 = "DD456EE"
   val prisonCode = "ABC"
   val otherPrisonCode = "DEF"
 
@@ -155,6 +166,98 @@ class PrisonerMergeNotificationControllerTest : NotificationTestBase() {
     assertThat(actionedByValues).anyMatch { it.userName == oldPrisonerNumber && it.userType == UserType.PRISONER }
     assertThat(actionedByValues).anyMatch { it.userName == newPrisonerNumber && it.userType == UserType.PRISONER }
     assertThat(actionedByValues).anyMatch { it.userName == null && it.userType == UserType.SYSTEM }
+  }
+
+  @Test
+  fun `when multiple prisoners are merged then all prisonerIds are updated`() {
+    // Given
+    val today = LocalDate.now()
+    createVisitAndAssociatedApplication(prisonerId = oldPrisonerNumber, slotDate = today, sessionTemplate = sessionTemplate1, visitStatus = BOOKED)
+    createVisitAndAssociatedApplication(prisonerId = oldPrisonerNumber2, slotDate = today.plusDays(1), sessionTemplate = sessionTemplate1, visitStatus = BOOKED)
+
+    // When
+    val notificationDto = PrisonerMergeNotificationsDto(
+      listOf(
+        PrisonerMergeNotificationDto(oldPrisonerNumber = oldPrisonerNumber, newPrisonerNumber = newPrisonerNumber),
+        PrisonerMergeNotificationDto(oldPrisonerNumber = oldPrisonerNumber2, newPrisonerNumber = newPrisonerNumber2),
+      ),
+    )
+    val responseSpec = callNotifyVSiPThatPrisonersMerged(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val visits = testVisitRepository.findAll()
+    assertThat(visits).hasSize(2)
+    assertThat(visits).noneMatch { it.prisonerId == oldPrisonerNumber }
+    assertThat(visits).noneMatch { it.prisonerId == oldPrisonerNumber2 }
+    assertThat(visits).anyMatch { it.prisonerId == newPrisonerNumber }
+    assertThat(visits).anyMatch { it.prisonerId == newPrisonerNumber2 }
+
+    val applications = testApplicationRepository.findAll()
+    assertThat(applications).hasSize(2)
+    assertThat(applications).noneMatch { it.prisonerId == oldPrisonerNumber }
+    assertThat(applications).noneMatch { it.prisonerId == oldPrisonerNumber2 }
+    assertThat(applications).anyMatch { it.prisonerId == newPrisonerNumber }
+    assertThat(applications).anyMatch { it.prisonerId == newPrisonerNumber2 }
+
+    val auditEvents = testEventAuditRepository.findAll()
+    assertThat(auditEvents).hasSize(2)
+    assertThat(auditEvents).anyMatch {
+      it.text == "Prisoner merge event occurred - old prisoner number $oldPrisonerNumber, new prisoner number - $newPrisonerNumber"
+    }
+    assertThat(auditEvents).anyMatch {
+      it.text == "Prisoner merge event occurred - old prisoner number $oldPrisonerNumber2, new prisoner number - $newPrisonerNumber2"
+    }
+  }
+
+  @Test
+  fun `when a prisoner merge fails then failure is tracked and other merges continue`() {
+    // Given
+    val today = LocalDate.now()
+    createVisitAndAssociatedApplication(prisonerId = oldPrisonerNumber, slotDate = today, sessionTemplate = sessionTemplate1, visitStatus = BOOKED)
+    createVisitAndAssociatedApplication(prisonerId = oldPrisonerNumber2, slotDate = today.plusDays(1), sessionTemplate = sessionTemplate1, visitStatus = BOOKED)
+    doThrow(RuntimeException("merge failed"))
+      .whenever(visitRepository).updatePrisonerId(oldPrisonerNumber, newPrisonerNumber)
+
+    // When
+    val notificationDto = PrisonerMergeNotificationsDto(
+      listOf(
+        PrisonerMergeNotificationDto(oldPrisonerNumber = oldPrisonerNumber, newPrisonerNumber = newPrisonerNumber),
+        PrisonerMergeNotificationDto(oldPrisonerNumber = oldPrisonerNumber2, newPrisonerNumber = newPrisonerNumber2),
+      ),
+    )
+    val responseSpec = callNotifyVSiPThatPrisonersMerged(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val visits = testVisitRepository.findAll()
+    assertThat(visits).hasSize(2)
+    assertThat(visits).anyMatch { it.prisonerId == oldPrisonerNumber }
+    assertThat(visits).anyMatch { it.prisonerId == newPrisonerNumber2 }
+    assertThat(visits).noneMatch { it.prisonerId == newPrisonerNumber }
+    assertThat(visits).noneMatch { it.prisonerId == oldPrisonerNumber2 }
+
+    val applications = testApplicationRepository.findAll()
+    assertThat(applications).hasSize(2)
+    assertThat(applications).anyMatch { it.prisonerId == oldPrisonerNumber }
+    assertThat(applications).anyMatch { it.prisonerId == newPrisonerNumber2 }
+    assertThat(applications).noneMatch { it.prisonerId == newPrisonerNumber }
+    assertThat(applications).noneMatch { it.prisonerId == oldPrisonerNumber2 }
+
+    val auditEvents = testEventAuditRepository.findAll()
+    assertThat(auditEvents).hasSize(1)
+    assertThat(auditEvents.single().text).isEqualTo(
+      "Prisoner merge event occurred - old prisoner number $oldPrisonerNumber2, new prisoner number - $newPrisonerNumber2",
+    )
+
+    verify(telemetryClient, times(1)).trackEvent(eq(PRISONER_MERGE_FAILURE_EVENT.eventName), mapCapture.capture(), isNull())
+    val telemetryData = mapCapture.value
+    assertThat(telemetryData["oldPrisonerNumber"]).isEqualTo(oldPrisonerNumber)
+    assertThat(telemetryData["newPrisonerNumber"]).isEqualTo(newPrisonerNumber)
+    assertThat(telemetryData["message"]).isEqualTo("merge failed")
+    assertThat(telemetryData["exception"]).isEqualTo("RuntimeException")
   }
 
   private fun createVisitAndAssociatedApplication(prisonerId: String, slotDate: LocalDate, sessionTemplate: SessionTemplate, visitStatus: VisitStatus): Visit {

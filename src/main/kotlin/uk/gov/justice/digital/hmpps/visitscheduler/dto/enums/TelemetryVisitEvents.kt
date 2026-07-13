@@ -32,4 +32,7 @@ enum class TelemetryVisitEvents(val eventName: String) {
   // reporting
   VISIT_COUNTS_REPORT("visit-counts-report"),
   OVERBOOKED_SESSION_REPORT("overbooked-sessions-report"),
+
+  // Prisoner merges
+  PRISONER_MERGE_FAILURE_EVENT("prisoner-merge-failure"),
 }

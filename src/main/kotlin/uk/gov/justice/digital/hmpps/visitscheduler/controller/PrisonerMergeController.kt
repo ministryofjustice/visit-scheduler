@@ -20,9 +20,12 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerMergeNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerMergeNotificationsDto
+import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonerMergeBulkService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonerMergeService
 
 const val VISIT_NOTIFICATION_PRISONER_MERGE_PATH: String = "$VISIT_CONTROLLER_PATH/prisoner/merge"
+const val VISIT_NOTIFICATION_PRISONER_MERGE_BATCH_PATH: String = "$VISIT_NOTIFICATION_PRISONER_MERGE_PATH/batch"
 
 @RestController
 @Validated
@@ -30,6 +33,7 @@ const val VISIT_NOTIFICATION_PRISONER_MERGE_PATH: String = "$VISIT_CONTROLLER_PA
 @RequestMapping(name = "Visit notification Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
 class PrisonerMergeController(
   private val prisonerMergeService: PrisonerMergeService,
+  private val prisonerMergeBulkService: PrisonerMergeBulkService,
 ) {
   private companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
@@ -68,6 +72,42 @@ class PrisonerMergeController(
   ): ResponseEntity<HttpStatus> {
     LOG.debug("Entered notifyVSiPOfPrisonerMerge {}", dto)
     prisonerMergeService.handlePrisonerMerge(dto)
+    return ResponseEntity(HttpStatus.OK)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PostMapping(VISIT_NOTIFICATION_PRISONER_MERGE_BATCH_PATH)
+  @ResponseStatus(HttpStatus.OK)
+  @Operation(
+    summary = "Endpoint to handle multiple prisoner merge events.",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Prisoner merges have completed successfully",
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Incorrect request to notify VSiP of prisoner merges.",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to notify VSiP of prisoner merges.",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun notifyVSiPOfPrisonerMerges(
+    @RequestBody @Valid
+    dto: PrisonerMergeNotificationsDto,
+  ): ResponseEntity<HttpStatus> {
+    LOG.debug("Entered notifyVSiPOfPrisonerMerges {}", dto)
+    prisonerMergeBulkService.handlePrisonerMerges(dto)
     return ResponseEntity(HttpStatus.OK)
   }
 }
