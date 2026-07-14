@@ -68,7 +68,7 @@ class SessionTemplateExcludeDatesTest : IntegrationTestBase() {
     val sessionTemplate = sessionTemplateEntityHelper.create()
     val getResponseSpec = callGetSessionTemplateExcludeDates(webTestClient, roleVisitSchedulerHttpHeaders, sessionTemplateReference = sessionTemplate.reference)
     val result = getResponseSpec.expectStatus().isOk.expectBody()
-    val excludeDates = getPrisonExcludeDates(result)
+    val excludeDates = getSessionExcludeDates(result)
     Assertions.assertThat(excludeDates).isEmpty()
   }
 
@@ -83,7 +83,7 @@ class SessionTemplateExcludeDatesTest : IntegrationTestBase() {
 
     val getResponseSpec = callGetSessionTemplateExcludeDates(webTestClient, roleVisitSchedulerHttpHeaders, sessionTemplateReference = sessionTemplate.reference)
     val result = getResponseSpec.expectStatus().isOk.expectBody()
-    val excludeDates = getPrisonExcludeDates(result)
+    val excludeDates = getSessionExcludeDates(result)
     Assertions.assertThat(excludeDates.size).isEqualTo(4)
 
     // check results are returned sorted by date desc
@@ -141,7 +141,7 @@ class SessionTemplateExcludeDatesTest : IntegrationTestBase() {
 
     val getResponseSpec = callGetSessionTemplateExcludeDates(webTestClient, roleVisitSchedulerHttpHeaders, sessionTemplateReference = sessionTemplate.reference)
     val result = getResponseSpec.expectStatus().isOk.expectBody()
-    val excludeDates = getPrisonExcludeDates(result)
+    val excludeDates = getSessionExcludeDates(result)
     Assertions.assertThat(excludeDates.size).isEqualTo(1)
     Assertions.assertThat(excludeDates[0].excludeDate).isEqualTo(excludeDate)
     Assertions.assertThat(excludeDates[0].actionedBy).isEqualTo(TEST_USER)
@@ -158,7 +158,10 @@ class SessionTemplateExcludeDatesTest : IntegrationTestBase() {
     val sessionTemplate2 = sessionTemplateEntityHelper.create(dayOfWeek = DayOfWeek.MONDAY, validFromDate = today.minusMonths(1), validToDate = null)
 
     // existing visit for excludeDate for same session
-    val bookedVisitForSameSession = createApplicationAndVisit(sessionTemplate = sessionTemplate1, visitStatus = VisitStatus.BOOKED, slotDate = excludeDate)
+    val bookedVisitForSameSession1 = createApplicationAndVisit(sessionTemplate = sessionTemplate1, visitStatus = VisitStatus.BOOKED, visitSubStatus = VisitSubStatus.AUTO_APPROVED, slotDate = excludeDate, prisonerId = "prisoner-1")
+    val bookedVisitForSameSession2 = createApplicationAndVisit(sessionTemplate = sessionTemplate1, visitStatus = VisitStatus.BOOKED, visitSubStatus = VisitSubStatus.REQUESTED, slotDate = excludeDate, prisonerId = "prisoner-2")
+    // canceled visit - should not be flagged
+    createApplicationAndVisit(sessionTemplate = sessionTemplate1, visitStatus = VisitStatus.CANCELLED, visitSubStatus = VisitSubStatus.CANCELLED, slotDate = excludeDate, prisonerId = "prisoner-3")
 
     // existing visit for excludeDate for different session
     createApplicationAndVisit(sessionTemplate = sessionTemplate2, visitStatus = VisitStatus.BOOKED, slotDate = excludeDate)
@@ -179,16 +182,16 @@ class SessionTemplateExcludeDatesTest : IntegrationTestBase() {
 
     val getResponseSpec = callGetSessionTemplateExcludeDates(webTestClient, roleVisitSchedulerHttpHeaders, sessionTemplateReference = sessionTemplate1.reference)
     val result = getResponseSpec.expectStatus().isOk.expectBody()
-    val excludeDates = getPrisonExcludeDates(result)
+    val excludeDates = getSessionExcludeDates(result)
     Assertions.assertThat(excludeDates.size).isEqualTo(1)
     Assertions.assertThat(excludeDates[0].excludeDate).isEqualTo(excludeDate)
     Assertions.assertThat(excludeDates[0].actionedBy).isEqualTo(TEST_USER)
 
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
 
-    // only 1 visit for the same date and session with status of BOOKED will be flagged.
-    Assertions.assertThat(visitNotifications).hasSize(1)
-    Assertions.assertThat(visitNotifications[0].visit.reference).isEqualTo(bookedVisitForSameSession.reference)
+    // only visits for the same date and session template with status of BOOKED will be flagged.
+    Assertions.assertThat(visitNotifications).hasSize(2)
+    Assertions.assertThat(visitNotifications.map { it.visit.reference }).containsExactlyInAnyOrder(bookedVisitForSameSession1.reference, bookedVisitForSameSession2.reference)
     verify(telemetryClient, times(1)).trackEvent(eq("add-session-exclude-date"), any(), isNull())
   }
 
@@ -286,7 +289,7 @@ class SessionTemplateExcludeDatesTest : IntegrationTestBase() {
     val today = LocalDate.now()
     val sessionTemplate = sessionTemplateEntityHelper.create(dayOfWeek = today.dayOfWeek, validFromDate = today, validToDate = null, weeklyFrequency = 2)
 
-    // exclude date is a week after today but the weekly frequency is 2 so the date is invalid
+    // exclude date is a week after today but the weekly frequency is 2, so the date is invalid
     val excludeDate = today.plusWeeks(1)
 
     // When
@@ -315,7 +318,7 @@ class SessionTemplateExcludeDatesTest : IntegrationTestBase() {
 
     val getResponseSpec = callGetSessionTemplateExcludeDates(webTestClient, roleVisitSchedulerHttpHeaders, sessionTemplateReference = sessionTemplate.reference)
     val result = getResponseSpec.expectStatus().isOk.expectBody()
-    val excludeDates = getPrisonExcludeDates(result).map { it.excludeDate }
+    val excludeDates = getSessionExcludeDates(result).map { it.excludeDate }
     Assertions.assertThat(excludeDates).doesNotContain(excludeDate)
     verify(telemetryClient, times(1)).trackEvent(eq("remove-session-exclude-date"), any(), isNull())
   }
@@ -323,28 +326,37 @@ class SessionTemplateExcludeDatesTest : IntegrationTestBase() {
   @Test
   fun `when remove exclude date called with existing date then exclude date is successfully removed and any notified visits are removed`() {
     // Given
-    val existingExcludeDates = setOf(LocalDate.now(), LocalDate.now().plusDays(7))
+    val today = LocalDate.now()
+    val excludeDateToTest = today.plusDays(7)
+    val existingExcludeDates = setOf(today, excludeDateToTest)
     val sessionTemplate = sessionTemplateEntityHelper.create(excludeDates = existingExcludeDates.toMutableList())
 
-    val excludeDate = LocalDate.now().plusDays(7)
-
     // existing visit for excludeDate in same session template
-    val bookedVisitForSamePrison = visitEntityHelper.create(sessionTemplate = sessionTemplate, visitStatus = VisitStatus.BOOKED)
+    val bookedVisitForSameSessionAndExcludedDate1 = visitEntityHelper.create(sessionTemplate = sessionTemplate, visitStatus = VisitStatus.BOOKED, prisonerId = "prisoner-1", slotDate = excludeDateToTest)
+    val bookedVisitForSameSessionAndExcludedDate2 = visitEntityHelper.create(sessionTemplate = sessionTemplate, visitStatus = VisitStatus.BOOKED, prisonerId = "prisoner-2", slotDate = excludeDateToTest)
 
-    visitNotificationEventHelper.create(bookedVisitForSamePrison, NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE)
+    visitNotificationEventHelper.create(bookedVisitForSameSessionAndExcludedDate1, NotificationEventType.SESSION_VISITS_BLOCKED_FOR_DATE)
+    visitNotificationEventHelper.create(bookedVisitForSameSessionAndExcludedDate2, NotificationEventType.SESSION_VISITS_BLOCKED_FOR_DATE)
 
     // When
-    val responseSpec = callRemoveSessionTemplateExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, sessionTemplateReference = sessionTemplate.reference, excludeDate, actionedBy = TEST_USER)
+    val responseSpec = callRemoveSessionTemplateExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, sessionTemplateReference = sessionTemplate.reference, excludeDateToTest, actionedBy = TEST_USER)
 
     // Then
     responseSpec.expectStatus().isOk
-    verify(sessionTemplateExcludeDateRepositorySpy, times(1)).deleteBySessionTemplateIdAndExcludeDate(sessionTemplate.id, excludeDate)
-    verify(visitNotificationEventServiceSpy, times(1)).handleRemoveSessionVisitBlockDate(SessionDateBlockedDto(sessionTemplate.reference, excludeDate))
+    verify(sessionTemplateExcludeDateRepositorySpy, times(1)).deleteBySessionTemplateIdAndExcludeDate(sessionTemplate.id, excludeDateToTest)
+    verify(visitNotificationEventServiceSpy, times(1)).handleRemoveSessionVisitBlockDate(SessionDateBlockedDto(sessionTemplate.reference, excludeDateToTest))
 
     val getResponseSpec = callGetSessionTemplateExcludeDates(webTestClient, roleVisitSchedulerHttpHeaders, sessionTemplateReference = sessionTemplate.reference)
     val result = getResponseSpec.expectStatus().isOk.expectBody()
-    val excludeDates = getPrisonExcludeDates(result).map { it.excludeDate }
-    Assertions.assertThat(excludeDates).doesNotContain(excludeDate)
+    val excludeDates = getSessionExcludeDates(result).map { it.excludeDate }
+    Assertions.assertThat(excludeDates).hasSize(1)
+    Assertions.assertThat(excludeDates).doesNotContain(excludeDateToTest)
+    Assertions.assertThat(excludeDates).contains(today)
+
+    // all visit notifications for session excludeDate are removed
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
+    Assertions.assertThat(visitNotifications).isEmpty()
+
     verify(telemetryClient, times(1)).trackEvent(eq("remove-session-exclude-date"), any(), isNull())
   }
 
@@ -364,7 +376,7 @@ class SessionTemplateExcludeDatesTest : IntegrationTestBase() {
 
     val getResponseSpec = callGetSessionTemplateExcludeDates(webTestClient, roleVisitSchedulerHttpHeaders, sessionTemplateReference = sessionTemplate.reference)
     val result = getResponseSpec.expectStatus().isOk.expectBody()
-    val excludeDates = getPrisonExcludeDates(result)
+    val excludeDates = getSessionExcludeDates(result)
     Assertions.assertThat(excludeDates).isEmpty()
     verify(telemetryClient, times(0)).trackEvent(eq("remove-exclude-date"), any(), isNull())
   }
@@ -403,5 +415,5 @@ class SessionTemplateExcludeDatesTest : IntegrationTestBase() {
     verify(telemetryClient, times(0)).trackEvent(eq("remove-exclude-date"), any(), isNull())
   }
 
-  private fun getPrisonExcludeDates(returnResult: BodyContentSpec): Array<ExcludeDateDto> = objectMapper.readValue(returnResult.returnResult().responseBody, Array<ExcludeDateDto>::class.java)
+  private fun getSessionExcludeDates(returnResult: BodyContentSpec): Array<ExcludeDateDto> = objectMapper.readValue(returnResult.returnResult().responseBody, Array<ExcludeDateDto>::class.java)
 }
