@@ -60,7 +60,7 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
       " JOIN visit_notification_event_attribute visitor_id on visitor_id.visit_notification_event_id = vne.id " +
       " WHERE ss.slot_start >= NOW() " +
       " AND v.visit_status = 'BOOKED' " +
-      " AND v.visit_sub_status IN ('APPROVED', 'AUTO_APPROVED') " +
+      " AND v.visit_sub_status IN ('APPROVED', 'AUTO_APPROVED', 'REQUESTED') " +
       " AND vne.type=:#{#notificationEvent.name()}" +
       " AND restriction_id.attribute_name = 'VISITOR_RESTRICTION_ID' " +
       " AND restriction_id.attribute_value = :#{#visitorRestrictionId.toString()} " +
