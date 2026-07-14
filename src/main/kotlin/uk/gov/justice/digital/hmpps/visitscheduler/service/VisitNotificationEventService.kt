@@ -144,7 +144,7 @@ class VisitNotificationEventService(
   fun handleRemoveSessionVisitBlockDate(sessionDateBlockedDto: SessionDateBlockedDto) {
     LOG.info("Remove session block date notification received : {}", sessionDateBlockedDto)
     with(sessionDateBlockedDto) {
-      val affectedNotifications = visitNotificationEventRepository.getEventsByVisitDate(sessionTemplateReference, visitDate, SESSION_VISITS_BLOCKED_FOR_DATE)
+      val affectedNotifications = visitNotificationEventRepository.getEventsBySessionTemplateReferenceAndVisitDate(sessionTemplateReference, visitDate, SESSION_VISITS_BLOCKED_FOR_DATE)
 
       deleteNotificationsThatAreNoLongerValid(affectedNotifications, SESSION_VISITS_BLOCKED_FOR_DATE, SESSION_EXCLUDE_DATE_REMOVED)
     }
