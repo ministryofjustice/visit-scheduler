@@ -189,7 +189,7 @@ class SessionTemplateExcludeDatesTest : IntegrationTestBase() {
 
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
 
-    // only 1 visit for the same date and session with status of BOOKED will be flagged.
+    // only visits for the same date and session template with status of BOOKED will be flagged.
     Assertions.assertThat(visitNotifications).hasSize(2)
     Assertions.assertThat(visitNotifications.map { it.visit.reference }).containsExactlyInAnyOrder(bookedVisitForSameSession1.reference, bookedVisitForSameSession2.reference)
     verify(telemetryClient, times(1)).trackEvent(eq("add-session-exclude-date"), any(), isNull())
@@ -332,11 +332,11 @@ class SessionTemplateExcludeDatesTest : IntegrationTestBase() {
     val sessionTemplate = sessionTemplateEntityHelper.create(excludeDates = existingExcludeDates.toMutableList())
 
     // existing visit for excludeDate in same session template
-    val bookedVisitForSamePrison1 = visitEntityHelper.create(sessionTemplate = sessionTemplate, visitStatus = VisitStatus.BOOKED, prisonerId = "prisoner-1", slotDate = excludeDateToTest)
-    val bookedVisitForSamePrison2 = visitEntityHelper.create(sessionTemplate = sessionTemplate, visitStatus = VisitStatus.BOOKED, prisonerId = "prisoner-2", slotDate = excludeDateToTest)
+    val bookedVisitForSameSessionAndExcludedDate1 = visitEntityHelper.create(sessionTemplate = sessionTemplate, visitStatus = VisitStatus.BOOKED, prisonerId = "prisoner-1", slotDate = excludeDateToTest)
+    val bookedVisitForSameSessionAndExcludedDate2 = visitEntityHelper.create(sessionTemplate = sessionTemplate, visitStatus = VisitStatus.BOOKED, prisonerId = "prisoner-2", slotDate = excludeDateToTest)
 
-    visitNotificationEventHelper.create(bookedVisitForSamePrison1, NotificationEventType.SESSION_VISITS_BLOCKED_FOR_DATE)
-    visitNotificationEventHelper.create(bookedVisitForSamePrison2, NotificationEventType.SESSION_VISITS_BLOCKED_FOR_DATE)
+    visitNotificationEventHelper.create(bookedVisitForSameSessionAndExcludedDate1, NotificationEventType.SESSION_VISITS_BLOCKED_FOR_DATE)
+    visitNotificationEventHelper.create(bookedVisitForSameSessionAndExcludedDate2, NotificationEventType.SESSION_VISITS_BLOCKED_FOR_DATE)
 
     // When
     val responseSpec = callRemoveSessionTemplateExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, sessionTemplateReference = sessionTemplate.reference, excludeDateToTest, actionedBy = TEST_USER)
