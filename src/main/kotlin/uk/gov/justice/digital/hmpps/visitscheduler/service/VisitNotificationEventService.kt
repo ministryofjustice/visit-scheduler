@@ -266,6 +266,7 @@ class VisitNotificationEventService(
         )
       } else {
         LOG.info("Alert is not active, skipping alert update for alert Uuid {} and prisoner number {}", notificationDto.alertUuid, notificationDto.prisonerNumber)
+        processAlertDeleted(notificationDto, UnFlagEventReason.PRISONER_ALERT_INACTIVE)
       }
     }
   }
