@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventAttributeType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
@@ -330,6 +331,59 @@ class PrisonerContactRestrictionUpsertedNotificationControllerTest : Notificatio
     responseSpec.expectStatus().isOk
     verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
+    assertThat(testEventAuditRepository.getAuditCount(EventAuditType.PERSON_RESTRICTION_UPSERTED_EVENT)).isEqualTo(0)
+  }
+
+  @Test
+  fun `when a prisoner contact restriction is updated with expiry date today then existing notifications are removed`() {
+    // Given
+    val notificationDto = PrisonerContactRestrictionUpsertedNotificationDto(
+      prisonerNumber = prisonerId,
+      contactId = visitorId,
+      prisonerContactId = prisonerContactId,
+      restrictionId = visitorRestrictionId,
+    )
+
+    val visit1 = createApplicationAndVisit(
+      prisonerId = prisonerId,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate1,
+    )
+
+    visit1.visitors.add(
+      VisitVisitor(
+        nomisPersonId = visitorId,
+        visitId = visit1.id,
+        visit = visit1,
+        visitContact = true,
+      ),
+    )
+
+    visitEntityHelper.save(visit1)
+    eventAuditEntityHelper.create(visit1)
+    visitNotificationEventHelper.create(
+      visit = visit1,
+      notificationEventType = NotificationEventType.PERSON_RESTRICTION_UPSERTED_EVENT,
+      notificationAttributes = mapOf(
+        NotificationEventAttributeType.VISITOR_RESTRICTION to VisitorSupportedRestrictionType.BAN.name,
+        NotificationEventAttributeType.VISITOR_RESTRICTION_ID to visitorRestrictionId.toString(),
+        NotificationEventAttributeType.VISITOR_ID to visitorId.toString(),
+      ),
+    )
+
+    val contactRestrictions = listOf(
+      RestrictionDto(restrictionId = visitorRestrictionId, restrictionType = VisitorSupportedRestrictionType.BAN.name, startDate = LocalDate.now().minusDays(1), expiryDate = LocalDate.now()),
+    )
+
+    // When
+    prisonerContactRegistryMockServer.stubGetPrisonerContactRelationshipDetailsWithRestrictions(prisonerId, visitorId, prisonerContactId, PrisonerContactDto(visitorId, contactRestrictions))
+    val responseSpec = callNotifyVSiPThatPrisonerContactRestrictionUpserted(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
+
+    // Then
+    responseSpec.expectStatus().isOk
+    assertUnflaggedVisitEvent(listOf(visit1), UnFlagEventReason.VISITOR_RESTRICTION_CLOSED, NotificationEventType.PERSON_RESTRICTION_UPSERTED_EVENT.reviewType)
+    assertThat(testVisitNotificationEventRepository.findAll()).isEmpty()
     assertThat(testEventAuditRepository.getAuditCount(EventAuditType.PERSON_RESTRICTION_UPSERTED_EVENT)).isEqualTo(0)
   }
 

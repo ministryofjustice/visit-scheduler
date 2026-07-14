@@ -16,6 +16,7 @@ enum class UnFlagEventReason(val desc: String) {
   PRISONER_ALERT_CODE_REMOVED("prison-alert-code-removed"),
   PRISONER_ALERT_DELETED("prisoner-alert-deleted"),
   VISITOR_APPROVED("visitor-approved"),
+  VISITOR_RESTRICTION_CLOSED("visitor-restriction-closed"),
   NON_ASSOCIATION_VISIT_CANCELLED("non-association-visit-cancelled"),
   NON_ASSOCIATION_VISIT_UPDATED("non-association-visit-updated"),
   NON_ASSOCIATION_VISIT_IGNORED("non-association-visit-ignored"),
