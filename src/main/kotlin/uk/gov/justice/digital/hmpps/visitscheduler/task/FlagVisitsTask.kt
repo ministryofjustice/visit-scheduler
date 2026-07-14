@@ -8,9 +8,6 @@ import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.visitscheduler.config.FlagVisitTaskConfiguration
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.NON_ASSOCIATION
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.PRISON_DATE_BLOCKED
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.SESSION_DATE_BLOCKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonsService
@@ -19,7 +16,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryClientServic
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitNotificationEventService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
 import java.time.LocalDate
-import java.util.function.Predicate
 
 @Component
 class FlagVisitsTask(
@@ -34,9 +30,6 @@ class FlagVisitsTask(
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
     private const val DEFAULT_VISIT_FLAG_REASON = "session not suitable"
-
-    // list of session conflicts that are needed on the report
-    private val REPORT_SESSION_CONFLICTS = listOf(NON_ASSOCIATION, PRISON_DATE_BLOCKED, SESSION_DATE_BLOCKED)
   }
 
   @Scheduled(cron = "\${task.flag-visits.cron:0 0 3 * * ?}")
@@ -71,7 +64,7 @@ class FlagVisitsTask(
           }
         }
 
-        // finally, run the retry visits loop once
+        // finally run the retry visits loop once
         retryVisits.forEach {
           flagVisit(it, i, true)
         }
@@ -94,9 +87,7 @@ class FlagVisitsTask(
       reason = notifications.joinToString(", ") { it.description }
     } else {
       try {
-        sessions = sessionService.getAllVisitSessions(prisonCode = visit.prisonCode, prisonerId = visit.prisonerId, minOverride = noticeDays, maxOverride = noticeDays, userType = UserType.STAFF)
-          .filter { it.sessionTemplateReference == visit.sessionTemplateReference }
-          .filterNot { sessionsWithVisitRenderConflicts.test(it) }
+        sessions = sessionService.getAllVisitSessions(prisonCode = visit.prisonCode, prisonerId = visit.prisonerId, minOverride = noticeDays, maxOverride = noticeDays, userType = UserType.STAFF).filter { it.sessionTemplateReference == visit.sessionTemplateReference }
       } catch (e: Exception) {
         if (isRetry) {
           // only log this if the visit is being retried
@@ -134,10 +125,4 @@ class FlagVisitsTask(
   }
 
   private fun getVisitNotifications(visitReference: String): List<NotificationEventType> = visitNotificationEventService.getNotificationsTypesForBookingReference(visitReference)
-
-  private val sessionsWithVisitRenderConflicts: Predicate<VisitSessionDto> = Predicate { session: VisitSessionDto ->
-    session.sessionConflicts.any {
-      REPORT_SESSION_CONFLICTS.contains(it.sessionConflict)
-    }
-  }
 }
