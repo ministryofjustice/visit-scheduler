@@ -90,6 +90,22 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
   ): List<VisitNotificationEvent>
 
   @Query(
+    "SELECT vne.* FROM visit_notification_event vne " +
+      " JOIN visit v on v.id  = vne.visit_id " +
+      " JOIN session_slot ss on ss.id  = v.session_slot_id " +
+      " WHERE ss.slot_date = :slotDate" +
+      " AND ss.session_template_reference = :sessionTemplateReference " +
+      " AND vne.type=:#{#notificationEvent.name()}" +
+      " ORDER BY vne.id",
+    nativeQuery = true,
+  )
+  fun getEventsBySessionTemplateReferenceAndVisitDate(
+    sessionTemplateReference: String,
+    slotDate: LocalDate,
+    notificationEvent: NotificationEventType,
+  ): List<VisitNotificationEvent>
+
+  @Query(
     value =
     "SELECT COUNT(DISTINCT v.id) " +
       "FROM visit_notification_event vne " +
