@@ -39,7 +39,7 @@ class PrisonerMergeController(
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
-  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PreAuthorize("hasAnyRole('VISIT_SCHEDULER', 'VISIT_SCHEDULER_CONFIG')")
   @PostMapping(VISIT_NOTIFICATION_PRISONER_MERGE_PATH)
   @ResponseStatus(HttpStatus.OK)
   @Operation(
@@ -75,7 +75,7 @@ class PrisonerMergeController(
     return ResponseEntity(HttpStatus.OK)
   }
 
-  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PreAuthorize("hasAnyRole('VISIT_SCHEDULER', 'VISIT_SCHEDULER_CONFIG')")
   @PostMapping(VISIT_NOTIFICATION_PRISONER_MERGE_BATCH_PATH)
   @ResponseStatus(HttpStatus.OK)
   @Operation(
