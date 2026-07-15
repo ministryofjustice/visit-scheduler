@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.PRISONER_ALERT_UPDATED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventAttributeType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
@@ -323,6 +324,57 @@ class PrisonerAlertUpdatedNotificationControllerTest : NotificationTestBase() {
     val auditEvents = testEventAuditRepository.getAuditByType(PRISONER_ALERT_UPDATED_EVENT)
     assertThat(auditEvents).hasSize(0)
     verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), any(), isNull())
+    verify(alertsApiClientSpy, times(1)).getAlertByUuid(notificationDto.alertUuid)
+  }
+
+  @Test
+  fun `when prisoner has had an alert updated but alert is inactive then existing alert notifications are removed`() {
+    // Given
+    val notificationDto = PrisonerAlertNotificationDto(
+      prisonerNumber = prisonerId,
+      alertCode = "C1",
+      alertUuid = "1234-5678-abcd",
+      description = "alert updated",
+    )
+
+    val visit1 = createApplicationAndVisit(
+      prisonerId = notificationDto.prisonerNumber,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate1,
+    )
+    eventAuditEntityHelper.create(visit1)
+
+    val visit2 = createApplicationAndVisit(
+      prisonerId = notificationDto.prisonerNumber,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate2,
+    )
+    eventAuditEntityHelper.create(visit2)
+
+    val notificationEventAttributes = mapOf(NotificationEventAttributeType.ALERT_UUID to notificationDto.alertUuid)
+    visitNotificationEventHelper.create(visit = visit1, notificationEventType = NotificationEventType.PRISONER_ALERT_CREATED_EVENT, notificationAttributes = notificationEventAttributes)
+    visitNotificationEventHelper.create(visit = visit2, notificationEventType = NotificationEventType.PRISONER_ALERT_UPDATED_EVENT, notificationAttributes = notificationEventAttributes)
+
+    alertsApiMockServer.stubGetAlertDetails(notificationDto.alertUuid, AlertDto(notificationDto.alertUuid, false))
+
+    // When
+    val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenUpdated(
+      webTestClient,
+      roleVisitSchedulerHttpHeaders,
+      notificationDto,
+    )
+
+    // Then
+    responseSpec.expectStatus().isOk
+    verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
+    verify(visitNotificationEventRepository, times(1)).deleteAll(any())
+
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
+    assertThat(visitNotifications).hasSize(0)
+
+    assertUnflaggedVisitEvent(listOf(visit1, visit2), UnFlagEventReason.PRISONER_ALERT_INACTIVE, "${NotificationEventType.PRISONER_ALERT_CREATED_EVENT.reviewType},${NotificationEventType.PRISONER_ALERT_UPDATED_EVENT.reviewType}")
     verify(alertsApiClientSpy, times(1)).getAlertByUuid(notificationDto.alertUuid)
   }
 
