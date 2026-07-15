@@ -514,7 +514,7 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
 
-    // none of the sessions on the day will be available
+    // sessions on the day are returned but flagged with non-association conflicts
     Assertions.assertThat(visitSessionResults.size).isEqualTo(5)
 
     val expectedAdditionalAttributes = listOf(
@@ -523,7 +523,7 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
       AdditionalSessionConflictInfoDto(REFERENCE, visit.reference),
     )
 
-    visitSessionResults.take(3).forEach { visitSessionResult ->
+    visitSessionResults.forEach { visitSessionResult ->
       Assertions.assertThat(visitSessionResult.sessionConflicts.size).isEqualTo(1)
       Assertions.assertThat(visitSessionResult.sessionConflicts.map { it.sessionConflict }.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
       assertThat(visitSessionResult.sessionConflicts.map { it.additionalAttributes }.flatten()).containsAll(

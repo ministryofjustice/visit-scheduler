@@ -53,6 +53,29 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
   ): List<VisitNotificationEvent>
 
   @Query(
+    "SELECT DISTINCT vne.* FROM visit_notification_event vne " +
+      " JOIN visit v on v.id  = vne.visit_id  " +
+      " JOIN session_slot ss on ss.id  = v.session_slot_id " +
+      " JOIN visit_notification_event_attribute restriction_id on restriction_id.visit_notification_event_id = vne.id " +
+      " JOIN visit_notification_event_attribute visitor_id on visitor_id.visit_notification_event_id = vne.id " +
+      " WHERE ss.slot_start >= NOW() " +
+      " AND v.visit_status = 'BOOKED' " +
+      " AND v.visit_sub_status IN ('APPROVED', 'AUTO_APPROVED', 'REQUESTED') " +
+      " AND vne.type=:#{#notificationEvent.name()}" +
+      " AND restriction_id.attribute_name = 'VISITOR_RESTRICTION_ID' " +
+      " AND restriction_id.attribute_value = :#{#visitorRestrictionId.toString()} " +
+      " AND visitor_id.attribute_name = 'VISITOR_ID' " +
+      " AND visitor_id.attribute_value = :#{#visitorId.toString()} " +
+      " ORDER BY vne.id",
+    nativeQuery = true,
+  )
+  fun getEventsByVisitorRestrictionId(
+    visitorId: Long,
+    visitorRestrictionId: Long,
+    notificationEvent: NotificationEventType,
+  ): List<VisitNotificationEvent>
+
+  @Query(
     "SELECT vne.* FROM visit_notification_event vne " +
       " JOIN visit v on v.id  = vne.visit_id  " +
       " JOIN session_slot ss on ss.id  = v.session_slot_id " +
@@ -85,6 +108,22 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
   )
   fun getEventsByVisitDate(
     prisonCode: String,
+    slotDate: LocalDate,
+    notificationEvent: NotificationEventType,
+  ): List<VisitNotificationEvent>
+
+  @Query(
+    "SELECT vne.* FROM visit_notification_event vne " +
+      " JOIN visit v on v.id  = vne.visit_id " +
+      " JOIN session_slot ss on ss.id  = v.session_slot_id " +
+      " WHERE ss.slot_date = :slotDate" +
+      " AND ss.session_template_reference = :sessionTemplateReference " +
+      " AND vne.type=:#{#notificationEvent.name()}" +
+      " ORDER BY vne.id",
+    nativeQuery = true,
+  )
+  fun getEventsBySessionTemplateReferenceAndVisitDate(
+    sessionTemplateReference: String,
     slotDate: LocalDate,
     notificationEvent: NotificationEventType,
   ): List<VisitNotificationEvent>

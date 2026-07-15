@@ -228,16 +228,16 @@ class SessionService(
   ) {
     val sessionSlotDates = visitSessions.map { it.startTimestamp.toLocalDate() }.distinct()
     if (sessionSlotDates.isNotEmpty()) {
+      // get any double booked visits
+      val doubleBookingOrReservationSessions = getDoubleBookingOrReservationSessions(visitSessions, sessionSlots, prisoner.prisonerId, excludedApplicationReference, usernameToExcludeFromReservedApplications)
+
       // get any non-association visits
       val nonAssociationPrisonerIds = getNonAssociationPrisonerIds(prisonerService.getPrisonerNonAssociationList(prisoner.prisonerId))
       val nonAssociationConflictSessions = if (nonAssociationPrisonerIds.isEmpty()) {
         emptyList()
       } else {
-        getNonAssociationVisitsOrApplications(sessionSlotDates, nonAssociationPrisonerIds, prison)
+        getNonAssociationVisitsOrApplications(sessionSlotDates, nonAssociationPrisonerIds, doubleBookingOrReservationSessions, prison)
       }
-
-      // get any double booked visits
-      val doubleBookingOrReservationSessions = getDoubleBookingOrReservationSessions(visitSessions, sessionSlots, prisoner.prisonerId, excludedApplicationReference, usernameToExcludeFromReservedApplications)
 
       // get any remand limit reached sessions
       val limitReachedSessions = getLimitReachedSessions(dateRange, prisoner, prison, visitSessions)
@@ -488,11 +488,15 @@ class SessionService(
   private fun getNonAssociationVisitsOrApplications(
     sessionSlotDates: List<LocalDate>,
     nonAssociationPrisonerIds: List<String>,
+    doubleBookingOrReservationSessions: List<DoubleBookedConflictSessionDto>,
     prison: Prison,
   ): List<NonAssociationConflictSessionDto> {
     val nonAssociationConflictSessions = mutableListOf<NonAssociationConflictSessionDto>()
     visitRepository.getBookedVisitsForPrisonersAndDates(prisonerIds = nonAssociationPrisonerIds, sessionDates = sessionSlotDates, prisonId = prison.id).forEach { visit ->
-      nonAssociationConflictSessions.add(NonAssociationConflictSessionDto(prisonerId = visit.prisonerId, conflictType = SessionConflictType.VISIT, reference = visit.reference, sessionDate = visit.sessionSlot.slotDate))
+      // do not flag any visits that have already been booked for the same session date and session template reference
+      if (!doubleBookingOrReservationSessions.any { it.sessionTemplateReference == visit.sessionSlot.sessionTemplateReference && it.sessionDate == visit.sessionSlot.slotDate }) {
+        nonAssociationConflictSessions.add(NonAssociationConflictSessionDto(prisonerId = visit.prisonerId, conflictType = SessionConflictType.VISIT, reference = visit.reference, sessionDate = visit.sessionSlot.slotDate))
+      }
     }
 
     applicationService.getInProgressApplicationsForPrisonersAndDates(nonAssociationPrisonerIds, sessionSlotDates, prisonId = prison.id).forEach { application ->
