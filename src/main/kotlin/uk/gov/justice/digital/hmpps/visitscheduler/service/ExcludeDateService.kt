@@ -76,11 +76,12 @@ class ExcludeDateService(
   private fun addSessionTemplateExcludeDate(sessionTemplate: SessionTemplate, excludeDateDto: ExcludeDateDto) {
     with(excludeDateDto) {
       val sessionTemplateReference = sessionTemplate.reference
+      val prisonCode = sessionTemplate.prison.code
       val existingExcludeDates = getExistingExcludeDates(sessionTemplate)
       validateAddSessionExcludeDate(excludeDate, sessionTemplate, existingExcludeDates)
 
       sessionTemplateExcludeDateRepository.saveAndFlush(SessionTemplateExcludeDate(sessionTemplate.id, sessionTemplate, excludeDate, actionedBy))
-      telemetryClientService.trackAddSessionExcludeDateEvent(sessionTemplateReference, excludeDateDto)
+      telemetryClientService.trackAddSessionExcludeDateEvent(sessionTemplateReference = sessionTemplateReference, prisonCode = prisonCode, excludeDateDto = excludeDateDto)
 
       // add any visits for the session template for the date for review
       visitNotificationEventService.handleAddSessionVisitBlockDate(SessionDateBlockedDto(sessionTemplateReference, excludeDate))
@@ -102,10 +103,11 @@ class ExcludeDateService(
   private fun removeSessionTemplateExcludeDate(sessionTemplate: SessionTemplate, excludeDateDto: ExcludeDateDto) {
     with(excludeDateDto) {
       val sessionTemplateReference = sessionTemplate.reference
+      val prisonCode = sessionTemplate.prison.code
       val existingExcludeDates = getExistingExcludeDates(sessionTemplate)
       validateRemoveExcludeDate(ExcludeDateEntity.SESSION_TEMPLATE, excludeDate, sessionTemplateReference, existingExcludeDates)
       sessionTemplateExcludeDateRepository.deleteBySessionTemplateIdAndExcludeDate(sessionTemplate.id, excludeDate)
-      telemetryClientService.trackRemoveSessionExcludeDateEvent(sessionTemplateReference, excludeDateDto)
+      telemetryClientService.trackRemoveSessionExcludeDateEvent(sessionTemplateReference = sessionTemplateReference, prisonCode = prisonCode, excludeDateDto = excludeDateDto)
 
       visitNotificationEventService.handleRemoveSessionVisitBlockDate(SessionDateBlockedDto(sessionTemplateReference, excludeDate))
     }
