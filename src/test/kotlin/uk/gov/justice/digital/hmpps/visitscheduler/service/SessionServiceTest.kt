@@ -952,7 +952,7 @@ class SessionServiceTest {
       // Then
       assertThat(sessions).size().isEqualTo(1)
       assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
-      assertThat(sessions[0].sessionConflicts.map { it.sessionConflict }).contains(SessionConflict.NO_VOS)
+      assertThat(sessions[0].sessionConflicts.map { it.sessionConflict }).contains(SessionConflict.NO_VO_BALANCE)
     }
   }
 

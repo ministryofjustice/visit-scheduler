@@ -159,17 +159,20 @@ class SessionConflictsUtil {
   private fun getVisitBalanceConflicts(voBalance: VisitOrderPrisonerBalanceDto?, session: VisitSessionDto): SessionConflictDto? {
     if (voBalance == null) return null
 
+    // no checks needed if SessionTemplateVisitOrderRestrictionType is NONE
+    if (session.visitOrderRestriction == SessionTemplateVisitOrderRestrictionType.NONE) return null
+
     val sessionConflict = when (session.visitOrderRestriction) {
-      SessionTemplateVisitOrderRestrictionType.VO if voBalance.voBalance == 0 -> {
-        SessionConflict.NO_VOS
+      SessionTemplateVisitOrderRestrictionType.VO if voBalance.voBalance <= 0 -> {
+        SessionConflict.NO_VO_BALANCE
       }
 
-      SessionTemplateVisitOrderRestrictionType.PVO if voBalance.pvoBalance == 0 -> {
-        SessionConflict.NO_PVOS
+      SessionTemplateVisitOrderRestrictionType.PVO if voBalance.pvoBalance <= 0 -> {
+        SessionConflict.NO_PVO_BALANCE
       }
 
-      SessionTemplateVisitOrderRestrictionType.VO_PVO if (voBalance.voBalance == 0 && voBalance.pvoBalance == 0) -> {
-        SessionConflict.NO_VO_OR_PVOS
+      SessionTemplateVisitOrderRestrictionType.VO_PVO if (voBalance.voBalance <= 0 && voBalance.pvoBalance <= 0) -> {
+        SessionConflict.NO_VO_OR_PVO_BALANCE
       }
 
       else -> {

@@ -19,12 +19,7 @@ class VisitOrderBalanceService(
     logger.info("Getting VO balance for prisoner {}", prisoner.prisonerId)
 
     return if (prisoner.convictedStatus == ConvictionStatus.CONVICTED.toString()) {
-      try {
-        visitAllocationApiClient.getPrisonerVOBalance(prisoner.prisonerId)
-      } catch (e: Exception) {
-        logger.error("Failed to get VO balance for prisoner ${prisoner.prisonerId}, returning null", e)
-        null
-      }
+      visitAllocationApiClient.getPrisonerVOBalance(prisoner.prisonerId)
     } else {
       null
     }

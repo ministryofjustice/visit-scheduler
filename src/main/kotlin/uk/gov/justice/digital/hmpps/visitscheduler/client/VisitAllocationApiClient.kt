@@ -17,7 +17,7 @@ class VisitAllocationApiClient(
   @param:Value("\${visit-allocation.api.timeout:10s}") private val apiTimeout: Duration,
 ) {
   companion object {
-    val LOG: Logger = LoggerFactory.getLogger(this::class.java)
+    val logger: Logger = LoggerFactory.getLogger(this::class.java)
     const val VO_BALANCE_ENDPOINT = "/visits/allocation/prisoner/{prisonerId}/balance"
     private val VISIT_ORDER_BALANCE_DTO = object : ParameterizedTypeReference<VisitOrderPrisonerBalanceDto>() {}
   }
@@ -29,8 +29,14 @@ class VisitAllocationApiClient(
       .retrieve()
       .bodyToMono(VISIT_ORDER_BALANCE_DTO)
       .onErrorResume { e ->
-        LOG.error("getPrisonerVOBalance failed for get request $uri, $e")
-        Mono.empty()
-      }.block(apiTimeout)
+        if (!isNotFoundError(e)) {
+          logger.error("getPrisonerVOBalance Failed for prisoner Id - $prisonerId")
+          Mono.error(e)
+        } else {
+          logger.debug("getPrisonerVOBalance Not Found for prisoner Id - $prisonerId")
+          return@onErrorResume Mono.justOrEmpty(null)
+        }
+      }
+      .block(apiTimeout)
   }
 }
