@@ -188,13 +188,13 @@ class TelemetryClientService(
     trackEvent(REMOVE_PRISON_EXCLUDE_DATE_EVENT, visitTrackEvent)
   }
 
-  fun trackAddSessionExcludeDateEvent(sessionTemplateReference: String, excludeDateDto: ExcludeDateDto) {
-    val visitTrackEvent = createSessionExcludeDateEventData(sessionTemplateReference, excludeDateDto)
+  fun trackAddSessionExcludeDateEvent(sessionTemplateReference: String, prisonCode: String, excludeDateDto: ExcludeDateDto) {
+    val visitTrackEvent = createSessionExcludeDateEventData(sessionTemplateReference = sessionTemplateReference, prisonCode = prisonCode, excludeDateDto = excludeDateDto)
     trackEvent(ADD_SESSION_EXCLUDE_DATE_EVENT, visitTrackEvent)
   }
 
-  fun trackRemoveSessionExcludeDateEvent(sessionTemplateReference: String, excludeDateDto: ExcludeDateDto) {
-    val visitTrackEvent = createSessionExcludeDateEventData(sessionTemplateReference, excludeDateDto)
+  fun trackRemoveSessionExcludeDateEvent(sessionTemplateReference: String, prisonCode: String, excludeDateDto: ExcludeDateDto) {
+    val visitTrackEvent = createSessionExcludeDateEventData(sessionTemplateReference = sessionTemplateReference, prisonCode = prisonCode, excludeDateDto = excludeDateDto)
     trackEvent(REMOVE_SESSION_EXCLUDE_DATE_EVENT, visitTrackEvent)
   }
 
@@ -504,12 +504,13 @@ class TelemetryClientService(
 
   private fun createSessionExcludeDateEventData(
     sessionTemplateReference: String,
+    prisonCode: String,
     excludeDateDto: ExcludeDateDto,
   ): Map<String, String> {
     val excludeDateEvent = mutableMapOf<String, String>()
     excludeDateEvent["sessionTemplateReference"] = sessionTemplateReference
+    excludeDateEvent["prisonCode"] = prisonCode
     excludeDateEvent["excludedDate"] = formatDateToString(excludeDateDto.excludeDate)
-
     excludeDateEvent["actionedBy"] = excludeDateDto.actionedBy
     return excludeDateEvent.toMap()
   }
