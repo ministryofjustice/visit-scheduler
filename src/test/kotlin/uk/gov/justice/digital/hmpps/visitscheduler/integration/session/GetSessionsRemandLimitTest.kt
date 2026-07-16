@@ -69,15 +69,15 @@ class GetSessionsRemandLimitTest : IntegrationTestBase() {
 
     val week1RemandVisits = visitSessionResults.filter { it.startTimestamp.toLocalDate() in week1StartDate..week1EndDate }
       .filter { !week1VisitDays.contains(it.startTimestamp.toLocalDate().dayOfWeek) }
-    assertThat(week1RemandVisits).allMatch { it.sessionConflicts.contains(REMAND_VISITS_LIMIT_REACHED) }
+    assertThat(week1RemandVisits).allMatch { it.sessionConflicts.map { sessionConflictDto -> sessionConflictDto.sessionConflict }.contains(REMAND_VISITS_LIMIT_REACHED) }
 
     val week2RemandVisits = visitSessionResults.filter { it.startTimestamp.toLocalDate() in week2StartDate..week2EndDate }
       .filter { !week2VisitDays.contains(it.startTimestamp.toLocalDate().dayOfWeek) }
-    assertThat(week2RemandVisits).allMatch { it.sessionConflicts.contains(REMAND_VISITS_LIMIT_REACHED) }
+    assertThat(week2RemandVisits).allMatch { it.sessionConflicts.map { sessionConflictDto -> sessionConflictDto.sessionConflict }.contains(REMAND_VISITS_LIMIT_REACHED) }
 
     val week3RemandVisits = visitSessionResults.filter { it.startTimestamp.toLocalDate() in week3StartDate..week3EndDate }
       .filter { !week3VisitDays.contains(it.startTimestamp.toLocalDate().dayOfWeek) }
-    assertThat(week3RemandVisits).allMatch { it.sessionConflicts.contains(REMAND_VISITS_LIMIT_REACHED) }
+    assertThat(week3RemandVisits).allMatch { it.sessionConflicts.map { sessionConflictDto -> sessionConflictDto.sessionConflict }.contains(REMAND_VISITS_LIMIT_REACHED) }
   }
 
   @Test
@@ -102,7 +102,7 @@ class GetSessionsRemandLimitTest : IntegrationTestBase() {
     val noneVisitOrderSessions = visitSessionResults.filter { it.sessionTemplateReference == noneVisitOrderSessionTemplate.reference }
 
     assertThat(noneVisitOrderSessions).isNotEmpty
-    assertThat(noneVisitOrderSessions).noneMatch { it.sessionConflicts.contains(REMAND_VISITS_LIMIT_REACHED) }
+    assertThat(noneVisitOrderSessions).noneMatch { it.sessionConflicts.map { sessionConflictDto -> sessionConflictDto.sessionConflict }.contains(REMAND_VISITS_LIMIT_REACHED) }
   }
 
   @Test
@@ -123,7 +123,7 @@ class GetSessionsRemandLimitTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
     assertThat(visitSessionResults.size).isEqualTo(14)
-    assertThat(visitSessionResults).noneMatch { it.sessionConflicts.contains(REMAND_VISITS_LIMIT_REACHED) }
+    assertThat(visitSessionResults).noneMatch { it.sessionConflicts.map { sessionConflictDto -> sessionConflictDto.sessionConflict }.contains(REMAND_VISITS_LIMIT_REACHED) }
   }
 
   @Test
@@ -158,7 +158,7 @@ class GetSessionsRemandLimitTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
     assertThat(visitSessionResults.size).isEqualTo(14)
-    assertThat(visitSessionResults).noneMatch { it.sessionConflicts.contains(REMAND_VISITS_LIMIT_REACHED) }
+    assertThat(visitSessionResults).noneMatch { it.sessionConflicts.map { sessionConflictDto -> sessionConflictDto.sessionConflict }.contains(REMAND_VISITS_LIMIT_REACHED) }
   }
 
   @Test
@@ -173,7 +173,7 @@ class GetSessionsRemandLimitTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
     assertThat(visitSessionResults.size).isEqualTo(14)
-    assertThat(visitSessionResults).noneMatch { it.sessionConflicts.contains(REMAND_VISITS_LIMIT_REACHED) }
+    assertThat(visitSessionResults).noneMatch { it.sessionConflicts.map { sessionConflictDto -> sessionConflictDto.sessionConflict }.contains(REMAND_VISITS_LIMIT_REACHED) }
   }
 
   @Test
@@ -194,7 +194,7 @@ class GetSessionsRemandLimitTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
     assertThat(visitSessionResults.size).isEqualTo(14)
-    assertThat(visitSessionResults).noneMatch { it.sessionConflicts.contains(REMAND_VISITS_LIMIT_REACHED) }
+    assertThat(visitSessionResults).noneMatch { it.sessionConflicts.map { sessionConflictDto -> sessionConflictDto.sessionConflict }.contains(REMAND_VISITS_LIMIT_REACHED) }
   }
 
   private fun getResults(returnResult: BodyContentSpec): Array<VisitSessionDto> = objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)

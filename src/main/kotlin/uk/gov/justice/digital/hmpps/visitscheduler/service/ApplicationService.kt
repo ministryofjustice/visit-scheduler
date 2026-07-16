@@ -420,13 +420,6 @@ class ApplicationService(
     }
   }
 
-  fun hasActiveApplicationsForDate(nonAssociationPrisonerIds: List<String>, sessionSlotDate: LocalDate, prisonId: Long): Boolean = applicationRepository.hasActiveApplicationsForDate(
-    nonAssociationPrisonerIds,
-    sessionSlotDate,
-    prisonId,
-    getExpiredApplicationDateAndTime(),
-  )
-
   fun hasReservations(prisonerId: String, sessionSlotId: Long, excludedApplicationReference: String?, usernameToExcludeFromReservedApplications: String?): Boolean {
     val expiredDateAndTime = getExpiredApplicationDateAndTime()
 
@@ -498,6 +491,13 @@ class ApplicationService(
 
     return applicationEntity
   }
+
+  fun getInProgressApplicationsForPrisonersAndDates(prisonerIds: List<String>, sessionDates: List<LocalDate>, prisonId: Long): List<Application> = applicationRepository.getInProgressApplicationsForPrisonersAndDates(
+    prisonerIds,
+    sessionDates,
+    prisonId,
+    getExpiredApplicationDateAndTime(),
+  )
 
   @Transactional
   fun updateApplicationsPrisonerIdPostMerge(oldPrisonerId: String, newPrisonerId: String) {

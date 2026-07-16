@@ -25,6 +25,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionSlotReposit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateExcludeDateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionConflictsUtil
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionDatesUtil
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -43,6 +44,7 @@ class SessionServiceRemandLimitTest {
   private val prisonsService = mock<PrisonsService>()
   private val applicationService = mock<ApplicationService>()
   private val sessionValidationService = mock<PrisonerSessionValidationService>()
+  private val sessionConflictsUtil = SessionConflictsUtil()
 
   private lateinit var sessionService: SessionService
 
@@ -73,12 +75,11 @@ class SessionServiceRemandLimitTest {
       sessionSlotRepository = sessionSlotRepository,
       sessionTemplateExcludeDateRepository = sessionTemplateExcludeDateRepository,
       prisonerService = prisonerService,
-      policyFilterDoubleBooking = false,
-      policyFilterNonAssociation = false,
       prisonerSessionValidationService = sessionValidationService,
       prisonerValidationService = prisonerValidationService,
       prisonsService = prisonsService,
       applicationService = applicationService,
+      sessionConflictsUtil = sessionConflictsUtil,
     )
   }
 
@@ -135,11 +136,11 @@ class SessionServiceRemandLimitTest {
     assertThat(sessions).size().isEqualTo(2)
     assertThat(sessions[0].sessionTemplateReference).isEqualTo(session1.reference)
     assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
-    assertThat(sessions[0].sessionConflicts.first()).isEqualTo(SessionConflict.REMAND_VISITS_LIMIT_REACHED)
+    assertThat(sessions[0].sessionConflicts.map { it.sessionConflict }.first()).isEqualTo(SessionConflict.REMAND_VISITS_LIMIT_REACHED)
 
     assertThat(sessions[1].sessionTemplateReference).isEqualTo(session2.reference)
     assertThat(sessions[1].sessionConflicts).size().isEqualTo(1)
-    assertThat(sessions[1].sessionConflicts.first()).isEqualTo(SessionConflict.REMAND_VISITS_LIMIT_REACHED)
+    assertThat(sessions[1].sessionConflicts.map { it.sessionConflict }.first()).isEqualTo(SessionConflict.REMAND_VISITS_LIMIT_REACHED)
   }
 
   @Test
