@@ -293,6 +293,7 @@ class SessionService(
     val doubleBookingOrReservationSessions = mutableListOf<DoubleBookedConflictSessionDto>()
     val sessionSlotsByKey = sessionSlots.associateBy { Pair(it.slotDate.toString(), it.sessionTemplateReference) }
     val bookedVisitsBySlotId = getBookedVisitsForSessionSlots(sessionSlots, prisonerId).associateBy { it.sessionSlot.id }
+    val reservedApplicationSessionSlotIds = getReservedApplicationSessionSlotIds(sessionSlots, prisonerId, excludedApplicationReference, usernameToExcludeFromReservedApplications)
     visitSessions.forEach { visitSession ->
       val key = Pair(visitSession.startTimestamp.toLocalDate().toString(), visitSession.sessionTemplateReference)
       val sessionSlot = sessionSlotsByKey[key] ?: return@forEach
@@ -303,7 +304,7 @@ class SessionService(
           doubleBookingOrReservationSessions.add(DoubleBookedConflictSessionDto(reference = bookedVisit.reference, conflictType = SessionConflictType.VISIT, visitSubStatus = bookedVisit.visitSubStatus, sessionDate = bookedVisit.sessionSlot.slotStart.toLocalDate(), sessionTemplateReference = sessionTemplateReference))
         }
       } else {
-        if (sessionHasDoubleBookedApplications(sessionSlot, prisonerId, excludedApplicationReference, usernameToExcludeFromReservedApplications)) {
+        if (reservedApplicationSessionSlotIds.contains(sessionSlot.id)) {
           sessionSlot.sessionTemplateReference?.let { sessionTemplateReference ->
             doubleBookingOrReservationSessions.add(DoubleBookedConflictSessionDto(conflictType = SessionConflictType.APPLICATION, sessionDate = sessionSlot.slotStart.toLocalDate(), sessionTemplateReference = sessionTemplateReference, reference = null, visitSubStatus = null))
           }
@@ -510,14 +511,14 @@ class SessionService(
     @NotNull prisonerNonAssociationList: List<PrisonerNonAssociationDetailDto>,
   ): List<String> = prisonerNonAssociationList.map { it.otherPrisonerDetails.prisonerNumber }
 
-  private fun sessionHasDoubleBookedApplications(
-    sessionSlot: SessionSlot,
+  private fun getReservedApplicationSessionSlotIds(
+    sessionSlots: List<SessionSlot>,
     prisonerId: String,
     excludedApplicationReference: String?,
     usernameToExcludeFromReservedApplications: String?,
-  ): Boolean = applicationService.hasReservations(
+  ): Set<Long> = applicationService.getReservedSessionSlotIds(
     prisonerId = prisonerId,
-    sessionSlotId = sessionSlot.id,
+    sessionSlotIds = sessionSlots.map { it.id },
     excludedApplicationReference = excludedApplicationReference,
     usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications,
   )

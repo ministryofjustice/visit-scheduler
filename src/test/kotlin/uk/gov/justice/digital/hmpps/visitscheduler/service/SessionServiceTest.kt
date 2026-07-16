@@ -675,6 +675,50 @@ class SessionServiceTest {
     }
 
     @Test
+    fun `sessions contain conflicts when a prisoner has a reserved application`() {
+      // Given
+      val validFromDate = currentDate.plusDays(noticeDaysMin.toLong())
+      val slotDate = validFromDate.plusDays(1)
+      val dayOfWeek = slotDate.dayOfWeek
+
+      val singleSession = sessionTemplate(
+        validFromDate = validFromDate,
+        validToDate = validFromDate.plusWeeks(1),
+        startTime = LocalTime.parse("11:30"),
+        endTime = LocalTime.parse("12:30"),
+        dayOfWeek = dayOfWeek,
+      )
+
+      mockSessionTemplateRepositoryResponse(listOf(singleSession))
+      val sessionSlot = mockSessionSlots(singleSession).first()
+
+      whenever(
+        prisonerService.getPrisonerNonAssociationList(prisonerId),
+      ).thenReturn(PrisonerNonAssociationDetailsDto().nonAssociations)
+
+      whenever(
+        applicationService.getReservedSessionSlotIds(
+          prisonerId = prisonerId,
+          sessionSlotIds = listOf(sessionSlot.id),
+          excludedApplicationReference = null,
+          usernameToExcludeFromReservedApplications = null,
+        ),
+      ).thenReturn(setOf(sessionSlot.id))
+
+      // When
+      val sessions = sessionService.getAllVisitSessions(prisonCode, prisonerId, userType = STAFF)
+
+      // Then
+      val saturdayAfter = currentDate.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
+      assertThat(sessions).size().isEqualTo(1)
+      assertDate(sessions[0].startTimestamp, saturdayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), dayOfWeek)
+      assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
+      assertThat(sessions[0].sessionConflicts.map { it.sessionConflict }).contains(SessionConflict.DOUBLE_BOOKING_OR_RESERVATION)
+      Mockito.verify(applicationService, times(1)).getReservedSessionSlotIds(prisonerId, listOf(sessionSlot.id), null, null)
+      Mockito.verify(prisonerService, times(1)).getPrisonerNonAssociationList(prisonerId)
+    }
+
+    @Test
     fun `session does not contain conflicts when a prisoner non-association NOT FOUND`() {
       // Given
       val singleSession = sessionTemplate(

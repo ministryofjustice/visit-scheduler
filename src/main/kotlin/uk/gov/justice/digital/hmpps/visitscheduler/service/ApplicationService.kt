@@ -441,6 +441,31 @@ class ApplicationService(
     }
   }
 
+  fun getReservedSessionSlotIds(prisonerId: String, sessionSlotIds: List<Long>, excludedApplicationReference: String?, usernameToExcludeFromReservedApplications: String?): Set<Long> {
+    if (sessionSlotIds.isEmpty()) {
+      return emptySet()
+    }
+
+    val expiredDateAndTime = getExpiredApplicationDateAndTime()
+
+    return if (usernameToExcludeFromReservedApplications != null) {
+      applicationRepository.getReservedSessionSlotIds(
+        prisonerId = prisonerId,
+        sessionSlotIds = sessionSlotIds,
+        expiredDateAndTime,
+        excludedApplicationReference = excludedApplicationReference,
+        usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications,
+      ).toSet()
+    } else {
+      applicationRepository.getReservedSessionSlotIds(
+        prisonerId = prisonerId,
+        sessionSlotIds = sessionSlotIds,
+        expiredDateAndTime,
+        excludedApplicationReference = excludedApplicationReference,
+      ).toSet()
+    }
+  }
+
   fun getCountOfReservedSessionForOpenOrClosedRestriction(id: Long, excludedApplicationReference: String?, usernameToExcludeFromReservedApplications: String?): List<VisitRestrictionStats> = if (usernameToExcludeFromReservedApplications == null) {
     applicationRepository.getCountOfReservedSessionForOpenOrClosedRestriction(
       id,

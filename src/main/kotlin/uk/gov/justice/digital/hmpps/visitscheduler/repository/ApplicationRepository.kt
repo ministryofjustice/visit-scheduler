@@ -123,6 +123,21 @@ interface ApplicationRepository :
   ): Boolean
 
   @Query(
+    "SELECT DISTINCT a.sessionSlotId FROM Application a " +
+      "WHERE a.applicationStatus = 'IN_PROGRESS' AND a.reservedSlot = true AND " +
+      "a.prisonerId = :prisonerId AND " +
+      "a.modifyTimestamp >= :expiredDateAndTime AND " +
+      "a.sessionSlotId IN (:sessionSlotIds) AND " +
+      "(:excludedApplicationReference is null OR a.reference != :excludedApplicationReference) ",
+  )
+  fun getReservedSessionSlotIds(
+    @Param("prisonerId") prisonerId: String,
+    @Param("sessionSlotIds") sessionSlotIds: List<Long>,
+    @Param("expiredDateAndTime") expiredDateAndTime: LocalDateTime,
+    @Param("excludedApplicationReference") excludedApplicationReference: String?,
+  ): List<Long>
+
+  @Query(
     "SELECT COUNT(a) > 0 FROM Application a " +
       "inner join EventAudit ea on a.reference = ea.applicationReference " +
       "inner join ActionedBy ab on ea.actionedById = ab.id " +
@@ -141,6 +156,26 @@ interface ApplicationRepository :
     @Param("excludedApplicationReference") excludedApplicationReference: String?,
     @Param("usernameToExcludeFromReservedApplications") usernameToExcludeFromReservedApplications: String,
   ): Boolean
+
+  @Query(
+    "SELECT DISTINCT a.sessionSlotId FROM Application a " +
+      "inner join EventAudit ea on a.reference = ea.applicationReference " +
+      "inner join ActionedBy ab on ea.actionedById = ab.id " +
+      "WHERE a.applicationStatus = 'IN_PROGRESS' AND a.reservedSlot = true AND " +
+      "a.prisonerId = :prisonerId AND " +
+      "a.modifyTimestamp >= :expiredDateAndTime AND " +
+      "a.sessionSlotId IN (:sessionSlotIds) AND " +
+      "(:excludedApplicationReference is null OR a.reference != :excludedApplicationReference)  AND " +
+      "(ea.type = 'RESERVED_VISIT' AND " +
+      "(ab.userName != :usernameToExcludeFromReservedApplications OR ab.bookerReference != :usernameToExcludeFromReservedApplications))",
+  )
+  fun getReservedSessionSlotIds(
+    @Param("prisonerId") prisonerId: String,
+    @Param("sessionSlotIds") sessionSlotIds: List<Long>,
+    @Param("expiredDateAndTime") expiredDateAndTime: LocalDateTime,
+    @Param("excludedApplicationReference") excludedApplicationReference: String?,
+    @Param("usernameToExcludeFromReservedApplications") usernameToExcludeFromReservedApplications: String,
+  ): List<Long>
 
   @Query(
     "SELECT a FROM Application a join a.sessionSlot sl " +
