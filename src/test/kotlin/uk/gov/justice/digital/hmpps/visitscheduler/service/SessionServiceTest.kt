@@ -103,8 +103,6 @@ class SessionServiceTest {
   fun beforeEachTestSetup() {
     whenever(prisonerService.getPrisoner(any())).thenReturn(prisonerDto)
     whenever(prisonsService.findPrisonByCode(prisonCode)).thenReturn(prison(policyNoticeDaysMin = noticeDaysMin, policyNoticeDaysMax = noticeDaysMax))
-    whenever(prisonerService.getPrisoner(any())).thenReturn(PrisonerDto(prisonerId, "john", "smith", "C", IncentiveLevel.STANDARD, prisonCode))
-    whenever(prisonsService.findPrisonByCode(prisonCode)).thenReturn(prison(policyNoticeDaysMin = noticeDaysMin, policyNoticeDaysMax = noticeDaysMax))
 
     whenever(prisonerService.getPrisonerHousingLocation(any(), any())).thenReturn(
       PrisonerHousingLocationsDto(

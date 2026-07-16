@@ -9,6 +9,6 @@ data class VisitOrderPrisonerBalanceDto(
   @param:Schema(description = "The total of available and accumulated VO balance - any negative VO balance", example = "5", required = true)
   val voBalance: Int,
 
-  @param:Schema(description = "The total of available PVO balance - any negative VO balance", example = "5", required = true)
+  @param:Schema(description = "The total of available PVO balance - any negative PVO balance", example = "5", required = true)
   val pvoBalance: Int,
 )

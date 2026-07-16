@@ -30,7 +30,7 @@ class VisitAllocationApiClient(
       .bodyToMono(VISIT_ORDER_BALANCE_DTO)
       .onErrorResume { e ->
         if (!isNotFoundError(e)) {
-          logger.error("getPrisonerVOBalance Failed for prisoner Id - $prisonerId")
+          logger.error("getPrisonerVOBalance Failed for prisoner Id - $prisonerId", e)
           Mono.error(e)
         } else {
           logger.debug("getPrisonerVOBalance Not Found for prisoner Id - $prisonerId")
