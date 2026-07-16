@@ -18,7 +18,7 @@ class VisitOrderBalanceService(
   fun getVOBalance(prisoner: PrisonerDto): VisitOrderPrisonerBalanceDto? {
     logger.info("Getting VO balance for prisoner {}", prisoner.prisonerId)
 
-    return if (prisoner.convictedStatus == ConvictionStatus.CONVICTED.toString()) {
+    return if (!ConvictionStatus.isRemand(prisoner.convictedStatus)) {
       visitAllocationApiClient.getPrisonerVOBalance(prisoner.prisonerId)
     } else {
       null

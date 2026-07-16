@@ -71,6 +71,7 @@ class WebClientConfiguration(
   @Bean
   fun alertsApiHealthWebClient(builder: WebClient.Builder): WebClient = builder.healthWebClient(alertsApiBaseUrl, healthTimeout)
 
+  @Bean
   fun visitAllocationApiHealthWebClient(builder: WebClient.Builder): WebClient = builder.healthWebClient(visitAllocationApiUrl, healthTimeout)
 
   @Bean
