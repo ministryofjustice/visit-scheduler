@@ -44,6 +44,7 @@ class SessionServiceRemandLimitTest {
   private val prisonsService = mock<PrisonsService>()
   private val applicationService = mock<ApplicationService>()
   private val sessionValidationService = mock<PrisonerSessionValidationService>()
+  private val visitOrderBalanceService = mock<VisitOrderBalanceService>()
   private val sessionConflictsUtil = SessionConflictsUtil()
 
   private lateinit var sessionService: SessionService
@@ -79,6 +80,7 @@ class SessionServiceRemandLimitTest {
       prisonerValidationService = prisonerValidationService,
       prisonsService = prisonsService,
       applicationService = applicationService,
+      visitOrderBalanceService = visitOrderBalanceService,
       sessionConflictsUtil = sessionConflictsUtil,
     )
   }

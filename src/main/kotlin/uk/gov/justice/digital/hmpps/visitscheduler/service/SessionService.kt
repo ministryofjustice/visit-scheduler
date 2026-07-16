@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityD
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionConflictType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionScheduleDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visit.allocation.VisitOrderPrisonerBalanceDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.CapacityNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
@@ -56,6 +57,7 @@ class SessionService(
   private val prisonsService: PrisonsService,
   private val applicationService: ApplicationService,
   private val prisonerSessionValidationService: PrisonerSessionValidationService,
+  private val visitOrderBalanceService: VisitOrderBalanceService,
   private val sessionConflictsUtil: SessionConflictsUtil,
 ) {
   companion object {
@@ -139,7 +141,6 @@ class SessionService(
     }!!
 
     var sessionTemplates = getAllSessionTemplatesForDateRange(prisonCode, dateRange).filter { sessionsByUserClientFilter(userType).test(it) }
-
     LOG.debug("Retrieved {} sessions before beginning filtering for prisoner {}, with date range {}", sessionTemplates.size, prisonerId, dateRange)
 
     val prisonerHousingLevels = prisonerService.getPrisonerHousingLevels(prisonerId = prisonerId, prisonCode = prisonCode, sessionTemplates = sessionTemplates)
@@ -155,7 +156,17 @@ class SessionService(
     }
 
     val sessionSlots = getSessionSlots(visitSessions)
-    addSessionConflicts(sessionTemplates, visitSessions, prisoner, prison, sessionSlots, dateRange, excludedApplicationReference, usernameToExcludeFromReservedApplications)
+
+    addSessionConflicts(
+      sessionTemplates = sessionTemplates,
+      visitSessions = visitSessions,
+      prisoner = prisoner,
+      prison = prison,
+      sessionSlots = sessionSlots,
+      dateRange = dateRange,
+      excludedApplicationReference = excludedApplicationReference,
+      usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications,
+    )
 
     visitSessions = visitSessions.also {
       populateBookedCount(sessionSlots, it, excludedApplicationReference, usernameToExcludeFromReservedApplications, true)
@@ -239,9 +250,21 @@ class SessionService(
         .flatMap { it.excludeDates }
         .groupBy { it.sessionTemplate.reference }
         .mapValues { (_, excludeDates) -> excludeDates.map { it.excludeDate } }
+
+      // get VO balance for the prisoner - if prisoner is not on REMAND
+      val voBalance = getVoBalance(prisoner)
+
       visitSessions.forEach { session ->
         val excludedDatesForSession = sessionExcludedDatesByReference[session.sessionTemplateReference].orEmpty()
-        sessionConflictsUtil.addSessionConflicts(session, nonAssociationConflictSessions, doubleBookingOrReservationSessions, limitReachedSessions, prisonExcludeDates, excludedDatesForSession)
+        sessionConflictsUtil.addSessionConflicts(
+          session = session,
+          nonAssociationConflictSessions = nonAssociationConflictSessions,
+          doubleBookingConflictSessions = doubleBookingOrReservationSessions,
+          limitReachedSessions = limitReachedSessions,
+          prisonExcludeDates = prisonExcludeDates,
+          sessionExcludeDates = excludedDatesForSession,
+          voBalance = voBalance,
+        )
       }
     }
   }
@@ -328,6 +351,12 @@ class SessionService(
     }
 
     return limitReachedSessions
+  }
+
+  private fun getVoBalance(prisoner: PrisonerDto): VisitOrderPrisonerBalanceDto? = if (!ConvictionStatus.isRemand(prisoner.convictedStatus)) {
+    visitOrderBalanceService.getVOBalance(prisoner)
+  } else {
+    null
   }
 
   private fun getSessionSlots(sessionTemplates: List<VisitSessionDto>): List<SessionSlot> {

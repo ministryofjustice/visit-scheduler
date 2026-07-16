@@ -23,6 +23,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.CLOSED
@@ -37,6 +38,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAss
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AdditionalSessionConflictInfoDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionConflictAttribute
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visit.allocation.VisitOrderPrisonerBalanceDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonerNotInSuppliedPrisonException
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionSlotEntityHelper
@@ -76,6 +78,7 @@ class SessionServiceTest {
   private val prisonsService = mock<PrisonsService>()
   private val applicationService = mock<ApplicationService>()
   private val sessionValidationService = mock<PrisonerSessionValidationService>()
+  private val visitOrderBalanceService = mock<VisitOrderBalanceService>()
   private val sessionConflictsUtil = SessionConflictsUtil()
 
   private lateinit var sessionService: SessionService
@@ -86,9 +89,20 @@ class SessionServiceTest {
   private val noticeDaysMin = 0
   private val noticeDaysMax = 100
   private val prisonerId = "AA1234BB"
+  private val prisonerDto = PrisonerDto(
+    prisonerId = prisonerId,
+    firstName = "john",
+    lastName = "smith",
+    category = "C",
+    incentiveLevel = IncentiveLevel.STANDARD,
+    prisonCode = prisonCode,
+    convictedStatus = "Convicted",
+  )
 
   @BeforeEach
   fun beforeEachTestSetup() {
+    whenever(prisonerService.getPrisoner(any())).thenReturn(prisonerDto)
+    whenever(prisonsService.findPrisonByCode(prisonCode)).thenReturn(prison(policyNoticeDaysMin = noticeDaysMin, policyNoticeDaysMax = noticeDaysMax))
     whenever(prisonerService.getPrisoner(any())).thenReturn(PrisonerDto(prisonerId, "john", "smith", "C", IncentiveLevel.STANDARD, prisonCode))
     whenever(prisonsService.findPrisonByCode(prisonCode)).thenReturn(prison(policyNoticeDaysMin = noticeDaysMin, policyNoticeDaysMax = noticeDaysMax))
 
@@ -183,6 +197,7 @@ class SessionServiceTest {
         prisonerSessionValidationService = sessionValidationService,
         sessionConflictsUtil = sessionConflictsUtil,
         sessionTemplateExcludeDateRepository = sessionTemplateExcludeDateRepository,
+        visitOrderBalanceService = visitOrderBalanceService,
       )
     }
 
@@ -482,6 +497,7 @@ class SessionServiceTest {
         applicationService = applicationService,
         sessionConflictsUtil = sessionConflictsUtil,
         sessionTemplateExcludeDateRepository = sessionTemplateExcludeDateRepository,
+        visitOrderBalanceService = visitOrderBalanceService,
       )
     }
 
@@ -756,6 +772,7 @@ class SessionServiceTest {
         applicationService = applicationService,
         sessionTemplateExcludeDateRepository = sessionTemplateExcludeDateRepository,
         sessionConflictsUtil = sessionConflictsUtil,
+        visitOrderBalanceService = visitOrderBalanceService,
       )
     }
 
@@ -912,6 +929,31 @@ class SessionServiceTest {
       assertThat(sessions).size().isEqualTo(3)
       Mockito.verify(prisonerService, times(1)).getPrisonerNonAssociationList(prisonerId)
     }
+
+    @Test
+    fun `when prisoner does not have a VO balance any sessions that are VO only are returned with a session conflict`() {
+      // Given
+      val singleSession = sessionTemplate(
+        validFromDate = currentDate,
+        validToDate = currentDate.plusWeeks(1),
+        dayOfWeek = MONDAY,
+        startTime = LocalTime.parse("11:30"),
+        endTime = LocalTime.parse("12:30"),
+        visitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO,
+      )
+
+      val voBalance = VisitOrderPrisonerBalanceDto(prisonerId = prisonerId, voBalance = 0, pvoBalance = 5)
+      mockSessionTemplateRepositoryResponse(listOf(singleSession))
+      mockVoBalance(prisonerDto, voBalance)
+
+      // When
+      val sessions = sessionService.getAllVisitSessions(prisonCode, prisonerId, userType = STAFF)
+
+      // Then
+      assertThat(sessions).size().isEqualTo(1)
+      assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
+      assertThat(sessions[0].sessionConflicts.map { it.sessionConflict }).contains(SessionConflict.NO_VO_BALANCE)
+    }
   }
 
   private fun assertDate(localDateTime: LocalDateTime, expectedlyDateTime: String, dayOfWeek: DayOfWeek) {
@@ -931,5 +973,9 @@ class SessionServiceTest {
         ),
       ).nonAssociations,
     )
+  }
+
+  private fun mockVoBalance(prisonerDto: PrisonerDto, voBalance: VisitOrderPrisonerBalanceDto?) {
+    whenever(visitOrderBalanceService.getVOBalance(any())).thenReturn(voBalance)
   }
 }
