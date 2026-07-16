@@ -126,6 +126,31 @@ class SessionConflictsUtilTest {
   }
 
   @Test
+  fun `when reservation exists for limit reached session then session is not marked with remand limit reached conflict`() {
+    val session = createVisitSessionDto(visitDate)
+    val doubleBookingSessionList = listOf(
+      createDoubleBookedConflictSessionDto(
+        reference = "",
+        sessionConflictType = SessionConflictType.APPLICATION,
+        sessionTemplateReference = session.sessionTemplateReference,
+        visitDate = session.startTimestamp.toLocalDate(),
+      ),
+    )
+
+    sessionConflictsUtil.addSessionConflicts(session, emptyList(), doubleBookingSessionList, listOf(session), emptyList(), emptyList(), null)
+
+    assertThat(session.sessionConflicts.size).isEqualTo(1)
+    assertThat(session.sessionConflicts.map { it.sessionConflict }).containsOnly(DOUBLE_BOOKING_OR_RESERVATION)
+    assertThat(session.sessionConflicts.flatMap { it.additionalAttributes }).containsAll(
+      listOf(
+        listOf(
+          AdditionalSessionConflictInfoDto(SessionConflictAttribute.CONFLICT_TYPE, "APPLICATION"),
+        ),
+      ),
+    )
+  }
+
+  @Test
   fun `when date is not blocked by prison then session is not marked with prison blocked session conflict`() {
     val session = createVisitSessionDto(visitDate)
     val prisonBlockedList = emptyList<LocalDate>()

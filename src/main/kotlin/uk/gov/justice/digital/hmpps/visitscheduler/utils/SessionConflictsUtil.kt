@@ -21,14 +21,11 @@ import java.util.function.BiPredicate
 
 @Component
 class SessionConflictsUtil {
-  private val isDoubleBookedSession =
+  private val isDoubleBookedOrReservedSession =
     BiPredicate<VisitSessionDto, List<DoubleBookedConflictSessionDto>> { visitSession, doubleBookedSessions ->
       doubleBookedSessions.any { doubleBookedSession ->
-        (
-          visitSession.startTimestamp.toLocalDate() == doubleBookedSession.sessionDate &&
-            visitSession.sessionTemplateReference == doubleBookedSession.sessionTemplateReference &&
-            doubleBookedSession.conflictType == SessionConflictType.VISIT
-          )
+        visitSession.startTimestamp.toLocalDate() == doubleBookedSession.sessionDate &&
+          visitSession.sessionTemplateReference == doubleBookedSession.sessionTemplateReference
       }
     }
 
@@ -94,8 +91,8 @@ class SessionConflictsUtil {
     limitReachedSessions: List<VisitSessionDto>,
     doubleBookingConflicts: List<DoubleBookedConflictSessionDto>,
   ): SessionConflictDto? {
-    val isDoubleBookedSession = isDoubleBookedSession.test(session, doubleBookingConflicts)
-    if (limitReachedSessions.contains(session) && !isDoubleBookedSession) {
+    val isDoubleBookedOrReservedSession = isDoubleBookedOrReservedSession.test(session, doubleBookingConflicts)
+    if (limitReachedSessions.contains(session) && !isDoubleBookedOrReservedSession) {
       return SessionConflictDto(REMAND_VISITS_LIMIT_REACHED)
     }
     return null
