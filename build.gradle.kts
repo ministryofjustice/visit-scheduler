@@ -88,7 +88,3 @@ allOpen {
 tasks.test {
   jvmArgs = listOf("-Xmx2g", "-XX:MaxMetaspaceSize=512m")
 }
-
-dependencyCheck {
-  nvd.datafeedUrl = "file:///opt/vulnz/cache"
-}
