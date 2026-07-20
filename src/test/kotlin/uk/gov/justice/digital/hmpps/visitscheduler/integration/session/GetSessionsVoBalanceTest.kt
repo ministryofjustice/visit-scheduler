@@ -32,8 +32,13 @@ class GetSessionsVoBalanceTest : IntegrationTestBase() {
   private val convictedPrisonerId = "A0000002"
 
   private val prisonCode = "STC"
+  private val policyNoticeDaysMin = 0
 
   private lateinit var authHttpHeaders: (HttpHeaders) -> Unit
+
+  private fun firstBookableMonday(): LocalDate = LocalDate.now()
+    .plusDays((policyNoticeDaysMin + 1).toLong())
+    .with(TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY))
 
   @MockitoSpyBean
   private lateinit var visitAllocationApiClientSpy: VisitAllocationApiClient
@@ -41,7 +46,7 @@ class GetSessionsVoBalanceTest : IntegrationTestBase() {
   @BeforeEach
   internal fun setUpTests() {
     authHttpHeaders = setAuthorisation(roles = requiredRole)
-    prison = prisonEntityHelper.create(prisonCode = prisonCode, policyNoticeDaysMin = 0, policyNoticeDaysMax = 14, remandVisitLimitPerWeek = 2, weekStartDay = DayOfWeek.MONDAY)
+    prison = prisonEntityHelper.create(prisonCode = prisonCode, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = 14, remandVisitLimitPerWeek = 2, weekStartDay = DayOfWeek.MONDAY)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = remandPrisonerId, prisonCode = prisonCode, convictedStatus = "REMAND")
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = convictedPrisonerId, prisonCode = prisonCode, convictedStatus = "CONVICTED")
   }
@@ -50,7 +55,7 @@ class GetSessionsVoBalanceTest : IntegrationTestBase() {
   fun `when prisoner is on remand then VO or PVO balance is not checked for that prisoner`() {
     // Given
     val today = LocalDate.now()
-    val sessionDate = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY))
+    val sessionDate = firstBookableMonday()
     val sessionTemplate = sessionTemplateEntityHelper.create(visitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO, prisonCode = prisonCode, weeklyFrequency = 1, validFromDate = today.minusMonths(1), dayOfWeek = DayOfWeek.MONDAY)
     val prisonerBalance = null
     visitAllocationApiMockServer.stubGetPrisonerVOBalance(prisonerId = remandPrisonerId, prisonerBalance)
@@ -69,7 +74,7 @@ class GetSessionsVoBalanceTest : IntegrationTestBase() {
   fun `when prisoner is convicted and session restriction is VO only then a NO_VO conflict is added if VO balance is negative`() {
     // Given
     val today = LocalDate.now()
-    val sessionDate = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY))
+    val sessionDate = firstBookableMonday()
     val sessionTemplate = sessionTemplateEntityHelper.create(visitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO, prisonCode = prisonCode, weeklyFrequency = 1, validFromDate = today.minusMonths(1), dayOfWeek = DayOfWeek.MONDAY)
     val prisonerBalance = VisitOrderPrisonerBalanceDto(prisonerId = convictedPrisonerId, voBalance = -1, pvoBalance = 3)
     visitAllocationApiMockServer.stubGetPrisonerVOBalance(prisonerId = convictedPrisonerId, prisonerBalance)
@@ -89,7 +94,7 @@ class GetSessionsVoBalanceTest : IntegrationTestBase() {
   fun `when prisoner is convicted and session restriction is VO only then a NO_VO conflict is added if VO balance is zero`() {
     // Given
     val today = LocalDate.now()
-    val sessionDate = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY))
+    val sessionDate = firstBookableMonday()
     val sessionTemplate = sessionTemplateEntityHelper.create(visitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO, prisonCode = prisonCode, weeklyFrequency = 1, validFromDate = today.minusMonths(1), dayOfWeek = DayOfWeek.MONDAY)
     val prisonerBalance = VisitOrderPrisonerBalanceDto(prisonerId = convictedPrisonerId, voBalance = 0, pvoBalance = 3)
     visitAllocationApiMockServer.stubGetPrisonerVOBalance(prisonerId = convictedPrisonerId, prisonerBalance)
@@ -109,7 +114,7 @@ class GetSessionsVoBalanceTest : IntegrationTestBase() {
   fun `when prisoner is convicted and session restriction is VO only then no conflict is added if VO balance is available`() {
     // Given
     val today = LocalDate.now()
-    val sessionDate = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY))
+    val sessionDate = firstBookableMonday()
     val sessionTemplate = sessionTemplateEntityHelper.create(visitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO, prisonCode = prisonCode, weeklyFrequency = 1, validFromDate = today.minusMonths(1), dayOfWeek = DayOfWeek.MONDAY)
     val prisonerBalance = VisitOrderPrisonerBalanceDto(prisonerId = convictedPrisonerId, voBalance = 1, pvoBalance = 0)
     visitAllocationApiMockServer.stubGetPrisonerVOBalance(prisonerId = convictedPrisonerId, prisonerBalance)
@@ -128,7 +133,7 @@ class GetSessionsVoBalanceTest : IntegrationTestBase() {
   fun `when prisoner is convicted and session restriction is PVO only then a NO_PVO conflict is added if PVO balance is negative`() {
     // Given
     val today = LocalDate.now()
-    val sessionDate = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY))
+    val sessionDate = firstBookableMonday()
     val sessionTemplate = sessionTemplateEntityHelper.create(visitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.PVO, prisonCode = prisonCode, weeklyFrequency = 1, validFromDate = today.minusMonths(1), dayOfWeek = DayOfWeek.MONDAY)
     val prisonerBalance = VisitOrderPrisonerBalanceDto(prisonerId = convictedPrisonerId, voBalance = 1, pvoBalance = -3)
     visitAllocationApiMockServer.stubGetPrisonerVOBalance(prisonerId = convictedPrisonerId, prisonerBalance)
@@ -148,7 +153,7 @@ class GetSessionsVoBalanceTest : IntegrationTestBase() {
   fun `when prisoner is convicted and session restriction is PVO only then a NO_PVO conflict is added if PVO balance is zero`() {
     // Given
     val today = LocalDate.now()
-    val sessionDate = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY))
+    val sessionDate = firstBookableMonday()
     val sessionTemplate = sessionTemplateEntityHelper.create(visitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.PVO, prisonCode = prisonCode, weeklyFrequency = 1, validFromDate = today.minusMonths(1), dayOfWeek = DayOfWeek.MONDAY)
     val prisonerBalance = VisitOrderPrisonerBalanceDto(prisonerId = convictedPrisonerId, voBalance = 4, pvoBalance = 0)
     visitAllocationApiMockServer.stubGetPrisonerVOBalance(prisonerId = convictedPrisonerId, prisonerBalance)
@@ -168,7 +173,7 @@ class GetSessionsVoBalanceTest : IntegrationTestBase() {
   fun `when prisoner is convicted and session restriction is PVO only then no conflict is added if PVO balance is available`() {
     // Given
     val today = LocalDate.now()
-    val sessionDate = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY))
+    val sessionDate = firstBookableMonday()
     val sessionTemplate = sessionTemplateEntityHelper.create(visitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.PVO, prisonCode = prisonCode, weeklyFrequency = 1, validFromDate = today.minusMonths(1), dayOfWeek = DayOfWeek.MONDAY)
     val prisonerBalance = VisitOrderPrisonerBalanceDto(prisonerId = convictedPrisonerId, voBalance = 0, pvoBalance = 3)
     visitAllocationApiMockServer.stubGetPrisonerVOBalance(prisonerId = convictedPrisonerId, prisonerBalance)
@@ -187,7 +192,7 @@ class GetSessionsVoBalanceTest : IntegrationTestBase() {
   fun `when prisoner is convicted and session restriction is VO or PVO then a NO_VO_OR_PVOS conflict is added if neither VO or PVO balance exists - zero balances`() {
     // Given
     val today = LocalDate.now()
-    val sessionDate = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY))
+    val sessionDate = firstBookableMonday()
     val sessionTemplate = sessionTemplateEntityHelper.create(visitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO, prisonCode = prisonCode, weeklyFrequency = 1, validFromDate = today.minusMonths(1), dayOfWeek = DayOfWeek.MONDAY)
     val prisonerBalance = VisitOrderPrisonerBalanceDto(prisonerId = convictedPrisonerId, voBalance = 0, pvoBalance = 0)
     visitAllocationApiMockServer.stubGetPrisonerVOBalance(prisonerId = convictedPrisonerId, prisonerBalance)
@@ -207,7 +212,7 @@ class GetSessionsVoBalanceTest : IntegrationTestBase() {
   fun `when prisoner is convicted and session restriction is VO or PVO then a NO_VO_OR_PVOS conflict is added if neither VO or PVO balance exists - negative balances`() {
     // Given
     val today = LocalDate.now()
-    val sessionDate = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY))
+    val sessionDate = firstBookableMonday()
     val sessionTemplate = sessionTemplateEntityHelper.create(visitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO, prisonCode = prisonCode, weeklyFrequency = 1, validFromDate = today.minusMonths(1), dayOfWeek = DayOfWeek.MONDAY)
     val prisonerBalance = VisitOrderPrisonerBalanceDto(prisonerId = convictedPrisonerId, voBalance = -1, pvoBalance = -1)
     visitAllocationApiMockServer.stubGetPrisonerVOBalance(prisonerId = convictedPrisonerId, prisonerBalance)
@@ -227,7 +232,7 @@ class GetSessionsVoBalanceTest : IntegrationTestBase() {
   fun `when prisoner is convicted and session restriction is VO or PVO then a NO_VO_OR_PVOS conflict is not added if VO balance exists`() {
     // Given
     val today = LocalDate.now()
-    val sessionDate = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY))
+    val sessionDate = firstBookableMonday()
     val sessionTemplate = sessionTemplateEntityHelper.create(visitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO, prisonCode = prisonCode, weeklyFrequency = 1, validFromDate = today.minusMonths(1), dayOfWeek = DayOfWeek.MONDAY)
     val prisonerBalance = VisitOrderPrisonerBalanceDto(prisonerId = convictedPrisonerId, voBalance = 1, pvoBalance = 0)
     visitAllocationApiMockServer.stubGetPrisonerVOBalance(prisonerId = convictedPrisonerId, prisonerBalance)
@@ -246,7 +251,7 @@ class GetSessionsVoBalanceTest : IntegrationTestBase() {
   fun `when prisoner is convicted and session restriction is VO or PVO then a NO_VO_OR_PVOS conflict is not added if PVO balance exists`() {
     // Given
     val today = LocalDate.now()
-    val sessionDate = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY))
+    val sessionDate = firstBookableMonday()
     val sessionTemplate = sessionTemplateEntityHelper.create(visitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO, prisonCode = prisonCode, weeklyFrequency = 1, validFromDate = today.minusMonths(1), dayOfWeek = DayOfWeek.MONDAY)
     val prisonerBalance = VisitOrderPrisonerBalanceDto(prisonerId = convictedPrisonerId, voBalance = -2, pvoBalance = 1)
     visitAllocationApiMockServer.stubGetPrisonerVOBalance(prisonerId = convictedPrisonerId, prisonerBalance)
@@ -265,7 +270,7 @@ class GetSessionsVoBalanceTest : IntegrationTestBase() {
   fun `when prisoner is convicted and session restriction is NONE then no session conflict is added even if no VO or PVO balance exists - negative balances`() {
     // Given
     val today = LocalDate.now()
-    val sessionDate = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY))
+    val sessionDate = firstBookableMonday()
     val sessionTemplate = sessionTemplateEntityHelper.create(visitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.NONE, prisonCode = prisonCode, weeklyFrequency = 1, validFromDate = today.minusMonths(1), dayOfWeek = DayOfWeek.MONDAY)
     val prisonerBalance = VisitOrderPrisonerBalanceDto(prisonerId = convictedPrisonerId, voBalance = -2, pvoBalance = -4)
     visitAllocationApiMockServer.stubGetPrisonerVOBalance(prisonerId = convictedPrisonerId, prisonerBalance)
@@ -284,7 +289,7 @@ class GetSessionsVoBalanceTest : IntegrationTestBase() {
   fun `when prisoner is convicted and session restriction is NONE then no session conflict is added even if no VO or PVO balance exists - zero balances`() {
     // Given
     val today = LocalDate.now()
-    val sessionDate = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY))
+    val sessionDate = firstBookableMonday()
     val sessionTemplate = sessionTemplateEntityHelper.create(visitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.NONE, prisonCode = prisonCode, weeklyFrequency = 1, validFromDate = today.minusMonths(1), dayOfWeek = DayOfWeek.MONDAY)
     val prisonerBalance = VisitOrderPrisonerBalanceDto(prisonerId = convictedPrisonerId, voBalance = 0, pvoBalance = 0)
     visitAllocationApiMockServer.stubGetPrisonerVOBalance(prisonerId = convictedPrisonerId, prisonerBalance)
@@ -303,7 +308,7 @@ class GetSessionsVoBalanceTest : IntegrationTestBase() {
   fun `when prisoner is convicted and call to visit allocation returns a null then no session conflicts are returned`() {
     // Given
     val today = LocalDate.now()
-    val sessionDate = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY))
+    val sessionDate = firstBookableMonday()
     val sessionTemplate = sessionTemplateEntityHelper.create(visitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO, prisonCode = prisonCode, weeklyFrequency = 1, validFromDate = today.minusMonths(1), dayOfWeek = DayOfWeek.MONDAY)
     visitAllocationApiMockServer.stubGetPrisonerVOBalance(prisonerId = convictedPrisonerId, null)
 
@@ -322,7 +327,7 @@ class GetSessionsVoBalanceTest : IntegrationTestBase() {
   fun `when prisoner is convicted and call to visit allocation fails with a NOT_FOUND error then no session conflicts are returned`() {
     // Given
     val today = LocalDate.now()
-    val sessionDate = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY))
+    val sessionDate = firstBookableMonday()
     val sessionTemplate = sessionTemplateEntityHelper.create(visitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO, prisonCode = prisonCode, weeklyFrequency = 1, validFromDate = today.minusMonths(1), dayOfWeek = DayOfWeek.MONDAY)
     visitAllocationApiMockServer.stubGetPrisonerVOBalance(prisonerId = convictedPrisonerId, null, HttpStatus.NOT_FOUND)
 
