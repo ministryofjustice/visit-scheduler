@@ -57,7 +57,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.ApplicationEntityHelpe
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AssertHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.DeleteEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.EventAuditEntityHelper
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.JwtAuthHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionLocationGroupHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionPrisonerCategoryHelper
@@ -90,6 +89,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPrisonUserClie
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionSlotRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.DateRange
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionDatesUtil
+import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -152,7 +152,7 @@ abstract class IntegrationTestBase {
   protected lateinit var deleteEntityHelper: DeleteEntityHelper
 
   @Autowired
-  protected lateinit var jwtAuthHelper: JwtAuthHelper
+  protected lateinit var jwtAuthHelper: JwtAuthorisationHelper
 
   @Autowired
   protected lateinit var assertHelper: AssertHelper
@@ -217,7 +217,12 @@ abstract class IntegrationTestBase {
     user: String = "AUTH_ADM",
     roles: List<String> = listOf(),
     scopes: List<String> = listOf(),
-  ): (HttpHeaders) -> Unit = jwtAuthHelper.setAuthorisation(user, roles, scopes)
+  ): (HttpHeaders) -> Unit = jwtAuthHelper.setAuthorisationHeader(
+    clientId = "visit-scheduler-client",
+    username = user,
+    scope = scopes,
+    roles = roles,
+  )
 
   companion object {
     internal val prisonApiMockServer = PrisonApiMockServer()
