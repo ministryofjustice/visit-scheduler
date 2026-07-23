@@ -154,7 +154,7 @@ class FuturePublicVisitsTest : IntegrationTestBase() {
   @Test
   fun `access forbidden when unknown role`() {
     // Given
-    val noRoles = listOf("SOME_OTHER_ROLE_VISIT_SCHEDULER")
+    val noRoles = listOf("INVALID_ROLE_ROLE_VISIT_SCHEDULER")
 
     // When
     val responseSpec = callPublicFutureVisitsEndPoint(bookerReference = "aTestRole", roles = noRoles)
