@@ -12,14 +12,14 @@ springdoc:
   swagger-ui:
     tagsSorter: alpha
     enabled: false
-    version: 5.32.2
   writer-with-order-by-keys: true
 
 spring:
   application:
     name: visit-scheduler
-  codec:
-    max-in-memory-size: 10MB
+  http:
+    codecs:
+      max-in-memory-size: 10MB
 
   security:
     oauth2:
