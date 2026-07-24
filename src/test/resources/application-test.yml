@@ -58,6 +58,11 @@ alerts:
     url: http://localhost:8097
     timeout: 10s
 
+
+visit-allocation:
+  api:
+    url: http://localhost:8098
+
 policy:
   session:
     non-association:

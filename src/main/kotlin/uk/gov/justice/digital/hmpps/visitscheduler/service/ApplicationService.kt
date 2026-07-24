@@ -420,13 +420,6 @@ class ApplicationService(
     }
   }
 
-  fun hasActiveApplicationsForDate(nonAssociationPrisonerIds: List<String>, sessionSlotDate: LocalDate, prisonId: Long): Boolean = applicationRepository.hasActiveApplicationsForDate(
-    nonAssociationPrisonerIds,
-    sessionSlotDate,
-    prisonId,
-    getExpiredApplicationDateAndTime(),
-  )
-
   fun hasReservations(prisonerId: String, sessionSlotId: Long, excludedApplicationReference: String?, usernameToExcludeFromReservedApplications: String?): Boolean {
     val expiredDateAndTime = getExpiredApplicationDateAndTime()
 
@@ -445,6 +438,31 @@ class ApplicationService(
         expiredDateAndTime,
         excludedApplicationReference = excludedApplicationReference,
       )
+    }
+  }
+
+  fun getReservedSessionSlotIds(prisonerId: String, sessionSlotIds: List<Long>, excludedApplicationReference: String?, usernameToExcludeFromReservedApplications: String?): Set<Long> {
+    if (sessionSlotIds.isEmpty()) {
+      return emptySet()
+    }
+
+    val expiredDateAndTime = getExpiredApplicationDateAndTime()
+
+    return if (usernameToExcludeFromReservedApplications != null) {
+      applicationRepository.getReservedSessionSlotIds(
+        prisonerId = prisonerId,
+        sessionSlotIds = sessionSlotIds,
+        expiredDateAndTime,
+        excludedApplicationReference = excludedApplicationReference,
+        usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications,
+      ).toSet()
+    } else {
+      applicationRepository.getReservedSessionSlotIds(
+        prisonerId = prisonerId,
+        sessionSlotIds = sessionSlotIds,
+        expiredDateAndTime,
+        excludedApplicationReference = excludedApplicationReference,
+      ).toSet()
     }
   }
 
@@ -498,6 +516,13 @@ class ApplicationService(
 
     return applicationEntity
   }
+
+  fun getInProgressApplicationsForPrisonersAndDates(prisonerIds: List<String>, sessionDates: List<LocalDate>, prisonId: Long): List<Application> = applicationRepository.getInProgressApplicationsForPrisonersAndDates(
+    prisonerIds,
+    sessionDates,
+    prisonId,
+    getExpiredApplicationDateAndTime(),
+  )
 
   @Transactional
   fun updateApplicationsPrisonerIdPostMerge(oldPrisonerId: String, newPrisonerId: String) {

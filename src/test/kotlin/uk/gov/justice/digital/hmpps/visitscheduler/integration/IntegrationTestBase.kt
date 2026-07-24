@@ -77,6 +77,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.NonAssociati
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.PrisonApiMockServer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.PrisonOffenderSearchMockServer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.PrisonerContactRegistryMockServer
+import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.VisitAllocationApiMockServer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.visit.application.ReserveSlotTest
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
@@ -231,6 +232,7 @@ abstract class IntegrationTestBase {
     internal val prisonerContactRegistryMockServer = PrisonerContactRegistryMockServer()
     internal val activitiesApiMockServer = ActivitiesApiMockServer()
     internal val alertsApiMockServer = AlertsApiMockServer()
+    internal val visitAllocationApiMockServer = VisitAllocationApiMockServer()
 
     @BeforeAll
     @JvmStatic
@@ -241,6 +243,7 @@ abstract class IntegrationTestBase {
       prisonerContactRegistryMockServer.start()
       activitiesApiMockServer.start()
       alertsApiMockServer.start()
+      visitAllocationApiMockServer.start()
     }
 
     @AfterAll
@@ -252,6 +255,7 @@ abstract class IntegrationTestBase {
       prisonerContactRegistryMockServer.stop()
       activitiesApiMockServer.stop()
       alertsApiMockServer.stop()
+      visitAllocationApiMockServer.stop()
     }
 
     private val pgContainer = PostgresContainer.instance
