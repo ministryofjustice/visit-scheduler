@@ -17,13 +17,14 @@ generic-service:
 
   # Environment variables to load into the deployment
   env:
-    JAVA_OPTS: "-Xmx512m"
     SERVER_PORT: "8080"
     SPRING_PROFILES_ACTIVE: "logstash"
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.json
     BOOKING_NOTICE_PERIOD_MAXIMUM_DAYS: 28
     HMPPS_SQS_USE_WEB_TOKEN: "true"
     FLAG_VISITS_NUMBER_OF_DAYS_AHEAD: 28
+    APPLICATIONINSIGHTS_STATSBEAT_DISABLED: "true"
+    JAVA_TOOL_OPTIONS: "$(JAVA_PROXY_TOOL_OPTIONS) -Xmx512m -XX:+ExitOnOutOfMemoryError -XX:MaxRAMPercentage=50.0"
 
   # Pre-existing kubernetes secrets to load as environment variables in the deployment.
   # namespace_secrets:
@@ -42,6 +43,11 @@ generic-service:
       DATABASE_ENDPOINT: "rds_instance_endpoint"
     hmpps-domain-events-topic:
       HMPPS_SQS_TOPICS_DOMAINEVENTS_ARN: "topic_arn"
+    hmpps-envoy-https-proxy-env:
+      HTTP_PROXY: "HTTP_PROXY"
+      HTTPS_PROXY: "HTTPS_PROXY"
+      NO_PROXY: "NO_PROXY"
+      JAVA_PROXY_TOOL_OPTIONS: "JAVA_PROXY_TOOL_OPTIONS"
 
   allowlist:
     groups:
