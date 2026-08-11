@@ -14,4 +14,5 @@ enum class ApplicationValidationErrorCodes(
   APPLICATION_INVALID_VISIT_DATE_BLOCKED("Visit date has been blocked by prison."),
   APPLICATION_INVALID_SESSION_DATE_BLOCKED("Visit date has been blocked for the session."),
   APPLICATION_INVALID_USER_TYPE("User type not valid for this operation."),
+  APPLICATION_INVALID_REMAND_VISIT_LIMIT_FOR_WEEK_REACHED("Remand limit for the week has been reached."),
 }

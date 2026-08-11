@@ -52,6 +52,12 @@ class SessionDatesUtil {
   fun isActiveForDate(date: LocalDate, sessionTemplate: SessionTemplate): Boolean = isActiveForDate(date, SessionTemplateDto(sessionTemplate))
 
   fun isActiveForDate(date: LocalDate, sessionTemplate: SessionTemplateDto): Boolean {
+    if (date.dayOfWeek != sessionTemplate.dayOfWeek) return false
+
+    if (date.isBefore(sessionTemplate.sessionDateRange.validFromDate)) return false
+
+    if (sessionTemplate.sessionDateRange.validToDate != null && date.isAfter(sessionTemplate.sessionDateRange.validToDate)) return false
+
     if (sessionTemplate.weeklyFrequency > 1) {
       return !isWeeklySkipDate(date, sessionTemplate.sessionDateRange.validFromDate, sessionTemplate.weeklyFrequency)
     }

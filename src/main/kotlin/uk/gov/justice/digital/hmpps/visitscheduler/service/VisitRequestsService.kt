@@ -121,7 +121,6 @@ class VisitRequestsService(
       telemetryClientService.trackVisitRequestAutoRejectedEvent(
         autoRejectResponseDto.visitDto,
         autoRejectResponseDto.eventAuditDto,
-        autoRejectionReason,
       )
 
       val snsDomainEventPublishDto = SnsDomainEventPublishDto(

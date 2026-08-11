@@ -1,11 +1,12 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.microsoft.applicationinsights.TelemetryClient
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import tools.jackson.databind.ObjectMapper
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.SnsDomainEventPublishDto
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import uk.gov.justice.hmpps.sqs.publish
@@ -23,6 +24,7 @@ import java.util.function.Supplier
 class SnsService(
   private val hmppsQueueService: HmppsQueueService,
   private val telemetryClient: TelemetryClient,
+  @param:Qualifier("objectMapper")
   private val objectMapper: ObjectMapper,
   @param:Value("\${feature.events.sns.enabled::true}")
   private val snsEventsEnabled: Boolean,

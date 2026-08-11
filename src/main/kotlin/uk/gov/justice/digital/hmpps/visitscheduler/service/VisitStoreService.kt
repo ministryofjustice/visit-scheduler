@@ -45,7 +45,6 @@ class VisitStoreService(
   private val visitRequestRuleCheckerService: VisitRequestRuleCheckerService,
   @param:Autowired private val visitDtoBuilder: VisitDtoBuilder,
   @param:Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int,
-  @param:Value("\${feature.request-booking-enabled:false}") private val requestBookingFeatureEnabled: Boolean,
 ) {
 
   @Lazy
@@ -71,7 +70,7 @@ class VisitStoreService(
     return null
   }
 
-  fun checkBookingAlreadyMade(applicationReference: String): VisitDto? {
+  fun checkApplicationAlreadyComplete(applicationReference: String): VisitDto? {
     if (applicationService.isApplicationCompleted(applicationReference)) {
       LOG.debug("The application $applicationReference has already been booked!")
       // If already booked then just return object and do nothing more!
@@ -109,15 +108,12 @@ class VisitStoreService(
       it
     } ?: run {
       // Create new booking
-      val visitSubStatus = if (requestBookingFeatureEnabled) {
+      val visitSubStatus =
         if (bookingRequestDto.isRequestBooking == true) {
           VisitSubStatus.REQUESTED
         } else {
           getApprovedOrRequestedStatus(application)
         }
-      } else {
-        VisitSubStatus.AUTO_APPROVED
-      }
 
       Visit(
         prisonId = application.prisonId,
@@ -145,6 +141,7 @@ class VisitStoreService(
         visitContact.name = it.name
         visitContact.telephone = it.telephone
         visitContact.email = it.email
+        visitContact.languagePreference = it.languagePreference
       } ?: run {
         booking.visitContact = VisitContact(
           visit = booking,
@@ -152,6 +149,7 @@ class VisitStoreService(
           name = it.name,
           telephone = it.telephone,
           email = it.email,
+          languagePreference = it.languagePreference,
         )
       }
     }
@@ -216,12 +214,14 @@ class VisitStoreService(
 
     val cancelOutcome = cancelVisitDto.cancelOutcome
 
-    if (requestBookingFeatureEnabled && (visitEntity.visitSubStatus == VisitSubStatus.REQUESTED && cancelVisitDto.userType == UserType.PUBLIC)) {
+    if (visitEntity.visitSubStatus == VisitSubStatus.REQUESTED && cancelVisitDto.userType == UserType.PUBLIC) {
       visitEntity.visitSubStatus = VisitSubStatus.WITHDRAWN
     } else {
       visitEntity.visitSubStatus = VisitSubStatus.CANCELLED
     }
+
     visitEntity.visitStatus = CANCELLED
+
     visitEntity.outcomeStatus = cancelOutcome.outcomeStatus
 
     cancelOutcome.text?.let {
@@ -323,6 +323,7 @@ class VisitStoreService(
         telephone = it.telephone,
         email = it.email,
         visit = newVisit,
+        languagePreference = it.languagePreference,
       )
     }
 
@@ -387,12 +388,14 @@ class VisitStoreService(
       it.name = updateVisitFromExternalSystemDto.visitContact.name
       it.telephone = updateVisitFromExternalSystemDto.visitContact.telephone
       it.email = updateVisitFromExternalSystemDto.visitContact.email
+      it.languagePreference = updateVisitFromExternalSystemDto.visitContact.languagePreference
     } ?: updateVisitFromExternalSystemDto.visitContact.let {
       VisitContact(
         visitId = existingVisit.id,
         name = it.name,
         telephone = it.telephone,
         email = it.email,
+        languagePreference = it.languagePreference,
         visit = existingVisit,
       )
     }

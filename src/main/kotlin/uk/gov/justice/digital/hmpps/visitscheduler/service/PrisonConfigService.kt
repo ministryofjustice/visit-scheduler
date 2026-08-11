@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
 import jakarta.validation.ValidationException
+import jakarta.validation.Validator
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -8,8 +9,8 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ExcludeDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonUserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdatePrisonDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonUserClient
@@ -23,9 +24,13 @@ class PrisonConfigService(
   private val messageService: MessageService,
   private val prisonsService: PrisonsService,
   private val excludeDateService: ExcludeDateService,
+  private val telemetryClientService: TelemetryClientService,
+  private val validator: Validator,
 ) {
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
+    const val DEFAULT_BOOKING_MIN_DAYS = 2
+    const val DEFAULT_BOOKING_MAX_DAYS = 28
   }
 
   @Autowired
@@ -37,44 +42,76 @@ class PrisonConfigService(
       throw ValidationException(messageService.getMessage("validation.create.prison.found", prisonDto.code))
     }
     validatePrisonDetails(
-      prisonDto.policyNoticeDaysMin,
-      prisonDto.policyNoticeDaysMax,
-      prisonDto.code,
-      prisonDto.maxTotalVisitors,
-      prisonDto.maxAdultVisitors,
-      prisonDto.maxChildVisitors,
+      prisonCode = prisonDto.code,
+      maxTotalVisitors = prisonDto.maxTotalVisitors,
+      maxAdultVisitors = prisonDto.maxAdultVisitors,
+      maxChildVisitors = prisonDto.maxChildVisitors,
+      remandVisitLimitPerWeek = prisonDto.remandVisitLimitPerWeek,
+      clients = prisonDto.clients,
     )
 
     val newPrison = Prison(prisonDto)
     val savedPrison = prisonRepository.saveAndFlush(newPrison)
 
-    val clients = prisonDto.clients.map { PrisonUserClient(prisonId = savedPrison.id, prison = savedPrison, userType = it.userType, active = it.active) }
+    val clients = prisonDto.clients.map { PrisonUserClient(prisonId = savedPrison.id, prison = savedPrison, userType = it.userType, policyNoticeDaysMin = it.policyNoticeDaysMin, policyNoticeDaysMax = it.policyNoticeDaysMax, active = it.active) }
     savedPrison.clients.addAll(clients)
 
     return prisonsService.mapEntityToDto(savedPrison)
   }
 
   fun updatePrison(prisonCode: String, prisonDto: UpdatePrisonDto): PrisonDto {
-    val prison = prisonsService.findPrisonByCode(prisonCode)
+    var prison = prisonsService.findPrisonByCode(prisonCode)
 
-    val policyNoticeDaysMin = prisonDto.policyNoticeDaysMin ?: prison.policyNoticeDaysMin
-    val policyNoticeDaysMax = prisonDto.policyNoticeDaysMax ?: prison.policyNoticeDaysMax
+    // TODO - remove this call and the below method once we enable client booking windows
+    setPrisonClients(prisonDto, prison)
 
     val maxTotalVisitors = prisonDto.maxTotalVisitors ?: prison.maxTotalVisitors
     val maxAdultVisitors = prisonDto.maxAdultVisitors ?: prison.maxAdultVisitors
     val maxChildVisitors = prisonDto.maxChildVisitors ?: prison.maxChildVisitors
     val adultAgeYears = prisonDto.adultAgeYears ?: prison.adultAgeYears
+    val weekStartDay = prisonDto.weekStartDay ?: prison.weekStartDay
+    val remandVisitLimitPerWeek = prisonDto.remandVisitLimitPerWeek ?: prison.remandVisitLimitPerWeek
 
-    validatePrisonDetails(policyNoticeDaysMin, policyNoticeDaysMax, prisonCode, maxTotalVisitors, maxAdultVisitors, maxChildVisitors)
+    validatePrisonDetails(
+      prisonCode = prisonCode,
+      maxTotalVisitors = maxTotalVisitors,
+      maxAdultVisitors = maxAdultVisitors,
+      maxChildVisitors = maxChildVisitors,
+      remandVisitLimitPerWeek = remandVisitLimitPerWeek,
+      clients = prisonDto.clients,
+    )
 
-    prison.policyNoticeDaysMin = policyNoticeDaysMin
-    prison.policyNoticeDaysMax = policyNoticeDaysMax
+    val originalPrisonConfig = prisonsService.mapEntityToDto(prison)
     prison.maxTotalVisitors = maxTotalVisitors
     prison.maxAdultVisitors = maxAdultVisitors
     prison.maxChildVisitors = maxChildVisitors
     prison.adultAgeYears = adultAgeYears
+    prison.weekStartDay = weekStartDay
+    prison.remandVisitLimitPerWeek = remandVisitLimitPerWeek
+
+    if (prisonDto.clients != null) {
+      prison.clients.clear()
+      prison = prisonRepository.saveAndFlush(prison)
+      val clients = prisonDto.clients
+
+      clients?.forEach {
+        prison.clients.add(
+          PrisonUserClient(
+            prisonId = prison.id,
+            prison = prison,
+            userType = it.userType,
+            policyNoticeDaysMin = it.policyNoticeDaysMin,
+            policyNoticeDaysMax = it.policyNoticeDaysMax,
+            active = it.active,
+          ),
+        )
+      }
+    }
 
     val savedPrison = prisonRepository.saveAndFlush(prison)
+
+    telemetryClientService.trackUpdatePrisonConfigEvent(originalPrisonConfig, prisonDto)
+
     return prisonsService.mapEntityToDto(savedPrison)
   }
 
@@ -86,10 +123,10 @@ class PrisonConfigService(
   }
 
   @Transactional
-  fun activatePrisonClient(prisonCode: String, type: UserType): UserClientDto = createOrUpdatePrisonClient(prisonCode, type, true)
+  fun activatePrisonClient(prisonCode: String, type: UserType): PrisonUserClientDto = createOrUpdatePrisonClient(prisonCode, type, true)
 
   @Transactional
-  fun deActivatePrisonClient(prisonCode: String, type: UserType): UserClientDto = createOrUpdatePrisonClient(prisonCode, type, false)
+  fun deActivatePrisonClient(prisonCode: String, type: UserType): PrisonUserClientDto = createOrUpdatePrisonClient(prisonCode, type, false)
 
   @Transactional
   fun deActivatePrison(prisonCode: String): PrisonDto {
@@ -128,26 +165,55 @@ class PrisonConfigService(
     return excludeDateService.getExcludeDates(prison.excludeDates)
   }
 
+  private fun setPrisonClients(prisonDto: UpdatePrisonDto, prison: Prison) {
+    if (prisonDto.clients == null) {
+      prisonDto.clients = prison.clients.map { PrisonUserClientDto(it) }.toList()
+
+      if (prisonDto.policyNoticeDaysMin != null || prisonDto.policyNoticeDaysMax != null) {
+        prisonDto.policyNoticeDaysMin?.let {
+          prisonDto.clients?.forEach { it.policyNoticeDaysMin = prisonDto.policyNoticeDaysMin }
+        }
+
+        prisonDto.policyNoticeDaysMax?.let {
+          prisonDto.clients?.forEach { it.policyNoticeDaysMax = prisonDto.policyNoticeDaysMax }
+        }
+      }
+    }
+  }
+
   private fun createOrUpdatePrisonClient(
     prisonCode: String,
     userType: UserType,
     active: Boolean,
-  ): UserClientDto {
+  ): PrisonUserClientDto {
     val prisonUserClient: PrisonUserClient
     if (prisonUserClientRepository.doesPrisonClientExist(prisonCode, userType)) {
       prisonUserClient = prisonUserClientRepository.getPrisonClient(prisonCode, userType)
       prisonUserClient.active = active
     } else {
       val prison = prisonsService.findPrisonByCode(prisonCode)
-      prisonUserClient = PrisonUserClient(prison.id, prison, userType, active)
+      prisonUserClient = PrisonUserClient(prison.id, prison, userType, policyNoticeDaysMin = DEFAULT_BOOKING_MIN_DAYS, policyNoticeDaysMax = DEFAULT_BOOKING_MAX_DAYS, active = active)
       prison.clients.add(prisonUserClient)
     }
-    return UserClientDto(prisonUserClient.userType, prisonUserClient.active)
+    return PrisonUserClientDto(prisonUserClient)
   }
 
   private fun validatePrisonDetails(
-    policyNoticeDaysMin: Int,
-    policyNoticeDaysMax: Int,
+    prisonCode: String,
+    maxTotalVisitors: Int,
+    maxAdultVisitors: Int,
+    maxChildVisitors: Int,
+    remandVisitLimitPerWeek: Int,
+    clients: List<PrisonUserClientDto>?,
+  ) {
+    validateTotalVisitors(prisonCode, maxTotalVisitors = maxTotalVisitors, maxAdultVisitors = maxAdultVisitors, maxChildVisitors = maxChildVisitors)
+    validateRemandLimitPerWeek(remandVisitLimitPerWeek, prisonCode)
+    if (!clients.isNullOrEmpty()) {
+      validatePrisonClients(prisonCode = prisonCode, clients = clients)
+    }
+  }
+
+  private fun validateTotalVisitors(
     prisonCode: String,
     maxTotalVisitors: Int,
     maxAdultVisitors: Int,
@@ -164,16 +230,43 @@ class PrisonConfigService(
         ),
       )
     }
+  }
 
-    if (policyNoticeDaysMin > policyNoticeDaysMax) {
+  private fun validateRemandLimitPerWeek(
+    remandVisitLimitPerWeek: Int,
+    prisonCode: String,
+  ) {
+    if (remandVisitLimitPerWeek < 1) {
       throw ValidationException(
         messageService.getMessage(
-          "validation.prison.policynoticedays.invalid",
+          "validation.prison.remandlimit.invalid",
           prisonCode,
-          policyNoticeDaysMin.toString(),
-          policyNoticeDaysMax.toString(),
+          remandVisitLimitPerWeek.toString(),
         ),
       )
+    }
+  }
+
+  private fun validatePrisonClients(
+    clients: List<PrisonUserClientDto>,
+    prisonCode: String,
+  ) {
+    clients.forEach { client ->
+      val validationErrors = validator.validate(client)
+      if (validationErrors.isNotEmpty()) {
+        throw ValidationException(validationErrors.joinToString(separator = ", ") { "${it.propertyPath}: ${it.message} (invalid value: ${it.invalidValue})" })
+      }
+      if (client.policyNoticeDaysMin > client.policyNoticeDaysMax) {
+        throw ValidationException(
+          messageService.getMessage(
+            "validation.prison.policynoticedays.invalid",
+            prisonCode,
+            client.policyNoticeDaysMin.toString(),
+            client.policyNoticeDaysMax.toString(),
+            client.userType.name,
+          ),
+        )
+      }
     }
   }
 }

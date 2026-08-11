@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.config
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -8,6 +9,8 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProviderBuilder
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository
 import org.springframework.web.reactive.function.client.WebClient
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
 import uk.gov.justice.hmpps.kotlin.auth.authorisedWebClient
 import uk.gov.justice.hmpps.kotlin.auth.healthWebClient
 import uk.gov.justice.hmpps.kotlin.auth.service.GlobalPrincipalOAuth2AuthorizedClientService
@@ -20,6 +23,7 @@ class WebClientConfiguration(
   @param:Value("\${prisoner.offender.search.url}") private val prisonOffenderSearchBaseUrl: String,
   @param:Value("\${prisoner-contact.registry.url}") private val prisonContactRegistryUrl: String,
   @param:Value("\${activities.api.url}") private val activitiesApiBaseUrl: String,
+  @param:Value("\${alerts.api.url}") private val alertsApiBaseUrl: String,
   @param:Value("\${api.health.timeout:2s}") val healthTimeout: Duration,
   @param:Value("\${api.timeout:10s}") val apiTimeout: Duration,
 ) {
@@ -43,6 +47,9 @@ class WebClientConfiguration(
   fun prisonerContactRegistryWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: WebClient.Builder): WebClient = getWebClient(prisonContactRegistryUrl, authorizedClientManager, builder)
 
   @Bean
+  fun alertsApiWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: WebClient.Builder): WebClient = getWebClient(alertsApiBaseUrl, authorizedClientManager, builder)
+
+  @Bean
   fun prisonApiHealthWebClient(builder: WebClient.Builder): WebClient = builder.healthWebClient(prisonApiBaseUrl, healthTimeout)
 
   @Bean
@@ -56,6 +63,9 @@ class WebClientConfiguration(
 
   @Bean
   fun prisonerContactRegistryHealthWebClient(builder: WebClient.Builder): WebClient = builder.healthWebClient(prisonContactRegistryUrl, healthTimeout)
+
+  @Bean
+  fun alertsApiHealthWebClient(builder: WebClient.Builder): WebClient = builder.healthWebClient(alertsApiBaseUrl, healthTimeout)
 
   @Bean
   fun authorizedClientManager(
@@ -80,4 +90,7 @@ class WebClientConfiguration(
     registrationId = CLIENT_REGISTRATION_ID,
     timeout = apiTimeout,
   )
+
+  @Bean
+  fun objectMapper(): ObjectMapper = JsonMapper.builder().changeDefaultPropertyInclusion { it.withValueInclusion(JsonInclude.Include.NON_NULL) }.build()
 }

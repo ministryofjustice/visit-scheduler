@@ -26,7 +26,13 @@ enum class TelemetryVisitEvents(val eventName: String) {
   ADD_SESSION_EXCLUDE_DATE_EVENT("add-session-exclude-date"),
   REMOVE_SESSION_EXCLUDE_DATE_EVENT("remove-session-exclude-date"),
 
+  // Prison Config Changes
+  PRISON_CONFIG_UPDATED_EVENT("prison-config-updated"),
+
   // reporting
   VISIT_COUNTS_REPORT("visit-counts-report"),
   OVERBOOKED_SESSION_REPORT("overbooked-sessions-report"),
+
+  // Prisoner merges
+  MANUAL_MERGE_EVENT_FAILED_FOR_PRISONER("manual-prisoner-merge-event-failed"),
 }

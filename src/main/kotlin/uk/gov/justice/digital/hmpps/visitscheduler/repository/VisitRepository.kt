@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.LastApprovedDateByVisitor
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitCountStats
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -78,6 +79,19 @@ interface VisitRepository :
     nativeQuery = true,
   )
   fun getCountOfBookedSessionVisitsForOpenOrClosedRestriction(sessionSlotId: Long): List<VisitRestrictionStats>
+
+  @Query(
+    "SELECT v.visit_restriction AS visitRestriction, " +
+      "v.visit_status as visitStatus, " +
+      "count(distinct v.id) as visitCount, " +
+      "count( vv.nomis_person_id ) as visitorCount " +
+      "from visit v left outer join visit_visitor vv on v.id = vv.visit_id " +
+      "WHERE v.session_slot_id = :sessionSlotId AND " +
+      "v.visit_restriction in ('OPEN','CLOSED') " +
+      "GROUP BY v.visit_restriction, v.visit_status",
+    nativeQuery = true,
+  )
+  fun getVisitCountsBySession(sessionSlotId: Long): List<VisitCountStats>
 
   @Query(
     "SELECT COUNT(*) AS count  FROM visit v " +
@@ -252,6 +266,51 @@ interface VisitRepository :
     @Param("startDateTime") startDateTime: LocalDateTime,
     @Param("endDateTime") endDateTime: LocalDateTime? = null,
   ): List<Visit>
+
+  @Query(
+    "SELECT v.* FROM visit v " +
+      "JOIN session_slot sl ON v.session_slot_id = sl.id " +
+      "JOIN prison p ON v.prison_id = p.id " +
+      "LEFT JOIN session_template st ON sl.session_template_reference = st.reference " +
+      "WHERE sl.slot_start >= :startDateTime AND " +
+      "v.prisoner_id = :prisonerId AND " +
+      "(:prisonCode is null OR p.code = :prisonCode) AND " +
+      "v.visit_status = 'BOOKED' AND " +
+      "(cast(:endDateTime as date) is null OR sl.slot_end < :endDateTime) AND " +
+      "(st.visit_order_restriction IS NULL OR st.visit_order_restriction != 'NONE') " +
+      "ORDER BY sl.slot_start, v.id",
+    nativeQuery = true,
+  )
+  fun getBookedVisitsThatCountTowardsRemandLimit(
+    @Param("prisonerId") prisonerId: String,
+    @Param("prisonCode") prisonCode: String?,
+    @Param("startDateTime") startDateTime: LocalDateTime,
+    @Param("endDateTime") endDateTime: LocalDateTime? = null,
+  ): List<Visit>
+
+  @Query(
+    """
+    SELECT count(distinct v.id) FROM visit v
+      JOIN session_slot sl ON v.session_slot_id = sl.id
+      JOIN prison p ON v.prison_id = p.id
+      LEFT JOIN session_template st ON sl.session_template_reference = st.reference
+      WHERE sl.slot_date >= :startDate AND
+      sl.slot_date <= :endDate AND
+      v.prisoner_id = :prisonerId AND
+      p.code = :prisonCode AND
+      v.visit_status = 'BOOKED' AND
+      (:excludeVisitReference is null OR v.reference != :excludeVisitReference) AND
+      (st.visit_order_restriction IS NULL OR st.visit_order_restriction != 'NONE')
+      """,
+    nativeQuery = true,
+  )
+  fun getCountOfBookedVisits(
+    @Param("prisonerId") prisonerId: String,
+    @Param("prisonCode") prisonCode: String,
+    @Param("startDate") startDate: LocalDate,
+    @Param("endDate") endDate: LocalDate,
+    @Param("excludeVisitReference") excludeVisitReference: String?,
+  ): Long
 
   @Query(
     "SELECT v  FROM Visit v " +
@@ -463,14 +522,16 @@ interface VisitRepository :
 
   @Transactional(readOnly = true)
   @Query(
-    "SELECT v.* " +
+    "SELECT DISTINCT v.* " +
       "FROM visit v " +
       "INNER JOIN prison p ON p.id = v.prison_id " +
+      "INNER JOIN prison_user_client pc ON p.id = pc.prison_id " +
       "INNER JOIN session_slot sl ON sl.id = v.session_slot_id " +
       "WHERE v.visit_status = 'BOOKED' " +
       "AND v.visit_sub_status = 'REQUESTED' " +
-      "AND sl.slot_start >= NOW() AND " +
-      "sl.slot_date <= (CURRENT_DATE + p.policy_notice_days_min + 1)", // +1 here to handle 0 day booking window (E.g. Monday rejects Sunday, NOT Monday).
+      "AND sl.slot_start >= NOW() " +
+      "AND pc.user_type = 'PUBLIC' " +
+      "AND sl.slot_date <= (CURRENT_DATE + pc.policy_notice_days_min + 1)", // +1 here to handle 0 day booking window (E.g. Monday rejects Sunday, NOT Monday).
     nativeQuery = true,
   )
   fun findAllVisitRequestsDueForAutoRejection(): List<Visit>
@@ -527,4 +588,17 @@ interface VisitRepository :
     @Param("prisonerId") prisonerId: String,
     @Param("nomisPersonIds") nomisPersonIds: List<Long>,
   ): List<LastApprovedDateByVisitor>
+
+  @Query(
+    "SELECT v FROM Visit v " +
+      "WHERE v.prisonerId = :prisonerId ",
+  )
+  fun findByPrisonerId(prisonerId: String): List<Visit>
+
+  @Transactional
+  @Modifying
+  @Query(
+    "UPDATE Visit v set v.prisonerId = :newPrisonerId WHERE v.prisonerId = :oldPrisonerId",
+  )
+  fun updatePrisonerId(oldPrisonerId: String, newPrisonerId: String): Int
 }

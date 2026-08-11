@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Propagation.REQUIRES_NEW
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonUserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdatePrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
@@ -28,6 +29,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.notify.LanguagePreference
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.ActionedBy
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
@@ -91,24 +93,41 @@ class PrisonEntityHelper(
     fun createPrison(
       prisonCode: String = "MDI",
       activePrison: Boolean = true,
-      policyNoticeDaysMin: Int = 2,
-      policyNoticeDaysMax: Int = 28,
       maxTotalVisitors: Int = 6,
       maxAdultVisitors: Int = 3,
       maxChildVisitors: Int = 3,
       adultAgeYears: Int = 18,
-    ): Prison = Prison(code = prisonCode, active = activePrison, policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears)
+      weekStartDay: DayOfWeek = DayOfWeek.MONDAY,
+      remandVisitLimitPerWeek: Int = 3,
+    ): Prison {
+      val prison = Prison(
+        code = prisonCode,
+        active = activePrison,
+        maxTotalVisitors = maxTotalVisitors,
+        maxAdultVisitors = maxAdultVisitors,
+        maxChildVisitors = maxChildVisitors,
+        adultAgeYears = adultAgeYears,
+        weekStartDay = weekStartDay,
+        remandVisitLimitPerWeek = remandVisitLimitPerWeek,
+      )
+      return prison
+    }
 
     fun createPrisonDto(
       prisonCode: String = "AWE",
       activePrison: Boolean = true,
-      clients: List<UserClientDto> = mutableListOf(),
       policyNoticeDaysMin: Int = 2,
       policyNoticeDaysMax: Int = 28,
+      clients: List<PrisonUserClientDto> = listOf(
+        PrisonUserClientDto(2, 28, STAFF, active = true),
+        PrisonUserClientDto(2, 28, PUBLIC, active = true),
+      ),
       maxTotalVisitors: Int = 6,
       maxAdultVisitors: Int = 3,
       maxChildVisitors: Int = 3,
       adultAgeYears: Int = 18,
+      weekStartDay: DayOfWeek = DayOfWeek.MONDAY,
+      remandVisitLimitPerWeek: Int = 3,
     ): PrisonDto = PrisonDto(
       code = prisonCode,
       active = activePrison,
@@ -119,6 +138,8 @@ class PrisonEntityHelper(
       maxChildVisitors = maxChildVisitors,
       adultAgeYears = adultAgeYears,
       clients = clients,
+      weekStartDay = weekStartDay,
+      remandVisitLimitPerWeek = remandVisitLimitPerWeek,
     )
 
     fun updatePrisonDto(
@@ -128,7 +149,23 @@ class PrisonEntityHelper(
       maxAdultVisitors: Int = 2,
       maxChildVisitors: Int = 2,
       adultAgeYears: Int = 16,
-    ): UpdatePrisonDto = UpdatePrisonDto(policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears)
+      weekStartDay: DayOfWeek = DayOfWeek.SUNDAY,
+      remandVisitLimitPerWeek: Int = 2,
+      clients: List<PrisonUserClientDto> = mutableListOf(
+        PrisonUserClientDto(2, 28, STAFF, active = true),
+        PrisonUserClientDto(2, 28, PUBLIC, active = true),
+      ),
+    ): UpdatePrisonDto = UpdatePrisonDto(
+      policyNoticeDaysMin = policyNoticeDaysMin,
+      policyNoticeDaysMax = policyNoticeDaysMax,
+      maxTotalVisitors = maxTotalVisitors,
+      maxAdultVisitors = maxAdultVisitors,
+      maxChildVisitors = maxChildVisitors,
+      adultAgeYears = adultAgeYears,
+      weekStartDay = weekStartDay,
+      clients = clients,
+      remandVisitLimitPerWeek = remandVisitLimitPerWeek,
+    )
   }
 
   @Transactional(propagation = REQUIRES_NEW)
@@ -138,6 +175,8 @@ class PrisonEntityHelper(
     excludeDates: List<LocalDate> = listOf(),
     policyNoticeDaysMin: Int = 2,
     policyNoticeDaysMax: Int = 28,
+    remandVisitLimitPerWeek: Int = 3,
+    weekStartDay: DayOfWeek = DayOfWeek.MONDAY,
     dontMakeClient: Boolean = false,
   ): Prison {
     var prison = prisonRepository.findByCode(prisonCode)
@@ -146,8 +185,8 @@ class PrisonEntityHelper(
         createPrison(
           prisonCode = prisonCode,
           activePrison = activePrison,
-          policyNoticeDaysMin = policyNoticeDaysMin,
-          policyNoticeDaysMax = policyNoticeDaysMax,
+          remandVisitLimitPerWeek = remandVisitLimitPerWeek,
+          weekStartDay = weekStartDay,
         ),
       )
 
@@ -156,6 +195,8 @@ class PrisonEntityHelper(
           createPrisonUserClient(
             prison = prison,
             active = true,
+            policyNoticeDaysMin = policyNoticeDaysMin,
+            policyNoticeDaysMax = policyNoticeDaysMax,
             userType = STAFF,
           ),
         )
@@ -164,6 +205,8 @@ class PrisonEntityHelper(
           createPrisonUserClient(
             prison = prison,
             active = true,
+            policyNoticeDaysMin = policyNoticeDaysMin,
+            policyNoticeDaysMax = policyNoticeDaysMax,
             userType = PUBLIC,
           ),
         )
@@ -171,14 +214,49 @@ class PrisonEntityHelper(
     } else {
       prison.active = activePrison
     }
-    prison?.let {
+    prison.let {
       prison.excludeDates.addAll(excludeDates.map { PrisonExcludeDate(prisonId = prison.id, prison = prison, excludeDate = it, actionedBy = "TEST_USER") })
     }
+    return prison
+  }
+
+  fun create(
+    prisonCode: String = "MDI",
+    clients: List<PrisonUserClientDto>,
+  ): Prison {
+    var prison = prisonRepository.findByCode(prisonCode)
+    if (prison == null) {
+      prison = prisonRepository.saveAndFlush(
+        createPrison(
+          prisonCode = prisonCode,
+          activePrison = true,
+        ),
+      )
+
+      clients.forEach { client ->
+        prisonUserClientRepository.saveAndFlush(
+          createPrisonUserClient(
+            prison = prison,
+            active = client.active,
+            policyNoticeDaysMin = client.policyNoticeDaysMin,
+            policyNoticeDaysMax = client.policyNoticeDaysMax,
+            userType = client.userType,
+          ),
+        )
+      }
+    }
+
     return prison!!
   }
 
-  private fun createPrisonUserClient(prison: Prison, active: Boolean, userType: UserType): PrisonUserClient {
-    val prisonUserClient = PrisonUserClient(prison = prison, prisonId = prison.id, active = active, userType = userType)
+  private fun createPrisonUserClient(
+    prison: Prison,
+    active: Boolean,
+    policyNoticeDaysMin: Int,
+    policyNoticeDaysMax: Int,
+    userType: UserType,
+  ): PrisonUserClient {
+    val prisonUserClient = PrisonUserClient(prison = prison, prisonId = prison.id, active = active, userType = userType, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax)
     prison.clients.add(prisonUserClient)
     return prisonUserClient
   }
@@ -200,7 +278,7 @@ class VisitEntityHelper(
     visit.addApplication(application)
 
     with(application.visitContact!!) {
-      visit.visitContact = VisitContact(visit = visit, visitId = visit.id, name = name, telephone = telephone, email = email)
+      visit.visitContact = VisitContact(visit = visit, visitId = visit.id, name = name, telephone = telephone, email = email, languagePreference = languagePreference)
     }
 
     application.support?.let {
@@ -289,7 +367,7 @@ class VisitEntityHelper(
     visitContact: ContactDto? = null,
     userType: UserType? = STAFF,
   ): Visit {
-    val prison = prisonEntityHelper.create(prisonCode, activePrison)
+    val prison = prisonEntityHelper.create(prisonCode, activePrison, dontMakeClient = true)
     val sessionSlot = sessionSlotEntityHelper.create(sessionTemplate.reference, prison.id, slotDate, visitStart, visitEnd)
 
     val notSaved = Visit(
@@ -310,7 +388,7 @@ class VisitEntityHelper(
 
     val savedVisit = visitRepository.saveAndFlush(notSaved)
     if (visitContact != null) {
-      createContact(visit = savedVisit, visitContact.name, visitContact.telephone, visitContact.email)
+      createContact(visit = savedVisit, visitContact.name, visitContact.telephone, visitContact.email, visitContact.languagePreference)
     }
 
     return if (createApplication) {
@@ -377,6 +455,7 @@ class VisitEntityHelper(
     name: String = "bob",
     phone: String? = "0123456789",
     email: String? = "email@example.com",
+    languagePreference: LanguagePreference = LanguagePreference.EN,
   ) {
     visit.visitContact = VisitContact(
       visitId = visit.id,
@@ -384,6 +463,7 @@ class VisitEntityHelper(
       telephone = phone,
       email = email,
       visit = visit,
+      languagePreference = languagePreference,
     )
   }
 
@@ -633,7 +713,7 @@ class SessionTemplateEntityHelper(
     includeLocationGroupType: Boolean = true,
     includeCategoryGroupType: Boolean = true,
     includeIncentiveGroupType: Boolean = true,
-    excludeDates: MutableList<LocalDate> = mutableListOf(),
+    excludeDates: List<LocalDate> = listOf(),
     clients: List<UserClientDto> = listOf(UserClientDto(STAFF, true), UserClientDto(PUBLIC, true)),
     visitOrderRestrictionType: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
   ): SessionTemplate {
@@ -686,7 +766,7 @@ class SessionTemplateEntityHelper(
     includeLocationGroupType: Boolean = true,
     includeCategoryGroupType: Boolean = true,
     includeIncentiveGroupType: Boolean = true,
-    excludeDates: MutableList<LocalDate> = mutableListOf(),
+    excludeDates: List<LocalDate> = listOf(),
     clients: List<UserClientDto> = listOf(UserClientDto(STAFF, true), UserClientDto(PUBLIC, true)),
     visitOrderRestrictionType: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
   ): SessionTemplate {
@@ -935,6 +1015,8 @@ class VisitNotificationEventHelper(
   fun getVisitNotifications(
     visitBookingReference: String,
   ): List<VisitNotificationEvent> = visitNotificationEventRepository.findVisitNotificationEventByVisitReference(visitBookingReference)
+
+  fun getAllVisitNotifications(): List<VisitNotificationEvent> = visitNotificationEventRepository.findAll()
 }
 
 @Component

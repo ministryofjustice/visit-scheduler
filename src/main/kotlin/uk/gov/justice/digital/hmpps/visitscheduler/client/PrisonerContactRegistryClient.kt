@@ -9,7 +9,9 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.bodyToMono
 import org.springframework.web.util.UriBuilder
 import reactor.core.publisher.Mono
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonercontactregistry.ContactWithOptionalPrisonerRelationshipDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonercontactregistry.PrisonerContactDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonercontactregistry.RestrictionDto
 import java.time.Duration
 
 @Component
@@ -20,43 +22,70 @@ class PrisonerContactRegistryClient(
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
     const val GET_PRISONERS_APPROVED_SOCIAL_CONTACTS_URL = "/v2/prisoners/{prisonerId}/contacts/social/approved"
+    const val GET_PRISONER_CONTACT_DETAILS_WITH_RESTRICTIONS_URL = "/v2/prisoners/{prisonerId}/contacts/{contactId}/relationships/{relationshipId}?withRestrictions=true"
+    const val GET_CONTACT_GLOBAL_RESTRICTIONS_URL = "/v2/contacts/{contactId}/restrictions/global"
+    const val GET_SEARCH_CONTACTS_URL: String = "/v2/contacts/search"
   }
 
-  fun getPrisonersApprovedSocialContacts(
+  fun searchContacts(contactIds: List<Long>, prisonerId: String? = null, withRestrictions: Boolean = false): List<ContactWithOptionalPrisonerRelationshipDto>? {
+    LOG.info("Searching for $contactIds, with restrictions: $withRestrictions and prisonerId = $prisonerId")
+    return webClient.get().uri(GET_SEARCH_CONTACTS_URL) {
+      getSearchContactsUriBuilder(contactIds, prisonerId, withRestrictions, it).build()
+    }
+      .retrieve()
+      .bodyToMono<List<ContactWithOptionalPrisonerRelationshipDto>>()
+      .onErrorResume { e ->
+        LOG.error("searchContacts Failed for get request $GET_SEARCH_CONTACTS_URL, $e")
+        Mono.empty()
+      }
+      .block(apiTimeout)
+  }
+
+  fun getPrisonerContactRelationshipDetailsWithRestrictions(
     prisonerId: String,
-    withAddress: Boolean,
-  ): List<PrisonerContactDto>? {
-    val uri = GET_PRISONERS_APPROVED_SOCIAL_CONTACTS_URL.replace("{prisonerId}", prisonerId)
-    return getPrisonersSocialContactsAsMono(prisonerId, withAddress = withAddress)
+    contactId: Long,
+    relationshipId: Long,
+  ): PrisonerContactDto? {
+    val uri = GET_PRISONER_CONTACT_DETAILS_WITH_RESTRICTIONS_URL.replace("{prisonerId}", prisonerId).replace("{contactId}", contactId.toString()).replace("{relationshipId}", relationshipId.toString())
+    return webClient.get().uri(uri)
+      .retrieve()
+      .bodyToMono<PrisonerContactDto>()
       .onErrorResume { e ->
         if (!isNotFoundError(e)) {
-          LOG.error("getPrisonersSocialContacts Failed for get request $uri")
-          Mono.empty()
+          LOG.error("getPrisonerContactRelationshipDetailsWithRestrictions Failed for get request $uri")
+          Mono.error(e)
         } else {
-          LOG.error("getPrisonersSocialContacts NOT_FOUND for get request $uri")
-          Mono.empty()
+          LOG.info("getPrisonerContactRelationshipDetailsWithRestrictions NOT_FOUND for get request $uri")
+          return@onErrorResume Mono.justOrEmpty(null)
         }
       }
       .block(apiTimeout)
   }
 
-  private fun getPrisonersSocialContactsAsMono(
-    prisonerId: String,
-    withAddress: Boolean,
-  ): Mono<List<PrisonerContactDto>> {
-    val uri = GET_PRISONERS_APPROVED_SOCIAL_CONTACTS_URL.replace("{prisonerId}", prisonerId)
-    return webClient.get().uri(uri) {
-      getSocialContactsUriBuilder(withAddress = withAddress, uriBuilder = it).build()
-    }
+  fun getContactGlobalRestrictions(
+    contactId: Long,
+  ): List<RestrictionDto>? {
+    val uri = GET_CONTACT_GLOBAL_RESTRICTIONS_URL.replace("{contactId}", contactId.toString())
+    return webClient.get().uri(uri)
       .retrieve()
-      .bodyToMono<List<PrisonerContactDto>>()
+      .bodyToMono<List<RestrictionDto>>()
+      .onErrorResume { e ->
+        if (!isNotFoundError(e)) {
+          LOG.error("getContactGlobalRestrictions Failed for get request $uri")
+          Mono.error(e)
+        } else {
+          LOG.info("getContactGlobalRestrictions NOT_FOUND for get request $uri, returning empty list")
+          Mono.just(emptyList())
+        }
+      }.block(apiTimeout)
   }
 
-  private fun getSocialContactsUriBuilder(
-    withAddress: Boolean,
-    uriBuilder: UriBuilder,
-  ): UriBuilder {
-    uriBuilder.queryParam("withAddress", withAddress)
+  private fun getSearchContactsUriBuilder(contactIds: List<Long>, prisonerId: String? = null, withRestrictions: Boolean = false, uriBuilder: UriBuilder): UriBuilder {
+    uriBuilder.queryParam("contactIds", contactIds.joinToString(","))
+    uriBuilder.queryParam("withRestrictions", withRestrictions)
+
+    prisonerId?.let { uriBuilder.queryParam("prisonerId", it) }
+
     return uriBuilder
   }
 }

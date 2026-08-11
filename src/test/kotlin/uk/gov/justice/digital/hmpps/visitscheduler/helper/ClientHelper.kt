@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.UPDATE_VISIT_BY_AP
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CONTROLLER_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_CONTACT_RESTRICTION_UPSERTED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_COUNT_FOR_PRISON_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_COURT_VIDEO_APPOINTMENT_CANCELLED_DELETED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_COURT_VIDEO_APPOINTMENT_CREATED_PATH
@@ -23,13 +24,17 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_EVENTS
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_IGNORE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_NON_ASSOCIATION_CHANGE_PATH
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PERSON_RESTRICTION_UPSERTED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_ALERTS_UPDATED_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_ALERT_CREATED_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_ALERT_DELETED_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_ALERT_UPDATED_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_CONTACT_RESTRICTION_UPSERTED_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_MERGE_BATCH_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_MERGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RECEIVED_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RELEASED_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RESTRICTION_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_VISITOR_APPROVED_PATH
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_VISITOR_RESTRICTION_UPSERTED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_VISITOR_UNAPPROVED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_REQUESTS_APPROVE_VISIT_BY_REFERENCE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_REQUESTS_COUNT_FOR_PRISON_PATH
@@ -38,12 +43,14 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ACTIVATE_SES
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ACTIVATE_SESSION_TEMPLATE_CLIENT
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADD_PRISON_EXCLUDE_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADD_SESSION_TEMPLATE_EXCLUDE_DATE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADMIN_SESSION_TEMPLATE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.CATEGORY_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.DEACTIVATE_SESSION_TEMPLATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.DEACTIVATE_SESSION_TEMPLATE_CLIENT
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.FIND_MATCHING_SESSION_TEMPLATES_ON_CREATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.FIND_MATCHING_SESSION_TEMPLATES_ON_UPDATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.GET_PRISON_EXCLUDE_DATES
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.GET_SESSION_EXCLUDE_DATES
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.GET_SESSION_TEMPLATE_EXCLUDE_DATES
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.INCENTIVE_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.LOCATION_GROUP_ADMIN_PATH
@@ -59,7 +66,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REFERENCE_LO
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REFERENCE_SESSION_TEMPLATE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REMOVE_PRISON_EXCLUDE_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REMOVE_SESSION_TEMPLATE_EXCLUDE_DATE
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMPLATE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMPLATE_VISIT_STATS
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.migration.MIGRATE_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApproveRejectionVisitRequestBodyDto
@@ -89,15 +95,18 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.Create
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.UpdateIncentiveGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.CreateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.UpdateLocationGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.ContactRestrictionUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.CourtVideoAppointmentNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PersonRestrictionUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertCreatedUpdatedNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerContactRestrictionUpsertedNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerMergeNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerMergeNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerRestrictionChangeNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorApprovedUnapprovedNotificationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorRestrictionUpsertedNotificationDto
 import java.time.LocalDate
 
 fun callCancelVisit(
@@ -264,7 +273,7 @@ fun callCreateSessionTemplate(
 ): ResponseSpec = callPost(
   dto,
   webTestClient,
-  SESSION_TEMPLATE_PATH,
+  ADMIN_SESSION_TEMPLATE_PATH,
   authHttpHeaders,
 )
 
@@ -577,6 +586,8 @@ fun getRemoveSessionTemplateExcludeDateUrl(sessionTemplateReference: String): St
 
 fun getGetSessionTemplateExcludeDatesUrl(sessionTemplateReference: String): String = getReferenceUrl(GET_SESSION_TEMPLATE_EXCLUDE_DATES, sessionTemplateReference)
 
+fun getGetSessionTemplateFutureExcludeDatesForPrisonUrl(prisonCode: String): String = getPrisonIdUrl(GET_SESSION_EXCLUDE_DATES, prisonCode)
+
 fun callCreatePrison(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
@@ -682,6 +693,16 @@ fun callGetSessionTemplateExcludeDates(
   authHttpHeaders,
 )
 
+fun callGetSessionTemplateFutureExcludeDatesForPrison(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  prisonCode: String,
+): ResponseSpec = callGet(
+  webTestClient,
+  getGetSessionTemplateFutureExcludeDatesForPrisonUrl(prisonCode),
+  authHttpHeaders,
+)
+
 fun callNotifyVSiPThatNonAssociationHasChanged(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
@@ -701,6 +722,39 @@ fun callNotifyVSiPThatPrisonerAlertHasBeenCreatedOrUpdated(
   webTestClient,
   authHttpHeaders,
   VISIT_NOTIFICATION_PRISONER_ALERTS_UPDATED_PATH,
+  dto,
+)
+
+fun callNotifyVSiPThatPrisonerAlertHasBeenCreated(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  dto: PrisonerAlertNotificationDto? = null,
+): ResponseSpec = callNotifyVSiPOfAEvent(
+  webTestClient,
+  authHttpHeaders,
+  VISIT_NOTIFICATION_PRISONER_ALERT_CREATED_PATH,
+  dto,
+)
+
+fun callNotifyVSiPThatPrisonerAlertHasBeenUpdated(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  dto: PrisonerAlertNotificationDto? = null,
+): ResponseSpec = callNotifyVSiPOfAEvent(
+  webTestClient,
+  authHttpHeaders,
+  VISIT_NOTIFICATION_PRISONER_ALERT_UPDATED_PATH,
+  dto,
+)
+
+fun callNotifyVSiPThatPrisonerAlertHasBeenDeleted(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  dto: PrisonerAlertNotificationDto? = null,
+): ResponseSpec = callNotifyVSiPOfAEvent(
+  webTestClient,
+  authHttpHeaders,
+  VISIT_NOTIFICATION_PRISONER_ALERT_DELETED_PATH,
   dto,
 )
 
@@ -802,28 +856,6 @@ fun callNotifyVSiPThatPrisonerHadBeenReceived(
   dto,
 )
 
-fun callNotifyVSiPThatPersonRestrictionUpserted(
-  webTestClient: WebTestClient,
-  authHttpHeaders: (HttpHeaders) -> Unit,
-  dto: PersonRestrictionUpsertedNotificationDto? = null,
-): ResponseSpec = callNotifyVSiPOfAEvent(
-  webTestClient,
-  authHttpHeaders,
-  VISIT_NOTIFICATION_PERSON_RESTRICTION_UPSERTED_PATH,
-  dto,
-)
-
-fun callNotifyVSiPThatVisitorRestrictionUpserted(
-  webTestClient: WebTestClient,
-  authHttpHeaders: (HttpHeaders) -> Unit,
-  dto: VisitorRestrictionUpsertedNotificationDto? = null,
-): ResponseSpec = callNotifyVSiPOfAEvent(
-  webTestClient,
-  authHttpHeaders,
-  VISIT_NOTIFICATION_VISITOR_RESTRICTION_UPSERTED_PATH,
-  dto,
-)
-
 fun callNotifyVSiPThatVisitorUnapproved(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
@@ -890,6 +922,28 @@ fun callNotifyVSiPThatPrisonerRestrictionHasChanged(
   dto,
 )
 
+fun callNotifyVSiPThatPrisonerContactRestrictionUpserted(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  dto: PrisonerContactRestrictionUpsertedNotificationDto? = null,
+): ResponseSpec = callNotifyVSiPOfAEvent(
+  webTestClient,
+  authHttpHeaders,
+  VISIT_NOTIFICATION_PRISONER_CONTACT_RESTRICTION_UPSERTED_PATH,
+  dto,
+)
+
+fun callNotifyVSiPThatContactRestrictionUpserted(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  dto: ContactRestrictionUpsertedNotificationDto? = null,
+): ResponseSpec = callNotifyVSiPOfAEvent(
+  webTestClient,
+  authHttpHeaders,
+  VISIT_NOTIFICATION_CONTACT_RESTRICTION_UPSERTED_PATH,
+  dto,
+)
+
 fun callNotifyVSiPOfAEvent(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
@@ -909,6 +963,28 @@ fun callUpdateVisitFromExternalSystem(
   reference: String,
   dto: UpdateVisitFromExternalSystemDto,
 ): ResponseSpec = callPut(dto, webTestClient, "$VISIT_CONTROLLER_PATH/external-system/$reference", authHttpHeaders)
+
+fun callNotifyVSiPThatPrisonerMerged(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  dto: PrisonerMergeNotificationDto,
+): ResponseSpec = callNotifyVSiPOfAEvent(
+  webTestClient,
+  authHttpHeaders,
+  VISIT_NOTIFICATION_PRISONER_MERGE_PATH,
+  dto,
+)
+
+fun callNotifyVSiPThatPrisonersMerged(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  dto: PrisonerMergeNotificationsDto,
+): ResponseSpec = callNotifyVSiPOfAEvent(
+  webTestClient,
+  authHttpHeaders,
+  VISIT_NOTIFICATION_PRISONER_MERGE_BATCH_PATH,
+  dto,
+)
 
 fun callGet(
   webTestClient: WebTestClient,

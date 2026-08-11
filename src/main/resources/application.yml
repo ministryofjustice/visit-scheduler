@@ -7,16 +7,20 @@ info.app:
     email: prisonvisitsbooking@digital.justice.gov.uk
 
 springdoc:
+  api-docs:
+    enabled: false
   swagger-ui:
     tagsSorter: alpha
+    enabled: false
+    version: 5.32.11
   writer-with-order-by-keys: true
-
 
 spring:
   application:
     name: visit-scheduler
-  codec:
-    max-in-memory-size: 10MB
+  http:
+    codecs:
+      max-in-memory-size: 10MB
 
   security:
     oauth2:
@@ -60,12 +64,10 @@ spring:
     date-format: "yyyy-MM-dd HH:mm:ss"
     default-property-inclusion: non_null
 
-  # Needs jackson2 configs until we move officially to 3.
-  jackson2:
-    date-format: "yyyy-MM-dd HH:mm:ss"
-    serialization:
-      WRITE_DATES_AS_TIMESTAMPS: false
-    default-property-inclusion: non_null
+    datatype:
+      datetime:
+        WRITE_DATES_AS_TIMESTAMPS: false
+
   web:
     error:
       include-message: always
@@ -148,6 +150,8 @@ task:
   requests:
     auto-reject:
       cron: "0 0 20 * * *"
+  visit-notification-events:
+    cron: "0 30 3 * * ?" #every day at 3:30 AM
 
 feature:
   events:
@@ -155,7 +159,6 @@ feature:
       enabled: true
 
 visit:
-  request-booking-enabled: false
   cancel:
     day-limit: 28
 

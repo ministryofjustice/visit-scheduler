@@ -7,17 +7,19 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ConvictionStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.DOUBLE_BOOKING_OR_RESERVATION
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.NON_ASSOCIATION
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.REMAND_VISITS_LIMIT_REACHED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType.NONE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AvailableVisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionDateRangeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionScheduleDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTimeSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.CapacityNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
@@ -25,8 +27,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.Visi
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionSlotRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateExcludeDateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonConfigService.Companion.DEFAULT_BOOKING_MAX_DAYS
+import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonConfigService.Companion.DEFAULT_BOOKING_MIN_DAYS
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionDatesUtil
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -44,6 +49,7 @@ class SessionService(
   private val sessionTemplateRepository: SessionTemplateRepository,
   private val visitRepository: VisitRepository,
   private val sessionSlotRepository: SessionSlotRepository,
+  private val sessionTemplateExcludeDateRepository: SessionTemplateExcludeDateRepository,
   private val prisonerService: PrisonerService,
   private val prisonerValidationService: PrisonerValidationService,
   private val prisonsService: PrisonsService,
@@ -81,6 +87,7 @@ class SessionService(
         endTimestamp = LocalDateTime.of(sessionDate, sessionTemplate.endTime),
         visitRoom = sessionTemplate.visitRoom,
         visitType = sessionTemplate.visitType,
+        visitOrderRestriction = sessionTemplate.visitOrderRestriction,
       )
     }.also {
       val sessionSlots = getSessionSlots(it)
@@ -105,7 +112,7 @@ class SessionService(
     }
 
     val prison = prisonsService.findPrisonByCode(prisonCode)
-    val dateRange = getDateRange(prison, minOverride, maxOverride)
+    val dateRange = getDateRange(prison, minOverride, maxOverride, userType)
 
     return getVisitSessions(
       prison = prison,
@@ -153,13 +160,14 @@ class SessionService(
     val sessionSlots = getSessionSlots(visitSessions)
     val nonAssociationConflictSessions = getNonAssociationSessions(visitSessions, prisonerId, prison)
     val doubleBookingOrReservationSessions = getDoubleBookingOrReservationSessions(visitSessions, sessionSlots, prisonerId, excludedApplicationReference, usernameToExcludeFromReservedApplications)
+    val limitReachedSessions = getLimitReachedSessions(dateRange, prisoner, prison, visitSessions, doubleBookingOrReservationSessions)
 
     return visitSessions.filterNot {
       hasNonAssociationConflict(nonAssociationConflictSessions, it) && policyFilterNonAssociation
     }.filterNot {
       hasDoubleBookingOrReservationSessions(doubleBookingOrReservationSessions, it) && policyFilterDoubleBooking
     }.also {
-      addConflicts(it, nonAssociationConflictSessions, doubleBookingOrReservationSessions)
+      addConflicts(it, nonAssociationConflictSessions, doubleBookingOrReservationSessions, limitReachedSessions)
     }.also {
       populateBookedCount(sessionSlots, it, excludedApplicationReference, usernameToExcludeFromReservedApplications, true)
     }.sortedWith(compareBy { it.startTimestamp }).also {
@@ -224,12 +232,15 @@ class SessionService(
     it: List<VisitSessionDto>,
     nonAssociationConflictSessions: Set<VisitSessionDto>,
     doubleBookingOrReservationSessions: List<VisitSessionDto>,
+    limitReachedSessions: List<VisitSessionDto>,
   ) {
     it.forEach {
       // set conflict non association flag
-      if (hasNonAssociationConflict(nonAssociationConflictSessions, it)) it.sessionConflicts.add(NON_ASSOCIATION)
-      // set conflict double booked flag
-      if (hasDoubleBookingOrReservationSessions(doubleBookingOrReservationSessions, it)) it.sessionConflicts.add(DOUBLE_BOOKING_OR_RESERVATION)
+      if (nonAssociationConflictSessions.isNotEmpty() && hasNonAssociationConflict(nonAssociationConflictSessions, it)) it.sessionConflicts.add(NON_ASSOCIATION)
+      // set  conflict double booked flag
+      if (doubleBookingOrReservationSessions.isNotEmpty() && hasDoubleBookingOrReservationSessions(doubleBookingOrReservationSessions, it)) it.sessionConflicts.add(DOUBLE_BOOKING_OR_RESERVATION)
+      // set conflict limit reached flag
+      if (limitReachedSessions.isNotEmpty() && isLimitReachedSession(limitReachedSessions, it)) it.sessionConflicts.add(REMAND_VISITS_LIMIT_REACHED)
     }
   }
 
@@ -246,6 +257,11 @@ class SessionService(
     it: VisitSessionDto,
   ): Boolean = doubleBookingOrReservationSessions.contains(it)
 
+  private fun isLimitReachedSession(
+    limitReachedSessions: List<VisitSessionDto>,
+    session: VisitSessionDto,
+  ): Boolean = limitReachedSessions.contains(session)
+
   private fun getDoubleBookingOrReservationSessions(
     visitSessions: List<VisitSessionDto>,
     sessionSlots: List<SessionSlot>,
@@ -260,6 +276,48 @@ class SessionService(
     }
   }
 
+  private fun getLimitReachedSessions(
+    dateRange: DateRange,
+    prisoner: PrisonerDto,
+    prison: Prison,
+    visitSessions: List<VisitSessionDto>,
+    doubleBookingOrReservationSessions: List<VisitSessionDto>,
+  ): List<VisitSessionDto> {
+    if (!ConvictionStatus.isRemand(prisoner.convictedStatus)) {
+      return emptyList()
+    }
+    val limitReachedSessions = mutableListOf<VisitSessionDto>()
+    // adjust start and end dates based on prison config
+    val adjustedStartDate = dateRange.fromDate.with(TemporalAdjusters.previousOrSame(prison.weekStartDay))
+    val adjustedToDate = dateRange.toDate.with(TemporalAdjusters.nextOrSame(prison.weekStartDay.plus(6)))
+
+    val visits = visitRepository.getBookedVisitsThatCountTowardsRemandLimit(
+      prisonerId = prisoner.prisonerId,
+      prisonCode = prison.code,
+      startDateTime = adjustedStartDate.atStartOfDay(),
+      endDateTime = adjustedToDate.atTime(23, 59, 59),
+    )
+
+    var weekStartDate = adjustedStartDate
+    while (weekStartDate < adjustedToDate) {
+      val weekEndDate = weekStartDate.plusDays(6)
+      val totalBookedVisitsForWeek = visits.count { it.sessionSlot.slotDate in weekStartDate..weekEndDate }
+
+      // if the remand visit limit per week has been reached, add the session to the list of limit-reached sessions
+      if (totalBookedVisitsForWeek >= prison.remandVisitLimitPerWeek) {
+        limitReachedSessions.addAll(
+          visitSessions
+            .filter { it.startTimestamp.toLocalDate() in weekStartDate..weekEndDate }
+            .filter { it.visitOrderRestriction != NONE }
+            .filter { !doubleBookingOrReservationSessions.contains(it) },
+        )
+      }
+      weekStartDate = weekStartDate.plusWeeks(1)
+    }
+
+    return limitReachedSessions
+  }
+
   private fun getSessionSlots(sessionTemplates: List<VisitSessionDto>): List<SessionSlot> {
     val sessionDates = sessionTemplates.map { it.startTimestamp.toLocalDate() }.distinct()
     val sessionTemplateReference = sessionTemplates.map { it.sessionTemplateReference }.distinct()
@@ -271,12 +329,15 @@ class SessionService(
     prison: Prison,
     minOverride: Int? = null,
     maxOverride: Int? = null,
+    userType: UserType,
   ): DateRange {
     val today = LocalDate.now()
 
     // add 1 to the policyNoticeDaysMin to ensure we are adding whole days
-    val min = minOverride ?: (prison.policyNoticeDaysMin.plus(1))
-    val max = maxOverride ?: prison.policyNoticeDaysMax
+    val client = prison.clients.find { it.userType == userType }
+    val minPolicy = client?.policyNoticeDaysMin ?: DEFAULT_BOOKING_MIN_DAYS
+    val min = minOverride ?: minPolicy.plus(1)
+    val max = maxOverride ?: client?.policyNoticeDaysMax ?: DEFAULT_BOOKING_MAX_DAYS
 
     val requestedBookableStartDate = today.plusDays(min.toLong())
     val requestedBookableEndDate = today.plusDays(max.toLong())
@@ -314,6 +375,7 @@ class SessionService(
             endTimestamp = LocalDateTime.of(date, sessionTemplate.endTime),
             visitRoom = sessionTemplate.visitRoom,
             visitType = sessionTemplate.visitType,
+            visitOrderRestriction = sessionTemplate.visitOrderRestriction,
           )
         }
         .toList()
@@ -550,24 +612,19 @@ class SessionService(
     )
 
     sessionTemplates = filterSessionsTemplatesForDate(scheduleDate, sessionTemplates)
-    sessionTemplates.map { sessionTemplate -> createSessionScheduleDto(sessionTemplate) }.toList()
+
+    val excludedSessionTemplatesForDate = getExcludedSessionTemplatesForDate(scheduleDate, sessionTemplates.map { it.reference }.distinct()).toHashSet()
+    sessionTemplates.map { sessionTemplate ->
+      val isSessionExcluded = excludedSessionTemplatesForDate.contains(sessionTemplate.reference)
+      SessionScheduleDto(sessionTemplate, isSessionExcluded)
+    }.toList()
   }
 
-  private fun createSessionScheduleDto(sessionTemplate: SessionTemplate): SessionScheduleDto = SessionScheduleDto(
-    sessionTemplateReference = sessionTemplate.reference,
-    sessionTimeSlot = SessionTimeSlotDto(startTime = sessionTemplate.startTime, endTime = sessionTemplate.endTime),
-    capacity = SessionCapacityDto(sessionTemplate),
-    areLocationGroupsInclusive = sessionTemplate.includeLocationGroupType,
-    prisonerLocationGroupNames = sessionTemplate.permittedSessionLocationGroups.map { it.name }.toList(),
-    areCategoryGroupsInclusive = sessionTemplate.includeCategoryGroupType,
-    prisonerCategoryGroupNames = sessionTemplate.permittedSessionCategoryGroups.map { it.name }.toList(),
-    areIncentiveGroupsInclusive = sessionTemplate.includeIncentiveGroupType,
-    prisonerIncentiveLevelGroupNames = sessionTemplate.permittedSessionIncentiveLevelGroups.map { it.name }.toList(),
-    weeklyFrequency = sessionTemplate.weeklyFrequency,
-    visitType = sessionTemplate.visitType,
-    sessionDateRange = SessionDateRangeDto(validFromDate = sessionTemplate.validFromDate, validToDate = sessionTemplate.validToDate),
-    visitRoom = sessionTemplate.visitRoom,
-  )
+  private fun getExcludedSessionTemplatesForDate(sessionDate: LocalDate, sessionTemplateReferences: List<String>) = if (sessionTemplateReferences.isEmpty()) {
+    emptyList()
+  } else {
+    sessionTemplateExcludeDateRepository.getSessionsExcludedForDate(sessionDate, sessionTemplateReferences)
+  }
 
   private fun adjustDateByDayOfWeek(dayOfWeek: DayOfWeek, startDate: LocalDate): LocalDate {
     if (startDate.dayOfWeek != dayOfWeek) {

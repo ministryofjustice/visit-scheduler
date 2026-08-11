@@ -1,7 +1,9 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions
 
 import io.swagger.v3.oas.annotations.media.Schema
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 
 @Schema(description = "Session schedule")
 data class SessionScheduleDto(
@@ -47,4 +49,28 @@ data class SessionScheduleDto(
 
   @param:Schema(description = "visit room name", example = "Visits Room", required = true)
   val visitRoom: String,
-)
+
+  @param:Schema(description = "Session vo restriction", required = true)
+  val visitOrderRestriction: SessionTemplateVisitOrderRestrictionType,
+
+  @param:Schema(description = "Flag to indicate if the session is excluded for the date. True will indicate that the session is excluded.", required = true)
+  val isSessionExcluded: Boolean,
+) {
+  constructor(sessionTemplate: SessionTemplate, isSessionExcluded: Boolean) : this(
+    sessionTemplateReference = sessionTemplate.reference,
+    sessionTimeSlot = SessionTimeSlotDto(startTime = sessionTemplate.startTime, endTime = sessionTemplate.endTime),
+    capacity = SessionCapacityDto(sessionTemplate),
+    areLocationGroupsInclusive = sessionTemplate.includeLocationGroupType,
+    prisonerLocationGroupNames = sessionTemplate.permittedSessionLocationGroups.map { it.name }.toList(),
+    areCategoryGroupsInclusive = sessionTemplate.includeCategoryGroupType,
+    prisonerCategoryGroupNames = sessionTemplate.permittedSessionCategoryGroups.map { it.name }.toList(),
+    areIncentiveGroupsInclusive = sessionTemplate.includeIncentiveGroupType,
+    prisonerIncentiveLevelGroupNames = sessionTemplate.permittedSessionIncentiveLevelGroups.map { it.name }.toList(),
+    weeklyFrequency = sessionTemplate.weeklyFrequency,
+    visitType = sessionTemplate.visitType,
+    sessionDateRange = SessionDateRangeDto(validFromDate = sessionTemplate.validFromDate, validToDate = sessionTemplate.validToDate),
+    visitRoom = sessionTemplate.visitRoom,
+    visitOrderRestriction = sessionTemplate.visitOrderRestriction,
+    isSessionExcluded = isSessionExcluded,
+  )
+}

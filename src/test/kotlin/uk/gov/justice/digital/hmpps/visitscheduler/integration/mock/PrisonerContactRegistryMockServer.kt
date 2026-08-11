@@ -5,27 +5,37 @@ import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.get
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
-import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonerContactRegistryClient.Companion.GET_PRISONERS_APPROVED_SOCIAL_CONTACTS_URL
+import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonerContactRegistryClient.Companion.GET_CONTACT_GLOBAL_RESTRICTIONS_URL
+import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonerContactRegistryClient.Companion.GET_PRISONER_CONTACT_DETAILS_WITH_RESTRICTIONS_URL
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonercontactregistry.ContactWithOptionalPrisonerRelationshipDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonercontactregistry.PrisonerContactDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonercontactregistry.RestrictionDto
 
 class PrisonerContactRegistryMockServer : WireMockServer(8095) {
-  fun stubGetPrisonerApprovedSocialContacts(
-    prisonerId: String,
-    withAddress: Boolean = false,
-    contactsList: List<PrisonerContactDto>?,
-    httpStatus: HttpStatus = HttpStatus.NOT_FOUND,
+  fun stubSearchContacts(
+    contactIds: List<Long>,
+    prisonerId: String? = null,
+    withRestrictions: Boolean = true,
+    contactsList: List<ContactWithOptionalPrisonerRelationshipDto>?,
+    httpStatus: HttpStatus = HttpStatus.INTERNAL_SERVER_ERROR,
   ) {
-    val url = GET_PRISONERS_APPROVED_SOCIAL_CONTACTS_URL.replace("{prisonerId}", prisonerId)
+    val responseBuilder = aResponse()
+      .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+
+    val uri = if (prisonerId != null) {
+      "/v2/contacts/search?contactIds=${contactIds.joinToString(",")}&withRestrictions=$withRestrictions&prisonerId=$prisonerId"
+    } else {
+      "/v2/contacts/search?contactIds=${contactIds.joinToString(",")}&withRestrictions=$withRestrictions"
+    }
+
     stubFor(
-      get("$url?${getContactsQueryParams(withAddress)}")
+      get(uri)
         .willReturn(
           if (contactsList == null) {
-            aResponse()
-              .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+            responseBuilder
               .withStatus(httpStatus.value())
           } else {
-            aResponse()
-              .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+            responseBuilder
               .withStatus(HttpStatus.OK.value())
               .withBody(getJsonString(contactsList))
           },
@@ -33,14 +43,51 @@ class PrisonerContactRegistryMockServer : WireMockServer(8095) {
     )
   }
 
-  private fun getContactsQueryParams(
-    withAddress: Boolean? = null,
-  ): String {
-    val queryParams = ArrayList<String>()
-    withAddress?.let {
-      queryParams.add("withAddress=$it")
-    }
+  fun stubGetPrisonerContactRelationshipDetailsWithRestrictions(
+    prisonerId: String,
+    contactId: Long,
+    prisonerContactId: Long,
+    contact: PrisonerContactDto?,
+    httpStatus: HttpStatus = HttpStatus.NOT_FOUND,
+  ) {
+    val url = GET_PRISONER_CONTACT_DETAILS_WITH_RESTRICTIONS_URL.replace("{prisonerId}", prisonerId).replace("{contactId}", contactId.toString()).replace("{relationshipId}", prisonerContactId.toString())
+    stubFor(
+      get(url)
+        .willReturn(
+          if (contact == null) {
+            aResponse()
+              .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+              .withStatus(httpStatus.value())
+          } else {
+            aResponse()
+              .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+              .withStatus(HttpStatus.OK.value())
+              .withBody(getJsonString(contact))
+          },
+        ),
+    )
+  }
 
-    return queryParams.joinToString("&")
+  fun stubGetContactGlobalRestrictions(
+    contactId: Long,
+    contactRestrictions: List<RestrictionDto>?,
+    httpStatus: HttpStatus = HttpStatus.NOT_FOUND,
+  ) {
+    val url = GET_CONTACT_GLOBAL_RESTRICTIONS_URL.replace("{contactId}", contactId.toString())
+    stubFor(
+      get(url)
+        .willReturn(
+          if (contactRestrictions == null) {
+            aResponse()
+              .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+              .withStatus(httpStatus.value())
+          } else {
+            aResponse()
+              .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+              .withStatus(HttpStatus.OK.value())
+              .withBody(getJsonString(contactRestrictions))
+          },
+        ),
+    )
   }
 }

@@ -5,6 +5,7 @@ import jakarta.validation.Valid
 import jakarta.validation.constraints.FutureOrPresent
 import jakarta.validation.constraints.NotNull
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType
 import java.time.LocalDate
 
 @Schema(description = "Visit Session")
@@ -25,11 +26,15 @@ data class AvailableVisitSessionDto(
   @param:Schema(description = "Session Restriction", example = "OPEN", required = true)
   @field:NotNull
   val sessionRestriction: SessionRestriction,
+
+  @param:Schema(description = "Session vo restriction", required = true)
+  val visitOrderRestriction: SessionTemplateVisitOrderRestrictionType,
 ) {
   constructor(visitSession: VisitSessionDto, sessionRestriction: SessionRestriction) : this(
     sessionTemplateReference = visitSession.sessionTemplateReference,
     sessionDate = visitSession.startTimestamp.toLocalDate(),
     sessionTimeSlot = SessionTimeSlotDto(visitSession.startTimestamp.toLocalTime(), visitSession.endTimestamp.toLocalTime()),
     sessionRestriction = sessionRestriction,
+    visitOrderRestriction = visitSession.visitOrderRestriction,
   )
 }

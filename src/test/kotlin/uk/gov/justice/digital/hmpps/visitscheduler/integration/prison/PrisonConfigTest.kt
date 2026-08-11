@@ -13,6 +13,9 @@ import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonUserClientDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCreatePrison
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGetPrison
@@ -57,13 +60,13 @@ class PrisonConfigTest : IntegrationTestBase() {
 
     Assertions.assertThat(result.code).isEqualTo(prisonDto.code)
     Assertions.assertThat(result.active).isTrue
-    Assertions.assertThat(result.policyNoticeDaysMin).isEqualTo(prisonDto.policyNoticeDaysMin)
-    Assertions.assertThat(result.policyNoticeDaysMax).isEqualTo(prisonDto.policyNoticeDaysMax)
 
     Assertions.assertThat(result.maxTotalVisitors).isEqualTo(prisonDto.maxTotalVisitors)
     Assertions.assertThat(result.maxAdultVisitors).isEqualTo(prisonDto.maxAdultVisitors)
     Assertions.assertThat(result.maxChildVisitors).isEqualTo(prisonDto.maxChildVisitors)
     Assertions.assertThat(result.adultAgeYears).isEqualTo(prisonDto.adultAgeYears)
+    Assertions.assertThat(result.weekStartDay).isEqualTo(prisonDto.weekStartDay)
+    Assertions.assertThat(result.remandVisitLimitPerWeek).isEqualTo(prisonDto.remandVisitLimitPerWeek)
 
     verify(prisonConfigServiceSpy, times(1)).createPrison(any())
     verify(prisonRepositorySpy, times(1)).saveAndFlush(any())
@@ -88,14 +91,15 @@ class PrisonConfigTest : IntegrationTestBase() {
   @Test
   fun `on create when notice days min is greater than policy notice days max`() {
     // Given
-    val createPrisonRequest = PrisonEntityHelper.createPrisonDto(policyNoticeDaysMin = 29, policyNoticeDaysMax = 28)
+    val staffClient = PrisonUserClientDto(29, 28, STAFF, active = true)
+    val createPrisonRequest = PrisonEntityHelper.createPrisonDto(clients = listOf(staffClient))
 
     // When
     val responseSpec = callCreatePrison(webTestClient, roleVisitSchedulerHttpHeaders, createPrisonRequest)
 
     // Then
     responseSpec.expectStatus().isBadRequest.expectBody()
-      .jsonPath("$.developerMessage").isEqualTo("Policy notice days invalid AWE, max 29 , min 28")
+      .jsonPath("$.developerMessage").isEqualTo("Policy notice days invalid AWE, min 29 , max 28 for STAFF client")
   }
 
   @Test
@@ -127,17 +131,14 @@ class PrisonConfigTest : IntegrationTestBase() {
   @Test
   fun `on create when notice days min and max is less than zero error is returned`() {
     // Given
-    val createPrisonRequest = PrisonEntityHelper.createPrisonDto(policyNoticeDaysMin = -1, policyNoticeDaysMax = -1)
+    val staffClient = PrisonUserClientDto(-1, -1, STAFF, active = true)
+    val createPrisonRequest = PrisonEntityHelper.createPrisonDto(clients = listOf(staffClient))
 
     // When
     val responseSpec = callCreatePrison(webTestClient, roleVisitSchedulerHttpHeaders, createPrisonRequest)
 
     // Then
-    val errorResponse = getErrorResponse(responseSpec)
-
-    Assertions.assertThat(errorResponse.userMessage).isEqualTo("Invalid Arguments")
-    Assertions.assertThat(errorResponse.developerMessage).contains("Field error in object 'prisonDto' on field 'policyNoticeDaysMin': rejected value [-1]")
-    Assertions.assertThat(errorResponse.developerMessage).contains("Field error in object 'prisonDto' on field 'policyNoticeDaysMax': rejected value [-1]")
+    responseSpec.expectStatus().isBadRequest.expectBody()
   }
 
   @Test
@@ -162,8 +163,9 @@ class PrisonConfigTest : IntegrationTestBase() {
     // Given
     // prison already exists in DB
     prison = prisonEntityHelper.create()
-
-    val updatePrisonRequest = PrisonEntityHelper.updatePrisonDto()
+    val staffClient = PrisonUserClientDto(1, 23, STAFF, active = true)
+    val publicClient = PrisonUserClientDto(2, 28, PUBLIC, active = true)
+    val updatePrisonRequest = PrisonEntityHelper.updatePrisonDto(clients = listOf(staffClient, publicClient))
     prisonEntityHelper.create(prison.code, prison.active)
 
     // When
@@ -172,22 +174,25 @@ class PrisonConfigTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isOk
     verify(prisonConfigServiceSpy, times(1)).updatePrison(prison.code, updatePrisonRequest)
-    verify(prisonRepositorySpy, times(1)).saveAndFlush(any())
+    verify(prisonRepositorySpy, times(2)).saveAndFlush(any())
 
     val result = getPrison(responseSpec.expectBody())
-    Assertions.assertThat(result.policyNoticeDaysMin).isNotEqualTo(prison.policyNoticeDaysMin)
-    Assertions.assertThat(result.policyNoticeDaysMax).isNotEqualTo(prison.policyNoticeDaysMax)
     Assertions.assertThat(result.maxTotalVisitors).isNotEqualTo(prison.maxTotalVisitors)
     Assertions.assertThat(result.maxAdultVisitors).isNotEqualTo(prison.maxAdultVisitors)
     Assertions.assertThat(result.maxChildVisitors).isNotEqualTo(prison.maxChildVisitors)
     Assertions.assertThat(result.adultAgeYears).isNotEqualTo(prison.adultAgeYears)
+    Assertions.assertThat(result.weekStartDay).isNotEqualTo(prison.weekStartDay)
+    Assertions.assertThat(result.remandVisitLimitPerWeek).isNotEqualTo(prison.remandVisitLimitPerWeek)
 
-    Assertions.assertThat(result.policyNoticeDaysMin).isEqualTo(updatePrisonRequest.policyNoticeDaysMin)
-    Assertions.assertThat(result.policyNoticeDaysMax).isEqualTo(updatePrisonRequest.policyNoticeDaysMax)
     Assertions.assertThat(result.maxTotalVisitors).isEqualTo(updatePrisonRequest.maxTotalVisitors)
     Assertions.assertThat(result.maxAdultVisitors).isEqualTo(updatePrisonRequest.maxAdultVisitors)
     Assertions.assertThat(result.maxChildVisitors).isEqualTo(updatePrisonRequest.maxChildVisitors)
     Assertions.assertThat(result.adultAgeYears).isEqualTo(updatePrisonRequest.adultAgeYears)
+
+    Assertions.assertThat(result.clients.size).isEqualTo(2)
+    Assertions.assertThat(result.clients).containsExactlyInAnyOrder(staffClient, publicClient)
+    Assertions.assertThat(result.weekStartDay).isEqualTo(updatePrisonRequest.weekStartDay)
+    Assertions.assertThat(result.remandVisitLimitPerWeek).isEqualTo(updatePrisonRequest.remandVisitLimitPerWeek)
   }
 
   @Test
@@ -196,7 +201,8 @@ class PrisonConfigTest : IntegrationTestBase() {
     // prison already exists in DB
     prison = prisonEntityHelper.create(policyNoticeDaysMin = 1, policyNoticeDaysMax = 28)
 
-    val updatePrisonRequest = PrisonEntityHelper.updatePrisonDto(policyNoticeDaysMin = 29, policyNoticeDaysMax = 28)
+    val staffClient = PrisonUserClientDto(29, 28, STAFF, active = true)
+    val updatePrisonRequest = PrisonEntityHelper.updatePrisonDto(clients = listOf(staffClient))
     prisonEntityHelper.create(prison.code, prison.active)
 
     // When
@@ -204,7 +210,7 @@ class PrisonConfigTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isBadRequest.expectBody()
-      .jsonPath("$.developerMessage").isEqualTo("Policy notice days invalid MDI, max 29 , min 28")
+      .jsonPath("$.developerMessage").isEqualTo("Policy notice days invalid MDI, min 29 , max 28 for STAFF client")
   }
 
   @Test
@@ -246,18 +252,15 @@ class PrisonConfigTest : IntegrationTestBase() {
     // Given
     // prison already exists in DB
     prison = prisonEntityHelper.create()
+    val staffClient = PrisonUserClientDto(-1, -1, STAFF, active = true)
 
-    val updatePrisonRequest = PrisonEntityHelper.updatePrisonDto(policyNoticeDaysMin = -1, policyNoticeDaysMax = -1)
+    val updatePrisonRequest = PrisonEntityHelper.updatePrisonDto(clients = listOf(staffClient))
     prisonEntityHelper.create(prison.code, prison.active)
     // When
     val responseSpec = callUpdatePrison(webTestClient, roleVisitSchedulerHttpHeaders, prison.code, updatePrisonRequest)
 
     // Then
-    val errorResponse = getErrorResponse(responseSpec)
-
-    Assertions.assertThat(errorResponse.userMessage).isEqualTo("Invalid Arguments")
-    Assertions.assertThat(errorResponse.developerMessage).contains("Field error in object 'updatePrisonDto' on field 'policyNoticeDaysMin': rejected value [-1]")
-    Assertions.assertThat(errorResponse.developerMessage).contains("Field error in object 'updatePrisonDto' on field 'policyNoticeDaysMax': rejected value [-1]")
+    responseSpec.expectStatus().isBadRequest.expectBody()
   }
 
   @Test
@@ -296,8 +299,8 @@ class PrisonConfigTest : IntegrationTestBase() {
 
     Assertions.assertThat(returnedPrison.code).isEqualTo(prison.code)
     Assertions.assertThat(returnedPrison.active).isTrue
-    Assertions.assertThat(returnedPrison.policyNoticeDaysMin).isEqualTo(prison.policyNoticeDaysMin)
-    Assertions.assertThat(returnedPrison.policyNoticeDaysMax).isEqualTo(prison.policyNoticeDaysMax)
+    Assertions.assertThat(returnedPrison.weekStartDay).isEqualTo(prison.weekStartDay)
+    Assertions.assertThat(returnedPrison.remandVisitLimitPerWeek).isEqualTo(prison.remandVisitLimitPerWeek)
   }
 
   private fun getPrison(returnResult: WebTestClient.BodyContentSpec): PrisonDto = objectMapper.readValue(returnResult.returnResult().responseBody, PrisonDto::class.java)

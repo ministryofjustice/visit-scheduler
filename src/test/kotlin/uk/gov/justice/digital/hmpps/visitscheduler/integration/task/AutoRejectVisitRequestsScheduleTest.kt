@@ -5,7 +5,7 @@ import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import org.mockito.kotlin.any
+import org.mockito.kotlin.check
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.isNull
 import org.mockito.kotlin.times
@@ -15,6 +15,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.AutoRejectionReason.MINIMUM_BOOKING_WINDOW_REACHED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -61,10 +62,16 @@ class AutoRejectVisitRequestsScheduleTest : IntegrationTestBase() {
     autoRejectVisitRequestsTask.autoRejectRequestVisits()
 
     // Then
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-request-auto-rejected"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(
+      eq("visit-request-auto-rejected"),
+      check {
+        assertThat(it["autoRejectionReason"]).isEqualTo(MINIMUM_BOOKING_WINDOW_REACHED.description)
+      },
+      isNull(),
+    )
     verify(telemetryClient).trackEvent(
       eq("prison-visit.cancelled-domain-event"),
-      org.mockito.kotlin.check {
+      check {
         assertThat(it["reference"]).isEqualTo(requestVisitForRejectionMdi.reference)
       },
       isNull(),
@@ -97,10 +104,16 @@ class AutoRejectVisitRequestsScheduleTest : IntegrationTestBase() {
     autoRejectVisitRequestsTask.autoRejectRequestVisits()
 
     // Then
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-request-auto-rejected"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(
+      eq("visit-request-auto-rejected"),
+      check {
+        assertThat(it["autoRejectionReason"]).isEqualTo(MINIMUM_BOOKING_WINDOW_REACHED.description)
+      },
+      isNull(),
+    )
     verify(telemetryClient).trackEvent(
       eq("prison-visit.cancelled-domain-event"),
-      org.mockito.kotlin.check {
+      check {
         assertThat(it["reference"]).isEqualTo(requestVisitForRejectionHei.reference)
       },
       isNull(),
@@ -133,10 +146,16 @@ class AutoRejectVisitRequestsScheduleTest : IntegrationTestBase() {
     autoRejectVisitRequestsTask.autoRejectRequestVisits()
 
     // Then
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-request-auto-rejected"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(
+      eq("visit-request-auto-rejected"),
+      check {
+        assertThat(it["autoRejectionReason"]).isEqualTo(MINIMUM_BOOKING_WINDOW_REACHED.description)
+      },
+      isNull(),
+    )
     verify(telemetryClient).trackEvent(
       eq("prison-visit.cancelled-domain-event"),
-      org.mockito.kotlin.check {
+      check {
         assertThat(it["reference"]).isEqualTo(requestVisitForRejectionCfi.reference)
       },
       isNull(),

@@ -1,10 +1,14 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.helper
 
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonUserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
@@ -24,6 +28,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.Permitt
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.SessionLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.UpdateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonUserClient
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplateUserClient
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
@@ -43,7 +50,21 @@ fun prison(
   maxChildVisitors: Int = 3,
   adultAgeYears: Int = 18,
   isActive: Boolean = true,
-): Prison = Prison(code = prisonCode, active = isActive, policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears)
+  weekStartDay: DayOfWeek = DayOfWeek.MONDAY,
+  remandVisitLimitPerWeek: Int = 3,
+  clients: List<PrisonUserClientDto> = listOf(
+    PrisonUserClientDto(policyNoticeDaysMin, policyNoticeDaysMax, UserType.STAFF, true),
+    PrisonUserClientDto(policyNoticeDaysMin, policyNoticeDaysMax, UserType.PUBLIC, true),
+  ),
+): Prison {
+  val prison = Prison(code = prisonCode, active = isActive, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears, weekStartDay, remandVisitLimitPerWeek)
+  clients.forEach { client ->
+    PrisonUserClient(prisonId = prison.id, prison = prison, userType = client.userType, policyNoticeDaysMin = client.policyNoticeDaysMin, policyNoticeDaysMax = client.policyNoticeDaysMax, active = client.active).also {
+      prison.clients.add(it)
+    }
+  }
+  return prison
+}
 
 fun sessionTemplate(
   name: String = "sessionTemplate_",
@@ -115,6 +136,8 @@ fun sessionTemplate(
   maxAdultVisitors: Int = 3,
   maxChildVisitors: Int = 3,
   adultAgeYears: Int = 18,
+  weekStartDay: DayOfWeek = DayOfWeek.MONDAY,
+  remandVisitLimitPerWeek: Int = 3,
   isActive: Boolean = true,
   includeLocationGroupType: Boolean = true,
   includeCategoryGroupType: Boolean = true,
@@ -122,7 +145,19 @@ fun sessionTemplate(
   userTypes: List<UserType> = listOf(UserType.STAFF, UserType.PUBLIC),
   visitOrderRestrictionType: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
 ): SessionTemplate {
-  val prison = Prison(code = prisonCode, active = isActive, policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears)
+  val prison = Prison(
+    code = prisonCode,
+    active = isActive,
+    maxTotalVisitors = maxTotalVisitors,
+    maxAdultVisitors = maxAdultVisitors,
+    maxChildVisitors = maxChildVisitors,
+    adultAgeYears = adultAgeYears,
+    weekStartDay = weekStartDay,
+    remandVisitLimitPerWeek = remandVisitLimitPerWeek,
+  )
+  val staffClient = PrisonUserClient(prisonId = prison.id, prison = prison, userType = UserType.STAFF, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax, active = true)
+  val publicClient = PrisonUserClient(prisonId = prison.id, prison = prison, userType = UserType.PUBLIC, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax, active = true)
+  prison.clients.addAll(listOf(staffClient, publicClient))
 
   var sessionTemplate = SessionTemplate(
     name = name + dayOfWeek,
@@ -149,6 +184,39 @@ fun sessionTemplate(
   sessionTemplate = addUserClients(sessionTemplate, userTypes)
 
   return sessionTemplate
+}
+
+fun visit(
+  prisonerId: String,
+  visitDate: LocalDate,
+  sessionTemplate: SessionTemplate,
+  visitRoom: String = "Visit Room 1",
+  visitStatus: VisitStatus = VisitStatus.BOOKED,
+  visitSubStatus: VisitSubStatus = VisitSubStatus.AUTO_APPROVED,
+  visitRestriction: VisitRestriction = VisitRestriction.OPEN,
+  userType: UserType = UserType.STAFF,
+): Visit {
+  val sessionSlot = SessionSlot(
+    sessionTemplateReference = sessionTemplate.reference,
+    prisonId = sessionTemplate.prisonId,
+    slotDate = visitDate,
+    slotStart = visitDate.atTime(sessionTemplate.startTime),
+    slotEnd = visitDate.atTime(sessionTemplate.endTime),
+  )
+
+  return Visit(
+    prisonId = sessionTemplate.prison.id,
+    prison = sessionTemplate.prison,
+    prisonerId = prisonerId,
+    sessionSlotId = sessionSlot.id,
+    sessionSlot = sessionSlot,
+    visitType = sessionTemplate.visitType,
+    visitRoom = visitRoom,
+    visitStatus = visitStatus,
+    visitSubStatus = visitSubStatus,
+    visitRestriction = visitRestriction,
+    userType = userType,
+  )
 }
 
 private fun addUserClients(

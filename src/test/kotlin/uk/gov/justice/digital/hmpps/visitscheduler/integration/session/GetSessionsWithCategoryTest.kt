@@ -361,5 +361,6 @@ class GetSessionsWithCategoryTest : IntegrationTestBase() {
     assertThat(visitSessionResult.endTimestamp).isEqualTo(testDate.atTime(expectedSessionTemplate.endTime))
     assertThat(visitSessionResult.startTimestamp.dayOfWeek).isEqualTo(expectedSessionTemplate.dayOfWeek)
     assertThat(visitSessionResult.endTimestamp.dayOfWeek).isEqualTo(expectedSessionTemplate.dayOfWeek)
+    assertThat(visitSessionResult.visitOrderRestriction).isEqualTo(expectedSessionTemplate.visitOrderRestriction)
   }
 }

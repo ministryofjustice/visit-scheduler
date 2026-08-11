@@ -4,7 +4,6 @@ import jakarta.validation.ValidationException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Lazy
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
@@ -48,7 +47,6 @@ class VisitService(
   private val eventAuditService: VisitEventAuditService,
   private val snsService: SnsService,
   private val updateVisitSummaryUtil: UpdateVisitSummaryUtil,
-  @param:Value("\${feature.request-booking-enabled:false}") private val requestBookingFeatureEnabled: Boolean,
 ) {
 
   @Lazy
@@ -68,7 +66,7 @@ class VisitService(
   }
 
   fun bookVisit(applicationReference: String, bookingRequestDto: BookingRequestDto): VisitDto {
-    val alreadyBookedVisit = visitStoreService.checkBookingAlreadyMade(applicationReference)
+    val alreadyBookedVisit = visitStoreService.checkApplicationAlreadyComplete(applicationReference)
     alreadyBookedVisit?.let {
       return alreadyBookedVisit
     }
@@ -84,22 +82,31 @@ class VisitService(
   }
 
   fun updateBookedVisit(applicationReference: String, bookingRequestDto: BookingRequestDto): VisitDto {
-    val alreadyBookedVisit = visitStoreService.checkBookingAlreadyMade(applicationReference)
-    alreadyBookedVisit?.let {
-      return alreadyBookedVisit
+    visitStoreService.checkApplicationAlreadyComplete(applicationReference)?.let {
+      return it
     }
 
     val existingVisit = visitStoreService.getBookingByApplicationReference(applicationReference)
-    val booking = visitStoreService.createOrUpdateBooking(applicationReference, bookingRequestDto)
-    return processUpdateBookingEvents(existingVisit, booking, bookingRequestDto)
+    val updatedVisit = visitStoreService.createOrUpdateBooking(applicationReference, bookingRequestDto)
+
+    processUpdateBookingEvents(
+      visitBeforeUpdate = existingVisit,
+      visitAfterUpdate = updatedVisit,
+      bookingRequestDto = bookingRequestDto,
+    )
+
+    return updatedVisit
   }
 
   @Transactional
   fun getBookedVisitByApplicationReference(applicationReference: String): VisitDto {
     val visit = visitRepository.findVisitByApplicationReference(applicationReference)
-    visit?.let {
-      return visitDtoBuilder.build(visit)
-    } ?: throw VisitNotFoundException("Visit not found for application reference")
+
+    if (visit == null) {
+      throw VisitNotFoundException("Visit not found for application reference")
+    }
+
+    return visitDtoBuilder.build(visit)
   }
 
   @Transactional
@@ -186,12 +193,8 @@ class VisitService(
     bookedVisitDto: VisitDto,
     bookingRequestDto: BookingRequestDto,
   ): VisitDto {
-    val eventType = if (requestBookingFeatureEnabled) {
-      if (bookingRequestDto.isRequestBooking == true) {
-        EventAuditType.REQUESTED_VISIT
-      } else {
-        EventAuditType.BOOKED_VISIT
-      }
+    val eventType = if (bookingRequestDto.isRequestBooking == true) {
+      EventAuditType.REQUESTED_VISIT
     } else {
       EventAuditType.BOOKED_VISIT
     }
@@ -253,27 +256,25 @@ class VisitService(
   }
 
   private fun processUpdateBookingEvents(
-    visitDtoBeforeUpdate: VisitDto?,
-    bookedVisitDto: VisitDto,
+    visitBeforeUpdate: VisitDto?,
+    visitAfterUpdate: VisitDto,
     bookingRequestDto: BookingRequestDto,
-  ): VisitDto {
-    val updateText = visitDtoBeforeUpdate?.let {
-      updateVisitSummaryUtil.getDiff(visitDtoAfterUpdate = bookedVisitDto, visitDtoBeforeUpdate = visitDtoBeforeUpdate)
+  ) {
+    val updateText = visitBeforeUpdate?.let {
+      updateVisitSummaryUtil.getDiff(visitDtoAfterUpdate = visitAfterUpdate, visitDtoBeforeUpdate = visitBeforeUpdate)
     }
-    val updatedEventAuditDto = visitEventAuditService.updateVisitApplicationAndSaveEvent(bookedVisitDto, bookingRequestDto, EventAuditType.UPDATED_VISIT, text = updateText)
+    val updatedEventAuditDto = visitEventAuditService.updateVisitApplicationAndSaveEvent(visitAfterUpdate, bookingRequestDto, EventAuditType.UPDATED_VISIT, text = updateText)
 
-    telemetryClientService.trackUpdateBookingEvent(visitDtoBeforeUpdate, bookedVisitDto, updatedEventAuditDto)
+    telemetryClientService.trackUpdateBookingEvent(visitBeforeUpdate, visitAfterUpdate, updatedEventAuditDto, bookingRequestDto)
 
     val snsDomainEventPublishDto = SnsDomainEventPublishDto(
-      bookedVisitDto.reference,
-      bookedVisitDto.createdTimestamp,
-      bookedVisitDto.modifiedTimestamp,
-      bookedVisitDto.prisonerId,
+      visitAfterUpdate.reference,
+      visitAfterUpdate.createdTimestamp,
+      visitAfterUpdate.modifiedTimestamp,
+      visitAfterUpdate.prisonerId,
       updatedEventAuditDto.id,
     )
     snsService.sendChangedVisitBookedEvent(snsDomainEventPublishDto)
-
-    return bookedVisitDto
   }
 
   private fun processCancelEvents(
@@ -435,5 +436,18 @@ class VisitService(
 
     LOG.debug("getLastApprovedVisitDatesByVisitor called for prisoner - {}, with visitorIds - {}, results - {}", prisonerId, visitorIds, lastApprovedDateByVisitorDatesList)
     return lastApprovedDateByVisitorDatesList
+  }
+
+  @Transactional(readOnly = true)
+  fun getAllVisitsForPrisoner(prisonerId: String): List<VisitDto> {
+    LOG.debug("Get all visits for prisoner - {}", prisonerId)
+
+    // get all visits - past, present, booked or cancelled for a prisoner
+    return visitRepository.findByPrisonerId(prisonerId).map { visitDtoBuilder.build(it) }
+  }
+
+  fun updateVisitsPrisonerIdPostMerge(oldPrisonerId: String, newPrisonerId: String) {
+    // update all visits from oldPrisonerId to newPrisonerId post merge
+    visitRepository.updatePrisonerId(oldPrisonerId = oldPrisonerId, newPrisonerId = newPrisonerId)
   }
 }

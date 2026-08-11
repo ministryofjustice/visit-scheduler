@@ -9,9 +9,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.IgnoreVisitNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.PHONE
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CANCELLED_NON_ASSOCIATION_VISIT_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.IGNORED_NON_ASSOCIATION_VISIT_NOTIFICATIONS_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.UPDATED_NON_ASSOCIATION_VISIT_EVENT
@@ -20,7 +18,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonAssociationDomai
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventAttributeType.PAIRED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.VISITOR_UNAPPROVED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitNotificationEventAttributeDto
@@ -30,7 +27,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatNonA
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitUpdate
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.visit.CancelVisitTest.Companion.CANCELLED_BY_USER
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.visit.IgnoreVisitNotificationsTest.Companion.USER
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
@@ -103,8 +99,7 @@ class PairedVisitsNotificationEventTest : NotificationTestBase() {
     assertThat(visitNotifications[0].visit.reference).isEqualTo(prisoner2Visit.reference)
     assertThat(visitNotifications[0].type).isEqualTo(VISITOR_UNAPPROVED_EVENT)
 
-    val eventAudit = this.eventAuditRepository.findLastEventByBookingReference(prisoner2Visit.reference)
-    assertEventAudit(eventAudit, CANCELLED_NON_ASSOCIATION_VISIT_EVENT, prisoner2Visit.reference, "Non-association's visit with reference - ${prisoner1Visit.reference} was cancelled.")
+    assertHelper.assertPairedVisitsNotificationEventAudit(CANCELLED_NON_ASSOCIATION_VISIT_EVENT, prisoner2Visit.reference, "Non-association's visit with reference - ${prisoner1Visit.reference} was cancelled.")
   }
 
   /**
@@ -158,8 +153,7 @@ class PairedVisitsNotificationEventTest : NotificationTestBase() {
     assertThat(visitNotifications[0].visit.reference).isEqualTo(prisoner2Visit.reference)
     assertThat(visitNotifications[0].type).isEqualTo(VISITOR_UNAPPROVED_EVENT)
 
-    val eventAudit = this.eventAuditRepository.findLastEventByBookingReference(prisoner2Visit.reference)
-    assertEventAudit(eventAudit, UPDATED_NON_ASSOCIATION_VISIT_EVENT, prisoner2Visit.reference, "Non-association's visit with reference - ${prisoner1Visit.reference} was updated.")
+    assertHelper.assertPairedVisitsNotificationEventAudit(UPDATED_NON_ASSOCIATION_VISIT_EVENT, prisoner2Visit.reference, "Non-association's visit with reference - ${prisoner1Visit.reference} was updated.")
   }
 
   /**
@@ -204,8 +198,7 @@ class PairedVisitsNotificationEventTest : NotificationTestBase() {
     visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(0)
 
-    val eventAudit = this.eventAuditRepository.findLastEventByBookingReference(prisoner2Visit.reference)
-    assertEventAudit(eventAudit, IGNORED_NON_ASSOCIATION_VISIT_NOTIFICATIONS_EVENT, prisoner2Visit.reference, "Non-association's visit with reference - ${prisoner1Visit.reference}'s notifications were ignored.")
+    assertHelper.assertPairedVisitsNotificationEventAudit(IGNORED_NON_ASSOCIATION_VISIT_NOTIFICATIONS_EVENT, prisoner2Visit.reference, "Non-association's visit with reference - ${prisoner1Visit.reference}'s notifications were ignored.")
   }
 
   /**
@@ -252,11 +245,9 @@ class PairedVisitsNotificationEventTest : NotificationTestBase() {
 
     visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(0)
-    var eventAudit = this.eventAuditRepository.findLastEventByBookingReference(prisoner2Visit1.reference)
-    assertEventAudit(eventAudit, CANCELLED_NON_ASSOCIATION_VISIT_EVENT, prisoner2Visit1.reference, "Non-association's visit with reference - ${prisoner1Visit.reference} was cancelled.")
+    assertHelper.assertPairedVisitsNotificationEventAudit(CANCELLED_NON_ASSOCIATION_VISIT_EVENT, prisoner2Visit1.reference, "Non-association's visit with reference - ${prisoner1Visit.reference} was cancelled.")
 
-    eventAudit = this.eventAuditRepository.findLastEventByBookingReference(prisoner2Visit1.reference)
-    assertEventAudit(eventAudit, CANCELLED_NON_ASSOCIATION_VISIT_EVENT, prisoner2Visit1.reference, "Non-association's visit with reference - ${prisoner1Visit.reference} was cancelled.")
+    assertHelper.assertPairedVisitsNotificationEventAudit(CANCELLED_NON_ASSOCIATION_VISIT_EVENT, prisoner2Visit1.reference, "Non-association's visit with reference - ${prisoner1Visit.reference} was cancelled.")
   }
 
   /**
@@ -314,18 +305,7 @@ class PairedVisitsNotificationEventTest : NotificationTestBase() {
     assertNotificationEvent(visitNotifications[1], prisoner2Visit.reference, listOf(VisitNotificationEventAttributeDto(PAIRED_VISIT, prisoner1Visit2.reference)))
 
     val eventAudit = this.eventAuditRepository.findLastEventByBookingReference(prisoner2Visit.reference)
-    assertEventAudit(eventAudit, IGNORED_NON_ASSOCIATION_VISIT_NOTIFICATIONS_EVENT, prisoner2Visit.reference, "Non-association's visit with reference - ${prisoner1Visit1.reference}'s notifications were ignored.")
-  }
-
-  private fun assertEventAudit(eventAudit: EventAudit, eventAuditType: EventAuditType, visitReference: String, text: String) {
-    assertThat(eventAudit.type).isEqualTo(eventAuditType)
-    assertThat(eventAudit.actionedBy.userType).isEqualTo(UserType.SYSTEM)
-    assertThat(eventAudit.applicationMethodType).isEqualTo(ApplicationMethodType.NOT_APPLICABLE)
-    assertThat(eventAudit.bookingReference).isEqualTo(visitReference)
-    assertThat(eventAudit.sessionTemplateReference).isNull()
-    assertThat(eventAudit.applicationReference).isNull()
-    assertThat(eventAudit.actionedBy.id).isNotNull()
-    assertThat(eventAudit.text).isEqualTo(text)
+    assertHelper.assertPairedVisitsNotificationEventAudit(IGNORED_NON_ASSOCIATION_VISIT_NOTIFICATIONS_EVENT, prisoner2Visit.reference, "Non-association's visit with reference - ${prisoner1Visit1.reference}'s notifications were ignored.")
   }
 
   private fun assertNotificationEvent(visitNotificationEvent: VisitNotificationEvent, expectedVisitReference: String, expectedNotificationEventAttributes: List<VisitNotificationEventAttributeDto>?) {

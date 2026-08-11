@@ -4,4 +4,5 @@ package uk.gov.justice.digital.hmpps.visitscheduler.dto.enums
 enum class SessionConflict {
   NON_ASSOCIATION,
   DOUBLE_BOOKING_OR_RESERVATION,
+  REMAND_VISITS_LIMIT_REACHED,
 }

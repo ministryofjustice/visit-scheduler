@@ -18,12 +18,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.ACCEPTED
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus.PRISONER_CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.VISIT_CANCELLED_ON_NOMIS
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitNotificationEventHelper
@@ -36,7 +34,7 @@ import java.time.LocalDate
 @DisplayName("Tests for visit cancellations on NOMIS - POST $MIGRATE_CANCEL")
 class MigrateCancelVisitTest : MigrationIntegrationTestBase() {
   @Autowired
-  protected lateinit var visitNotificationEventHelper: VisitNotificationEventHelper
+  private lateinit var visitNotificationEventHelper: VisitNotificationEventHelper
 
   @MockitoSpyBean
   private lateinit var visitNotificationEventRepositorySpy: VisitNotificationEventRepository
@@ -116,11 +114,7 @@ class MigrateCancelVisitTest : MigrationIntegrationTestBase() {
     assertTelemetryClientEvents(visitCancelled, TelemetryVisitEvents.CANCELLED_VISIT_MIGRATED_EVENT)
     assertCancelledDomainEvent(visitCancelled)
 
-    val eventAuditList = eventAuditRepository.findAllByBookingReference(visit.reference)
-    assertThat(eventAuditList).hasSize(1)
-    assertThat(eventAuditList[0].actionedBy.userName).isEqualTo("user-2")
-    assertThat(eventAuditList[0].type).isEqualTo(EventAuditType.CANCELLED_VISIT)
-    assertThat(eventAuditList[0].actionedBy.userType).isEqualTo(STAFF)
+    assertHelper.assertMigrateCancelVisitEventAudit(visit.reference)
   }
 
   @Test
@@ -161,11 +155,7 @@ class MigrateCancelVisitTest : MigrationIntegrationTestBase() {
     assertTelemetryClientEvents(visitCancelled, TelemetryVisitEvents.CANCELLED_VISIT_MIGRATED_EVENT)
     assertCancelledDomainEvent(visitCancelled)
 
-    val eventAuditList = eventAuditRepository.findAllByBookingReference(visit.reference)
-    assertThat(eventAuditList).hasSize(1)
-    assertThat(eventAuditList[0].actionedBy.userName).isEqualTo("user-2")
-    assertThat(eventAuditList[0].type).isEqualTo(EventAuditType.CANCELLED_VISIT)
-    assertThat(eventAuditList[0].actionedBy.userType).isEqualTo(STAFF)
+    assertHelper.assertMigrateCancelVisitEventAudit(visit.reference)
 
     visitNotifications = visitNotificationEventHelper.getVisitNotifications(visit.reference)
     verify(visitNotificationEventRepositorySpy, times(1)).deleteVisitNotificationEventByVisitReference(eq(visit.reference))
@@ -214,11 +204,7 @@ class MigrateCancelVisitTest : MigrationIntegrationTestBase() {
     assertTelemetryClientEvents(visitCancelled, TelemetryVisitEvents.CANCELLED_VISIT_MIGRATED_EVENT)
     assertCancelledDomainEvent(visitCancelled)
 
-    val eventAuditList = eventAuditRepository.findAllByBookingReference(visit.reference)
-    assertThat(eventAuditList).hasSize(1)
-    assertThat(eventAuditList[0].actionedBy.userName).isEqualTo("user-2")
-    assertThat(eventAuditList[0].type).isEqualTo(EventAuditType.CANCELLED_VISIT)
-    assertThat(eventAuditList[0].actionedBy.userType).isEqualTo(STAFF)
+    assertHelper.assertMigrateCancelVisitEventAudit(visit.reference)
 
     visitNotifications = visitNotificationEventHelper.getVisitNotifications(visit.reference)
     verify(visitNotificationEventRepositorySpy, times(1)).deleteVisitNotificationEventByVisitReference(eq(visit.reference))

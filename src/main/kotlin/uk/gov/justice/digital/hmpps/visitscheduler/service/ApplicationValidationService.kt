@@ -12,10 +12,13 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidati
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_NO_VO_BALANCE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_PRISONER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_PRISON_PRISONER_MISMATCH
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_REMAND_VISIT_LIMIT_FOR_WEEK_REACHED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_SESSION_NOT_AVAILABLE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_SESSION_TEMPLATE_NOT_FOUND
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_USER_TYPE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_VISIT_ALREADY_BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ConvictionStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType.NONE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PRISONER
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
@@ -26,11 +29,13 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonExcludeDateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateExcludeDateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDate
+import java.time.temporal.TemporalAdjusters
 
 @Service
 class ApplicationValidationService(
@@ -83,6 +88,7 @@ class ApplicationValidationService(
     }
 
     checkPrison(prison.code, prisoner.prisonCode)
+    val sessionTemplate = getSessionTemplate(application)
 
     // check if the prison has blocked the application's date for visits
     checkIfPrisonDateBlocked(application)?.also {
@@ -94,7 +100,7 @@ class ApplicationValidationService(
       errorCodes.add(it)
     }
 
-    checkSessionSlot(application, prisoner, prison)?.also {
+    checkSessionSlot(application, prisoner, prison, sessionTemplate)?.also {
       errorCodes.add(it)
     }
 
@@ -109,6 +115,11 @@ class ApplicationValidationService(
 
     // check if any double bookings for the same prisoner
     checkDoubleBookedVisits(prisonerId = application.prisonerId, sessionSlot = application.sessionSlot, visitReference = application.visit?.reference)?.also {
+      errorCodes.add(it)
+    }
+
+    // check if remand limit reached for a remand prisoner
+    checkRemandLimitReachedForWeek(prisoner = prisoner, prison = prison, application = application, existingBooking = existingBooking, sessionTemplate = sessionTemplate)?.also {
       errorCodes.add(it)
     }
 
@@ -169,11 +180,13 @@ class ApplicationValidationService(
     return emptyList()
   }
 
-  private fun checkSessionSlot(application: Application, prisoner: PrisonerDto, prison: Prison): ApplicationValidationErrorCodes? {
+  private fun getSessionTemplate(application: Application): SessionTemplate? = application.sessionSlot.sessionTemplateReference
+    ?.let { sessionTemplateRepository.findByReference(it) }
+
+  private fun checkSessionSlot(application: Application, prisoner: PrisonerDto, prison: Prison, sessionTemplate: SessionTemplate?): ApplicationValidationErrorCodes? {
     val sessionSlot = application.sessionSlot
 
     sessionSlot.sessionTemplateReference?.let {
-      val sessionTemplate = sessionTemplateRepository.findByReference(it)
       if (sessionTemplate != null) {
         val prisonerHousingLevels =
           prisonerService.getPrisonerHousingLevels(application.prisonerId, prison.code, listOf(sessionTemplate))
@@ -235,9 +248,41 @@ class ApplicationValidationService(
     return null
   }
 
+  private fun checkRemandLimitReachedForWeek(prisoner: PrisonerDto, prison: Prison, application: Application, existingBooking: Visit?, sessionTemplate: SessionTemplate?): ApplicationValidationErrorCodes? {
+    // ignore if prisoner is not a REMAND prisoner
+    if (!ConvictionStatus.isRemand(prisoner.convictedStatus)) {
+      return null
+    } else {
+      // if the session slot is not updated skip the check
+      if (existingBooking != null && (application.sessionSlot.id == existingBooking.sessionSlotId)) {
+        return null
+      }
+
+      if (isNoVisitOrderSession(sessionTemplate)) {
+        return null
+      }
+
+      // get the number of booked visits for the week
+      val sessionDate = application.sessionSlot.slotDate
+      val weekStartDate = sessionDate.with(TemporalAdjusters.previousOrSame(prison.weekStartDay))
+      val weekEndDate = weekStartDate.plusDays(6)
+      val totalBookedVisitsForWeek = visitRepository.getCountOfBookedVisits(prisonerId = prisoner.prisonerId, prisonCode = prison.code, startDate = weekStartDate, endDate = weekEndDate, excludeVisitReference = existingBooking?.reference)
+
+      // if the remand visit limit per week has been reached, return APPLICATION_INVALID_REMAND_VISIT_LIMIT_FOR_WEEK_REACHED
+      if (totalBookedVisitsForWeek >= prison.remandVisitLimitPerWeek.toLong()) {
+        LOG.info("{} visit(s) already booked for REMAND prisoner - {} on week starting on - {}, so visit for {} cannot be booked.", totalBookedVisitsForWeek, prisoner.prisonerId, weekStartDate, sessionDate)
+        return APPLICATION_INVALID_REMAND_VISIT_LIMIT_FOR_WEEK_REACHED
+      }
+    }
+
+    return null
+  }
+
+  private fun isNoVisitOrderSession(sessionTemplate: SessionTemplate?): Boolean = sessionTemplate?.visitOrderRestriction == NONE
+
   private fun checkVOLimits(prisoner: PrisonerDto): ApplicationValidationErrorCodes? {
     // check VO limits if prisoner is not on Remand.
-    if (prisoner.convictedStatus != "Remand") {
+    if (!ConvictionStatus.isRemand(prisoner.convictedStatus)) {
       val remainingVisitBalance = prisonerService.getVisitBalance(prisonerId = prisoner.prisonerId)
       if (remainingVisitBalance <= 0) {
         LOG.info("not enough VO balance for prisoner - ${prisoner.prisonerId} to book visit")

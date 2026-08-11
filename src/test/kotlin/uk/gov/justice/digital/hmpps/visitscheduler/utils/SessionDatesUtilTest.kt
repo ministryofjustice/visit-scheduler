@@ -372,5 +372,77 @@ class SessionDatesUtilTest {
     assertThat(results[7]).isTrue
   }
 
+  @Test
+  fun `when sessionDate is before the session template valid from date then isActiveForDate returns false`() {
+    val sessionTemplateStartDate = getStartOfWeek()
+    val sessionTemplate = sessionTemplate(validFromDate = sessionTemplateStartDate, validToDate = null, dayOfWeek = MONDAY, weeklyFrequency = 1)
+    val sessionDate = sessionTemplateStartDate.minusWeeks(1)
+    assertThat(SessionDatesUtil().isActiveForDate(sessionDate, sessionTemplate)).isFalse
+  }
+
+  @Test
+  fun `when sessionDate is after the session template to date then isActiveForDate returns false`() {
+    val sessionTemplateStartDate = getStartOfWeek()
+    val sessionTemplate = sessionTemplate(validFromDate = sessionTemplateStartDate, validToDate = sessionTemplateStartDate.plusWeeks(2), dayOfWeek = MONDAY, weeklyFrequency = 1)
+    val sessionDate = sessionTemplate.validToDate!!.plusWeeks(1)
+    assertThat(SessionDatesUtil().isActiveForDate(sessionDate, sessionTemplate)).isFalse
+  }
+
+  @Test
+  fun `when sessionDate is not the same weekday as session weekday then isActiveForDate returns false`() {
+    val sessionTemplateStartDate = getStartOfWeek()
+    val sessionTemplate = sessionTemplate(validFromDate = sessionTemplateStartDate, validToDate = null, dayOfWeek = MONDAY, weeklyFrequency = 1)
+    val sessionDate = sessionTemplateStartDate.plusDays(1)
+    assertThat(SessionDatesUtil().isActiveForDate(sessionDate, sessionTemplate)).isFalse
+  }
+
+  @Test
+  fun `when sessionDate does not fall in the weeklyFrequency with weeklyFrequency as 2 then isActiveForDate returns false`() {
+    val sessionTemplateStartDate = getStartOfWeek()
+    val sessionTemplate = sessionTemplate(validFromDate = sessionTemplateStartDate, validToDate = null, dayOfWeek = MONDAY, weeklyFrequency = 2)
+    val sessionDate = sessionTemplateStartDate.plusWeeks(7)
+    assertThat(SessionDatesUtil().isActiveForDate(sessionDate, sessionTemplate)).isFalse
+  }
+
+  @Test
+  fun `when sessionDate does not fall in the weeklyFrequency with weeklyFrequency as 3 then isActiveForDate returns false`() {
+    val sessionTemplateStartDate = getStartOfWeek()
+    val sessionTemplate = sessionTemplate(validFromDate = sessionTemplateStartDate, validToDate = null, dayOfWeek = MONDAY, weeklyFrequency = 3)
+    val sessionDate = sessionTemplateStartDate.plusWeeks(5)
+    assertThat(SessionDatesUtil().isActiveForDate(sessionDate, sessionTemplate)).isFalse
+  }
+
+  @Test
+  fun `when sessionDate is after the session template valid from date then isActiveForDate returns true`() {
+    val sessionTemplateStartDate = getStartOfWeek()
+    val sessionTemplate = sessionTemplate(validFromDate = sessionTemplateStartDate, validToDate = null, weeklyFrequency = 1, dayOfWeek = MONDAY)
+    val sessionDate = sessionTemplateStartDate.plusWeeks(1)
+    assertThat(SessionDatesUtil().isActiveForDate(sessionDate, sessionTemplate)).isTrue
+  }
+
+  @Test
+  fun `when sessionDate is before the session template to date then isActiveForDate returns true`() {
+    val sessionTemplateStartDate = getStartOfWeek()
+    val sessionTemplate = sessionTemplate(validFromDate = sessionTemplateStartDate, validToDate = sessionTemplateStartDate.plusWeeks(2), dayOfWeek = MONDAY, weeklyFrequency = 1)
+    val sessionDate = sessionTemplate.validToDate!!.minusWeeks(1)
+    assertThat(SessionDatesUtil().isActiveForDate(sessionDate, sessionTemplate)).isTrue
+  }
+
+  @Test
+  fun `when sessionDate falls in the weeklyFrequency with weeklyFrequency as 2 then isActiveForDate returns true`() {
+    val sessionTemplateStartDate = getStartOfWeek()
+    val sessionTemplate = sessionTemplate(validFromDate = sessionTemplateStartDate, validToDate = null, dayOfWeek = MONDAY, weeklyFrequency = 2)
+    val sessionDate = sessionTemplateStartDate.plusWeeks(8)
+    assertThat(SessionDatesUtil().isActiveForDate(sessionDate, sessionTemplate)).isTrue
+  }
+
+  @Test
+  fun `when sessionDate falls in the weeklyFrequency with weeklyFrequency as 3 then isActiveForDate returns true`() {
+    val sessionTemplateStartDate = getStartOfWeek()
+    val sessionTemplate = sessionTemplate(validFromDate = sessionTemplateStartDate, validToDate = null, dayOfWeek = MONDAY, weeklyFrequency = 3)
+    val sessionDate = sessionTemplateStartDate.plusWeeks(21)
+    assertThat(SessionDatesUtil().isActiveForDate(sessionDate, sessionTemplate)).isTrue
+  }
+
   private fun getStartOfWeek() = LocalDate.now().with(TemporalAdjusters.next(MONDAY))
 }

@@ -109,7 +109,6 @@ class Visit(
 
   @Column
   var reference: String = ""
-    private set
 
   @OneToOne(fetch = FetchType.LAZY, cascade = [ALL], mappedBy = "visit", orphanRemoval = true)
   var visitExternalSystemDetails: VisitExternalSystemDetails? = null

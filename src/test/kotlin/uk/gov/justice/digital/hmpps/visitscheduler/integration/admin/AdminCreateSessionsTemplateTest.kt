@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.admin
 
 import org.assertj.core.api.Assertions
-import org.hamcrest.Matchers
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -242,7 +241,7 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.developerMessage").value(Matchers.containsString("Session end time should be greater than start time"))
+      .jsonPath("$.developerMessage").value<String> { it.contains(("Session end time should be greater than start time")) }
   }
 
   @Test
@@ -258,7 +257,7 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.developerMessage").value(Matchers.containsString("Session end time should be greater than start time"))
+      .jsonPath("$.developerMessage").value<String> { it.contains(("Session end time should be greater than start time")) }
   }
 
   @Test
@@ -291,7 +290,7 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.developerMessage").value(Matchers.containsString("Session valid to date cannot be less than valid from date"))
+      .jsonPath("$.developerMessage").value<String> { it.contains(("Session valid to date cannot be less than valid from date")) }
   }
 
   @Test
@@ -362,7 +361,7 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.developerMessage").value(Matchers.containsString("Either open capacity or closed capacity should be greater than 0"))
+      .jsonPath("$.developerMessage").value<String> { it.contains(("Either open capacity or closed capacity should be greater than 0")) }
   }
 
   @Test

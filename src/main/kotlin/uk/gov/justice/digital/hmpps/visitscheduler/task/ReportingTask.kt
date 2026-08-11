@@ -7,7 +7,7 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ReportingTaskConfiguration
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting.OverbookedSessionsDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting.SessionVisitCountsDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting.SessionVisitCountsByDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.reporting.VisitsReportingService
 import java.time.LocalDate
 
@@ -20,13 +20,13 @@ class ReportingTask(
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
-  @Scheduled(cron = "\${task.visit-counts-report.cron:0 0 1 * * ?}")
+  @Scheduled(cron = "\${task.reporting.visit-counts-report.cron:0 0 1 * * ?}")
   @SchedulerLock(
     name = "VSIP Reporting - sessions and book count",
     lockAtLeastFor = ReportingTaskConfiguration.LOCK_AT_LEAST_FOR,
     lockAtMostFor = ReportingTaskConfiguration.LOCK_AT_MOST_FOR,
   )
-  fun getVisitCountsReportByDay(): Map<LocalDate, List<SessionVisitCountsDto>> = if (!reportingTaskConfiguration.visitCountsReportingEnabled) {
+  fun getVisitCountsReportByDay(): Map<LocalDate, List<SessionVisitCountsByDateDto>> = if (!reportingTaskConfiguration.visitCountsReportingEnabled) {
     LOG.info("Reporting task for visit counts not enabled")
     emptyMap()
   } else {

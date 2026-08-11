@@ -18,9 +18,9 @@ import org.springframework.mock.web.MockHttpServletResponse
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.context.junit.jupiter.SpringExtension
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.JwtAuthHelper
+import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
 
-@Import(JwtAuthHelper::class, ClientTrackingInterceptor::class, ClientTrackingConfiguration::class)
+@Import(JwtAuthorisationHelper::class, ClientTrackingInterceptor::class, ClientTrackingConfiguration::class)
 @ContextConfiguration(initializers = [ConfigDataApplicationContextInitializer::class])
 @ActiveProfiles("test")
 @ExtendWith(SpringExtension::class)
@@ -31,7 +31,7 @@ class ClientTrackingConfigurationTest {
 
   @Suppress("SpringJavaInjectionPointsAutowiringInspection")
   @Autowired
-  private lateinit var jwtAuthHelper: JwtAuthHelper
+  private lateinit var jwtAuthHelper: JwtAuthorisationHelper
 
   @BeforeEach
   fun setup() {
@@ -44,7 +44,7 @@ class ClientTrackingConfigurationTest {
   @Test
   fun shouldAddClientIdAndUserNameToInsightTelemetry() {
     // Given
-    val token = jwtAuthHelper.createJwt("bob")
+    val token = jwtAuthHelper.createJwtAccessToken(clientId = "visit-scheduler-client", username = "bob")
     val req = MockHttpServletRequest()
     req.addHeader(HttpHeaders.AUTHORIZATION, "Bearer $token")
     val res = MockHttpServletResponse()
@@ -65,7 +65,7 @@ class ClientTrackingConfigurationTest {
   @Test
   fun shouldAddOnlyClientIdIfUsernameNullToInsightTelemetry() {
     // Given
-    val token = jwtAuthHelper.createJwt(null)
+    val token = jwtAuthHelper.createJwtAccessToken(clientId = "visit-scheduler-client")
     val req = MockHttpServletRequest()
     req.addHeader(HttpHeaders.AUTHORIZATION, "Bearer $token")
     val res = MockHttpServletResponse()

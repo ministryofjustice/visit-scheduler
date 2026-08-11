@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.migration
 
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.tuple
-import org.hamcrest.Matchers
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -615,7 +614,7 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
       .expectStatus().isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT)
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Migration failure: Could not migrate visit")
-      .jsonPath("$.developerMessage").value(Matchers.startsWith("Visit more than 6 months in future, will not be migrated!"))
+      .jsonPath("$.developerMessage").value<String> { it.startsWith(("Visit more than 6 months in future, will not be migrated!")) }
   }
 
   @Test
@@ -631,7 +630,7 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
       .expectStatus().isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT)
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Migration failure: Could not migrate visit")
-      .jsonPath("$.developerMessage").value(Matchers.startsWith("Visit more than 6 months in future, will not be migrated!"))
+      .jsonPath("$.developerMessage").value<String> { it.startsWith(("Visit more than 6 months in future, will not be migrated!")) }
   }
 
   @Test

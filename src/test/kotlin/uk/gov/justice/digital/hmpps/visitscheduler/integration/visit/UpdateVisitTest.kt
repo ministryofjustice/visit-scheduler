@@ -17,8 +17,11 @@ import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestVisitorDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.ACCEPTED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.IN_PROGRESS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
@@ -639,6 +642,9 @@ class UpdateVisitTest : IntegrationTestBase() {
     val visitor1Id: Long = 1
     val visitor2Id: Long = 2
     val visitor3Id: Long = 3
+
+    val visitorDetails = setOf(BookingRequestVisitorDetailsDto(visitor1Id, 21), BookingRequestVisitorDetailsDto(visitor2Id, 25), BookingRequestVisitorDetailsDto(visitor3Id, 28))
+
     visitEntityHelper.createContact(visit = existingVisit, name = "Jane Doe", phone = "01234 098765")
     visitEntityHelper.createVisitor(existingVisit, visitor1Id, true)
     visitEntityHelper.createVisitor(existingVisit, visitor2Id, false)
@@ -657,9 +663,17 @@ class UpdateVisitTest : IntegrationTestBase() {
     updateVisitApplication = applicationEntityHelper.save(updateVisitApplication)
 
     // When
-    val responseSpec = callVisitUpdate(webTestClient, roleVisitSchedulerHttpHeaders, updateVisitApplication.reference)
+    val responseSpec = callVisitUpdate(
+      webTestClient,
+      roleVisitSchedulerHttpHeaders,
+      updateVisitApplication.reference,
+      bookingRequestDto = BookingRequestDto(actionedBy = "booking_guy", applicationMethodType = ApplicationMethodType.PHONE, userType = UserType.STAFF, visitorDetails = visitorDetails),
+    )
+
     responseSpec.expectStatus().isOk
+
     val visitDto = getVisitDto(responseSpec)
+
     verify(telemetryClient).trackEvent(
       eq("visit-booked"),
       org.mockito.kotlin.check {
@@ -671,6 +685,21 @@ class UpdateVisitTest : IntegrationTestBase() {
         assertThat(it["hasVisitorsChanged"]).isEqualTo(true.toString())
         assertThat(it["hasNeedsChanged"]).isEqualTo(false.toString())
         assertThat(it["hasContactsChanged"]).isEqualTo(false.toString())
+
+        val visitors = objectMapper.readTree(it["visitors"])
+        val actualVisitors = visitors.toMutableList().asSequence()
+          .map { visitor ->
+            visitor["visitorId"].asString() to visitor["age"].asInt()
+          }
+          .toList()
+
+        assertThat(actualVisitors).isEqualTo(
+          listOf(
+            "1" to 21,
+            "2" to 25,
+            "3" to 28,
+          ),
+        )
       },
       isNull(),
     )

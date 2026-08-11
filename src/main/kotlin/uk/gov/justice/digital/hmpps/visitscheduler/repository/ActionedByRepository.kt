@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.repository
 
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.ActionedBy
@@ -31,4 +32,12 @@ interface ActionedByRepository : JpaRepository<ActionedBy, Long> {
       "WHERE a.userName =  :prisonerId and a.userType = 'PRISONER'",
   )
   fun findActionedByForPrisoner(prisonerId: String): ActionedBy?
+
+  @Modifying
+  @Query(
+    "UPDATE ActionedBy a SET a.userName = :newPrisonerId " +
+      "WHERE a.userName = :oldPrisonerId and a.userType = 'PRISONER' " +
+      "and not exists (select 1 from ActionedBy a2 where a2.userName = :newPrisonerId and a2.userType = 'PRISONER')",
+  )
+  fun updateActionedByUsername(oldPrisonerId: String, newPrisonerId: String)
 }

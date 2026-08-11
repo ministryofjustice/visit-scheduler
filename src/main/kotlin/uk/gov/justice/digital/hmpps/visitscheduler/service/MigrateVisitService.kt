@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.notify.LanguagePreference
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.MigrateVisitInFutureException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.LegacyData
@@ -350,6 +351,7 @@ class MigrateVisitService(
     telephone = telephone,
     visit = visit,
     email = null,
+    languagePreference = LanguagePreference.EN,
   )
 
   private fun createVisitVisitor(visit: Visit, personId: Long): VisitVisitor = VisitVisitor(

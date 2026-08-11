@@ -343,6 +343,7 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
     assertThat(visitSessionResult.startTimestamp.dayOfWeek).isEqualTo(expectedSessionTemplate.dayOfWeek)
     assertThat(visitSessionResult.endTimestamp.dayOfWeek).isEqualTo(expectedSessionTemplate.dayOfWeek)
     assertThat(visitSessionResult.visitRoom).isEqualTo(expectedSessionTemplate.visitRoom)
+    assertThat(visitSessionResult.visitOrderRestriction).isEqualTo(expectedSessionTemplate.visitOrderRestriction)
   }
 
   private fun getResults(returnResult: WebTestClient.BodyContentSpec): Array<VisitSessionDto> = objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)

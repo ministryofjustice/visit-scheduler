@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VSIPReport
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VSIPReport.VISIT_COUNTS_BY_DAY
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting.OverbookedSessionsDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting.SessionVisitCountsDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting.SessionVisitCountsByDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VSIPReporting
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VSIPReportingRepository
 import java.time.LocalDate
@@ -24,8 +24,8 @@ class VisitsReportingService(
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
-  fun getVisitCountsReportByDay(): Map<LocalDate, List<SessionVisitCountsDto>> {
-    val sessionsReports = mutableMapOf<LocalDate, List<SessionVisitCountsDto>>()
+  fun getVisitCountsReportByDay(): Map<LocalDate, List<SessionVisitCountsByDateDto>> {
+    val sessionsReports = mutableMapOf<LocalDate, List<SessionVisitCountsByDateDto>>()
 
     val reportDate = getNextReportDate(VISIT_COUNTS_BY_DAY)
     if (reportDate != null) {

@@ -1,22 +1,25 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.microsoft.applicationinsights.TelemetryClient
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Value
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
+import tools.jackson.databind.ObjectMapper
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestVisitorDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ExcludeDateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdatePrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.AutoRejectionReason
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.REQUESTED_VISIT_AUTO_REJECTED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.REQUESTED_VISIT_REJECTED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.ADD_PRISON_EXCLUDE_DATE_EVENT
@@ -24,6 +27,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.APPLICATION_DELETED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.APPLICATION_SLOT_CHANGED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.FLAGGED_VISIT_EVENT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.PRISON_CONFIG_UPDATED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.REMOVE_PRISON_EXCLUDE_DATE_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.REMOVE_SESSION_EXCLUDE_DATE_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.UNFLAGGED_VISIT_EVENT
@@ -36,7 +40,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_SLOT_RESERVED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting.OverbookedSessionsDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting.SessionVisitCountsDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting.SessionVisitCountsByDateDto
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -46,9 +50,8 @@ import java.time.temporal.ChronoUnit
 @Service
 class TelemetryClientService(
   private val telemetryClient: TelemetryClient,
+  @param:Qualifier("objectMapper")
   private val objectMapper: ObjectMapper,
-  @param:Value("\${feature.request-booking-enabled:false}")
-  private val requestBookingFeatureEnabled: Boolean,
 ) {
 
   companion object {
@@ -60,13 +63,14 @@ class TelemetryClientService(
   private lateinit var visitEventAuditService: VisitEventAuditService
 
   fun trackUpdateBookingEvent(
-    visitDtoBeforeUpdate: VisitDto?,
-    bookedVisitDto: VisitDto,
-    eventAuditDto: EventAuditDto,
+    visitBeforeUpdate: VisitDto?,
+    visitAfterUpdate: VisitDto,
+    eventAudit: EventAuditDto,
+    bookingRequestDto: BookingRequestDto? = null,
   ) {
     trackEvent(
       VISIT_BOOKED_EVENT,
-      createBookedVisitTrackData(visitDtoBeforeUpdate, bookedVisitDto, eventAuditDto, true),
+      createBookedVisitTrackData(visitBeforeUpdate, visitAfterUpdate, eventAudit, true, bookingRequestDto?.visitorDetails),
     )
   }
 
@@ -76,12 +80,8 @@ class TelemetryClientService(
     bookingRequestDto: BookingRequestDto?,
   ) {
     val isRequestBooking = (bookingRequestDto?.isRequestBooking == true)
-    val eventType = if (requestBookingFeatureEnabled) {
-      if (isRequestBooking) {
-        VISIT_REQUESTED_EVENT
-      } else {
-        VISIT_BOOKED_EVENT
-      }
+    val eventType = if (isRequestBooking) {
+      VISIT_REQUESTED_EVENT
     } else {
       VISIT_BOOKED_EVENT
     }
@@ -163,7 +163,7 @@ class TelemetryClientService(
     trackEvent(UNFLAGGED_VISIT_EVENT, data)
   }
 
-  fun trackVisitCountsEvent(sessionReport: SessionVisitCountsDto) {
+  fun trackVisitCountsEvent(sessionReport: SessionVisitCountsByDateDto) {
     val event = createVisitCountTelemetryData(sessionReport)
     trackEvent(TelemetryVisitEvents.VISIT_COUNTS_REPORT, event)
   }
@@ -188,14 +188,52 @@ class TelemetryClientService(
     trackEvent(REMOVE_PRISON_EXCLUDE_DATE_EVENT, visitTrackEvent)
   }
 
-  fun trackAddSessionExcludeDateEvent(sessionTemplateReference: String, excludeDateDto: ExcludeDateDto) {
-    val visitTrackEvent = createSessionExcludeDateEventData(sessionTemplateReference, excludeDateDto)
+  fun trackAddSessionExcludeDateEvent(sessionTemplateReference: String, prisonCode: String, excludeDateDto: ExcludeDateDto) {
+    val visitTrackEvent = createSessionExcludeDateEventData(sessionTemplateReference = sessionTemplateReference, prisonCode = prisonCode, excludeDateDto = excludeDateDto)
     trackEvent(ADD_SESSION_EXCLUDE_DATE_EVENT, visitTrackEvent)
   }
 
-  fun trackRemoveSessionExcludeDateEvent(sessionTemplateReference: String, excludeDateDto: ExcludeDateDto) {
-    val visitTrackEvent = createSessionExcludeDateEventData(sessionTemplateReference, excludeDateDto)
+  fun trackRemoveSessionExcludeDateEvent(sessionTemplateReference: String, prisonCode: String, excludeDateDto: ExcludeDateDto) {
+    val visitTrackEvent = createSessionExcludeDateEventData(sessionTemplateReference = sessionTemplateReference, prisonCode = prisonCode, excludeDateDto = excludeDateDto)
     trackEvent(REMOVE_SESSION_EXCLUDE_DATE_EVENT, visitTrackEvent)
+  }
+
+  fun trackUpdatePrisonConfigEvent(beforePrisonConfig: PrisonDto, afterPrisonConfig: UpdatePrisonDto) {
+    val eventProperties = mutableMapOf<String, String>()
+    eventProperties["prisonId"] = beforePrisonConfig.code
+
+    afterPrisonConfig.maxTotalVisitors?.let {
+      eventProperties["beforeMaxTotalVisitors"] = beforePrisonConfig.maxTotalVisitors.toString()
+      eventProperties["afterMaxTotalVisitors"] = afterPrisonConfig.maxTotalVisitors.toString()
+    }
+
+    afterPrisonConfig.maxAdultVisitors?.let {
+      eventProperties["beforeMaxAdultVisitor"] = beforePrisonConfig.maxAdultVisitors.toString()
+      eventProperties["afterMaxAdultVisitor"] = afterPrisonConfig.maxAdultVisitors.toString()
+    }
+
+    afterPrisonConfig.maxChildVisitors?.let {
+      eventProperties["beforeMaxChildVisitors"] = beforePrisonConfig.maxChildVisitors.toString()
+      eventProperties["afterMaxChildVisitors"] = afterPrisonConfig.maxChildVisitors.toString()
+    }
+
+    afterPrisonConfig.adultAgeYears?.let {
+      eventProperties["beforeAdultAgeYears"] = beforePrisonConfig.adultAgeYears.toString()
+      eventProperties["afterAdultAgeYears"] = afterPrisonConfig.adultAgeYears.toString()
+    }
+
+    afterPrisonConfig.weekStartDay?.let {
+      eventProperties["beforeWeekStartDay"] = beforePrisonConfig.weekStartDay.toString()
+      eventProperties["afterWeekStartDay"] = afterPrisonConfig.weekStartDay.toString()
+    }
+
+    afterPrisonConfig.remandVisitLimitPerWeek?.let {
+      eventProperties["beforeRemandVisitLimitPerWeek"] = beforePrisonConfig.remandVisitLimitPerWeek.toString()
+      eventProperties["afterRemandVisitLimitPerWeek"] = afterPrisonConfig.remandVisitLimitPerWeek.toString()
+    }
+
+    // TODO - look at client update telemetry events
+    trackEvent(PRISON_CONFIG_UPDATED_EVENT, eventProperties)
   }
 
   fun trackVisitRequestApprovedOrRejectedEvent(
@@ -218,11 +256,10 @@ class TelemetryClientService(
   fun trackVisitRequestAutoRejectedEvent(
     bookedVisitDto: VisitDto,
     eventAuditDto: EventAuditDto,
-    rejectionReason: AutoRejectionReason,
   ) {
     trackEvent(
       TelemetryVisitEvents.VISIT_REQUEST_AUTO_REJECTED_EVENT,
-      createVisitRequestApprovedOrRejectedTrackData(bookedVisitDto, eventAuditDto, rejectionReason),
+      createVisitRequestApprovedOrRejectedTrackData(bookedVisitDto, eventAuditDto),
     )
   }
 
@@ -235,7 +272,7 @@ class TelemetryClientService(
   }
 
   private fun createVisitCountTelemetryData(
-    sessionReport: SessionVisitCountsDto,
+    sessionReport: SessionVisitCountsByDateDto,
   ): Map<String, String> {
     val reportEvent = mutableMapOf<String, String>()
     reportEvent["reportDate"] = formatDateToString(sessionReport.reportDate)
@@ -243,28 +280,21 @@ class TelemetryClientService(
     reportEvent["blockedDate"] = sessionReport.isBlockedDate.toString()
     reportEvent["hasSessions"] = sessionReport.hasSessionsOnDate.toString()
 
-    sessionReport.sessionTimeSlot?.let {
-      reportEvent["sessionStart"] = formatTimeToString(it.startTime)
-      reportEvent["sessionEnd"] = formatTimeToString(it.endTime)
-    }
-    sessionReport.sessionCapacity?.let {
-      reportEvent["openCapacity"] = it.open.toString()
-      reportEvent["closedCapacity"] = it.closed.toString()
-    }
-    sessionReport.visitType?.let {
-      reportEvent["visitType"] = it.toString()
-    }
-    sessionReport.openBookedCount?.let {
-      reportEvent["openBooked"] = it.toString()
-    }
-    sessionReport.closedBookedCount?.let {
-      reportEvent["closedBooked"] = it.toString()
-    }
-    sessionReport.openCancelledCount?.let {
-      reportEvent["openCancelled"] = it.toString()
-    }
-    sessionReport.closedCancelledCount?.let {
-      reportEvent["closedCancelled"] = it.toString()
+    sessionReport.visitCountBySession?.let { visitCountBySession ->
+      with(visitCountBySession) {
+        reportEvent["sessionStart"] = formatTimeToString(sessionTimeSlot.startTime)
+        reportEvent["sessionEnd"] = formatTimeToString(sessionTimeSlot.endTime)
+        reportEvent["openCapacity"] = sessionCapacity.open.toString()
+        reportEvent["closedCapacity"] = sessionCapacity.closed.toString()
+        reportEvent["visitType"] = visitType.toString()
+        reportEvent["openBooked"] = openBookedCount.toString()
+        reportEvent["openBookedVisitors"] = openBookedVisitorsCount.toString()
+        reportEvent["closedBooked"] = closedBookedCount.toString()
+        reportEvent["closedBookedVisitors"] = closedBookedVisitorsCount.toString()
+        reportEvent["openCancelled"] = openCancelledCount.toString()
+        reportEvent["closedCancelled"] = closedCancelledCount.toString()
+        reportEvent["visitRoom"] = visitRoom
+      }
     }
 
     return reportEvent.toMap()
@@ -324,12 +354,15 @@ class TelemetryClientService(
   private fun createVisitRequestApprovedOrRejectedTrackData(
     visitDto: VisitDto,
     eventAudit: EventAuditDto,
-    rejectionReason: AutoRejectionReason? = null,
   ): MutableMap<String, String> {
     val data = createDefaultVisitData(visitDto)
 
-    if (rejectionReason != null) {
-      data["autoRejectionReason"] = rejectionReason.description
+    eventAudit.text?.let {
+      when (eventAudit.type) {
+        REQUESTED_VISIT_AUTO_REJECTED -> data["autoRejectionReason"] = it
+        REQUESTED_VISIT_REJECTED -> data["rejectionReason"] = it
+        else -> {}
+      }
     }
 
     createEventAuditData(eventAudit, data)
@@ -411,6 +444,7 @@ class TelemetryClientService(
     "visitRoom" to visitDto.visitRoom,
     "hasPhoneNumber" to (visitDto.visitContact.telephone != null).toString(),
     "hasEmail" to (visitDto.visitContact.email != null).toString(),
+    "languagePreference" to visitDto.visitContact.languagePreference.toString(),
     "totalVisitors" to visitDto.visitors.size.toString(),
     "visitors" to objectMapper.writeValueAsString(createVisitorData(visitDto.visitors, visitorDetails)),
   )
@@ -470,12 +504,13 @@ class TelemetryClientService(
 
   private fun createSessionExcludeDateEventData(
     sessionTemplateReference: String,
+    prisonCode: String,
     excludeDateDto: ExcludeDateDto,
   ): Map<String, String> {
     val excludeDateEvent = mutableMapOf<String, String>()
     excludeDateEvent["sessionTemplateReference"] = sessionTemplateReference
+    excludeDateEvent["prisonCode"] = prisonCode
     excludeDateEvent["excludedDate"] = formatDateToString(excludeDateDto.excludeDate)
-
     excludeDateEvent["actionedBy"] = excludeDateDto.actionedBy
     return excludeDateEvent.toMap()
   }

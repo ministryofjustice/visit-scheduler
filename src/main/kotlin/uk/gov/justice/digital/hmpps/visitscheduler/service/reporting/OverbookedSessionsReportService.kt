@@ -2,7 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.service.reporting
 
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting.OverbookedSessionsDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting.SessionVisitCountsDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting.SessionVisitCountsByDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryClientService
 import java.time.LocalDate
 
@@ -26,23 +26,21 @@ class OverbookedSessionsReportService(
     }
   }
 
-  private fun getOverbookedSessionsDto(sessionVisitCountsDto: SessionVisitCountsDto): OverbookedSessionsDto? = if (
-    !sessionVisitCountsDto.hasSessionsOnDate ||
-    sessionVisitCountsDto.isBlockedDate ||
-    sessionVisitCountsDto.sessionTimeSlot == null ||
-    sessionVisitCountsDto.sessionCapacity == null
+  private fun getOverbookedSessionsDto(sessionVisitCountsByDateDto: SessionVisitCountsByDateDto): OverbookedSessionsDto? = if (
+    !sessionVisitCountsByDateDto.hasSessionsOnDate ||
+    sessionVisitCountsByDateDto.isBlockedDate ||
+    sessionVisitCountsByDateDto.visitCountBySession == null
   ) {
     null
   } else {
-    with(sessionVisitCountsDto) {
-      OverbookedSessionsDto(
-        sessionDate = reportDate,
-        prisonCode = prisonCode,
-        sessionTimeSlot = sessionTimeSlot!!,
-        sessionCapacity = sessionCapacity!!,
-        openCount = openBookedCount ?: 0,
-        closedCount = closedBookedCount ?: 0,
-      )
-    }
+    val visitCountsBySession = sessionVisitCountsByDateDto.visitCountBySession!!
+    OverbookedSessionsDto(
+      sessionDate = sessionVisitCountsByDateDto.reportDate,
+      prisonCode = sessionVisitCountsByDateDto.prisonCode,
+      sessionTimeSlot = visitCountsBySession.sessionTimeSlot,
+      sessionCapacity = visitCountsBySession.sessionCapacity,
+      openCount = visitCountsBySession.openBookedCount,
+      closedCount = visitCountsBySession.closedBookedCount,
+    )
   }
 }

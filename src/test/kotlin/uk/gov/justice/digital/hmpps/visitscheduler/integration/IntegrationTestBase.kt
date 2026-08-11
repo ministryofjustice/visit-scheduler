@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
@@ -19,6 +18,7 @@ import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.transaction.annotation.Transactional
+import tools.jackson.databind.ObjectMapper
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFY_CONTROLLER_CALLBACK_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFY_CONTROLLER_CREATE_PATH
@@ -57,7 +57,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.ApplicationEntityHelpe
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AssertHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.DeleteEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.EventAuditEntityHelper
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.JwtAuthHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionLocationGroupHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionPrisonerCategoryHelper
@@ -69,8 +68,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.VsipReportingEntityHel
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGet
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callPut
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.container.LocalStackContainer
+import uk.gov.justice.digital.hmpps.visitscheduler.integration.container.LocalStackContainer.setLocalStackProperties
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.container.PostgresContainer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.ActivitiesApiMockServer
+import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.AlertsApiMockServer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.HmppsAuthExtension
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.NonAssociationsApiMockServer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.PrisonApiMockServer
@@ -88,6 +89,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPrisonUserClie
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionSlotRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.DateRange
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionDatesUtil
+import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -150,7 +152,7 @@ abstract class IntegrationTestBase {
   protected lateinit var deleteEntityHelper: DeleteEntityHelper
 
   @Autowired
-  protected lateinit var jwtAuthHelper: JwtAuthHelper
+  protected lateinit var jwtAuthHelper: JwtAuthorisationHelper
 
   @Autowired
   protected lateinit var assertHelper: AssertHelper
@@ -215,7 +217,12 @@ abstract class IntegrationTestBase {
     user: String = "AUTH_ADM",
     roles: List<String> = listOf(),
     scopes: List<String> = listOf(),
-  ): (HttpHeaders) -> Unit = jwtAuthHelper.setAuthorisation(user, roles, scopes)
+  ): (HttpHeaders) -> Unit = jwtAuthHelper.setAuthorisationHeader(
+    clientId = "visit-scheduler-client",
+    username = user,
+    scope = scopes,
+    roles = roles,
+  )
 
   companion object {
     internal val prisonApiMockServer = PrisonApiMockServer()
@@ -223,6 +230,7 @@ abstract class IntegrationTestBase {
     internal val prisonOffenderSearchMockServer = PrisonOffenderSearchMockServer()
     internal val prisonerContactRegistryMockServer = PrisonerContactRegistryMockServer()
     internal val activitiesApiMockServer = ActivitiesApiMockServer()
+    internal val alertsApiMockServer = AlertsApiMockServer()
 
     @BeforeAll
     @JvmStatic
@@ -232,6 +240,7 @@ abstract class IntegrationTestBase {
       prisonOffenderSearchMockServer.start()
       prisonerContactRegistryMockServer.start()
       activitiesApiMockServer.start()
+      alertsApiMockServer.start()
     }
 
     @AfterAll
@@ -242,6 +251,7 @@ abstract class IntegrationTestBase {
       prisonOffenderSearchMockServer.stop()
       prisonerContactRegistryMockServer.stop()
       activitiesApiMockServer.stop()
+      alertsApiMockServer.stop()
     }
 
     private val pgContainer = PostgresContainer.instance
@@ -251,18 +261,17 @@ abstract class IntegrationTestBase {
     @DynamicPropertySource
     fun properties(registry: DynamicPropertyRegistry) {
       pgContainer?.run {
-        registry.add("spring.datasource.url", pgContainer::getJdbcUrl)
-        registry.add("spring.datasource.username", pgContainer::getUsername)
-        registry.add("spring.datasource.password", pgContainer::getPassword)
-        registry.add("spring.datasource.placeholders.database_update_password", pgContainer::getPassword)
-        registry.add("spring.datasource.placeholders.database_read_only_password", pgContainer::getPassword)
-        registry.add("spring.flyway.url", pgContainer::getJdbcUrl)
-        registry.add("spring.flyway.user", pgContainer::getUsername)
-        registry.add("spring.flyway.password", pgContainer::getPassword)
+        registry.add("spring.datasource.url") { PostgresContainer.jdbcUrl }
+        registry.add("spring.datasource.username") { PostgresContainer.dbUsername }
+        registry.add("spring.datasource.password") { PostgresContainer.dbPassword }
+        registry.add("spring.datasource.placeholders.database_update_password") { PostgresContainer.dbPassword }
+        registry.add("spring.datasource.placeholders.database_read_only_password") { PostgresContainer.dbPassword }
+        registry.add("spring.flyway.url") { PostgresContainer.jdbcUrl }
+        registry.add("spring.flyway.user") { PostgresContainer.dbUsername }
+        registry.add("spring.flyway.password") { PostgresContainer.dbPassword }
       }
       lsContainer?.run {
-        registry.add("hmpps.sqs.localstackUrl") { lsContainer.getEndpointOverride(org.testcontainers.containers.localstack.LocalStackContainer.Service.SNS) }
-        registry.add("hmpps.sqs.region") { lsContainer.region }
+        setLocalStackProperties(lsContainer, registry)
       }
     }
   }
@@ -343,7 +352,7 @@ abstract class IntegrationTestBase {
       visitRestriction = visitRestriction,
       userType = userType,
     )
-    applicationEntityHelper.createContact(application = applicationEntity, visitContact.name, visitContact.telephone, visitContact.email)
+    applicationEntityHelper.createContact(application = applicationEntity, visitContact.name, visitContact.telephone, visitContact.email, visitContact.languagePreference)
     applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 621L, visitContact = false)
     applicationEntityHelper.createSupport(application = applicationEntity, description = "Some More Text")

@@ -6,6 +6,7 @@ import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import java.time.LocalDateTime
 
@@ -23,6 +24,9 @@ data class VisitSessionDto(
   @param:Schema(description = "The type of visits taking place within this session", example = "SOCIAL", required = true)
   @field:NotNull
   val visitType: VisitType,
+
+  @param:Schema(description = "Session vo restriction", required = true)
+  val visitOrderRestriction: SessionTemplateVisitOrderRestrictionType,
 
   @param:JsonProperty("prisonId")
   @param:Schema(description = "The prison id", example = "LEI", required = true)

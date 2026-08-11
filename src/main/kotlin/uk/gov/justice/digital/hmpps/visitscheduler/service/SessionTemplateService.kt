@@ -20,6 +20,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTem
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.RequestSessionTemplateVisitStatsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionDetailsDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionScheduleDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionScheduleWithDateExclusionsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateVisitCountsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateVisitStatsDto
@@ -621,6 +623,24 @@ class SessionTemplateService(
     // ensure the prison is enabled
     val sessionTemplate = getSessionTemplate(sessionTemplateReference)
     return excludeDateService.getExcludeDates(sessionTemplate.excludeDates)
+  }
+
+  @Transactional(readOnly = true)
+  fun getFutureExcludedSessionsForPrison(prisonCode: String): List<SessionScheduleWithDateExclusionsDto> {
+    LOG.debug("Getting sessions with exclude dates from today onwards for prison - {}", prisonCode)
+    val today = LocalDate.now()
+    val sessionSchedulesWithDateExclusions = mutableListOf<SessionScheduleWithDateExclusionsDto>()
+
+    sessionTemplateRepository.findCurrentAndFutureSessionTemplates(prisonCode).map { sessionTemplate ->
+      val futureExcludeDates = sessionTemplate.excludeDates.filter { it.excludeDate >= today }
+      if (futureExcludeDates.isNotEmpty()) {
+        val sessionSchedule = SessionScheduleDto(sessionTemplate, false)
+        sessionSchedulesWithDateExclusions.add(SessionScheduleWithDateExclusionsDto(sessionSchedule, futureExcludeDates.map { ExcludeDateDto(it.excludeDate, it.actionedBy) }))
+      }
+    }
+
+    // return only those sessions that have future exclude dates
+    return sessionSchedulesWithDateExclusions.filter { it.excludeDates.isNotEmpty() }.toList()
   }
 
   @Transactional

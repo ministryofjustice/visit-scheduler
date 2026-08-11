@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.controller.admin
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -8,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import tools.jackson.databind.ObjectMapper
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ValidationErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
@@ -36,14 +37,14 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTem
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionTemplateService
 
 const val ADMIN_SESSION_TEMPLATES_PATH: String = "/admin/session-templates"
-const val SESSION_TEMPLATE_PATH: String = "$ADMIN_SESSION_TEMPLATES_PATH/template"
-const val FIND_MATCHING_SESSION_TEMPLATES_ON_CREATE: String = "$SESSION_TEMPLATE_PATH/matching/"
-const val FIND_MATCHING_SESSION_TEMPLATES_ON_UPDATE: String = "$SESSION_TEMPLATE_PATH/{reference}/matching/"
+const val ADMIN_SESSION_TEMPLATE_PATH: String = "$ADMIN_SESSION_TEMPLATES_PATH/template"
+const val FIND_MATCHING_SESSION_TEMPLATES_ON_CREATE: String = "$ADMIN_SESSION_TEMPLATE_PATH/matching/"
+const val FIND_MATCHING_SESSION_TEMPLATES_ON_UPDATE: String = "$ADMIN_SESSION_TEMPLATE_PATH/{reference}/matching/"
 const val MOVE_VISITS: String = "$ADMIN_SESSION_TEMPLATES_PATH/move/"
-const val REFERENCE_SESSION_TEMPLATE_PATH: String = "$SESSION_TEMPLATE_PATH/{reference}"
-const val SESSION_TEMPLATE_VISIT_STATS: String = "$SESSION_TEMPLATE_PATH/{reference}/stats"
-const val ACTIVATE_SESSION_TEMPLATE: String = "$SESSION_TEMPLATE_PATH/{reference}/activate"
-const val DEACTIVATE_SESSION_TEMPLATE: String = "$SESSION_TEMPLATE_PATH/{reference}/deactivate"
+const val REFERENCE_SESSION_TEMPLATE_PATH: String = "$ADMIN_SESSION_TEMPLATE_PATH/{reference}"
+const val SESSION_TEMPLATE_VISIT_STATS: String = "$ADMIN_SESSION_TEMPLATE_PATH/{reference}/stats"
+const val ACTIVATE_SESSION_TEMPLATE: String = "$ADMIN_SESSION_TEMPLATE_PATH/{reference}/activate"
+const val DEACTIVATE_SESSION_TEMPLATE: String = "$ADMIN_SESSION_TEMPLATE_PATH/{reference}/deactivate"
 const val ACTIVATE_SESSION_TEMPLATE_CLIENT: String = "$REFERENCE_SESSION_TEMPLATE_PATH/client/{type}/activate"
 const val DEACTIVATE_SESSION_TEMPLATE_CLIENT: String = "$REFERENCE_SESSION_TEMPLATE_PATH/client/{type}/deactivate"
 
@@ -59,10 +60,11 @@ enum class SessionTemplateRangeType {
 @Tag(name = "6. Session template admin rest controller")
 class SessionTemplateAdminController(
   private val sessionTemplateService: SessionTemplateService,
+  @param:Qualifier("objectMapper")
   private val objectMapper: ObjectMapper,
 ) {
 
-  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
+  @PreAuthorize("hasAnyRole('VISIT_SCHEDULER_CONFIG', 'VISIT_SCHEDULER')")
   @GetMapping(ADMIN_SESSION_TEMPLATES_PATH)
   @Operation(
     summary = "Get session templates",
@@ -134,7 +136,7 @@ class SessionTemplateAdminController(
   ): SessionTemplateDto = sessionTemplateService.getSessionTemplates(reference)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
-  @PostMapping(SESSION_TEMPLATE_PATH)
+  @PostMapping(ADMIN_SESSION_TEMPLATE_PATH)
   @Operation(
     summary = "Create a session template",
     description = "Create a session templates",
