@@ -45,7 +45,7 @@ class MaxVisitsPerMonthVisitRequestRule(
   private fun getMaxVisitsPerMonth(prisonVisitRequestRules: PrisonVisitRequestRules): Int? = try {
     prisonVisitRequestRules.prisonVisitRequestRulesConfig.firstOrNull { it.attributeName == PrisonVisitRequestRuleConfigType.MAX_VISITS_PER_MONTH }?.attributeValue?.toIntOrNull()
   } catch (e: NumberFormatException) {
-    logger.error("NumberFormatException thrown whilemax visits per month for max visits a month rule : ${prisonVisitRequestRules.ruleName} for prison ${prisonVisitRequestRules.prison.code}", e)
+    logger.error("NumberFormatException thrown for max visits a month rule : ${prisonVisitRequestRules.ruleName} for prison ${prisonVisitRequestRules.prison.code}", e)
     null
   }
 }
