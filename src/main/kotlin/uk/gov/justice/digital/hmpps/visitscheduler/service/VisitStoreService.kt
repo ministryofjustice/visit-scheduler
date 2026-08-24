@@ -184,7 +184,7 @@ class VisitStoreService(
     visitDtoBuilder.build(it)
   }
 
-  private fun getApprovedOrRequestedStatus(application: Application): VisitSubStatus = if (visitRequestRuleCheckerService.getRequestReviewReasons(application, RequestRuleType.REQUESTED_RULE).isNotEmpty()) {
+  private fun getApprovedOrRequestedStatus(application: Application): VisitSubStatus = if (application.userType == UserType.PUBLIC && visitRequestRuleCheckerService.getRequestReviewReasons(application, RequestRuleType.REQUESTED_RULE).isNotEmpty()) {
     VisitSubStatus.REQUESTED
   } else {
     VisitSubStatus.AUTO_APPROVED

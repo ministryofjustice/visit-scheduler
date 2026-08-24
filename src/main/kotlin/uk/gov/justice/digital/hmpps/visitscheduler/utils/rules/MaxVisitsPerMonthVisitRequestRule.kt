@@ -11,7 +11,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.temporal.TemporalAdjusters
 
 @Service
-@Description("This rule will ensure visits for same prisoner within n days are being flagged")
+@Description("This rule will ensure visits above the allowed limit for the month are being flagged")
 class MaxVisitsPerMonthVisitRequestRule(
   private val visitRepository: VisitRepository,
 ) : VisitRequestRule<Application> {

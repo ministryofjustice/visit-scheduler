@@ -5,4 +5,4 @@ import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonVisitRequestRulesConfig
 
 @Repository
-interface PrisonVisitRequestRulesConfigRepository : JpaRepository<PrisonVisitRequestRulesConfig, Int>
+interface PrisonVisitRequestRulesConfigRepository : JpaRepository<PrisonVisitRequestRulesConfig, Long>
