@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.service
 
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonVisitRequestRuleType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.RequestRuleType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonVisitRequestRules
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonVisitRequestRulesRepository
@@ -12,11 +13,14 @@ class VisitRequestRuleCheckerService(
   private val prisonVisitRequestRulesRepository: PrisonVisitRequestRulesRepository,
   private val visitRequestRuleFactory: VisitRequestRuleFactory,
 ) {
-  fun getRequestReviewReasons(application: Application): List<PrisonVisitRequestRuleType> {
+  fun getRequestReviewReasons(application: Application, ruleType: RequestRuleType): List<PrisonVisitRequestRuleType> {
     val failedRules = mutableListOf<PrisonVisitRequestRuleType>()
-    prisonVisitRequestRulesRepository.findActiveVisitRequestRulesByPrison(application.prison.code).forEach { rule ->
-      checkVisitRequestRule(application, rule)?.let {
-        failedRules.add(it)
+    val rules = prisonVisitRequestRulesRepository.findActiveVisitRequestRulesByPrison(application.prison.code)
+    rules.forEach { rule ->
+      if (rule.ruleName.ruleType == ruleType) {
+        checkVisitRequestRule(application, rule)?.let {
+          failedRules.add(it)
+        }
       }
     }
 

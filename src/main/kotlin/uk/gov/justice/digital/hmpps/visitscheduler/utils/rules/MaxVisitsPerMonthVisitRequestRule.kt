@@ -33,13 +33,14 @@ class MaxVisitsPerMonthVisitRequestRule(
     val fromDate = visitDate.withDayOfMonth(1)
     val toDate = visitDate.with(TemporalAdjusters.lastDayOfMonth())
 
-    val visits = visitRepository.findBookedVisits(
+    val totalBookedVisitsForPrisoner = visitRepository.getBookedVisitsCountForPrisoner(
       prisonCode = prisonCode,
       prisonerId = prisonerId,
       fromDate = fromDate,
       toDate = toDate,
     )
-    return visits.size >= maxVisitsAllowedPerMonth
+
+    return totalBookedVisitsForPrisoner >= maxVisitsAllowedPerMonth
   }
 
   private fun getMaxVisitsPerMonth(prisonVisitRequestRules: PrisonVisitRequestRules): Int? = try {

@@ -10,41 +10,65 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Appl
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 
 @Service
-@Description("This rule will ensure visits for same prisoner within n days are being flagged")
+@Description("This rule will ensure visits for same prisoner within n days (before or after) are being flagged")
 class VisitIntervalVisitRequestRule(
   private val visitRepository: VisitRepository,
 ) : VisitRequestRule<Application> {
   companion object {
-    private const val DEFAULT_INTERVAL = 2
     val logger: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
   override fun ruleCheck(application: Application, prisonVisitRequestRules: PrisonVisitRequestRules): Boolean {
-    var interval = getInterval(prisonVisitRequestRules)
-    if (interval == null) {
-      logger.error("Interval not set or set incorrectly for visit interval rule for prison ${prisonVisitRequestRules.prison.code}, using default interval of $DEFAULT_INTERVAL")
-      interval = DEFAULT_INTERVAL
+    val prisonCode = application.prison.code
+    val rulesConfig = getConfigValues(prisonVisitRequestRules)
+    val interval = getInterval(rulesConfig, prisonCode)
+    val allowedVisits = getVisitsAllowed(rulesConfig, prisonCode)
+
+    if (interval == null || allowedVisits == null) {
+      logger.error("Interval or allowed visits not set or set incorrectly for visit interval rule for prison {}", prisonCode)
+      return true
     }
 
     val prisonerId = application.prisonerId
-    val prisonCode = application.prison.code
     val visitDate = application.sessionSlot.slotDate
     val fromDate = visitDate.minusDays(interval.toLong())
     val toDate = visitDate.plusDays(interval.toLong())
 
-    val visits = visitRepository.findBookedVisits(
+    val totalBookedVisitsForPrisonerPrior = visitRepository.getBookedVisitsCountForPrisoner(
       prisonCode = prisonCode,
       prisonerId = prisonerId,
       fromDate = fromDate,
+      toDate = visitDate,
+    )
+
+    val totalBookedVisitsForPrisonerAfter = visitRepository.getBookedVisitsCountForPrisoner(
+      prisonCode = prisonCode,
+      prisonerId = prisonerId,
+      fromDate = visitDate,
       toDate = toDate,
     )
-    return visits.isNotEmpty()
+
+    return (
+      (totalBookedVisitsForPrisonerPrior >= allowedVisits) ||
+        (totalBookedVisitsForPrisonerAfter >= allowedVisits)
+      )
   }
 
-  private fun getInterval(prisonVisitRequestRules: PrisonVisitRequestRules): Int? = try {
-    prisonVisitRequestRules.prisonVisitRequestRulesConfig.firstOrNull { it.attributeName == PrisonVisitRequestRuleConfigType.NUMBER_OF_DAYS }?.attributeValue?.toIntOrNull()
-  } catch (e: NumberFormatException) {
-    logger.error("NumberFormatException thrown while getting number of days for visit interval rule : ${prisonVisitRequestRules.ruleName} for prison ${prisonVisitRequestRules.prison.code}", e)
-    null
+  private fun getInterval(configValues: Map<PrisonVisitRequestRuleConfigType, String?>, prisonCode: String): Int? {
+    try {
+      return configValues[PrisonVisitRequestRuleConfigType.INTERVAL_DAYS_BEFORE_AND_AFTER]?.toInt()
+    } catch (_: NumberFormatException) {
+      logger.error("NumberFormatException thrown while getting number of days for visit interval rule for prison {}", prisonCode)
+      return null
+    }
+  }
+
+  private fun getVisitsAllowed(configValues: Map<PrisonVisitRequestRuleConfigType, String?>, prisonCode: String): Int? {
+    try {
+      return configValues[PrisonVisitRequestRuleConfigType.VISITS_ALLOWED]?.toInt()
+    } catch (_: NumberFormatException) {
+      logger.error("NumberFormatException thrown while getting number of visits allowed for visit interval rule for prison {}", prisonCode)
+      return null
+    }
   }
 }

@@ -64,6 +64,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionPrisonerIncenti
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionTemplateEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitNotifyHistoryHelper
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitRequestRuleHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VsipReportingEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGet
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callPut
@@ -162,6 +163,9 @@ abstract class IntegrationTestBase {
 
   @Autowired
   protected lateinit var visitNotifyHistoryHelper: VisitNotifyHistoryHelper
+
+  @Autowired
+  protected lateinit var visitRequestRuleHelper: VisitRequestRuleHelper
 
   init {
     // Resolves an issue where Wiremock keeps previous sockets open from other tests causing connection resets
