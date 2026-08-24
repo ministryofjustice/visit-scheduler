@@ -204,6 +204,7 @@ class VisitService(
     val bookingEventAuditDto = visitEventAuditService.updateVisitApplicationAndSaveEvent(bookedVisitDto, bookingRequestDto, eventType, text = null)
 
     // TODO - check events to be generated if the visit was AUTO_REJECTED and status became CANCELLED
+    // TODO - check events to be generated if the visit was REQUESTED instead of AUTO_APPROVED
     if (bookedVisitDto.visitStatus == VisitStatus.BOOKED) {
       telemetryClientService.trackBookingEvent(bookedVisitDto, bookingEventAuditDto, bookingRequestDto)
 

@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.IN_PROGRESS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
@@ -100,6 +101,7 @@ class AlreadyRejectedVisitRequestRulesTest : IntegrationTestBase() {
     // visit is rejected as the number of rejections is equal to the allowed limit
     assertThat(visitDto.visitStatus).isEqualTo(CANCELLED)
     assertThat(visitDto.visitSubStatus).isEqualTo(VisitSubStatus.REJECTED)
+    assertThat(visitDto.outcomeStatus).isEqualTo(OutcomeStatus.REQUESTED_VISIT_AUTO_REJECTED)
   }
 
   @Test
@@ -150,6 +152,7 @@ class AlreadyRejectedVisitRequestRulesTest : IntegrationTestBase() {
     // visit is not rejected as the number of rejections is below the allowed limit
     assertThat(visitDto.visitStatus).isEqualTo(BOOKED)
     assertThat(visitDto.visitSubStatus).isEqualTo(VisitSubStatus.REQUESTED)
+    assertThat(visitDto.outcomeStatus).isNull()
   }
 
   @Test
@@ -201,6 +204,7 @@ class AlreadyRejectedVisitRequestRulesTest : IntegrationTestBase() {
     // visit is not rejected as the visitor list is different
     assertThat(visitDto.visitStatus).isEqualTo(BOOKED)
     assertThat(visitDto.visitSubStatus).isEqualTo(VisitSubStatus.REQUESTED)
+    assertThat(visitDto.outcomeStatus).isNull()
   }
 
   @Test
@@ -252,6 +256,7 @@ class AlreadyRejectedVisitRequestRulesTest : IntegrationTestBase() {
     // visit is not rejected as the visitor list is different
     assertThat(visitDto.visitStatus).isEqualTo(BOOKED)
     assertThat(visitDto.visitSubStatus).isEqualTo(VisitSubStatus.REQUESTED)
+    assertThat(visitDto.outcomeStatus).isNull()
   }
 
   @Test
@@ -303,5 +308,6 @@ class AlreadyRejectedVisitRequestRulesTest : IntegrationTestBase() {
     // visit is not rejected as the visitor list is different
     assertThat(visitDto.visitStatus).isEqualTo(BOOKED)
     assertThat(visitDto.visitSubStatus).isEqualTo(VisitSubStatus.REQUESTED)
+    assertThat(visitDto.outcomeStatus).isNull()
   }
 }

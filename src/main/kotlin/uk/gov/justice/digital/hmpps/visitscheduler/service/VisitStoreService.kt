@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitFromExternalSy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.RequestRuleType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.VISIT_UPDATED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
@@ -129,6 +130,10 @@ class VisitStoreService(
         visitSubStatus = visitSubStatus,
         userType = application.userType,
       )
+    }
+
+    if (notSavedBooking.visitStatus == CANCELLED) {
+      notSavedBooking.outcomeStatus = OutcomeStatus.REQUESTED_VISIT_AUTO_REJECTED
     }
 
     val booking = visitRepository.saveAndFlush(notSavedBooking)
