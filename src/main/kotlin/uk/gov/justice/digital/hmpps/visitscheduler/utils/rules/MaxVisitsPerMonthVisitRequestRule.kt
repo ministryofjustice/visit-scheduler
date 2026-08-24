@@ -16,15 +16,14 @@ class MaxVisitsPerMonthVisitRequestRule(
   private val visitRepository: VisitRepository,
 ) : VisitRequestRule<Application> {
   companion object {
-    private const val DEFAULT_MAX_VISITS_PER_MONTH = 7
     val logger: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
   override fun ruleCheck(application: Application, prisonVisitRequestRules: PrisonVisitRequestRules): Boolean {
-    var maxVisitsAllowedPerMonth = getMaxVisitsPerMonth(prisonVisitRequestRules)
+    val maxVisitsAllowedPerMonth = getMaxVisitsPerMonth(prisonVisitRequestRules)
     if (maxVisitsAllowedPerMonth == null) {
-      logger.error("Max visits not set or set incorrectly for max visits a month rule for prison ${prisonVisitRequestRules.prison.code}, using default interval of $DEFAULT_MAX_VISITS_PER_MONTH")
-      maxVisitsAllowedPerMonth = DEFAULT_MAX_VISITS_PER_MONTH
+      logger.error("Max visits not set or set incorrectly for max visits a month rule for prison ${prisonVisitRequestRules.prison.code}")
+      return false
     }
 
     val prisonerId = application.prisonerId

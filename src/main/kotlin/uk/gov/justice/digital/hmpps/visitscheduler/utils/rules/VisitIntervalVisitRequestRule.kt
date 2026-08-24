@@ -26,7 +26,7 @@ class VisitIntervalVisitRequestRule(
 
     if (interval == null || allowedVisits == null) {
       logger.error("Interval or allowed visits not set or set incorrectly for visit interval rule for prison {}", prisonCode)
-      return true
+      return false
     }
 
     val prisonerId = application.prisonerId

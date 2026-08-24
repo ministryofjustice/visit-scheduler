@@ -30,7 +30,7 @@ class AlreadyRejectedVisitRequestRejectionRule(
 
     if (rejectionTimeIntervalInHours == null || totalRejections == null) {
       logger.error("Reject interval / Total rejections not set or set incorrectly for already rejected visit request rule for prison {}", prisonCode)
-      return true
+      return false
     }
 
     val rejectedVisits = visitRepository.getRejectedVisitsForPrisoner(
