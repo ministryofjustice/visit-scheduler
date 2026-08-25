@@ -194,7 +194,7 @@ class VisitService(
     bookedVisitDto: VisitDto,
     bookingRequestDto: BookingRequestDto,
   ): VisitDto {
-    val eventType = if (bookingRequestDto.isRequestBooking == true) {
+    val eventType = if (bookedVisitDto.visitSubStatus == VisitSubStatus.REQUESTED) {
       EventAuditType.REQUESTED_VISIT
     } else {
       EventAuditType.BOOKED_VISIT
