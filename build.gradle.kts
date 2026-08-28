@@ -1,5 +1,5 @@
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.0.4"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.0.6"
   kotlin("plugin.spring") version "2.4.10"
   kotlin("plugin.jpa") version "2.4.10"
   idea
@@ -20,29 +20,29 @@ repositories {
 }
 
 dependencies {
-  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:3.0.0")
+  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:3.0.1")
   implementation("org.springframework.boot:spring-boot-starter-webclient")
-  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:7.4.0")
+  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:7.4.1")
   implementation("org.springframework.boot:spring-boot-starter-flyway")
 
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
-  implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.30.0")
+  implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.31.1")
 
-  implementation("org.springframework.data:spring-data-commons:4.1.0")
+  implementation("org.springframework.data:spring-data-commons:4.1.1")
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.0")
 
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-  implementation("net.javacrumbs.shedlock:shedlock-spring:7.7.0")
-  implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:7.7.0")
-  implementation("org.freemarker:freemarker:2.3.34")
+  implementation("net.javacrumbs.shedlock:shedlock-spring:7.9.0")
+  implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:7.9.0")
+  implementation("org.freemarker:freemarker:2.3.35")
 
   runtimeOnly("org.postgresql:postgresql:42.7.13")
   runtimeOnly("org.flywaydb:flyway-database-postgresql")
 
   annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
-  testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:3.0.0")
-  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.46")
+  testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:3.0.1")
+  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.47")
   testImplementation("org.springframework.boot:spring-boot-starter-webflux-test")
   testImplementation("org.wiremock:wiremock-standalone:3.13.2")
   testImplementation("org.mockito:mockito-inline:5.2.0")
