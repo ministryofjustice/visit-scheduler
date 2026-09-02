@@ -1747,6 +1747,7 @@ class GetSessionsTest : IntegrationTestBase() {
     // Then
     val visitSessions = getResults(returnResult)
     val visitSessionsForDate = visitSessions.filter { it.startTimestamp.toLocalDate() == nonAssociationVisit.sessionSlot.slotDate }
+    assertThat(visitSessionsForDate).isNotEmpty()
     visitSessionsForDate.forEach { visitSessionForDate ->
       assertThat(visitSessionForDate.sessionConflicts.map { it.sessionConflict }).contains(
         SessionConflict.DOUBLE_BOOKING_OR_RESERVATION,
