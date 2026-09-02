@@ -123,6 +123,21 @@ interface ApplicationRepository :
   ): Boolean
 
   @Query(
+    "SELECT DISTINCT a.sessionSlotId FROM Application a " +
+      "WHERE a.applicationStatus = 'IN_PROGRESS' AND a.reservedSlot = true AND " +
+      "a.prisonerId = :prisonerId AND " +
+      "a.modifyTimestamp >= :expiredDateAndTime AND " +
+      "a.sessionSlotId IN (:sessionSlotIds) AND " +
+      "(:excludedApplicationReference is null OR a.reference != :excludedApplicationReference) ",
+  )
+  fun getReservedSessionSlotIds(
+    @Param("prisonerId") prisonerId: String,
+    @Param("sessionSlotIds") sessionSlotIds: List<Long>,
+    @Param("expiredDateAndTime") expiredDateAndTime: LocalDateTime,
+    @Param("excludedApplicationReference") excludedApplicationReference: String?,
+  ): List<Long>
+
+  @Query(
     "SELECT COUNT(a) > 0 FROM Application a " +
       "inner join EventAudit ea on a.reference = ea.applicationReference " +
       "inner join ActionedBy ab on ea.actionedById = ab.id " +
@@ -143,20 +158,40 @@ interface ApplicationRepository :
   ): Boolean
 
   @Query(
-    "SELECT count(*) > 0 FROM application a left join session_slot sl on a.session_slot_id = sl.id " +
-      "WHERE a.prisoner_id IN :prisonerIds AND " +
-      "a.prison_id = :prisonId AND " +
-      "sl.slot_date = :sessionDate AND " +
-      "a.modify_timestamp >= :expiredDateAndTime AND " +
-      "a.application_status = 'IN_PROGRESS' AND a.reserved_slot = true",
-    nativeQuery = true,
+    "SELECT DISTINCT a.sessionSlotId FROM Application a " +
+      "inner join EventAudit ea on a.reference = ea.applicationReference " +
+      "inner join ActionedBy ab on ea.actionedById = ab.id " +
+      "WHERE a.applicationStatus = 'IN_PROGRESS' AND a.reservedSlot = true AND " +
+      "a.prisonerId = :prisonerId AND " +
+      "a.modifyTimestamp >= :expiredDateAndTime AND " +
+      "a.sessionSlotId IN (:sessionSlotIds) AND " +
+      "(:excludedApplicationReference is null OR a.reference != :excludedApplicationReference)  AND " +
+      "(ea.type = 'RESERVED_VISIT' AND " +
+      "(ab.userName != :usernameToExcludeFromReservedApplications OR ab.bookerReference != :usernameToExcludeFromReservedApplications))",
   )
-  fun hasActiveApplicationsForDate(
-    prisonerIds: List<String>,
-    sessionDate: LocalDate,
-    prisonId: Long,
+  fun getReservedSessionSlotIds(
+    @Param("prisonerId") prisonerId: String,
+    @Param("sessionSlotIds") sessionSlotIds: List<Long>,
     @Param("expiredDateAndTime") expiredDateAndTime: LocalDateTime,
-  ): Boolean
+    @Param("excludedApplicationReference") excludedApplicationReference: String?,
+    @Param("usernameToExcludeFromReservedApplications") usernameToExcludeFromReservedApplications: String,
+  ): List<Long>
+
+  @Query(
+    "SELECT a FROM Application a join a.sessionSlot sl " +
+      "WHERE a.prisonerId in (:prisonerIds) AND " +
+      "a.prisonId = :prisonId AND " +
+      "sl.slotDate in (:sessionDates) AND " +
+      "a.modifyTimestamp >= :expiredDateAndTime AND " +
+      "a.applicationStatus = 'IN_PROGRESS' " +
+      "AND a.reservedSlot = true",
+  )
+  fun getInProgressApplicationsForPrisonersAndDates(
+    prisonerIds: List<String>,
+    sessionDates: List<LocalDate>,
+    prisonId: Long,
+    expiredDateAndTime: LocalDateTime,
+  ): List<Application>
 
   @Modifying
   @Query(

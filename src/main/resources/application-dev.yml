@@ -47,6 +47,11 @@ alerts:
     url: https://alerts-api-dev.hmpps.service.justice.gov.uk
     timeout: 10s
 
+visit-allocation:
+  api:
+    url: https://hmpps-visit-allocation-api-dev.prison.service.justice.gov.uk
+    timeout: 10s
+
 policy:
   session:
     booking-notice-period:

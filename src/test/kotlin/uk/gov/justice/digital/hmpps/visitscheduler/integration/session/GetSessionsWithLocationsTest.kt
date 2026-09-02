@@ -1,17 +1,23 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.session
 
 import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpHeaders
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_SESSION_CONTROLLER_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TransitionalLocationTypes
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AdditionalSessionConflictInfoDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionConflictAttribute.CONFLICT_TYPE
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionConflictAttribute.PRISONER_NUMBER
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionConflictAttribute.REFERENCE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -475,13 +481,13 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `one session unavailable when non association has a visit for one of the sessions`() {
+  fun `sessions returned with appropriate flags when non association has a visit for one of the sessions`() {
     // Given
     val prisonerId = "A0000001"
     val prisonerInternalLocation = "SWL-A-1-100-1"
     val associationId = "B1234BB"
 
-    this.visitEntityHelper.create(
+    val visit = this.visitEntityHelper.create(
       prisonerId = associationId,
       prisonCode = prison.code,
       visitRoom = sessionTemplateForAllPrisoners.visitRoom,
@@ -508,8 +514,54 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
 
-    // none of the sessions on the day will be available
-    Assertions.assertThat(visitSessionResults.size).isEqualTo(0)
+    // sessions on the day are returned but flagged with non-association conflicts
+    Assertions.assertThat(visitSessionResults.size).isEqualTo(5)
+
+    val expectedAdditionalAttributes = listOf(
+      AdditionalSessionConflictInfoDto(PRISONER_NUMBER, associationId),
+      AdditionalSessionConflictInfoDto(CONFLICT_TYPE, "VISIT"),
+      AdditionalSessionConflictInfoDto(REFERENCE, visit.reference),
+    )
+
+    visitSessionResults.forEach { visitSessionResult ->
+      Assertions.assertThat(visitSessionResult.sessionConflicts.size).isEqualTo(1)
+      Assertions.assertThat(visitSessionResult.sessionConflicts.map { it.sessionConflict }.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
+      assertThat(visitSessionResult.sessionConflicts.map { it.additionalAttributes }.flatten()).containsAll(
+        listOf(expectedAdditionalAttributes),
+      )
+    }
+    Assertions.assertThat(visitSessionResults[2].sessionConflicts.map { it.sessionConflict }.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
+    assertThat(visitSessionResults[2].sessionConflicts.map { it.additionalAttributes }.flatten()).containsAll(
+      listOf(
+        listOf(
+          AdditionalSessionConflictInfoDto(PRISONER_NUMBER, associationId),
+          AdditionalSessionConflictInfoDto(CONFLICT_TYPE, "VISIT"),
+          AdditionalSessionConflictInfoDto(REFERENCE, visit.reference),
+        ),
+      ),
+    )
+    Assertions.assertThat(visitSessionResults[3].sessionConflicts.size).isEqualTo(1)
+    Assertions.assertThat(visitSessionResults[3].sessionConflicts.map { it.sessionConflict }.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
+    assertThat(visitSessionResults[3].sessionConflicts.map { it.additionalAttributes }.flatten()).containsAll(
+      listOf(
+        listOf(
+          AdditionalSessionConflictInfoDto(PRISONER_NUMBER, associationId),
+          AdditionalSessionConflictInfoDto(CONFLICT_TYPE, "VISIT"),
+          AdditionalSessionConflictInfoDto(REFERENCE, visit.reference),
+        ),
+      ),
+    )
+    Assertions.assertThat(visitSessionResults[4].sessionConflicts.size).isEqualTo(1)
+    Assertions.assertThat(visitSessionResults[4].sessionConflicts.map { it.sessionConflict }.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
+    assertThat(visitSessionResults[4].sessionConflicts.map { it.additionalAttributes }.flatten()).containsAll(
+      listOf(
+        listOf(
+          AdditionalSessionConflictInfoDto(PRISONER_NUMBER, associationId),
+          AdditionalSessionConflictInfoDto(CONFLICT_TYPE, "VISIT"),
+          AdditionalSessionConflictInfoDto(REFERENCE, visit.reference),
+        ),
+      ),
+    )
   }
 
   @Test
