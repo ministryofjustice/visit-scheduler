@@ -1700,6 +1700,71 @@ class GetSessionsTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `visit sessions are returned with non-association when prisoner already has a booking for the same session`() {
+    // Given
+    val prisonerId = "A1234AA"
+    val associationPrisonerId = "B1234BB"
+    val validFromDate = this.getNextAllowedDay()
+    val sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek, prisonCode = prisonCode)
+
+    this.visitEntityHelper.create(
+      prisonerId = prisonerId,
+      prisonCode = prisonCode,
+      visitRoom = sessionTemplate.visitRoom,
+      slotDate = validFromDate,
+      visitStart = LocalTime.of(9, 0),
+      visitEnd = LocalTime.of(9, 30),
+      visitType = SOCIAL,
+      visitStatus = BOOKED,
+      visitRestriction = OPEN,
+      sessionTemplate = sessionTemplate,
+    )
+
+    val nonAssociationVisit = this.visitEntityHelper.create(
+      prisonerId = associationPrisonerId,
+      prisonCode = prisonCode,
+      visitRoom = sessionTemplate.visitRoom,
+      slotDate = validFromDate,
+      visitStart = LocalTime.of(9, 0),
+      visitEnd = LocalTime.of(9, 30),
+      visitType = SOCIAL,
+      visitStatus = BOOKED,
+      visitRestriction = OPEN,
+      sessionTemplate = sessionTemplate,
+    )
+
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(
+      prisonerId,
+      associationPrisonerId,
+    )
+
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
+
+    // When
+    val returnResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders).expectBody()
+
+    // Then
+    val visitSessions = getResults(returnResult)
+    val visitSessionsForDate = visitSessions.filter { it.startTimestamp.toLocalDate() == nonAssociationVisit.sessionSlot.slotDate }
+    visitSessionsForDate.forEach { visitSessionForDate ->
+      assertThat(visitSessionForDate.sessionConflicts.map { it.sessionConflict }).contains(
+        SessionConflict.DOUBLE_BOOKING_OR_RESERVATION,
+        SessionConflict.NON_ASSOCIATION,
+      )
+      assertThat(visitSessionForDate.sessionConflicts.map { it.additionalAttributes }.flatten()).containsAll(
+        listOf(
+          listOf(
+            AdditionalSessionConflictInfoDto(SessionConflictAttribute.PRISONER_NUMBER, associationPrisonerId),
+            AdditionalSessionConflictInfoDto(SessionConflictAttribute.CONFLICT_TYPE, "VISIT"),
+            AdditionalSessionConflictInfoDto(SessionConflictAttribute.REFERENCE, nonAssociationVisit.reference),
+          ),
+        ),
+      )
+    }
+  }
+
+  @Test
   fun `when a session has multiple non associations all of them are returned as session conflicts attributes`() {
     // Given
     val prisonerId = "A1234AA"
