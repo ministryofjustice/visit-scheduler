@@ -29,6 +29,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAsso
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitNotificationEventHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatNonAssociationHasChanged
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatPrisonerHadBeenReleased
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -56,6 +57,9 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
   @MockitoSpyBean
   private lateinit var sessionService: SessionService
 
+  @Autowired
+  private lateinit var visitNotificationEventHelper: VisitNotificationEventHelper
+
   private val prisonerAId = "Prisoner-A"
   private val prisonerBId = "Prisoner-B"
   private val prisonerCId = "Prisoner-C"
@@ -80,6 +84,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     createSessionTemplate(startTime = startTime.plusHours(2), endTime = endTime.plusHours(2), dayOfWeek = visitDate.dayOfWeek)
     // prisoner A has non association with prisoner B who has a visit on the same day
     val prisonerAVisit = createApplicationAndVisit(prisonerId = prisonerAId, sessionTemplate = sessionTemplateReference)
+    visitNotificationEventHelper.create(prisonerAVisit, NON_ASSOCIATION_EVENT)
 
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(
       prisonerAId,
@@ -107,7 +112,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     flagVisitsTask.flagVisits()
     // Then
 
-    assertFlaggedVisitEvent(prisonerAVisit, "session not suitable")
+    assertFlaggedVisitEvent(prisonerAVisit, "non-association")
   }
 
   @Test
