@@ -105,6 +105,7 @@ class SessionService(
     maxOverride: Int? = null,
     usernameToExcludeFromReservedApplications: String? = null,
     userType: UserType,
+    youngestVisitorAge: Int? = null,
   ): List<VisitSessionDto> {
     if (userType != UserType.STAFF) {
       throw ValidationException("Cannot call endpoint for userType - $userType")
@@ -120,6 +121,7 @@ class SessionService(
       excludedApplicationReference = currentApplicationReference,
       usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications,
       userType = userType,
+      youngestVisitorAge = youngestVisitorAge,
     )
   }
 
@@ -130,6 +132,7 @@ class SessionService(
     excludedApplicationReference: String? = null,
     usernameToExcludeFromReservedApplications: String? = null,
     userType: UserType,
+    youngestVisitorAge: Int? = null,
   ): List<VisitSessionDto> {
     val prisonCode = prison.code
     LOG.debug("Enter getVisitSessions prisonCode:${prison.code}, prisonerId : $prisonerId")
@@ -166,6 +169,7 @@ class SessionService(
       dateRange = dateRange,
       excludedApplicationReference = excludedApplicationReference,
       usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications,
+      youngestVisitorAge = youngestVisitorAge,
     )
 
     visitSessions = visitSessions.also {
@@ -225,6 +229,7 @@ class SessionService(
     dateRange: DateRange,
     excludedApplicationReference: String?,
     usernameToExcludeFromReservedApplications: String?,
+    youngestVisitorAge: Int? = null,
   ) {
     val sessionSlotDates = visitSessions.map { it.startTimestamp.toLocalDate() }.distinct()
     if (sessionSlotDates.isNotEmpty()) {
@@ -254,6 +259,13 @@ class SessionService(
       // get VO balance for the prisoner - if prisoner is not on REMAND
       val voBalance = getVoBalance(prisoner)
 
+      val sessionsWithAgeRestrictionConflicts = if (youngestVisitorAge == null) {
+        emptyList()
+      } else {
+        sessionTemplates.filter { it.isAgeRestricted && youngestVisitorAge < it.ageRestriction }
+          .map { it.reference }
+      }
+
       visitSessions.forEach { session ->
         val excludedDatesForSession = sessionExcludedDatesByReference[session.sessionTemplateReference].orEmpty()
         sessionConflictsUtil.addSessionConflicts(
@@ -264,6 +276,7 @@ class SessionService(
           prisonExcludeDates = prisonExcludeDates,
           sessionExcludeDates = excludedDatesForSession,
           voBalance = voBalance,
+          sessionsWithAgeRestrictionConflicts = sessionsWithAgeRestrictionConflicts,
         )
       }
     }

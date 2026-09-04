@@ -95,7 +95,10 @@ class VisitSessionController(
     @RequestParam
     @Parameter(description = "userType", example = "STAFF", required = true)
     userType: UserType,
-  ): List<VisitSessionDto> = sessionService.getAllVisitSessions(prisonCode, prisonerId, minOverride = min, maxOverride = max, usernameToExcludeFromReservedApplications = username, userType = userType)
+    @RequestParam
+    @Parameter(description = "youngestVisitorAge", example = "18", required = false)
+    youngestVisitorAge: Int? = null,
+  ): List<VisitSessionDto> = sessionService.getAllVisitSessions(prisonCode, prisonerId, minOverride = min, maxOverride = max, usernameToExcludeFromReservedApplications = username, userType = userType, youngestVisitorAge = youngestVisitorAge)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(VISIT_SESSIONS_AVAILABLE_CONTROLLER_PATH)
