@@ -217,7 +217,7 @@ class SessionService(
 
     // finally, filter out sessions without capacity or with blocking conflicts
     return visitSessions.filter {
-      hasSessionGotCapacity(it, sessionRestriction).and(hasNoBlockingSessionConflicts(it))
+      hasSessionGotCapacity(it, sessionRestriction) && hasNoBlockingSessionConflicts(it)
     }.map { AvailableVisitSessionDto(it, sessionRestriction) }.toList().also {
       LOG.info("Returning final count for public filtered sessions ${it.size} for prisonerId - $prisonerId, after applying capacity filtering")
     }
@@ -294,21 +294,20 @@ class SessionService(
     SessionRestriction.OPEN -> (session.openVisitCapacity > 0 && (session.openVisitCapacity > (session.openVisitBookedCount ?: 0)))
   }
 
-  private fun hasNoBlockingSessionConflicts(session: VisitSessionDto): Boolean = session.sessionConflicts.none { it.sessionConflict != ADULT_ONLY }
+  private fun hasNoBlockingSessionConflicts(session: VisitSessionDto): Boolean = session.sessionConflicts.all { it.sessionConflict == ADULT_ONLY }
 
   private fun getAdultOnlyConflictSessionTemplateReferences(
     sessionTemplates: List<SessionTemplate>,
     ageOfYoungestVisitor: Int?,
-  ): List<String> {
+  ): Set<String> {
     if (ageOfYoungestVisitor == null) {
-      return emptyList()
+      return emptySet()
     }
 
     return sessionTemplates
       .filter { it.adultOnly && ageOfYoungestVisitor < it.adultAgeThreshold }
       .map { it.reference }
-      .distinct()
-      .toList()
+      .toSet()
   }
 
   private fun getDoubleBookingOrReservationSessions(
