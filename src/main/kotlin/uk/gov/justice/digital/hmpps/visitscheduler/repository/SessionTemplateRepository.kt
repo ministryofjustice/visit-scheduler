@@ -203,6 +203,14 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
   @Query("Update SessionTemplate s set s.visitOrderRestriction = :visitOrderRestriction WHERE s.reference = :reference")
   fun updateVisitOrderRestriction(reference: String, visitOrderRestriction: SessionTemplateVisitOrderRestrictionType): Int
 
+  @Modifying(clearAutomatically = true)
+  @Query("Update SessionTemplate s set s.isAgeRestricted = :isAgeRestricted WHERE s.reference = :reference")
+  fun updateIsAgeRestricted(reference: String, isAgeRestricted: Boolean): Int
+
+  @Modifying(clearAutomatically = true)
+  @Query("Update SessionTemplate s set s.ageRestriction = :ageRestriction WHERE s.reference = :reference")
+  fun updateAgeRestriction(reference: String, ageRestriction: Int): Int
+
   @Query(
     "SELECT new uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTimeSlotDto(st.startTime,st.endTime)  FROM SessionTemplate st WHERE st.reference = :reference",
   )

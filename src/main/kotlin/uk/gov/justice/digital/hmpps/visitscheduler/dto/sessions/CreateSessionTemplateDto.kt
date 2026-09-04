@@ -75,4 +75,10 @@ data class CreateSessionTemplateDto(
 
   @param:Schema(description = "The type of visit order restriction, defaults to VO_PVO (Either allowed)", example = "PVO", implementation = SessionTemplateVisitOrderRestrictionType::class, required = false)
   val visitOrderRestriction: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
-)
+
+  @param:Schema(description = "Determines if the age restriction is enabled for this session", example = "true", required = true)
+  val isAgeRestricted: Boolean,
+
+  @param:Schema(description = "Minimum required age for attending the session", example = "18", required = true)
+  val ageRestriction: Int = 18,
+  )
