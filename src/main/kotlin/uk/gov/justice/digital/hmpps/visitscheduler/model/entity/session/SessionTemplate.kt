@@ -119,6 +119,6 @@ class SessionTemplate(
   var isAgeRestricted: Boolean,
 
   @Column(nullable = false)
-  var ageRestriction: Int = 18
+  var ageRestriction: Int = 18,
 
-  ) : AbstractReferenceEntity(delimiter = ".", chunkSize = 3)
+) : AbstractReferenceEntity(delimiter = ".", chunkSize = 3)

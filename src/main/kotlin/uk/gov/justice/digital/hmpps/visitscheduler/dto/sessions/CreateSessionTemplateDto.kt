@@ -81,4 +81,4 @@ data class CreateSessionTemplateDto(
 
   @param:Schema(description = "Minimum required age for attending the session", example = "18", required = true)
   val ageRestriction: Int = 18,
-  )
+)
