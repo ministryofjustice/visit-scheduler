@@ -10,4 +10,5 @@ enum class SessionConflict {
   NO_VO_BALANCE,
   NO_PVO_BALANCE,
   NO_VO_OR_PVO_BALANCE,
+  AGE_RESTRICTION,
 }
