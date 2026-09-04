@@ -1,5 +1,5 @@
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.0.6"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.0.7"
   kotlin("plugin.spring") version "2.4.10"
   kotlin("plugin.jpa") version "2.4.10"
   idea
@@ -32,8 +32,8 @@ dependencies {
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.0")
 
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-  implementation("net.javacrumbs.shedlock:shedlock-spring:7.9.0")
-  implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:7.9.0")
+  implementation("net.javacrumbs.shedlock:shedlock-spring:7.10.0")
+  implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:7.10.0")
   implementation("org.freemarker:freemarker:2.3.35")
 
   runtimeOnly("org.postgresql:postgresql:42.7.13")
