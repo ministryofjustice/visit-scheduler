@@ -714,6 +714,8 @@ class SessionTemplateEntityHelper(
     excludeDates: List<LocalDate> = listOf(),
     clients: List<UserClientDto> = listOf(UserClientDto(STAFF, true), UserClientDto(PUBLIC, true)),
     visitOrderRestrictionType: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
+    adultOnly: Boolean = false,
+    adultAgeThreshold: Int = 18,
   ): SessionTemplate {
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
 
@@ -740,6 +742,8 @@ class SessionTemplateEntityHelper(
       excludeDates = excludeDates,
       clients = clients,
       visitOrderRestrictionType = visitOrderRestrictionType,
+      adultOnly = adultOnly,
+      adultAgeThreshold = adultAgeThreshold,
     )
   }
 
@@ -767,6 +771,8 @@ class SessionTemplateEntityHelper(
     excludeDates: List<LocalDate> = listOf(),
     clients: List<UserClientDto> = listOf(UserClientDto(STAFF, true), UserClientDto(PUBLIC, true)),
     visitOrderRestrictionType: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
+    adultOnly: Boolean = false,
+    adultAgeThreshold: Int = 18,
   ): SessionTemplate {
     val sessionTemplate = sessionRepository.saveAndFlush(
       SessionTemplate(
@@ -791,6 +797,8 @@ class SessionTemplateEntityHelper(
         includeCategoryGroupType = includeCategoryGroupType,
         includeIncentiveGroupType = includeIncentiveGroupType,
         visitOrderRestriction = visitOrderRestrictionType,
+        adultOnly = adultOnly,
+        adultAgeThreshold = adultAgeThreshold,
       ),
     )
 

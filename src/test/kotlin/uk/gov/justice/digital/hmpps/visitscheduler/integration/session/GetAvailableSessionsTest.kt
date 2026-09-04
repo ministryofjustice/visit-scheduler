@@ -89,6 +89,41 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `adult only sessions are still returned by available endpoint when youngest visitor is below session adult age threshold`() {
+    // Given
+    val nextAllowedDay = getNextAllowedDay()
+
+    val sessionTemplate = sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      prisonCode = prisonCode,
+      openCapacity = 10,
+      closedCapacity = 0,
+      adultOnly = true,
+      adultAgeThreshold = 18,
+    )
+
+    // When
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      OPEN,
+      ageOfYoungestVisitor = 17,
+      authHttpHeaders = authHttpHeaders,
+    )
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+    val visitSessionResults = getResults(returnResult)
+    assertThat(visitSessionResults.size).isEqualTo(1)
+    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate, OPEN)
+  }
+
+  @Test
   fun `all available sessions are returned by CLOSED restriction`() {
     // Given
     val nextAllowedDay = getNextAllowedDay()

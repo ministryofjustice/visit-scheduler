@@ -114,4 +114,10 @@ class SessionTemplate(
   @Column(nullable = false)
   @Enumerated(EnumType.STRING)
   val visitOrderRestriction: SessionTemplateVisitOrderRestrictionType,
+
+  @Column(nullable = false)
+  val adultOnly: Boolean = false,
+
+  @Column(nullable = false)
+  val adultAgeThreshold: Int = 18,
 ) : AbstractReferenceEntity(delimiter = ".", chunkSize = 3)

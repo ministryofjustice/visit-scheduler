@@ -538,6 +538,7 @@ abstract class IntegrationTestBase {
     policyNoticeDaysMax: Int? = null,
     userName: String? = null,
     userType: UserType,
+    ageOfYoungestVisitor: Int? = null,
     authHttpHeaders: (HttpHeaders) -> Unit,
   ): ResponseSpec {
     val urlParams = mutableListOf(
@@ -553,6 +554,9 @@ abstract class IntegrationTestBase {
     }
     userName?.let {
       urlParams.add("username=$userName")
+    }
+    ageOfYoungestVisitor?.let {
+      urlParams.add("ageOfYoungestVisitor=$ageOfYoungestVisitor")
     }
 
     val uri = VISIT_SESSION_CONTROLLER_PATH + "?" + urlParams.joinToString("&")
@@ -573,6 +577,7 @@ abstract class IntegrationTestBase {
     excludedApplicationReference: String? = null,
     username: String? = null,
     userType: UserType = UserType.PUBLIC,
+    ageOfYoungestVisitor: Int? = null,
     authHttpHeaders: (HttpHeaders) -> Unit,
   ): ResponseSpec {
     val today = LocalDate.now()
@@ -591,6 +596,7 @@ abstract class IntegrationTestBase {
       excludedApplicationReference = excludedApplicationReference,
       username = username,
       userType = userType,
+      ageOfYoungestVisitor = ageOfYoungestVisitor,
     ).joinToString("&")
 
     return webTestClient.get().uri("$uri?$uriQueryParams")
@@ -608,6 +614,7 @@ abstract class IntegrationTestBase {
     excludedApplicationReference: String?,
     username: String?,
     userType: UserType,
+    ageOfYoungestVisitor: Int?,
   ): List<String> {
     val queryParams = ArrayList<String>()
     queryParams.add("prisonId=$prisonCode")
@@ -624,6 +631,10 @@ abstract class IntegrationTestBase {
 
     username?.let {
       queryParams.add("username=$username")
+    }
+
+    ageOfYoungestVisitor?.let {
+      queryParams.add("ageOfYoungestVisitor=$ageOfYoungestVisitor")
     }
 
     queryParams.add("userType=${userType.name}")

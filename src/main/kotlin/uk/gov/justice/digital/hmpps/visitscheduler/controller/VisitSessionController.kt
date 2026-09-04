@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.validation.constraints.Min
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
@@ -95,7 +96,15 @@ class VisitSessionController(
     @RequestParam
     @Parameter(description = "userType", example = "STAFF", required = true)
     userType: UserType,
-  ): List<VisitSessionDto> = sessionService.getAllVisitSessions(prisonCode, prisonerId, minOverride = min, maxOverride = max, usernameToExcludeFromReservedApplications = username, userType = userType)
+    @RequestParam(value = "ageOfYoungestVisitor", required = false)
+    @Parameter(
+      description = "Age of the youngest visitor. If not passed, visitor group is considered adult for adult-only session checks.",
+      example = "17",
+      required = false,
+    )
+    @Min(0)
+    ageOfYoungestVisitor: Int? = null,
+  ): List<VisitSessionDto> = sessionService.getAllVisitSessions(prisonCode, prisonerId, minOverride = min, maxOverride = max, usernameToExcludeFromReservedApplications = username, userType = userType, ageOfYoungestVisitor = ageOfYoungestVisitor)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(VISIT_SESSIONS_AVAILABLE_CONTROLLER_PATH)
@@ -165,7 +174,15 @@ class VisitSessionController(
     @RequestParam
     @Parameter(description = "userType", example = "STAFF", required = true)
     userType: UserType,
-  ): List<AvailableVisitSessionDto> = sessionService.getOnlyAvailableVisitSessions(prisonCode, prisonerId, sessionRestriction, DateRange(fromDate, toDate), excludedApplicationReference, usernameToExcludeFromReservedApplications = username, userType = userType)
+    @RequestParam(value = "ageOfYoungestVisitor", required = false)
+    @Parameter(
+      description = "Age of the youngest visitor. If not passed, visitor group is considered adult for adult-only session checks.",
+      example = "17",
+      required = false,
+    )
+    @Min(0)
+    ageOfYoungestVisitor: Int? = null,
+  ): List<AvailableVisitSessionDto> = sessionService.getOnlyAvailableVisitSessions(prisonCode, prisonerId, sessionRestriction, DateRange(fromDate, toDate), excludedApplicationReference, usernameToExcludeFromReservedApplications = username, userType = userType, ageOfYoungestVisitor = ageOfYoungestVisitor)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(GET_SESSION_SCHEDULE)

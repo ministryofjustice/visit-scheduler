@@ -61,4 +61,11 @@ data class UpdateSessionTemplateDto(
 
   @param:Schema(description = "The type of visit order restriction, defaults to VO_PVO (Either allowed)", example = "PVO", implementation = SessionTemplateVisitOrderRestrictionType::class, required = false)
   val visitOrderRestriction: SessionTemplateVisitOrderRestrictionType? = null,
+
+  @param:Schema(description = "Whether the session is adult only", example = "false", required = false)
+  val adultOnly: Boolean? = null,
+
+  @param:Schema(description = "The minimum age considered adult for this session", example = "18", required = false)
+  @field:Min(0)
+  val adultAgeThreshold: Int? = null,
 )

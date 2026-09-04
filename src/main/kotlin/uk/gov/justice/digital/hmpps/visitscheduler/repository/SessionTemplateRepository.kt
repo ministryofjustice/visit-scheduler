@@ -27,7 +27,7 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
       " WHERE sl.session_template_reference = :reference" +
       " AND sl.slot_start >= :visitsFromDate" +
       " AND (cast(:visitsToDate as date) is null OR sl.slot_end <= :visitsToDate)" +
-      " AND visit_status = 'BOOKED'" +
+      " AND v.visit_status = 'BOOKED'" +
       " GROUP BY sl.slot_date,sl.slot_start ) AS tmp ",
     nativeQuery = true,
   )
@@ -43,7 +43,7 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
       " WHERE sl.session_template_reference = :reference" +
       " AND sl.slot_date >= :visitsFromDate" +
       " AND (cast(:visitsToDate as date) is null OR sl.slot_date < (CAST(:visitsToDate AS DATE) + CAST('1 day' AS INTERVAL)))" +
-      " AND visit_status = :visitStatus " +
+      " AND v.visit_status = :visitStatus " +
       " GROUP BY sl.slot_date, v.visit_restriction" +
       " ORDER BY sl.slot_date",
     nativeQuery = true,
@@ -202,6 +202,14 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
   @Modifying(clearAutomatically = true)
   @Query("Update SessionTemplate s set s.visitOrderRestriction = :visitOrderRestriction WHERE s.reference = :reference")
   fun updateVisitOrderRestriction(reference: String, visitOrderRestriction: SessionTemplateVisitOrderRestrictionType): Int
+
+  @Modifying(clearAutomatically = true)
+  @Query("Update SessionTemplate s set s.adultOnly = :adultOnly WHERE s.reference = :reference")
+  fun updateAdultOnly(reference: String, adultOnly: Boolean): Int
+
+  @Modifying(clearAutomatically = true)
+  @Query("Update SessionTemplate s set s.adultAgeThreshold = :adultAgeThreshold WHERE s.reference = :reference")
+  fun updateAdultAgeThreshold(reference: String, adultAgeThreshold: Int): Int
 
   @Query(
     "SELECT new uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTimeSlotDto(st.startTime,st.endTime)  FROM SessionTemplate st WHERE st.reference = :reference",

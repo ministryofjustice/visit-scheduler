@@ -87,6 +87,8 @@ fun sessionTemplate(
   prison: Prison,
   userTypes: List<UserType> = listOf(UserType.STAFF, UserType.PUBLIC),
   visitOrderRestrictionType: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
+  adultOnly: Boolean = false,
+  adultAgeThreshold: Int = 18,
 ): SessionTemplate {
   var sessionTemplate = SessionTemplate(
     name = name + dayOfWeek,
@@ -109,6 +111,8 @@ fun sessionTemplate(
     includeCategoryGroupType = includeCategoryGroupType,
     includeIncentiveGroupType = includeIncentiveGroupType,
     visitOrderRestriction = visitOrderRestrictionType,
+    adultOnly = adultOnly,
+    adultAgeThreshold = adultAgeThreshold,
   ).also { it.reference = UUID.randomUUID().toString() }
 
   sessionTemplate = addUserClients(sessionTemplate, userTypes)
@@ -144,6 +148,8 @@ fun sessionTemplate(
   includeIncentiveGroupType: Boolean = true,
   userTypes: List<UserType> = listOf(UserType.STAFF, UserType.PUBLIC),
   visitOrderRestrictionType: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
+  adultOnly: Boolean = false,
+  adultAgeThreshold: Int = 18,
 ): SessionTemplate {
   val prison = Prison(
     code = prisonCode,
@@ -180,6 +186,8 @@ fun sessionTemplate(
     includeCategoryGroupType = includeCategoryGroupType,
     includeIncentiveGroupType = includeIncentiveGroupType,
     visitOrderRestriction = visitOrderRestrictionType,
+    adultOnly = adultOnly,
+    adultAgeThreshold = adultAgeThreshold,
   ).also { it.reference = UUID.randomUUID().toString() }
   sessionTemplate = addUserClients(sessionTemplate, userTypes)
 
@@ -280,6 +288,8 @@ fun createCreateSessionTemplateDto(
   includeIncentiveGroupType: Boolean = true,
   userClients: List<UserClientDto> = listOf(),
   visitOrderRestrictionType: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
+  adultOnly: Boolean = false,
+  adultAgeThreshold: Int = 18,
 ): CreateSessionTemplateDto = CreateSessionTemplateDto(
   name = name + dayOfWeek,
   prisonCode = prisonCode,
@@ -297,6 +307,8 @@ fun createCreateSessionTemplateDto(
   includeIncentiveGroupType = includeIncentiveGroupType,
   clients = userClients,
   visitOrderRestriction = visitOrderRestrictionType,
+  adultOnly = adultOnly,
+  adultAgeThreshold = adultAgeThreshold,
 )
 
 fun createCreateSessionTemplateDto(
@@ -310,6 +322,8 @@ fun createCreateSessionTemplateDto(
   includeCategoryGroupType: Boolean = true,
   includeIncentiveGroupType: Boolean = true,
   visitOrderRestrictionType: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
+  adultOnly: Boolean = sessionTemplateDto.adultOnly,
+  adultAgeThreshold: Int = sessionTemplateDto.adultAgeThreshold,
 ): CreateSessionTemplateDto = CreateSessionTemplateDto(
   name = name + sessionTemplateDto.dayOfWeek,
   prisonCode = sessionTemplateDto.prisonCode,
@@ -326,6 +340,8 @@ fun createCreateSessionTemplateDto(
   includeCategoryGroupType = includeCategoryGroupType,
   includeIncentiveGroupType = includeIncentiveGroupType,
   visitOrderRestriction = visitOrderRestrictionType,
+  adultOnly = adultOnly,
+  adultAgeThreshold = adultAgeThreshold,
 )
 
 fun createUpdateSessionTemplateDto(
@@ -344,6 +360,8 @@ fun createUpdateSessionTemplateDto(
   includeIncentiveGroupType: Boolean? = true,
   clients: List<UserClientDto>? = null,
   visitOrderRestrictionType: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
+  adultOnly: Boolean? = null,
+  adultAgeThreshold: Int? = null,
 ): UpdateSessionTemplateDto = UpdateSessionTemplateDto(
   name = name + dayOfWeek,
   sessionDateRange = sessionDateRange,
@@ -359,6 +377,8 @@ fun createUpdateSessionTemplateDto(
   includeIncentiveGroupType = includeIncentiveGroupType,
   clients = clients,
   visitOrderRestriction = visitOrderRestrictionType,
+  adultOnly = adultOnly,
+  adultAgeThreshold = adultAgeThreshold,
 )
 
 fun createUpdateSessionTemplateDto(
@@ -371,6 +391,8 @@ fun createUpdateSessionTemplateDto(
   includeIncentiveGroupType: Boolean? = null,
   incentiveLevelReferences: List<String>? = null,
   visitOrderRestrictionType: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
+  adultOnly: Boolean? = sessionTemplateDto.adultOnly,
+  adultAgeThreshold: Int? = sessionTemplateDto.adultAgeThreshold,
 ): UpdateSessionTemplateDto = UpdateSessionTemplateDto(
   name = sessionTemplateDto.name,
   sessionDateRange = sessionTemplateDto.sessionDateRange,
@@ -385,6 +407,8 @@ fun createUpdateSessionTemplateDto(
   incentiveLevelGroupReferences = incentiveLevelReferences ?: sessionTemplateDto.prisonerIncentiveLevelGroups.stream().map { it.reference }.toList(),
   visitRoom = sessionTemplateDto.visitRoom,
   visitOrderRestriction = visitOrderRestrictionType,
+  adultOnly = adultOnly,
+  adultAgeThreshold = adultAgeThreshold,
 )
 
 fun createCreateLocationGroupDto(

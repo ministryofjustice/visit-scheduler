@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ConvictionStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.ADULT_ONLY
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType.NONE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
@@ -105,6 +106,7 @@ class SessionService(
     maxOverride: Int? = null,
     usernameToExcludeFromReservedApplications: String? = null,
     userType: UserType,
+    ageOfYoungestVisitor: Int? = null,
   ): List<VisitSessionDto> {
     if (userType != UserType.STAFF) {
       throw ValidationException("Cannot call endpoint for userType - $userType")
@@ -120,6 +122,7 @@ class SessionService(
       excludedApplicationReference = currentApplicationReference,
       usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications,
       userType = userType,
+      ageOfYoungestVisitor = ageOfYoungestVisitor,
     )
   }
 
@@ -130,6 +133,7 @@ class SessionService(
     excludedApplicationReference: String? = null,
     usernameToExcludeFromReservedApplications: String? = null,
     userType: UserType,
+    ageOfYoungestVisitor: Int? = null,
   ): List<VisitSessionDto> {
     val prisonCode = prison.code
     LOG.debug("Enter getVisitSessions prisonCode:${prison.code}, prisonerId : $prisonerId")
@@ -166,6 +170,7 @@ class SessionService(
       dateRange = dateRange,
       excludedApplicationReference = excludedApplicationReference,
       usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications,
+      ageOfYoungestVisitor = ageOfYoungestVisitor,
     )
 
     visitSessions = visitSessions.also {
@@ -186,6 +191,7 @@ class SessionService(
     excludedApplicationReference: String?,
     usernameToExcludeFromReservedApplications: String?,
     userType: UserType,
+    ageOfYoungestVisitor: Int? = null,
   ): List<AvailableVisitSessionDto> {
     LOG.debug(
       "Enter getAvailableVisitSessions prisonCode:{}, prisonerId : {}, sessionRestriction: {}, dateRange - {}, excludedApplicationReference - {}, excludeReservedApplicationsForUser - {} ",
@@ -206,11 +212,12 @@ class SessionService(
       excludedApplicationReference = excludedApplicationReference,
       usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications,
       userType = userType,
+      ageOfYoungestVisitor = ageOfYoungestVisitor,
     )
 
-    // finally, filter out sessions without conflicts and with capacity
+    // finally, filter out sessions without capacity or with blocking conflicts
     return visitSessions.filter {
-      hasSessionGotCapacity(it, sessionRestriction).and(it.sessionConflicts.isEmpty())
+      hasSessionGotCapacity(it, sessionRestriction).and(hasNoBlockingSessionConflicts(it))
     }.map { AvailableVisitSessionDto(it, sessionRestriction) }.toList().also {
       LOG.info("Returning final count for public filtered sessions ${it.size} for prisonerId - $prisonerId, after applying capacity filtering")
     }
@@ -225,6 +232,7 @@ class SessionService(
     dateRange: DateRange,
     excludedApplicationReference: String?,
     usernameToExcludeFromReservedApplications: String?,
+    ageOfYoungestVisitor: Int?,
   ) {
     val sessionSlotDates = visitSessions.map { it.startTimestamp.toLocalDate() }.distinct()
     if (sessionSlotDates.isNotEmpty()) {
@@ -254,6 +262,8 @@ class SessionService(
       // get VO balance for the prisoner - if prisoner is not on REMAND
       val voBalance = getVoBalance(prisoner)
 
+      val adultOnlySessionTemplateReferences = getAdultOnlyConflictSessionTemplateReferences(sessionTemplates, ageOfYoungestVisitor)
+
       visitSessions.forEach { session ->
         val excludedDatesForSession = sessionExcludedDatesByReference[session.sessionTemplateReference].orEmpty()
         sessionConflictsUtil.addSessionConflicts(
@@ -264,6 +274,7 @@ class SessionService(
           prisonExcludeDates = prisonExcludeDates,
           sessionExcludeDates = excludedDatesForSession,
           voBalance = voBalance,
+          adultOnlySessionTemplateReferences = adultOnlySessionTemplateReferences,
         )
       }
     }
@@ -281,6 +292,23 @@ class SessionService(
   private fun hasSessionGotCapacity(session: VisitSessionDto, sessionRestriction: SessionRestriction): Boolean = when (sessionRestriction) {
     SessionRestriction.CLOSED -> (session.closedVisitCapacity > 0 && (session.closedVisitCapacity > (session.closedVisitBookedCount ?: 0)))
     SessionRestriction.OPEN -> (session.openVisitCapacity > 0 && (session.openVisitCapacity > (session.openVisitBookedCount ?: 0)))
+  }
+
+  private fun hasNoBlockingSessionConflicts(session: VisitSessionDto): Boolean = session.sessionConflicts.none { it.sessionConflict != ADULT_ONLY }
+
+  private fun getAdultOnlyConflictSessionTemplateReferences(
+    sessionTemplates: List<SessionTemplate>,
+    ageOfYoungestVisitor: Int?,
+  ): List<String> {
+    if (ageOfYoungestVisitor == null) {
+      return emptyList()
+    }
+
+    return sessionTemplates
+      .filter { it.adultOnly && ageOfYoungestVisitor < it.adultAgeThreshold }
+      .map { it.reference }
+      .distinct()
+      .toList()
   }
 
   private fun getDoubleBookingOrReservationSessions(

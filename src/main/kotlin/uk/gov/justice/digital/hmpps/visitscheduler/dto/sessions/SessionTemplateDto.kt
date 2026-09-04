@@ -56,6 +56,12 @@ data class SessionTemplateDto(
   val includeIncentiveGroupType: Boolean,
   @param:Schema(description = "The type of visit order restriction", example = "PVO", required = true)
   val visitOrderRestriction: SessionTemplateVisitOrderRestrictionType,
+
+  @param:Schema(description = "Whether the session is adult only", example = "false", required = true)
+  val adultOnly: Boolean = false,
+
+  @param:Schema(description = "The minimum age considered adult for this session", example = "18", required = true)
+  val adultAgeThreshold: Int = 18,
 ) {
   constructor(sessionTemplateEntity: SessionTemplate) : this(
     reference = sessionTemplateEntity.reference,
@@ -77,5 +83,7 @@ data class SessionTemplateDto(
     includeIncentiveGroupType = sessionTemplateEntity.includeIncentiveGroupType,
     clients = sessionTemplateEntity.clients.map { UserClientDto(it.userType, it.active) },
     visitOrderRestriction = sessionTemplateEntity.visitOrderRestriction,
+    adultOnly = sessionTemplateEntity.adultOnly,
+    adultAgeThreshold = sessionTemplateEntity.adultAgeThreshold,
   )
 }

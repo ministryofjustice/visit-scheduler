@@ -88,6 +88,62 @@ class GetSessionsTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `visit sessions include adult only conflict when youngest visitor is below session adult age threshold`() {
+    // Given
+    val nextAllowedDay = getNextAllowedDay()
+
+    sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      prisonCode = prisonCode,
+      adultOnly = true,
+      adultAgeThreshold = 18,
+    )
+
+    // When
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, ageOfYoungestVisitor = 17, authHttpHeaders = authHttpHeaders)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+    val visitSessionResults = getResults(returnResult)
+    assertThat(visitSessionResults.size).isEqualTo(1)
+    assertThat(visitSessionResults[0].sessionConflicts.map { it.sessionConflict }).containsOnly(SessionConflict.ADULT_ONLY)
+  }
+
+  @Test
+  fun `visit sessions do not include adult only conflict when youngest visitor age is absent or meets adult age threshold`() {
+    // Given
+    val nextAllowedDay = getNextAllowedDay()
+
+    sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      prisonCode = prisonCode,
+      adultOnly = true,
+      adultAgeThreshold = 18,
+    )
+
+    // When
+    val noAgeResponseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val adultAgeResponseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, ageOfYoungestVisitor = 18, authHttpHeaders = authHttpHeaders)
+
+    // Then
+    val noAgeResult = noAgeResponseSpec.expectStatus().isOk
+      .expectBody()
+    val adultAgeResult = adultAgeResponseSpec.expectStatus().isOk
+      .expectBody()
+    assertThat(getResults(noAgeResult)[0].sessionConflicts).isEmpty()
+    assertThat(getResults(adultAgeResult)[0].sessionConflicts).isEmpty()
+  }
+
+  @Test
   fun `visit sessions are returned using prison booking min and max days`() {
     // Given
     val prisonCode = "TST"

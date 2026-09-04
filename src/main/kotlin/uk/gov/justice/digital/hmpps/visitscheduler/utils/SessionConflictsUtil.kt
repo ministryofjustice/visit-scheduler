@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.utils
 
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.ADULT_ONLY
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.DOUBLE_BOOKING_OR_RESERVATION
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.NON_ASSOCIATION
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.PRISON_DATE_BLOCKED
@@ -40,6 +41,7 @@ class SessionConflictsUtil {
     prisonExcludeDates: List<LocalDate>,
     sessionExcludeDates: List<LocalDate>,
     voBalance: VisitOrderPrisonerBalanceDto?,
+    adultOnlySessionTemplateReferences: List<String>,
   ) {
     getNonAssociationSessionConflict(session, nonAssociationConflictSessions)?.let {
       session.sessionConflicts.add(it)
@@ -57,6 +59,9 @@ class SessionConflictsUtil {
       session.sessionConflicts.add(it)
     }
     getVisitBalanceConflicts(voBalance, session)?.let {
+      session.sessionConflicts.add(it)
+    }
+    getAdultOnlyConflict(session, adultOnlySessionTemplateReferences)?.let {
       session.sessionConflicts.add(it)
     }
   }
@@ -181,5 +186,14 @@ class SessionConflictsUtil {
     }
 
     return if (sessionConflict == null) null else SessionConflictDto(sessionConflict)
+  }
+
+  private fun getAdultOnlyConflict(
+    session: VisitSessionDto,
+    adultOnlySessionTemplateReferences: List<String>,
+  ): SessionConflictDto? = if (adultOnlySessionTemplateReferences.contains(session.sessionTemplateReference)) {
+    SessionConflictDto(ADULT_ONLY)
+  } else {
+    null
   }
 }
