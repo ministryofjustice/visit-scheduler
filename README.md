@@ -33,10 +33,10 @@ To run the visit-scheduler, first start the required local services using docker
 ```
 docker-compose up -d
 ```
-Next create a .env file at the project root and add 2 secrets to it
+Next create the [.env](.env) file at the project root and add the secrets to it:
+
 ```
-SYSTEM_CLIENT_ID="get from kubernetes secrets for dev namespace"
-SYSTEM_CLIENT_SECRET"get from kubernetes secrets for dev namespace"
+cp example.env .env
 ```
 
 Then create a Spring Boot run configuration with active profile of 'dev' and set an environments file to the 
@@ -55,8 +55,10 @@ Connect to the localhost database and run this script `resources/db.scripts.mvp/
 ### Auth token retrieval
 
 To create a Token via curl (local):
+
 ```
-curl --location --request POST "https://sign-in-dev.hmpps.service.justice.gov.uk/auth/oauth/token?grant_type=client_credentials" --header "Authorization: Basic $(echo -n {Client}:{ClientSecret} | base64)"
+source .env
+curl --location --request POST "https://sign-in-dev.hmpps.service.justice.gov.uk/auth/oauth/token?grant_type=client_credentials" --header "Authorization: Basic $(echo -n $SYSTEM_CLIENT_ID:$SYSTEM_CLIENT_SECRET | base64)" | jq 
 ```
 
 or via postman collection using the following authorisation urls:
