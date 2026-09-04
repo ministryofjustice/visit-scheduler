@@ -109,6 +109,8 @@ fun sessionTemplate(
     includeCategoryGroupType = includeCategoryGroupType,
     includeIncentiveGroupType = includeIncentiveGroupType,
     visitOrderRestriction = visitOrderRestrictionType,
+    isAgeRestricted = false,
+    ageRestriction = 18,
   ).also { it.reference = UUID.randomUUID().toString() }
 
   sessionTemplate = addUserClients(sessionTemplate, userTypes)
@@ -180,6 +182,8 @@ fun sessionTemplate(
     includeCategoryGroupType = includeCategoryGroupType,
     includeIncentiveGroupType = includeIncentiveGroupType,
     visitOrderRestriction = visitOrderRestrictionType,
+    isAgeRestricted = false,
+    ageRestriction = 18,
   ).also { it.reference = UUID.randomUUID().toString() }
   sessionTemplate = addUserClients(sessionTemplate, userTypes)
 
@@ -297,6 +301,8 @@ fun createCreateSessionTemplateDto(
   includeIncentiveGroupType = includeIncentiveGroupType,
   clients = userClients,
   visitOrderRestriction = visitOrderRestrictionType,
+  isAgeRestricted = false,
+  ageRestriction = 18,
 )
 
 fun createCreateSessionTemplateDto(
@@ -326,6 +332,8 @@ fun createCreateSessionTemplateDto(
   includeCategoryGroupType = includeCategoryGroupType,
   includeIncentiveGroupType = includeIncentiveGroupType,
   visitOrderRestriction = visitOrderRestrictionType,
+  isAgeRestricted = false,
+  ageRestriction = 18,
 )
 
 fun createUpdateSessionTemplateDto(

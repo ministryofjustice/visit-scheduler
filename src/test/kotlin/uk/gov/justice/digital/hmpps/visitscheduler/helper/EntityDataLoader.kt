@@ -791,6 +791,8 @@ class SessionTemplateEntityHelper(
         includeCategoryGroupType = includeCategoryGroupType,
         includeIncentiveGroupType = includeIncentiveGroupType,
         visitOrderRestriction = visitOrderRestrictionType,
+        isAgeRestricted = false,
+        ageRestriction = 18,
       ),
     )
 
