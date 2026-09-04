@@ -41,7 +41,7 @@ class SessionConflictsUtil {
     prisonExcludeDates: List<LocalDate>,
     sessionExcludeDates: List<LocalDate>,
     voBalance: VisitOrderPrisonerBalanceDto?,
-    adultOnlySessionTemplateReferences: Set<String> = emptySet(),
+    adultOnlySessionTemplateReferences: Set<String>,
   ) {
     getNonAssociationSessionConflict(session, nonAssociationConflictSessions)?.let {
       session.sessionConflicts.add(it)
