@@ -186,11 +186,12 @@ class SessionConflictsUtil {
     return if (sessionConflict == null) null else SessionConflictDto(sessionConflict)
   }
 
-  private fun getSessionsWithAgeRestrictionConflicts(session: VisitSessionDto, sessionsWithAgeRestrictionConflicts: List<String>): SessionConflictDto? {
-    return if (sessionsWithAgeRestrictionConflicts.contains(session.sessionTemplateReference)) {
-      SessionConflictDto(SessionConflict.AGE_RESTRICTION)
-    } else {
-      null
-    }
+  private fun getSessionsWithAgeRestrictionConflicts(
+    session: VisitSessionDto,
+    sessionsWithAgeRestrictionConflicts: List<String>,
+  ): SessionConflictDto? = if (sessionsWithAgeRestrictionConflicts.contains(session.sessionTemplateReference)) {
+    SessionConflictDto(SessionConflict.AGE_RESTRICTION)
+  } else {
+    null
   }
 }
