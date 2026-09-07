@@ -267,10 +267,10 @@ class SessionService(
       val voBalance = getVoBalance(prisoner)
 
       val sessionsWithAgeRestrictionConflicts = if (youngestVisitorAge == null) {
-        emptyList()
+        emptySet()
       } else {
         sessionTemplates.filter { it.isAgeRestricted && youngestVisitorAge < it.ageRestriction }
-          .map { it.reference }
+          .map { it.reference }.toSet()
       }
 
       visitSessions.forEach { session ->

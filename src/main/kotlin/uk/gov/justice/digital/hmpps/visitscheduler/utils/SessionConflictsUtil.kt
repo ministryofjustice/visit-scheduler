@@ -40,7 +40,7 @@ class SessionConflictsUtil {
     prisonExcludeDates: List<LocalDate>,
     sessionExcludeDates: List<LocalDate>,
     voBalance: VisitOrderPrisonerBalanceDto?,
-    sessionsWithAgeRestrictionConflicts: List<String>,
+    sessionsWithAgeRestrictionConflicts: Set<String>,
   ) {
     getNonAssociationSessionConflict(session, nonAssociationConflictSessions)?.let {
       session.sessionConflicts.add(it)
@@ -188,7 +188,7 @@ class SessionConflictsUtil {
 
   private fun getSessionsWithAgeRestrictionConflicts(
     session: VisitSessionDto,
-    sessionsWithAgeRestrictionConflicts: List<String>,
+    sessionsWithAgeRestrictionConflicts: Set<String>,
   ): SessionConflictDto? = if (sessionsWithAgeRestrictionConflicts.contains(session.sessionTemplateReference)) {
     SessionConflictDto(SessionConflict.AGE_RESTRICTION)
   } else {
