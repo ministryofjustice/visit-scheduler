@@ -11,4 +11,10 @@ enum class SessionConflict {
   NO_PVO_BALANCE,
   NO_VO_OR_PVO_BALANCE,
   AGE_RESTRICTION,
+  ;
+
+  fun toPublicSessionConflict(): PublicSessionConflict? = when (this) {
+    AGE_RESTRICTION -> PublicSessionConflict.AGE_RESTRICTION
+    else -> null
+  }
 }

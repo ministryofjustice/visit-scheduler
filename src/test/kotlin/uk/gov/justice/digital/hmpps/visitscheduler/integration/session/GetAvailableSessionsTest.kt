@@ -3000,7 +3000,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     assertThat(visitSession.visitOrderRestriction).isEqualTo(expectedSessionTemplate.visitOrderRestriction)
 
     if (sessionConflict != null) {
-      assertThat(visitSession.sessionConflicts.map { it.sessionConflict }).contains(sessionConflict)
+      assertThat(visitSession.sessionConflicts.map { it.toSessionConflict() }).contains(sessionConflict)
     }
   }
 
