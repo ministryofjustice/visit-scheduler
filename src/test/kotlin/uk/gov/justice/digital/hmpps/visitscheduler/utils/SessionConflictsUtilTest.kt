@@ -490,4 +490,25 @@ class SessionConflictsUtilTest {
     )
     assertThat(session.sessionConflicts).isEmpty()
   }
+
+  @Test
+  fun `when a session visit is included in the set of sessions with age restrictions, it is marked with a session conflict`() {
+    val session = createVisitSessionDto(visitDate)
+    val sessionsWithAgeRestrictionConflicts = setOf(session.sessionTemplateReference)
+
+    sessionConflictsUtil.addSessionConflicts(session, emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), null, sessionsWithAgeRestrictionConflicts)
+
+    assertThat(session.sessionConflicts.size).isEqualTo(1)
+    assertThat(session.sessionConflicts[0].sessionConflict).isEqualTo(SessionConflict.AGE_RESTRICTION)
+  }
+
+  @Test
+  fun `when a session visit is not included in the set of sessions with age restrictions, it is not marked with any session conflicts`() {
+    val session = createVisitSessionDto(visitDate)
+    val sessionsWithAgeRestrictionConflicts = setOf("unrelated-references", "like-this")
+
+    sessionConflictsUtil.addSessionConflicts(session, emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), null, sessionsWithAgeRestrictionConflicts)
+
+    assertThat(session.sessionConflicts.size).isEqualTo(0)
+  }
 }

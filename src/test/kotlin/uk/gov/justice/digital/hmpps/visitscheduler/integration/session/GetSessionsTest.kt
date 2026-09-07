@@ -2392,6 +2392,76 @@ class GetSessionsTest : IntegrationTestBase() {
     responseSpec.expectStatus().isBadRequest
   }
 
+  @Test
+  fun `visit sessions returned for a visit with underage visitors are flagged with session conflicts`() {
+    // Given
+    val nextAllowedDay = getNextAllowedDay()
+    val nextWeek = nextAllowedDay.plusDays(7)
+    val prisonCode = "AWE"
+    prisonEntityHelper.create(prisonCode = prisonCode, excludeDates = listOf(nextWeek))
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+
+    val sessionTemplate = sessionTemplateEntityHelper.create(
+      prisonCode = "AWE",
+      validFromDate = nextAllowedDay,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      isAgeRestricted = true,
+      ageRestriction = 18,
+    )
+
+    // When
+    val responseSpec = callGetSessions(
+      prisonCode = "AWE",
+      prisonerId,
+      userType = STAFF,
+      authHttpHeaders = authHttpHeaders,
+      youngestVisitorAge = 16,
+    )
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk.expectBody()
+    val visitSessionResults = getResults(returnResult)
+    assertThat(visitSessionResults.size).isGreaterThan(0)
+    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate)
+    assertThat(visitSessionResults[0].sessionConflicts.map { it.sessionConflict }).contains(SessionConflict.AGE_RESTRICTION)
+  }
+
+  @Test
+  fun `visit sessions returned for a visit without age-restrictions with underage visitors are flagged with session conflicts`() {
+    // Given
+    val nextAllowedDay = getNextAllowedDay()
+    val nextWeek = nextAllowedDay.plusDays(7)
+    val prisonCode = "AWE"
+    prisonEntityHelper.create(prisonCode = prisonCode, excludeDates = listOf(nextWeek))
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+
+    val sessionTemplate = sessionTemplateEntityHelper.create(
+      prisonCode = "AWE",
+      validFromDate = nextAllowedDay,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      isAgeRestricted = false,
+      ageRestriction = 18,
+    )
+
+    // When
+    val responseSpec = callGetSessions(
+      prisonCode = "AWE",
+      prisonerId,
+      userType = STAFF,
+      authHttpHeaders = authHttpHeaders,
+      youngestVisitorAge = 16,
+    )
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk.expectBody()
+    val visitSessionResults = getResults(returnResult)
+    assertThat(visitSessionResults.size).isGreaterThan(0)
+    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate)
+    assertThat(visitSessionResults[0].sessionConflicts).isEmpty()
+  }
+
   private fun getNextAllowedDay(): LocalDate {
     // The 3 days is based on the default SessionService.policyNoticeDaysMin
     // VB-5790 - adding 1 day after adding policyNoticeDaysMin as there is a change wherein
