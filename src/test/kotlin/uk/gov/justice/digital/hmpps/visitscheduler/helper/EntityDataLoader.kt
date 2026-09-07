@@ -767,6 +767,8 @@ class SessionTemplateEntityHelper(
     excludeDates: List<LocalDate> = listOf(),
     clients: List<UserClientDto> = listOf(UserClientDto(STAFF, true), UserClientDto(PUBLIC, true)),
     visitOrderRestrictionType: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
+    isAgeRestricted: Boolean = false,
+    ageRestriction: Int = 18,
   ): SessionTemplate {
     val sessionTemplate = sessionRepository.saveAndFlush(
       SessionTemplate(
@@ -791,8 +793,8 @@ class SessionTemplateEntityHelper(
         includeCategoryGroupType = includeCategoryGroupType,
         includeIncentiveGroupType = includeIncentiveGroupType,
         visitOrderRestriction = visitOrderRestrictionType,
-        isAgeRestricted = false,
-        ageRestriction = 18,
+        isAgeRestricted = isAgeRestricted,
+        ageRestriction = ageRestriction,
       ),
     )
 
