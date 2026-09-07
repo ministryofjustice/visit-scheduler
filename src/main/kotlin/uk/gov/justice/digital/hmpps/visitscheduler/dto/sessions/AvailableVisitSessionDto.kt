@@ -29,6 +29,9 @@ data class AvailableVisitSessionDto(
 
   @param:Schema(description = "Session vo restriction", required = true)
   val visitOrderRestriction: SessionTemplateVisitOrderRestrictionType,
+
+  @param:Schema(description = "Session conflicts", required = false)
+  val sessionConflicts: MutableList<SessionConflictDto> = mutableListOf(),
 ) {
   constructor(visitSession: VisitSessionDto, sessionRestriction: SessionRestriction) : this(
     sessionTemplateReference = visitSession.sessionTemplateReference,
@@ -36,5 +39,6 @@ data class AvailableVisitSessionDto(
     sessionTimeSlot = SessionTimeSlotDto(visitSession.startTimestamp.toLocalTime(), visitSession.endTimestamp.toLocalTime()),
     sessionRestriction = sessionRestriction,
     visitOrderRestriction = visitSession.visitOrderRestriction,
+    sessionConflicts = visitSession.sessionConflicts,
   )
 }
