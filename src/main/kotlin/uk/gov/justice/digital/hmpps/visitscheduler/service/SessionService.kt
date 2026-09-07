@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ConvictionStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType.NONE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
@@ -190,6 +191,7 @@ class SessionService(
     excludedApplicationReference: String?,
     usernameToExcludeFromReservedApplications: String?,
     userType: UserType,
+    youngestVisitorAge: Int?,
   ): List<AvailableVisitSessionDto> {
     LOG.debug(
       "Enter getAvailableVisitSessions prisonCode:{}, prisonerId : {}, sessionRestriction: {}, dateRange - {}, excludedApplicationReference - {}, excludeReservedApplicationsForUser - {} ",
@@ -210,11 +212,16 @@ class SessionService(
       excludedApplicationReference = excludedApplicationReference,
       usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications,
       userType = userType,
+      youngestVisitorAge = youngestVisitorAge,
     )
 
     // finally, filter out sessions without conflicts and with capacity
-    return visitSessions.filter {
-      hasSessionGotCapacity(it, sessionRestriction).and(it.sessionConflicts.isEmpty())
+    return visitSessions.filter { session ->
+      hasSessionGotCapacity(session, sessionRestriction)
+        .and(
+          session.sessionConflicts.isEmpty() ||
+            session.sessionConflicts.all { it.sessionConflict == SessionConflict.AGE_RESTRICTION },
+        )
     }.map { AvailableVisitSessionDto(it, sessionRestriction) }.toList().also {
       LOG.info("Returning final count for public filtered sessions ${it.size} for prisonerId - $prisonerId, after applying capacity filtering")
     }
