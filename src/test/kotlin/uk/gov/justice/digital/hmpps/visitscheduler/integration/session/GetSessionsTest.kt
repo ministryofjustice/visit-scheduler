@@ -2404,6 +2404,8 @@ class GetSessionsTest : IntegrationTestBase() {
     val sessionTemplate = sessionTemplateEntityHelper.create(
       prisonCode = "AWE",
       validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay.plusDays(10),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
       isAgeRestricted = true,
@@ -2439,6 +2441,8 @@ class GetSessionsTest : IntegrationTestBase() {
     val sessionTemplate = sessionTemplateEntityHelper.create(
       prisonCode = "AWE",
       validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay.plusDays(10),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
       isAgeRestricted = false,
