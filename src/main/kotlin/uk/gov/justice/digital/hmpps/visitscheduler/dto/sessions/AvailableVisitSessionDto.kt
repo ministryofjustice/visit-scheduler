@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.Valid
 import jakarta.validation.constraints.FutureOrPresent
 import jakarta.validation.constraints.NotNull
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PublicSessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType
 import java.time.LocalDate
@@ -29,6 +30,9 @@ data class AvailableVisitSessionDto(
 
   @param:Schema(description = "Session vo restriction", required = true)
   val visitOrderRestriction: SessionTemplateVisitOrderRestrictionType,
+
+  @param:Schema(description = "Session conflicts", required = false)
+  val sessionConflicts: Set<PublicSessionConflict> = setOf(),
 ) {
   constructor(visitSession: VisitSessionDto, sessionRestriction: SessionRestriction) : this(
     sessionTemplateReference = visitSession.sessionTemplateReference,
@@ -36,5 +40,6 @@ data class AvailableVisitSessionDto(
     sessionTimeSlot = SessionTimeSlotDto(visitSession.startTimestamp.toLocalTime(), visitSession.endTimestamp.toLocalTime()),
     sessionRestriction = sessionRestriction,
     visitOrderRestriction = visitSession.visitOrderRestriction,
+    sessionConflicts = visitSession.sessionConflicts.mapNotNull { it.sessionConflict.toPublicSessionConflict() }.toSet(),
   )
 }

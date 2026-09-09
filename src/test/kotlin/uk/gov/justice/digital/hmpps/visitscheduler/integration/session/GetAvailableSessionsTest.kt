@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.A
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.IN_PROGRESS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction.OPEN
@@ -351,6 +352,33 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectBody()
     val visitSessionResults = getResults(returnResult)
     assertThat(visitSessionResults.size).isEqualTo(0)
+  }
+
+  @Test
+  fun `when fetching a session with age restrictions, the conflict is returned with it`() {
+    // Given
+    val nextAllowedDay = getNextAllowedDay()
+
+    val sessionTemplate = sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      prisonCode = prisonCode,
+      isAgeRestricted = true,
+      ageRestriction = 21,
+    )
+
+    // When
+    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, OPEN, 1, 7, authHttpHeaders = authHttpHeaders, youngestVisitorAge = 12)
+
+    // Then
+    responseSpec.expectStatus().isOk
+    val returnResult = responseSpec.expectBody()
+    val visitSessionResults = getResults(returnResult)
+    assertThat(visitSessionResults.size).isEqualTo(1)
+    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate, OPEN, SessionConflict.AGE_RESTRICTION)
   }
 
   @Test
@@ -2962,6 +2990,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     expectedDate: LocalDate,
     expectedSessionTemplate: SessionTemplate,
     sessionRestriction: SessionRestriction,
+    sessionConflict: SessionConflict? = null,
   ) {
     assertThat(visitSession.sessionTemplateReference).isEqualTo(expectedSessionTemplate.reference)
     assertThat(visitSession.sessionDate).isEqualTo(expectedDate)
@@ -2969,6 +2998,10 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     assertThat(visitSession.sessionTimeSlot.endTime).isEqualTo(expectedSessionTemplate.endTime)
     assertThat(visitSession.sessionRestriction).isEqualTo(sessionRestriction)
     assertThat(visitSession.visitOrderRestriction).isEqualTo(expectedSessionTemplate.visitOrderRestriction)
+
+    if (sessionConflict != null) {
+      assertThat(visitSession.sessionConflicts.map { it.toSessionConflict() }).contains(sessionConflict)
+    }
   }
 
   private fun assertResponseLength(responseSpec: ResponseSpec, length: Int) {

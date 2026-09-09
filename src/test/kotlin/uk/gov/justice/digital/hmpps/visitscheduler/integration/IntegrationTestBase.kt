@@ -538,22 +538,18 @@ abstract class IntegrationTestBase {
     policyNoticeDaysMax: Int? = null,
     userName: String? = null,
     userType: UserType,
+    youngestVisitorAge: Int? = null,
     authHttpHeaders: (HttpHeaders) -> Unit,
   ): ResponseSpec {
-    val urlParams = mutableListOf(
-      "prisonerId=$prisonerId",
-      "prisonId=$prisonCode",
-      "userType=$userType",
+    val urlParams = getAvailableSessionsQueryParams(
+      prisonCode = prisonCode!!,
+      prisonerId = prisonerId,
+      policyNoticeDaysMin = policyNoticeDaysMin,
+      policyNoticeDaysMax = policyNoticeDaysMax,
+      username = userName,
+      userType = userType,
+      youngestVisitorAge = youngestVisitorAge,
     )
-    policyNoticeDaysMin?.let {
-      urlParams.add("min=$policyNoticeDaysMin")
-    }
-    policyNoticeDaysMax?.let {
-      urlParams.add("max=$policyNoticeDaysMax")
-    }
-    userName?.let {
-      urlParams.add("username=$userName")
-    }
 
     val uri = VISIT_SESSION_CONTROLLER_PATH + "?" + urlParams.joinToString("&")
 
@@ -574,6 +570,7 @@ abstract class IntegrationTestBase {
     username: String? = null,
     userType: UserType = UserType.PUBLIC,
     authHttpHeaders: (HttpHeaders) -> Unit,
+    youngestVisitorAge: Int? = null,
   ): ResponseSpec {
     val today = LocalDate.now()
     val fromDate = today.plusDays(policyNoticeDaysMin.toLong())
@@ -591,6 +588,7 @@ abstract class IntegrationTestBase {
       excludedApplicationReference = excludedApplicationReference,
       username = username,
       userType = userType,
+      youngestVisitorAge = youngestVisitorAge,
     ).joinToString("&")
 
     return webTestClient.get().uri("$uri?$uriQueryParams")
@@ -601,22 +599,34 @@ abstract class IntegrationTestBase {
   private fun getAvailableSessionsQueryParams(
     prisonCode: String,
     prisonerId: String,
-    sessionRestriction: SessionRestriction,
-    dateRange: DateRange,
-    policyNoticeDaysMin: Int,
-    policyNoticeDaysMax: Int,
-    excludedApplicationReference: String?,
-    username: String?,
+    sessionRestriction: SessionRestriction? = null,
+    dateRange: DateRange? = null,
+    policyNoticeDaysMin: Int? = null,
+    policyNoticeDaysMax: Int? = null,
+    excludedApplicationReference: String? = null,
+    username: String? = null,
     userType: UserType,
+    youngestVisitorAge: Int? = null,
   ): List<String> {
     val queryParams = ArrayList<String>()
     queryParams.add("prisonId=$prisonCode")
     queryParams.add("prisonerId=$prisonerId")
-    queryParams.add("sessionRestriction=$sessionRestriction")
-    queryParams.add("fromDate=${dateRange.fromDate}")
-    queryParams.add("toDate=${dateRange.toDate}")
-    queryParams.add("policyNoticeDaysMin=$policyNoticeDaysMin")
-    queryParams.add("policyNoticeDaysMax=$policyNoticeDaysMax")
+
+    sessionRestriction?.let {
+      queryParams.add("sessionRestriction=$sessionRestriction")
+    }
+
+    dateRange?.let {
+      queryParams.add("fromDate=${dateRange.fromDate}")
+      queryParams.add("toDate=${dateRange.toDate}")
+    }
+
+    policyNoticeDaysMin?.let {
+      queryParams.add("min=$policyNoticeDaysMin")
+    }
+    policyNoticeDaysMax?.let {
+      queryParams.add("max=$policyNoticeDaysMax")
+    }
 
     excludedApplicationReference?.let {
       queryParams.add("excludedApplicationReference=$excludedApplicationReference")
@@ -627,6 +637,11 @@ abstract class IntegrationTestBase {
     }
 
     queryParams.add("userType=${userType.name}")
+
+    youngestVisitorAge?.let {
+      queryParams.add("youngestVisitorAge=$youngestVisitorAge")
+    }
+
     return queryParams
   }
 }
