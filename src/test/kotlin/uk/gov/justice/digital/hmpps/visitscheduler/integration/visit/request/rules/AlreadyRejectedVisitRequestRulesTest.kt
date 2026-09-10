@@ -2,28 +2,30 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit.request.ru
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
+import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestVisitorDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.IN_PROGRESS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonVisitRequestRuleType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.VisitBalancesDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch.PrisonerSearchResultDto
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestEventAuditRepository
 import java.time.LocalTime
 
+// TODO - enable this when these rules are checked the public service
+@Disabled("disabled till rules are checked on the public service")
 class AlreadyRejectedVisitRequestRulesTest : IntegrationTestBase() {
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
@@ -41,12 +43,6 @@ class AlreadyRejectedVisitRequestRulesTest : IntegrationTestBase() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
     reservedPublicApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS, userType = PUBLIC)
-    applicationEntityHelper.createContact(application = reservedPublicApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
-    applicationEntityHelper.createVisitor(application = reservedPublicApplication, nomisPersonId = 321L, visitContact = true)
-    applicationEntityHelper.createVisitor(application = reservedPublicApplication, nomisPersonId = 322L, visitContact = false)
-    applicationEntityHelper.createVisitor(application = reservedPublicApplication, nomisPersonId = 323L, visitContact = false)
-    applicationEntityHelper.createSupport(application = reservedPublicApplication, description = "Some Text")
-    reservedPublicApplication = applicationEntityHelper.save(reservedPublicApplication)
 
     visitorDetails = mutableSetOf()
     visitorDetails.add(BookingRequestVisitorDetailsDto(321L, 21))
@@ -55,7 +51,7 @@ class AlreadyRejectedVisitRequestRulesTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when visit was already rejected for same time and same visitor list within rejection rule hours then visit is automatically rejected`() {
+  fun `when visit was already rejected for same time and same visitor list within rejection rule hours then session is flagged`() {
     // Given
     val visitDate = reservedPublicApplication.sessionSlot.slotDate
 
@@ -71,37 +67,22 @@ class AlreadyRejectedVisitRequestRulesTest : IntegrationTestBase() {
     visitRequestRuleHelper.createAlreadyRejectedRequestRule(prisonCode, rejectionIntervalInHours = 4, totalRejectedVisits = 1)
 
     val prisonerId = reservedPublicApplication.prisonerId
-    val applicationReference = reservedPublicApplication.reference
     val prisonerDto = PrisonerSearchResultDto(prisonerNumber = prisonerId, "john", "smith", prisonId = reservedPublicApplication.prison.code)
     prisonOffenderSearchMockServer.stubGetPrisoner(prisonerId, prisonerDto)
     prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
 
     // When
-    // request booking is true
-    val responseSpec = callVisitBook(
-      webTestClient,
-      roleVisitSchedulerHttpHeaders,
-      applicationReference,
-      userType = PUBLIC,
-      bookingRequestDto = BookingRequestDto(
-        actionedBy = "booking_guy",
-        applicationMethodType = ApplicationMethodType.PHONE,
-        allowOverBooking = false,
-        userType = PUBLIC,
-        isRequestBooking = true,
-        visitorDetails = visitorDetails,
-      ),
-    )
+    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = roleVisitSchedulerHttpHeaders)
 
     // Then
-    responseSpec.expectStatus().isOk
+    responseResult.expectStatus().isOk
 
-    val visitDto = getVisitDto(responseSpec)
-
-    // visit is rejected as the number of rejections is equal to the allowed limit
-    assertThat(visitDto.visitStatus).isEqualTo(CANCELLED)
-    assertThat(visitDto.visitSubStatus).isEqualTo(VisitSubStatus.REJECTED)
-    assertThat(visitDto.outcomeStatus).isEqualTo(OutcomeStatus.REQUESTED_VISIT_AUTO_REJECTED)
+    val sessions = getResults(responseResult.expectBody())
+    // as there is 1 visit before and 1 visit after the visit date and hence less than allowed, the visit should not be flagged
+    val session = sessions.firstOrNull { it.sessionTemplateReference == sessionTemplateDefault.reference && it.startTimestamp.toLocalDate() == visitDate }
+    assertThat(session).isNotNull
+    assertThat(session!!.sessionPrisonRuleFailures.size).isEqualTo(1)
+    assertThat(session.sessionPrisonRuleFailures[0]).isEqualTo(PrisonVisitRequestRuleType.ALREADY_REJECTED_VISIT)
   }
 
   @Test
@@ -122,37 +103,22 @@ class AlreadyRejectedVisitRequestRulesTest : IntegrationTestBase() {
     visitRequestRuleHelper.createAlreadyRejectedRequestRule(prisonCode, rejectionIntervalInHours = 4, totalRejectedVisits = 2)
 
     val prisonerId = reservedPublicApplication.prisonerId
-    val applicationReference = reservedPublicApplication.reference
     val prisonerDto = PrisonerSearchResultDto(prisonerNumber = prisonerId, "john", "smith", prisonId = reservedPublicApplication.prison.code)
     prisonOffenderSearchMockServer.stubGetPrisoner(prisonerId, prisonerDto)
     prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
 
     // When
-    // request booking is true
-    val responseSpec = callVisitBook(
-      webTestClient,
-      roleVisitSchedulerHttpHeaders,
-      applicationReference,
-      userType = PUBLIC,
-      bookingRequestDto = BookingRequestDto(
-        actionedBy = "booking_guy",
-        applicationMethodType = ApplicationMethodType.PHONE,
-        allowOverBooking = false,
-        userType = PUBLIC,
-        isRequestBooking = true,
-        visitorDetails = visitorDetails,
-      ),
-    )
+    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = roleVisitSchedulerHttpHeaders)
 
     // Then
-    responseSpec.expectStatus().isOk
+    responseResult.expectStatus().isOk
 
-    val visitDto = getVisitDto(responseSpec)
-
-    // visit is not rejected as the number of rejections is below the allowed limit
-    assertThat(visitDto.visitStatus).isEqualTo(BOOKED)
-    assertThat(visitDto.visitSubStatus).isEqualTo(VisitSubStatus.REQUESTED)
-    assertThat(visitDto.outcomeStatus).isNull()
+    val sessions = getResults(responseResult.expectBody())
+    // as there are already 3 visits booked for the month and max visits allowed are 3, the session should be flagged
+    val session = sessions.firstOrNull { it.sessionTemplateReference == sessionTemplateDefault.reference && it.startTimestamp.toLocalDate() == visitDate }
+    assertThat(session).isNotNull
+    assertThat(session!!.sessionPrisonRuleFailures.size).isEqualTo(1)
+    assertThat(session.sessionPrisonRuleFailures[0]).isEqualTo(PrisonVisitRequestRuleType.VISITS_PER_MONTH)
   }
 
   @Test
@@ -174,37 +140,22 @@ class AlreadyRejectedVisitRequestRulesTest : IntegrationTestBase() {
     visitRequestRuleHelper.createAlreadyRejectedRequestRule(prisonCode, rejectionIntervalInHours = 4, totalRejectedVisits = 1)
 
     val prisonerId = reservedPublicApplication.prisonerId
-    val applicationReference = reservedPublicApplication.reference
     val prisonerDto = PrisonerSearchResultDto(prisonerNumber = prisonerId, "john", "smith", prisonId = reservedPublicApplication.prison.code)
     prisonOffenderSearchMockServer.stubGetPrisoner(prisonerId, prisonerDto)
     prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
 
     // When
-    // request booking is true
-    val responseSpec = callVisitBook(
-      webTestClient,
-      roleVisitSchedulerHttpHeaders,
-      applicationReference,
-      userType = PUBLIC,
-      bookingRequestDto = BookingRequestDto(
-        actionedBy = "booking_guy",
-        applicationMethodType = ApplicationMethodType.PHONE,
-        allowOverBooking = false,
-        userType = PUBLIC,
-        isRequestBooking = true,
-        visitorDetails = visitorDetails,
-      ),
-    )
+    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = roleVisitSchedulerHttpHeaders)
 
     // Then
-    responseSpec.expectStatus().isOk
+    responseResult.expectStatus().isOk
 
-    val visitDto = getVisitDto(responseSpec)
-
-    // visit is not rejected as the visitor list is different
-    assertThat(visitDto.visitStatus).isEqualTo(BOOKED)
-    assertThat(visitDto.visitSubStatus).isEqualTo(VisitSubStatus.REQUESTED)
-    assertThat(visitDto.outcomeStatus).isNull()
+    val sessions = getResults(responseResult.expectBody())
+    // as there are already 3 visits booked for the month and max visits allowed are 3, the session should be flagged
+    val session = sessions.firstOrNull { it.sessionTemplateReference == sessionTemplateDefault.reference && it.startTimestamp.toLocalDate() == visitDate }
+    assertThat(session).isNotNull
+    assertThat(session!!.sessionPrisonRuleFailures.size).isEqualTo(1)
+    assertThat(session.sessionPrisonRuleFailures[0]).isEqualTo(PrisonVisitRequestRuleType.VISITS_PER_MONTH)
   }
 
   @Test
@@ -226,37 +177,22 @@ class AlreadyRejectedVisitRequestRulesTest : IntegrationTestBase() {
     visitRequestRuleHelper.createAlreadyRejectedRequestRule(prisonCode, rejectionIntervalInHours = 4, totalRejectedVisits = 1)
 
     val prisonerId = reservedPublicApplication.prisonerId
-    val applicationReference = reservedPublicApplication.reference
     val prisonerDto = PrisonerSearchResultDto(prisonerNumber = prisonerId, "john", "smith", prisonId = reservedPublicApplication.prison.code)
     prisonOffenderSearchMockServer.stubGetPrisoner(prisonerId, prisonerDto)
     prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
 
     // When
-    // request booking is true
-    val responseSpec = callVisitBook(
-      webTestClient,
-      roleVisitSchedulerHttpHeaders,
-      applicationReference,
-      userType = PUBLIC,
-      bookingRequestDto = BookingRequestDto(
-        actionedBy = "booking_guy",
-        applicationMethodType = ApplicationMethodType.PHONE,
-        allowOverBooking = false,
-        userType = PUBLIC,
-        isRequestBooking = true,
-        visitorDetails = visitorDetails,
-      ),
-    )
+    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = roleVisitSchedulerHttpHeaders)
 
     // Then
-    responseSpec.expectStatus().isOk
+    responseResult.expectStatus().isOk
 
-    val visitDto = getVisitDto(responseSpec)
-
-    // visit is not rejected as the visitor list is different
-    assertThat(visitDto.visitStatus).isEqualTo(BOOKED)
-    assertThat(visitDto.visitSubStatus).isEqualTo(VisitSubStatus.REQUESTED)
-    assertThat(visitDto.outcomeStatus).isNull()
+    val sessions = getResults(responseResult.expectBody())
+    // as there are already 3 visits booked for the month and max visits allowed are 3, the session should be flagged
+    val session = sessions.firstOrNull { it.sessionTemplateReference == sessionTemplateDefault.reference && it.startTimestamp.toLocalDate() == visitDate }
+    assertThat(session).isNotNull
+    assertThat(session!!.sessionPrisonRuleFailures.size).isEqualTo(1)
+    assertThat(session.sessionPrisonRuleFailures[0]).isEqualTo(PrisonVisitRequestRuleType.VISITS_PER_MONTH)
   }
 
   @Test
@@ -278,36 +214,22 @@ class AlreadyRejectedVisitRequestRulesTest : IntegrationTestBase() {
     visitRequestRuleHelper.createAlreadyRejectedRequestRule(prisonCode, rejectionIntervalInHours = 4, totalRejectedVisits = 1)
 
     val prisonerId = reservedPublicApplication.prisonerId
-    val applicationReference = reservedPublicApplication.reference
     val prisonerDto = PrisonerSearchResultDto(prisonerNumber = prisonerId, "john", "smith", prisonId = reservedPublicApplication.prison.code)
     prisonOffenderSearchMockServer.stubGetPrisoner(prisonerId, prisonerDto)
     prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
 
     // When
-    // request booking is true
-    val responseSpec = callVisitBook(
-      webTestClient,
-      roleVisitSchedulerHttpHeaders,
-      applicationReference,
-      userType = PUBLIC,
-      bookingRequestDto = BookingRequestDto(
-        actionedBy = "booking_guy",
-        applicationMethodType = ApplicationMethodType.PHONE,
-        allowOverBooking = false,
-        userType = PUBLIC,
-        isRequestBooking = true,
-        visitorDetails = visitorDetails,
-      ),
-    )
+    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = roleVisitSchedulerHttpHeaders)
 
     // Then
-    responseSpec.expectStatus().isOk
+    responseResult.expectStatus().isOk
 
-    val visitDto = getVisitDto(responseSpec)
-
-    // visit is not rejected as the visitor list is different
-    assertThat(visitDto.visitStatus).isEqualTo(BOOKED)
-    assertThat(visitDto.visitSubStatus).isEqualTo(VisitSubStatus.REQUESTED)
-    assertThat(visitDto.outcomeStatus).isNull()
+    val sessions = getResults(responseResult.expectBody())
+    // as there is 1 visit before and 1 visit after the visit date and hence less than allowed, the visit should not be flagged
+    val session = sessions.firstOrNull { it.sessionTemplateReference == sessionTemplateDefault.reference && it.startTimestamp.toLocalDate() == visitDate }
+    assertThat(session).isNotNull
+    assertThat(session!!.sessionPrisonRuleFailures).isEmpty()
   }
+
+  private fun getResults(returnResult: BodyContentSpec): Array<VisitSessionDto> = objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)
 }

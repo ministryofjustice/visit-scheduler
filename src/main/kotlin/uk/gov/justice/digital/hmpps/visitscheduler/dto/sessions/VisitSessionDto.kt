@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonVisitRequestRuleType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
@@ -72,6 +73,9 @@ class VisitSessionDto(
 
   @param:Schema(description = "Session conflicts", required = false)
   val sessionConflicts: MutableList<SessionConflictDto> = mutableListOf(),
+
+  @param:Schema(description = "Session rule failures", required = false)
+  var sessionPrisonRuleFailures: List<PrisonVisitRequestRuleType> = listOf(),
 ) {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

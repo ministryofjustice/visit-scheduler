@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.utils.rules
+package uk.gov.justice.digital.hmpps.visitscheduler.utils.rules.session
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -7,23 +7,21 @@ import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonVisitRequestRuleConfigType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonVisitRequestRules
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlin.math.absoluteValue
 
 @Service
 @Description("This rule will reject a visit if a similar request for same prisoner was already rejected in the last n hours")
-class AlreadyRejectedVisitRequestRejectionRule(
-  private val visitRepository: VisitRepository,
-) : VisitRejectionRequestRule<Application> {
+class AlreadyRejectedVisitRequestRejectionRule(private val visitRepository: VisitRepository) : VisitRequestRule<SessionRequestInfo> {
   companion object {
     val logger: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
-  override fun ruleCheck(application: Application, prisonVisitRequestRules: PrisonVisitRequestRules): Boolean {
-    val prisonCode = application.prison.code
-    val prisonerId = application.prisonerId
+  override fun ruleCheck(sessionRequest: SessionRequestInfo, prisonVisitRequestRules: PrisonVisitRequestRules): Boolean {
+    val prisonCode = sessionRequest.prisonCode
+    val prisonerId = sessionRequest.prisonerId
     val rulesConfig = getConfigValues(prisonVisitRequestRules)
     val rejectionTimeIntervalInHours = getRejectedVisitInterval(rulesConfig, prisonCode)
     val totalRejections = getTotalRejections(rulesConfig, prisonCode)
@@ -42,8 +40,8 @@ class AlreadyRejectedVisitRequestRejectionRule(
     return if (rejectedVisits.isNotEmpty() && rejectedVisits.size >= totalRejections) {
       // if visit for same time slot and same visitor list has been rejected more than allowed limit in the last n hours, fail the rejection rule
       rejectedVisits.any { rejectedVisit ->
-        hasSameSessionSlot(rejectedVisit, application) &&
-          hasSameVisitorList(rejectedVisit, application)
+        hasSameSessionSlot(rejectedVisit, sessionRequest.visitSession.sessionTemplateReference, sessionRequest.visitSession.startTimestamp.toLocalDate()) &&
+          hasSameVisitorList(rejectedVisit, sessionRequest.visitorIds)
       }
     } else {
       false
@@ -68,8 +66,15 @@ class AlreadyRejectedVisitRequestRejectionRule(
     }
   }
 
-  private fun hasSameVisitorList(rejectedVisit: Visit, application: Application) = (rejectedVisit.visitors.map { it.nomisPersonId }.distinct().size == application.visitors.map { it.nomisPersonId }.distinct().size) &&
-    (rejectedVisit.visitors.map { it.nomisPersonId }.containsAll(application.visitors.map { it.nomisPersonId }))
+  private fun hasSameVisitorList(rejectedVisit: Visit, visitorIds: List<Long>?): Boolean {
+    // only check visitor list if visitorIds is not null
+    return if (visitorIds == null) {
+      false
+    } else {
+      (rejectedVisit.visitors.map { it.nomisPersonId }.distinct().size == visitorIds.distinct().size) &&
+        (rejectedVisit.visitors.map { it.nomisPersonId }.containsAll(visitorIds))
+    }
+  }
 
-  private fun hasSameSessionSlot(rejectedVisit: Visit, application: Application) = rejectedVisit.sessionSlot.id == application.sessionSlot.id
+  private fun hasSameSessionSlot(rejectedVisit: Visit, sessionTemplateReference: String, sessionDate: LocalDate) = rejectedVisit.sessionSlot.sessionTemplateReference == sessionTemplateReference && rejectedVisit.sessionSlot.slotDate == sessionDate
 }

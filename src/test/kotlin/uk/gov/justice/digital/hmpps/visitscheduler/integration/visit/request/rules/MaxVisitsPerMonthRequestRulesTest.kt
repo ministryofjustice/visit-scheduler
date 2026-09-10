@@ -4,18 +4,18 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpHeaders
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestVisitorDetailsDto
+import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.IN_PROGRESS
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonVisitRequestRuleType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.VisitBalancesDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch.PrisonerSearchResultDto
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
@@ -27,8 +27,6 @@ class MaxVisitsPerMonthRequestRulesTest : IntegrationTestBase() {
 
   private lateinit var reservedPublicApplication: Application
 
-  private lateinit var visitorDetails: MutableSet<BookingRequestVisitorDetailsDto>
-
   private val prisonCode = "DFT"
 
   @BeforeEach
@@ -36,21 +34,10 @@ class MaxVisitsPerMonthRequestRulesTest : IntegrationTestBase() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
     reservedPublicApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS, userType = PUBLIC)
-    applicationEntityHelper.createContact(application = reservedPublicApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
-    applicationEntityHelper.createVisitor(application = reservedPublicApplication, nomisPersonId = 321L, visitContact = true)
-    applicationEntityHelper.createVisitor(application = reservedPublicApplication, nomisPersonId = 322L, visitContact = false)
-    applicationEntityHelper.createVisitor(application = reservedPublicApplication, nomisPersonId = 323L, visitContact = false)
-    applicationEntityHelper.createSupport(application = reservedPublicApplication, description = "Some Text")
-    reservedPublicApplication = applicationEntityHelper.save(reservedPublicApplication)
-
-    visitorDetails = mutableSetOf()
-    visitorDetails.add(BookingRequestVisitorDetailsDto(321L, 21))
-    visitorDetails.add(BookingRequestVisitorDetailsDto(322L, 25))
-    visitorDetails.add(BookingRequestVisitorDetailsDto(323L, null))
   }
 
   @Test
-  fun `when visits already booked are less than max visits allowed for prison then visit sub status is set to AUTO_APPROVED`() {
+  fun `when visits already booked are less than max visits allowed for that month then session for the date should not be flagged`() {
     // Given
     val visitDate = reservedPublicApplication.sessionSlot.slotDate
 
@@ -66,32 +53,25 @@ class MaxVisitsPerMonthRequestRulesTest : IntegrationTestBase() {
     visitRequestRuleHelper.createMaxVisitsPerMonthRule(prisonCode, 3)
 
     val prisonerId = reservedPublicApplication.prisonerId
-    val applicationReference = reservedPublicApplication.reference
     val prisonerDto = PrisonerSearchResultDto(prisonerNumber = prisonerId, "john", "smith", prisonId = reservedPublicApplication.prison.code)
     prisonOffenderSearchMockServer.stubGetPrisoner(prisonerId, prisonerDto)
     prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
 
     // When
-    val responseSpec = callVisitBook(
-      webTestClient,
-      roleVisitSchedulerHttpHeaders,
-      applicationReference,
-      userType = PUBLIC,
-      bookingRequestDto = BookingRequestDto(actionedBy = "booking_guy", applicationMethodType = ApplicationMethodType.PHONE, allowOverBooking = false, userType = PUBLIC, isRequestBooking = false, visitorDetails = visitorDetails),
-    )
+    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = roleVisitSchedulerHttpHeaders)
 
     // Then
-    responseSpec.expectStatus().isOk
+    responseResult.expectStatus().isOk
 
-    val visitDto = getVisitDto(responseSpec)
-
+    val sessions = getResults(responseResult.expectBody())
     // as there are only 2 visits booked for the month and max visits allowed is 3, the visit should get auto approved
-    assertThat(visitDto.visitStatus).isEqualTo(BOOKED)
-    assertThat(visitDto.visitSubStatus).isEqualTo(VisitSubStatus.AUTO_APPROVED)
+    val session = sessions.firstOrNull { it.sessionTemplateReference == sessionTemplateDefault.reference && it.startTimestamp.toLocalDate() == visitDate }
+    assertThat(session).isNotNull
+    assertThat(session!!.sessionPrisonRuleFailures).isEmpty()
   }
 
   @Test
-  fun `when visits already booked are same as max visits allowed for prison then visit sub status is set to REQUESTED`() {
+  fun `when visits already booked are same as max visits allowed for that month then session for the date should be flagged`() {
     // Given
     val visitDate = reservedPublicApplication.sessionSlot.slotDate
 
@@ -104,28 +84,22 @@ class MaxVisitsPerMonthRequestRulesTest : IntegrationTestBase() {
     visitRequestRuleHelper.createMaxVisitsPerMonthRule(prisonCode, 3)
 
     val prisonerId = reservedPublicApplication.prisonerId
-    val applicationReference = reservedPublicApplication.reference
     val prisonerDto = PrisonerSearchResultDto(prisonerNumber = prisonerId, "john", "smith", prisonId = reservedPublicApplication.prison.code)
     prisonOffenderSearchMockServer.stubGetPrisoner(prisonerId, prisonerDto)
     prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
 
     // When
-    val responseSpec = callVisitBook(
-      webTestClient,
-      roleVisitSchedulerHttpHeaders,
-      applicationReference,
-      userType = PUBLIC,
-      bookingRequestDto = BookingRequestDto(actionedBy = "booking_guy", applicationMethodType = ApplicationMethodType.PHONE, allowOverBooking = false, userType = PUBLIC, isRequestBooking = false, visitorDetails = visitorDetails),
-    )
+    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = roleVisitSchedulerHttpHeaders)
 
     // Then
-    responseSpec.expectStatus().isOk
+    responseResult.expectStatus().isOk
 
-    val visitDto = getVisitDto(responseSpec)
-
-    // as there are already 3 visits booked for the month and max visits allowed is 3, the visit should not get auto approved and instead move into REQUESTED
-    assertThat(visitDto.visitStatus).isEqualTo(BOOKED)
-    assertThat(visitDto.visitSubStatus).isEqualTo(VisitSubStatus.REQUESTED)
+    val sessions = getResults(responseResult.expectBody())
+    // as there are already 3 visits booked for the month and max visits allowed are 3, the session should be flagged
+    val session = sessions.firstOrNull { it.sessionTemplateReference == sessionTemplateDefault.reference && it.startTimestamp.toLocalDate() == visitDate }
+    assertThat(session).isNotNull
+    assertThat(session!!.sessionPrisonRuleFailures.size).isEqualTo(1)
+    assertThat(session.sessionPrisonRuleFailures[0]).isEqualTo(PrisonVisitRequestRuleType.VISITS_PER_MONTH)
   }
 
   @Test
@@ -133,7 +107,7 @@ class MaxVisitsPerMonthRequestRulesTest : IntegrationTestBase() {
     // Given
     val visitDate = reservedPublicApplication.sessionSlot.slotDate
 
-    // create 3 visits for last month, 3 visits for next month and 3 visits for current month on a different session template
+    // create 3 visits for last month, 3 visits for next month and 5 visits for current month on a different session template
     val sessionTemplate1 = sessionTemplateEntityHelper.create(prisonCode = prisonCode, startTime = LocalTime.now().plusMinutes(5), endTime = LocalTime.now().plusHours(1))
     createBookedVisits(visitDate.minusMonths(1), totalVisits = 3, sessionTemplate = sessionTemplate1)
     createBookedVisits(visitDate.plusMonths(1), totalVisits = 3, sessionTemplate = sessionTemplate1)
@@ -142,28 +116,21 @@ class MaxVisitsPerMonthRequestRulesTest : IntegrationTestBase() {
     visitRequestRuleHelper.createMaxVisitsPerMonthRule(prisonCode, 3)
 
     val prisonerId = reservedPublicApplication.prisonerId
-    val applicationReference = reservedPublicApplication.reference
     val prisonerDto = PrisonerSearchResultDto(prisonerNumber = prisonerId, "john", "smith", prisonId = reservedPublicApplication.prison.code)
     prisonOffenderSearchMockServer.stubGetPrisoner(prisonerId, prisonerDto)
-    prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
 
     // When
-    val responseSpec = callVisitBook(
-      webTestClient,
-      roleVisitSchedulerHttpHeaders,
-      applicationReference,
-      userType = PUBLIC,
-      bookingRequestDto = BookingRequestDto(actionedBy = "booking_guy", applicationMethodType = ApplicationMethodType.PHONE, allowOverBooking = false, userType = PUBLIC, isRequestBooking = false, visitorDetails = visitorDetails),
-    )
+    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = roleVisitSchedulerHttpHeaders)
 
     // Then
-    responseSpec.expectStatus().isOk
+    responseResult.expectStatus().isOk
 
-    val visitDto = getVisitDto(responseSpec)
-
-    // as there are already 3 visits booked for the month and max visits allowed is 3, the visit should not get auto approved and instead move into REQUESTED
-    assertThat(visitDto.visitStatus).isEqualTo(BOOKED)
-    assertThat(visitDto.visitSubStatus).isEqualTo(VisitSubStatus.REQUESTED)
+    val sessions = getResults(responseResult.expectBody())
+    // as there are already 3 visits booked for the month and max visits allowed are 3, the session should be flagged
+    val session = sessions.firstOrNull { it.sessionTemplateReference == sessionTemplateDefault.reference && it.startTimestamp.toLocalDate() == visitDate }
+    assertThat(session).isNotNull
+    assertThat(session!!.sessionPrisonRuleFailures.size).isEqualTo(1)
+    assertThat(session.sessionPrisonRuleFailures[0]).isEqualTo(PrisonVisitRequestRuleType.VISITS_PER_MONTH)
   }
 
   private fun createBookedVisits(firstDatOfMonth: LocalDate, totalVisits: Int, sessionTemplate: SessionTemplate) {
@@ -180,4 +147,6 @@ class MaxVisitsPerMonthRequestRulesTest : IntegrationTestBase() {
       visitEntityHelper.create(visitStatus = visitStatus, visitSubStatus = visitSubStatus, slotDate = visitDate, sessionTemplate = sessionTemplate, visitContact = ContactDto("Jane Doe", "01111111111", "email@example.com"))
     }
   }
+
+  private fun getResults(returnResult: BodyContentSpec): Array<VisitSessionDto> = objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)
 }

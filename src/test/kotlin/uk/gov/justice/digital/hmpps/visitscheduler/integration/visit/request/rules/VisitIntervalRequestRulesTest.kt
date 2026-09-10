@@ -4,18 +4,18 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpHeaders
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestVisitorDetailsDto
+import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.IN_PROGRESS
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonVisitRequestRuleType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.VisitBalancesDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch.PrisonerSearchResultDto
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
@@ -27,8 +27,6 @@ class VisitIntervalRequestRulesTest : IntegrationTestBase() {
 
   private lateinit var reservedPublicApplication: Application
 
-  private lateinit var visitorDetails: MutableSet<BookingRequestVisitorDetailsDto>
-
   private val prisonCode = "DFT"
 
   @BeforeEach
@@ -36,17 +34,6 @@ class VisitIntervalRequestRulesTest : IntegrationTestBase() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
     reservedPublicApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS, userType = PUBLIC)
-    applicationEntityHelper.createContact(application = reservedPublicApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
-    applicationEntityHelper.createVisitor(application = reservedPublicApplication, nomisPersonId = 321L, visitContact = true)
-    applicationEntityHelper.createVisitor(application = reservedPublicApplication, nomisPersonId = 322L, visitContact = false)
-    applicationEntityHelper.createVisitor(application = reservedPublicApplication, nomisPersonId = 323L, visitContact = false)
-    applicationEntityHelper.createSupport(application = reservedPublicApplication, description = "Some Text")
-    reservedPublicApplication = applicationEntityHelper.save(reservedPublicApplication)
-
-    visitorDetails = mutableSetOf()
-    visitorDetails.add(BookingRequestVisitorDetailsDto(321L, 21))
-    visitorDetails.add(BookingRequestVisitorDetailsDto(322L, 25))
-    visitorDetails.add(BookingRequestVisitorDetailsDto(323L, null))
   }
 
   @Test
@@ -65,28 +52,21 @@ class VisitIntervalRequestRulesTest : IntegrationTestBase() {
     visitRequestRuleHelper.createVisitIntervalRule(prisonCode, allowedVisits = 2, intervalDays = 1)
 
     val prisonerId = reservedPublicApplication.prisonerId
-    val applicationReference = reservedPublicApplication.reference
     val prisonerDto = PrisonerSearchResultDto(prisonerNumber = prisonerId, "john", "smith", prisonId = reservedPublicApplication.prison.code)
     prisonOffenderSearchMockServer.stubGetPrisoner(prisonerId, prisonerDto)
     prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
 
     // When
-    val responseSpec = callVisitBook(
-      webTestClient,
-      roleVisitSchedulerHttpHeaders,
-      applicationReference,
-      userType = PUBLIC,
-      bookingRequestDto = BookingRequestDto(actionedBy = "booking_guy", applicationMethodType = ApplicationMethodType.PHONE, allowOverBooking = false, userType = PUBLIC, isRequestBooking = false, visitorDetails = visitorDetails),
-    )
+    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = roleVisitSchedulerHttpHeaders)
 
     // Then
-    responseSpec.expectStatus().isOk
+    responseResult.expectStatus().isOk
 
-    val visitDto = getVisitDto(responseSpec)
-
-    // as there is 1 visit before and 1 visit after the visit date and hence less than allowed, the visit should get auto approved
-    assertThat(visitDto.visitStatus).isEqualTo(BOOKED)
-    assertThat(visitDto.visitSubStatus).isEqualTo(VisitSubStatus.AUTO_APPROVED)
+    val sessions = getResults(responseResult.expectBody())
+    // as there is 1 visit before and 1 visit after the visit date and hence less than allowed, the visit should not be flagged
+    val session = sessions.firstOrNull { it.sessionTemplateReference == sessionTemplateDefault.reference && it.startTimestamp.toLocalDate() == visitDate }
+    assertThat(session).isNotNull
+    assertThat(session!!.sessionPrisonRuleFailures).isEmpty()
   }
 
   @Test
@@ -105,28 +85,22 @@ class VisitIntervalRequestRulesTest : IntegrationTestBase() {
     visitRequestRuleHelper.createVisitIntervalRule(prisonCode, allowedVisits = 2, intervalDays = 1)
 
     val prisonerId = reservedPublicApplication.prisonerId
-    val applicationReference = reservedPublicApplication.reference
     val prisonerDto = PrisonerSearchResultDto(prisonerNumber = prisonerId, "john", "smith", prisonId = reservedPublicApplication.prison.code)
     prisonOffenderSearchMockServer.stubGetPrisoner(prisonerId, prisonerDto)
     prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
 
     // When
-    val responseSpec = callVisitBook(
-      webTestClient,
-      roleVisitSchedulerHttpHeaders,
-      applicationReference,
-      userType = PUBLIC,
-      bookingRequestDto = BookingRequestDto(actionedBy = "booking_guy", applicationMethodType = ApplicationMethodType.PHONE, allowOverBooking = false, userType = PUBLIC, isRequestBooking = false, visitorDetails = visitorDetails),
-    )
+    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = roleVisitSchedulerHttpHeaders)
 
     // Then
-    responseSpec.expectStatus().isOk
+    responseResult.expectStatus().isOk
 
-    val visitDto = getVisitDto(responseSpec)
-
-    // as there are 2 visits before and 1 visit after the visit date and hence more than allowed, the visit should not be auto approved
-    assertThat(visitDto.visitStatus).isEqualTo(BOOKED)
-    assertThat(visitDto.visitSubStatus).isEqualTo(VisitSubStatus.REQUESTED)
+    val sessions = getResults(responseResult.expectBody())
+    // as there are 2 visits before and 1 visit after the visit date and hence more than allowed, the visit should be flagged
+    val session = sessions.firstOrNull { it.sessionTemplateReference == sessionTemplateDefault.reference && it.startTimestamp.toLocalDate() == visitDate }
+    assertThat(session).isNotNull
+    assertThat(session!!.sessionPrisonRuleFailures.size).isEqualTo(1)
+    assertThat(session.sessionPrisonRuleFailures[0]).isEqualTo(PrisonVisitRequestRuleType.VISIT_INTERVAL)
   }
 
   @Test
@@ -145,28 +119,22 @@ class VisitIntervalRequestRulesTest : IntegrationTestBase() {
     visitRequestRuleHelper.createVisitIntervalRule(prisonCode, allowedVisits = 2, intervalDays = 1)
 
     val prisonerId = reservedPublicApplication.prisonerId
-    val applicationReference = reservedPublicApplication.reference
     val prisonerDto = PrisonerSearchResultDto(prisonerNumber = prisonerId, "john", "smith", prisonId = reservedPublicApplication.prison.code)
     prisonOffenderSearchMockServer.stubGetPrisoner(prisonerId, prisonerDto)
     prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
 
     // When
-    val responseSpec = callVisitBook(
-      webTestClient,
-      roleVisitSchedulerHttpHeaders,
-      applicationReference,
-      userType = PUBLIC,
-      bookingRequestDto = BookingRequestDto(actionedBy = "booking_guy", applicationMethodType = ApplicationMethodType.PHONE, allowOverBooking = false, userType = PUBLIC, isRequestBooking = false, visitorDetails = visitorDetails),
-    )
+    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = roleVisitSchedulerHttpHeaders)
 
     // Then
-    responseSpec.expectStatus().isOk
+    responseResult.expectStatus().isOk
 
-    val visitDto = getVisitDto(responseSpec)
-
-    // as there are 1 visit before and 2 visits after the visit date and hence more than allowed, the visit should not be auto approved
-    assertThat(visitDto.visitStatus).isEqualTo(BOOKED)
-    assertThat(visitDto.visitSubStatus).isEqualTo(VisitSubStatus.REQUESTED)
+    val sessions = getResults(responseResult.expectBody())
+    // as there are 1 visit before and 2 visits after the visit date and hence more than allowed, the visit should be flagged
+    val session = sessions.firstOrNull { it.sessionTemplateReference == sessionTemplateDefault.reference && it.startTimestamp.toLocalDate() == visitDate }
+    assertThat(session).isNotNull
+    assertThat(session!!.sessionPrisonRuleFailures.size).isEqualTo(1)
+    assertThat(session.sessionPrisonRuleFailures[0]).isEqualTo(PrisonVisitRequestRuleType.VISIT_INTERVAL)
   }
 
   @Test
@@ -186,28 +154,22 @@ class VisitIntervalRequestRulesTest : IntegrationTestBase() {
     visitRequestRuleHelper.createVisitIntervalRule(prisonCode, allowedVisits = 2, intervalDays = 1)
 
     val prisonerId = reservedPublicApplication.prisonerId
-    val applicationReference = reservedPublicApplication.reference
     val prisonerDto = PrisonerSearchResultDto(prisonerNumber = prisonerId, "john", "smith", prisonId = reservedPublicApplication.prison.code)
     prisonOffenderSearchMockServer.stubGetPrisoner(prisonerId, prisonerDto)
     prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
 
-    // When
-    val responseSpec = callVisitBook(
-      webTestClient,
-      roleVisitSchedulerHttpHeaders,
-      applicationReference,
-      userType = PUBLIC,
-      bookingRequestDto = BookingRequestDto(actionedBy = "booking_guy", applicationMethodType = ApplicationMethodType.PHONE, allowOverBooking = false, userType = PUBLIC, isRequestBooking = false, visitorDetails = visitorDetails),
-    )
+// When
+    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = roleVisitSchedulerHttpHeaders)
 
     // Then
-    responseSpec.expectStatus().isOk
+    responseResult.expectStatus().isOk
 
-    val visitDto = getVisitDto(responseSpec)
-
-    // as there are 2 visits already booked for the visit date and hence more than allowed, the visit should not be auto approved
-    assertThat(visitDto.visitStatus).isEqualTo(BOOKED)
-    assertThat(visitDto.visitSubStatus).isEqualTo(VisitSubStatus.REQUESTED)
+    val sessions = getResults(responseResult.expectBody())
+    // as there are 1 visit before and 2 visits after the visit date and hence more than allowed, the visit should be flagged
+    val session = sessions.firstOrNull { it.sessionTemplateReference == sessionTemplateDefault.reference && it.startTimestamp.toLocalDate() == visitDate }
+    assertThat(session).isNotNull
+    assertThat(session!!.sessionPrisonRuleFailures.size).isEqualTo(1)
+    assertThat(session.sessionPrisonRuleFailures[0]).isEqualTo(PrisonVisitRequestRuleType.VISIT_INTERVAL)
   }
 
   private fun createBookedVisits(visitDate: LocalDate, totalVisits: Int, sessionTemplate: SessionTemplate) {
@@ -223,4 +185,6 @@ class VisitIntervalRequestRulesTest : IntegrationTestBase() {
       visitEntityHelper.create(visitStatus = visitStatus, visitSubStatus = visitSubStatus, slotDate = visitDate, sessionTemplate = sessionTemplate, visitContact = ContactDto("Jane Doe", "01111111111", "email@example.com"))
     }
   }
+
+  private fun getResults(returnResult: BodyContentSpec): Array<VisitSessionDto> = objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)
 }

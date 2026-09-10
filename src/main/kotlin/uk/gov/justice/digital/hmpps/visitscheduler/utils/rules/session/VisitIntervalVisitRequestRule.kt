@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.utils.rules
+package uk.gov.justice.digital.hmpps.visitscheduler.utils.rules.session
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -6,20 +6,19 @@ import org.springframework.context.annotation.Description
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonVisitRequestRuleConfigType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonVisitRequestRules
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 
 @Service
 @Description("This rule will ensure visits for same prisoner within n days (before or after) are being flagged")
 class VisitIntervalVisitRequestRule(
   private val visitRepository: VisitRepository,
-) : VisitRequestRule<Application> {
+) : VisitRequestRule<SessionRequestInfo> {
   companion object {
     val logger: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
-  override fun ruleCheck(application: Application, prisonVisitRequestRules: PrisonVisitRequestRules): Boolean {
-    val prisonCode = application.prison.code
+  override fun ruleCheck(sessionRequest: SessionRequestInfo, prisonVisitRequestRules: PrisonVisitRequestRules): Boolean {
+    val prisonCode = sessionRequest.prisonCode
     val rulesConfig = getConfigValues(prisonVisitRequestRules)
     val interval = getInterval(rulesConfig, prisonCode)
     val allowedVisits = getVisitsAllowed(rulesConfig, prisonCode)
@@ -29,8 +28,8 @@ class VisitIntervalVisitRequestRule(
       return false
     }
 
-    val prisonerId = application.prisonerId
-    val visitDate = application.sessionSlot.slotDate
+    val prisonerId = sessionRequest.prisonerId
+    val visitDate = sessionRequest.visitSession.startTimestamp.toLocalDate()
     val fromDate = visitDate.minusDays(interval.toLong())
     val toDate = visitDate.plusDays(interval.toLong())
 

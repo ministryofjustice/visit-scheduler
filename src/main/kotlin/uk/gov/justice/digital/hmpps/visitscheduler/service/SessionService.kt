@@ -35,6 +35,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonConfigService.C
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonConfigService.Companion.DEFAULT_BOOKING_MIN_DAYS
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionConflictsUtil
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionDatesUtil
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.rules.session.SessionRequestInfo
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -58,6 +59,7 @@ class SessionService(
   private val applicationService: ApplicationService,
   private val prisonerSessionValidationService: PrisonerSessionValidationService,
   private val visitOrderBalanceService: VisitOrderBalanceService,
+  private val visitRequestRuleCheckerService: VisitRequestRuleCheckerService,
   private val sessionConflictsUtil: SessionConflictsUtil,
 ) {
   companion object {
@@ -265,6 +267,20 @@ class SessionService(
           sessionExcludeDates = excludedDatesForSession,
           voBalance = voBalance,
         )
+      }
+
+      // TODO - this needs more work now as doing this for each session will be inefficient and a lot of redundant queries - around max visits per month will be fired
+      //  maybe we can have it as a separate endpoint that gets called when the user selects the session?
+      visitSessions.forEach { session ->
+        val sessionRequest = SessionRequestInfo(
+          prisonCode = prison.code,
+          prisonerId = prisoner.prisonerId,
+          visitSession = session,
+          visitorIds = null,
+          userType = UserType.STAFF,
+        )
+        val failedRules = visitRequestRuleCheckerService.getRequestReviewReasons(sessionRequest)
+        session.sessionPrisonRuleFailures = failedRules
       }
     }
   }
