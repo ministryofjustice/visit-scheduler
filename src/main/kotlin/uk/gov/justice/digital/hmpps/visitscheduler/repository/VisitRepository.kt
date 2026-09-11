@@ -225,6 +225,21 @@ interface VisitRepository :
   ): List<Visit>
 
   @Query(
+    "SELECT count(v)  FROM Visit v " +
+      "WHERE v.visitStatus = 'BOOKED' AND " +
+      "v.prisonerId = :prisonerId AND " +
+      "v.prison.code = :prisonCode AND " +
+      "v.sessionSlot.slotDate >= :fromDate AND " +
+      "v.sessionSlot.slotDate <= :toDate ",
+  )
+  fun getBookedVisitsCountForPrisoner(
+    @Param("prisonerId") prisonerId: String,
+    @Param("prisonCode") prisonCode: String,
+    @Param("fromDate") fromDate: LocalDate,
+    @Param("toDate") toDate: LocalDate,
+  ): Long
+
+  @Query(
     "SELECT v FROM Visit v WHERE " +
       "(:#{#prisonerId} is null OR v.prisonerId = :prisonerId)  AND  " +
       "(:#{#prisonCode} is null OR v.prison.code = :prisonCode) AND " +
@@ -622,4 +637,20 @@ interface VisitRepository :
     "UPDATE Visit v set v.prisonerId = :newPrisonerId WHERE v.prisonerId = :oldPrisonerId",
   )
   fun updatePrisonerId(oldPrisonerId: String, newPrisonerId: String): Int
+
+  @Transactional(readOnly = true)
+  @Query(
+    "SELECT v.* " +
+      "FROM visit v " +
+      "INNER JOIN prison p ON p.id = v.prison_id " +
+      "INNER JOIN event_audit ea ON ea.booking_reference = v.reference " +
+      "WHERE v.prisoner_id = :prisonerId " +
+      "AND v.visit_status = 'CANCELLED' " +
+      "AND v.visit_sub_status = 'REJECTED' " +
+      "AND p.code = :prisonCode " +
+      "AND ea.type = 'REQUESTED_VISIT_REJECTED' " +
+      "AND ea.create_timestamp >= :rejectionDateTime",
+    nativeQuery = true,
+  )
+  fun getRejectedVisitsForPrisoner(prisonerId: String, prisonCode: String, rejectionDateTime: LocalDateTime): List<Visit>
 }

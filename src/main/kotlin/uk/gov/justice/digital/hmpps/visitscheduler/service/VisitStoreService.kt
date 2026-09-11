@@ -13,6 +13,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitFromExternalSy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.RequestRuleType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.VISIT_UPDATED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType
@@ -42,6 +44,7 @@ class VisitStoreService(
   private val sessionSlotService: SessionSlotService,
   private val applicationValidationService: ApplicationValidationService,
   private val applicationService: ApplicationService,
+  private val visitRequestRuleCheckerService: VisitRequestRuleCheckerService,
   @param:Autowired private val visitDtoBuilder: VisitDtoBuilder,
   @param:Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int,
 ) {
@@ -109,9 +112,9 @@ class VisitStoreService(
       // Create new booking
       val visitSubStatus =
         if (bookingRequestDto.isRequestBooking == true) {
-          VisitSubStatus.REQUESTED
+          getRequestedOrRejectedStatus(application)
         } else {
-          VisitSubStatus.AUTO_APPROVED
+          getApprovedOrRequestedStatus(application)
         }
 
       Visit(
@@ -123,10 +126,14 @@ class VisitStoreService(
         visitType = application.visitType,
         visitRestriction = application.restriction,
         visitRoom = visitRoom,
-        visitStatus = BOOKED,
+        visitStatus = if (visitSubStatus == VisitSubStatus.REJECTED) CANCELLED else BOOKED,
         visitSubStatus = visitSubStatus,
         userType = application.userType,
       )
+    }
+
+    if (notSavedBooking.visitStatus == CANCELLED) {
+      notSavedBooking.outcomeStatus = OutcomeStatus.REQUESTED_VISIT_AUTO_REJECTED
     }
 
     val booking = visitRepository.saveAndFlush(notSavedBooking)
@@ -180,6 +187,18 @@ class VisitStoreService(
   @Transactional(readOnly = true)
   fun getBookingByApplicationReference(applicationReference: String): VisitDto? = visitRepository.findVisitByApplicationReference(applicationReference)?.let {
     visitDtoBuilder.build(it)
+  }
+
+  private fun getApprovedOrRequestedStatus(application: Application): VisitSubStatus = if (application.userType == UserType.PUBLIC && visitRequestRuleCheckerService.getRequestReviewReasons(application, RequestRuleType.REQUESTED_RULE).isNotEmpty()) {
+    VisitSubStatus.REQUESTED
+  } else {
+    VisitSubStatus.AUTO_APPROVED
+  }
+
+  private fun getRequestedOrRejectedStatus(application: Application): VisitSubStatus = if (visitRequestRuleCheckerService.getRequestReviewReasons(application, RequestRuleType.REJECTION_RULE).isNotEmpty()) {
+    VisitSubStatus.REJECTED
+  } else {
+    VisitSubStatus.REQUESTED
   }
 
   private fun hasNotBeenAddedToBooking(booking: Visit, application: Application): Boolean = if (booking.getApplications().isEmpty()) true else booking.getApplications().any { it.id == application.id }
