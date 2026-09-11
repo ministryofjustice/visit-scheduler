@@ -174,6 +174,8 @@ class SessionTemplateService(
       includeCategoryGroupType = createSessionTemplateDto.includeCategoryGroupType,
       includeIncentiveGroupType = createSessionTemplateDto.includeIncentiveGroupType,
       visitOrderRestriction = createSessionTemplateDto.visitOrderRestriction,
+      isAgeRestricted = createSessionTemplateDto.isAgeRestricted ?: false,
+      ageRestriction = createSessionTemplateDto.ageRestriction ?: 18,
     )
 
     createSessionTemplateDto.categoryGroupReferences?.let {
@@ -252,6 +254,14 @@ class SessionTemplateService(
 
       visitOrderRestriction?.let {
         sessionTemplateRepository.updateVisitOrderRestriction(reference, visitOrderRestriction = it)
+      }
+
+      isAgeRestricted?.let {
+        sessionTemplateRepository.updateIsAgeRestricted(reference, isAgeRestricted = it)
+      }
+
+      ageRestriction?.let {
+        sessionTemplateRepository.updateAgeRestriction(reference, ageRestriction = it)
       }
     }
 

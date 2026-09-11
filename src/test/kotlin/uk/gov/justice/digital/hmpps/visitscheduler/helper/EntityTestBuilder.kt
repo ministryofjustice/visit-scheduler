@@ -87,6 +87,8 @@ fun sessionTemplate(
   prison: Prison,
   userTypes: List<UserType> = listOf(UserType.STAFF, UserType.PUBLIC),
   visitOrderRestrictionType: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
+  isAgeRestricted: Boolean = false,
+  ageRestriction: Int = 18,
 ): SessionTemplate {
   var sessionTemplate = SessionTemplate(
     name = name + dayOfWeek,
@@ -109,6 +111,8 @@ fun sessionTemplate(
     includeCategoryGroupType = includeCategoryGroupType,
     includeIncentiveGroupType = includeIncentiveGroupType,
     visitOrderRestriction = visitOrderRestrictionType,
+    isAgeRestricted = isAgeRestricted,
+    ageRestriction = ageRestriction,
   ).also { it.reference = UUID.randomUUID().toString() }
 
   sessionTemplate = addUserClients(sessionTemplate, userTypes)
@@ -144,6 +148,8 @@ fun sessionTemplate(
   includeIncentiveGroupType: Boolean = true,
   userTypes: List<UserType> = listOf(UserType.STAFF, UserType.PUBLIC),
   visitOrderRestrictionType: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
+  isAgeRestricted: Boolean = false,
+  ageRestriction: Int = 18,
 ): SessionTemplate {
   val prison = Prison(
     code = prisonCode,
@@ -180,6 +186,8 @@ fun sessionTemplate(
     includeCategoryGroupType = includeCategoryGroupType,
     includeIncentiveGroupType = includeIncentiveGroupType,
     visitOrderRestriction = visitOrderRestrictionType,
+    isAgeRestricted = isAgeRestricted,
+    ageRestriction = ageRestriction,
   ).also { it.reference = UUID.randomUUID().toString() }
   sessionTemplate = addUserClients(sessionTemplate, userTypes)
 
@@ -297,6 +305,8 @@ fun createCreateSessionTemplateDto(
   includeIncentiveGroupType = includeIncentiveGroupType,
   clients = userClients,
   visitOrderRestriction = visitOrderRestrictionType,
+  isAgeRestricted = false,
+  ageRestriction = 18,
 )
 
 fun createCreateSessionTemplateDto(
@@ -326,6 +336,8 @@ fun createCreateSessionTemplateDto(
   includeCategoryGroupType = includeCategoryGroupType,
   includeIncentiveGroupType = includeIncentiveGroupType,
   visitOrderRestriction = visitOrderRestrictionType,
+  isAgeRestricted = false,
+  ageRestriction = 18,
 )
 
 fun createUpdateSessionTemplateDto(

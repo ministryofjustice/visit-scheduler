@@ -797,6 +797,30 @@ class SessionServiceTest {
       // Then
       Mockito.verify(prisonerValidationService, times(1)).validatePrisonerIsFromPrison(prisonerDto, prisonCode)
     }
+
+    @Test
+    fun `sessions contain conflicts when a prisoner has an underage visitor`() {
+      // Given
+      val singleSession = sessionTemplate(
+        validFromDate = currentDate,
+        startTime = LocalTime.parse("11:30"),
+        endTime = LocalTime.parse("12:30"),
+        isAgeRestricted = true,
+        ageRestriction = 18,
+      )
+
+      mockSessionTemplateRepositoryResponse(listOf(singleSession))
+      mockSessionSlots(singleSession)
+
+      // When
+      val sessions = sessionService.getAllVisitSessions(prisonCode, prisonerId, userType = STAFF, youngestVisitorAge = 16)
+
+      // Then
+      assertThat(sessions).size().isGreaterThan(0)
+      assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
+      assertThat(sessions[0].sessionConflicts.map { it.sessionConflict }.first()).isEqualTo(SessionConflict.AGE_RESTRICTION)
+      Mockito.verify(prisonerService, times(1)).getPrisonerNonAssociationList(prisonerId)
+    }
   }
 
   @Nested
@@ -999,6 +1023,29 @@ class SessionServiceTest {
       assertThat(sessions).size().isEqualTo(1)
       assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
       assertThat(sessions[0].sessionConflicts.map { it.sessionConflict }).contains(SessionConflict.NO_VO_BALANCE)
+    }
+
+    @Test
+    fun `sessions do not contain age-restrictions conflicts when a session is not age-restricted`() {
+      // Given
+      val singleSession = sessionTemplate(
+        validFromDate = currentDate,
+        startTime = LocalTime.parse("11:30"),
+        endTime = LocalTime.parse("12:30"),
+        isAgeRestricted = false,
+        ageRestriction = 18,
+      )
+
+      mockSessionTemplateRepositoryResponse(listOf(singleSession))
+      mockSessionSlots(singleSession)
+
+      // When
+      val sessions = sessionService.getAllVisitSessions(prisonCode, prisonerId, userType = STAFF, youngestVisitorAge = 16)
+
+      // Then
+      assertThat(sessions).size().isGreaterThan(0)
+      assertThat(sessions[0].sessionConflicts).size().isEqualTo(0)
+      Mockito.verify(prisonerService, times(1)).getPrisonerNonAssociationList(prisonerId)
     }
   }
 
