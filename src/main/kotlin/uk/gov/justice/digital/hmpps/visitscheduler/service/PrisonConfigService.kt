@@ -168,16 +168,6 @@ class PrisonConfigService(
   private fun setPrisonClients(prisonDto: UpdatePrisonDto, prison: Prison) {
     if (prisonDto.clients == null) {
       prisonDto.clients = prison.clients.map { PrisonUserClientDto(it) }.toList()
-
-      if (prisonDto.policyNoticeDaysMin != null || prisonDto.policyNoticeDaysMax != null) {
-        prisonDto.policyNoticeDaysMin?.let {
-          prisonDto.clients?.forEach { it.policyNoticeDaysMin = prisonDto.policyNoticeDaysMin }
-        }
-
-        prisonDto.policyNoticeDaysMax?.let {
-          prisonDto.clients?.forEach { it.policyNoticeDaysMax = prisonDto.policyNoticeDaysMax }
-        }
-      }
     }
   }
 
