@@ -59,7 +59,7 @@ class GetSessionsRemandLimitTest : IntegrationTestBase() {
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
-    assertThat(visitSessionResults.size).isEqualTo(14)
+    assertThat(visitSessionResults.size).isEqualTo(15)
     val week1StartDate = startDate
     val week1EndDate = startDate.with(TemporalAdjusters.next(DayOfWeek.SUNDAY))
     val week2StartDate = week1EndDate.plusDays(1)
@@ -122,7 +122,7 @@ class GetSessionsRemandLimitTest : IntegrationTestBase() {
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
-    assertThat(visitSessionResults.size).isEqualTo(14)
+    assertThat(visitSessionResults.size).isEqualTo(15)
     assertThat(visitSessionResults).noneMatch { it.sessionConflicts.map { sessionConflictDto -> sessionConflictDto.sessionConflict }.contains(REMAND_VISITS_LIMIT_REACHED) }
   }
 
@@ -157,7 +157,7 @@ class GetSessionsRemandLimitTest : IntegrationTestBase() {
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
-    assertThat(visitSessionResults.size).isEqualTo(14)
+    assertThat(visitSessionResults.size).isEqualTo(15)
     assertThat(visitSessionResults).noneMatch { it.sessionConflicts.map { sessionConflictDto -> sessionConflictDto.sessionConflict }.contains(REMAND_VISITS_LIMIT_REACHED) }
   }
 
@@ -172,7 +172,7 @@ class GetSessionsRemandLimitTest : IntegrationTestBase() {
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
-    assertThat(visitSessionResults.size).isEqualTo(14)
+    assertThat(visitSessionResults.size).isEqualTo(15)
     assertThat(visitSessionResults).noneMatch { it.sessionConflicts.map { sessionConflictDto -> sessionConflictDto.sessionConflict }.contains(REMAND_VISITS_LIMIT_REACHED) }
   }
 
@@ -193,7 +193,7 @@ class GetSessionsRemandLimitTest : IntegrationTestBase() {
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
-    assertThat(visitSessionResults.size).isEqualTo(14)
+    assertThat(visitSessionResults.size).isEqualTo(15)
     assertThat(visitSessionResults).noneMatch { it.sessionConflicts.map { sessionConflictDto -> sessionConflictDto.sessionConflict }.contains(REMAND_VISITS_LIMIT_REACHED) }
   }
 
