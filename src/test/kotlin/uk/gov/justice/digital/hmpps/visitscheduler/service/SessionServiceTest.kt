@@ -122,7 +122,7 @@ class SessionServiceTest {
     whenever(
       sessionTemplateRepository.findSessionTemplateMinCapacityBy(
         prisonCode = prisonCode,
-        rangeStartDate = currentDate.plusDays(noticeDaysMin.toLong().plus(1)),
+        rangeStartDate = currentDate.plusDays(noticeDaysMin.toLong()),
         rangeEndDate = currentDate.plusDays(noticeDaysMax.toLong()),
       ),
     ).thenReturn(response)
