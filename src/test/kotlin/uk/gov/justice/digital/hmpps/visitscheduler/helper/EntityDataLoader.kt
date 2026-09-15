@@ -141,8 +141,6 @@ class PrisonEntityHelper(
     )
 
     fun updatePrisonDto(
-      policyNoticeDaysMin: Int = 10,
-      policyNoticeDaysMax: Int = 20,
       maxTotalVisitors: Int = 4,
       maxAdultVisitors: Int = 2,
       maxChildVisitors: Int = 2,
@@ -154,8 +152,6 @@ class PrisonEntityHelper(
         PrisonUserClientDto(2, 28, PUBLIC, active = true),
       ),
     ): UpdatePrisonDto = UpdatePrisonDto(
-      policyNoticeDaysMin = policyNoticeDaysMin,
-      policyNoticeDaysMax = policyNoticeDaysMax,
       maxTotalVisitors = maxTotalVisitors,
       maxAdultVisitors = maxAdultVisitors,
       maxChildVisitors = maxChildVisitors,
