@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Description
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonVisitRequestRuleConfigType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonVisitRequestRules
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.temporal.TemporalAdjusters
@@ -13,19 +14,20 @@ import java.time.temporal.TemporalAdjusters
 @Description("This rule will ensure visits above the allowed limit for the month are being flagged")
 class MaxVisitsPerMonthVisitRequestRule(
   private val visitRepository: VisitRepository,
-) : VisitRequestRule<SessionRequestInfo> {
+) : VisitRequestRule {
   companion object {
     val logger: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
   override fun ruleCheck(
     sessionRequest: SessionRequestInfo,
+    visitSessions: List<VisitSessionDto>,
     prisonVisitRequestRules: PrisonVisitRequestRules,
-  ): Boolean {
+  ): List<VisitSessionDto> {
     val maxVisitsAllowedPerMonth = getMaxVisitsPerMonth(prisonVisitRequestRules)
     if (maxVisitsAllowedPerMonth == null) {
       logger.error("Max visits not set or set incorrectly for max visits a month rule for prison ${prisonVisitRequestRules.prison.code}")
-      return false
+      return visitSessions
     }
 
     val prisonerId = sessionRequest.prisonerId
@@ -41,7 +43,7 @@ class MaxVisitsPerMonthVisitRequestRule(
       toDate = toDate,
     )
 
-    return totalBookedVisitsForPrisoner >= maxVisitsAllowedPerMonth
+    return visitSessions
   }
 
   private fun getMaxVisitsPerMonth(prisonVisitRequestRules: PrisonVisitRequestRules): Int? = try {
