@@ -2998,6 +2998,8 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     assertThat(visitSession.sessionTimeSlot.endTime).isEqualTo(expectedSessionTemplate.endTime)
     assertThat(visitSession.sessionRestriction).isEqualTo(sessionRestriction)
     assertThat(visitSession.visitOrderRestriction).isEqualTo(expectedSessionTemplate.visitOrderRestriction)
+    assertThat(visitSession.isAgeRestricted).isEqualTo(expectedSessionTemplate.isAgeRestricted)
+    assertThat(visitSession.ageRestriction).isEqualTo(expectedSessionTemplate.ageRestriction)
 
     if (sessionConflict != null) {
       assertThat(visitSession.sessionConflicts.map { it.toSessionConflict() }).contains(sessionConflict)

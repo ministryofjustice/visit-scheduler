@@ -88,6 +88,8 @@ class SessionService(
         visitRoom = sessionTemplate.visitRoom,
         visitType = sessionTemplate.visitType,
         visitOrderRestriction = sessionTemplate.visitOrderRestriction,
+        isAgeRestricted = sessionTemplate.isAgeRestricted,
+        ageRestriction = sessionTemplate.ageRestriction,
       )
     }.also {
       val sessionSlots = getSessionSlots(it)
@@ -434,6 +436,8 @@ class SessionService(
             visitRoom = sessionTemplate.visitRoom,
             visitType = sessionTemplate.visitType,
             visitOrderRestriction = sessionTemplate.visitOrderRestriction,
+            isAgeRestricted = sessionTemplate.isAgeRestricted,
+            ageRestriction = sessionTemplate.ageRestriction,
           )
         }
         .toList()
