@@ -398,10 +398,10 @@ class SessionService(
   ): DateRange {
     val today = LocalDate.now()
 
-    // add 1 to the policyNoticeDaysMin to ensure we are adding whole days
+    // do not add 1 to the policyNoticeDaysMin to ensure we are adding whole days
     val client = prison.clients.find { it.userType == userType }
     val minPolicy = client?.policyNoticeDaysMin ?: DEFAULT_BOOKING_MIN_DAYS
-    val min = minOverride ?: minPolicy.plus(1)
+    val min = minOverride ?: minPolicy
     val max = maxOverride ?: client?.policyNoticeDaysMax ?: DEFAULT_BOOKING_MAX_DAYS
 
     val requestedBookableStartDate = today.plusDays(min.toLong())
