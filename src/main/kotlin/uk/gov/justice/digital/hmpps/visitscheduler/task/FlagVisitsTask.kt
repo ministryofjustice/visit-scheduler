@@ -167,7 +167,7 @@ class FlagVisitsTask(
   private fun getVisitorDOBs(visit: VisitDto): Map<Long, LocalDate?>? = try {
     prisonerContactRegistryClient.searchContacts(contactIds = visit.visitors.map { it.nomisPersonId }, withRestrictions = false)?.associate { it.contactId to it.dateOfBirth }
   } catch (e: RuntimeException) {
-    LOG.error("Error occurred in call to prisoner contact registry client to get contact details - $e.toString()")
+LOG.error("Error occurred in call to prisoner contact registry client to get contact details", e)
     emptyMap()
   }
 
