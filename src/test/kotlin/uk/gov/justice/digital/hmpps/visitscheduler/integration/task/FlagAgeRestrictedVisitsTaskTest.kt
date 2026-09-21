@@ -82,33 +82,33 @@ class FlagAgeRestrictedVisitsTaskTest : IntegrationTestBase() {
     // 2nd session
     val nonAgeRestrictedSessionTemplate = createSessionTemplate(startTime = startTime.plusHours(2), endTime = endTime.plusHours(2), dayOfWeek = visitDate.dayOfWeek, isAgeRestricted = false, ageRestriction = 18)
 
-    // visitor is over allowed age hence allowed on the visit
+    // visitor is over allowed age hence should not be flagged
     val visitor1 = createContactWithOptionalPrisonerRelationshipDto(personId = 1L, dateOfBirth = visitDate.minusYears(19), approvedVisitor = true)
-    // visitor is below allowed age hence not allowed on the visit
+    // visitor is below allowed age hence should be flagged
     val visitor2 = createContactWithOptionalPrisonerRelationshipDto(personId = 2L, dateOfBirth = visitDate.minusYears(12), approvedVisitor = true)
     val prisonerAVisitors = listOf(Pair(visitor1.contactId, false), Pair(visitor2.contactId, false))
 
-    // visitor is over allowed age hence allowed on the visit
+    // visitor is over allowed age hence should not be flagged
     val visitor3 = createContactWithOptionalPrisonerRelationshipDto(personId = 3L, dateOfBirth = visitDate.minusYears(31), approvedVisitor = true)
-    // visitor does not have a DOB hence allowed on the visit
-    val visitor4 = createContactWithOptionalPrisonerRelationshipDto(personId = 4L, dateOfBirth = null, approvedVisitor = true)
-    // visitor is exactly the allowed age hence allowed on the visit
+    // visitor is over allowed age hence should not be flagged
+    val visitor4 = createContactWithOptionalPrisonerRelationshipDto(personId = 4L, dateOfBirth = visitDate.minusYears(21), approvedVisitor = true)
+    // visitor is exactly the allowed age hence should not be flagged
     val visitor5 = createContactWithOptionalPrisonerRelationshipDto(personId = 5L, dateOfBirth = visitDate.minusYears(18), approvedVisitor = true)
     val prisonerBVisitors = listOf(Pair(visitor3.contactId, false), Pair(visitor4.contactId, false), Pair(visitor5.contactId, false))
 
-    // visitor does not have a DOB hence allowed on the visit
+    // visitor does not have a DOB hence should be flagged
     val visitor6 = createContactWithOptionalPrisonerRelationshipDto(personId = 6L, dateOfBirth = null, approvedVisitor = true)
-    // visitor is over allowed age hence allowed on the visit
+    // visitor is over allowed age hence should not be flagged
     val visitor7 = createContactWithOptionalPrisonerRelationshipDto(personId = 7L, dateOfBirth = visitDate.minusYears(21), approvedVisitor = true)
-    // visitor is over allowed age hence allowed on the visit
+    // visitor is over allowed age hence should not be flagged
     val visitor8 = createContactWithOptionalPrisonerRelationshipDto(personId = 8L, dateOfBirth = visitDate.minusYears(45), approvedVisitor = true)
     val prisonerCVisitors = listOf(Pair(visitor6.contactId, false), Pair(visitor7.contactId, false), Pair(visitor8.contactId, false))
 
-    // visitor is below allowed age hence not allowed on the visit
+    // visitor is below allowed age hence should be flagged
     val visitor9 = createContactWithOptionalPrisonerRelationshipDto(personId = 9L, dateOfBirth = visitDate.minusYears(18).plusDays(1), approvedVisitor = true)
     val prisonerDVisitors = listOf(Pair(visitor9.contactId, false))
 
-    // visitor is over allowed age hence allowed on the visit
+    // visitor is over allowed age hence should not be flagged
     val visitor10 = createContactWithOptionalPrisonerRelationshipDto(personId = 10L, dateOfBirth = visitDate.minusYears(18).minusDays(1), approvedVisitor = true)
     val prisonerEVisitors = listOf(Pair(visitor10.contactId, false))
 
@@ -152,9 +152,10 @@ class FlagAgeRestrictedVisitsTaskTest : IntegrationTestBase() {
     flagVisitsTask.flagVisits()
 
     // Then
-    verify(telemetryClient, times(2)).trackEvent(eq("flagged-visit-event"), any(), isNull())
-    assertFlaggedVisitEvent(prisonerAVisit1, "Age restricted visit")
-    assertFlaggedVisitEvent(prisonerDVisit1, "Age restricted visit")
+    verify(telemetryClient, times(3)).trackEvent(eq("flagged-visit-event"), any(), isNull())
+    assertFlaggedVisitEvent(prisonerAVisit1, "Age restricted visit - visitors below allowed age")
+    assertFlaggedVisitEvent(prisonerCVisit1, "Age restricted visit - visitors without a DOB")
+    assertFlaggedVisitEvent(prisonerDVisit1, "Age restricted visit - visitors below allowed age")
   }
 
   private fun assertFlaggedVisitEvent(visit: Visit, additionalInformation: String) {

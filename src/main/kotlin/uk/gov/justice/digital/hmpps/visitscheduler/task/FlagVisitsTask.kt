@@ -150,19 +150,27 @@ class FlagVisitsTask(
 
     // go through all visits for the date and flag any visits that have age-restricted visitors
     visits.forEach { visit ->
-      if (hasAgeRestrictedVisitors(visit, ageRestrictedSessionTemplate)) {
-        LOG.debug("Flagging visit - {} as it has age restricted visitors.", visit.reference)
-        trackEvent(visit, "Age restricted visit")
+      getVisitorDOBs(visit)?.let { visitorsWithDOBDetails ->
+        if (hasAgeRestrictedVisitors(visit, visitorsWithDOBDetails, ageRestrictedSessionTemplate)) {
+          LOG.debug("Flagging visit - {} as it has age restricted visitors.", visit.reference)
+          trackEvent(visit, "Age restricted visit - visitors below allowed age")
+        }
+
+        if (hasVisitorsWithoutDOB(visitorsWithDOBDetails)) {
+          LOG.debug("Flagging visit - {} as it has visitors without DOBs.", visit.reference)
+          trackEvent(visit, "Age restricted visit - visitors without a DOB")
+        }
       }
     }
   }
 
-  private fun hasAgeRestrictedVisitors(visit: VisitDto, ageRestrictedSessionTemplate: SessionTemplateDto): Boolean {
-    val visitorsWithDOBDetails = getVisitorDOBs(visit)
+  private fun hasAgeRestrictedVisitors(visit: VisitDto, visitorsWithDOBDetails: Map<Long, LocalDate?>, ageRestrictedSessionTemplate: SessionTemplateDto): Boolean {
     val visitDate = visit.startTimestamp.toLocalDate()
     val allowedAge = ageRestrictedSessionTemplate.ageRestriction
-    return (visitorsWithDOBDetails != null && isAnyVisitorBelowAllowedAgeOnVisitDate(visitDate, visitorsWithDOBDetails, allowedAge))
+    return isAnyVisitorBelowAllowedAgeOnVisitDate(visitDate, visitorsWithDOBDetails, allowedAge)
   }
+
+  private fun hasVisitorsWithoutDOB(visitorsWithDOBDetails: Map<Long, LocalDate?>): Boolean = isAnyVisitorWithoutADOB(visitorsWithDOBDetails)
 
   private fun getVisitorDOBs(visit: VisitDto): Map<Long, LocalDate?>? = try {
     prisonerContactRegistryClient.searchContacts(contactIds = visit.visitors.map { it.nomisPersonId }, withRestrictions = false)?.associate { it.contactId to it.dateOfBirth }
@@ -172,6 +180,8 @@ class FlagVisitsTask(
   }
 
   private fun isAnyVisitorBelowAllowedAgeOnVisitDate(visitDate: LocalDate, visitors: Map<Long, LocalDate?>, allowedAge: Int): Boolean = visitors.any { (_, dob) -> isVisitorBelowAllowedAge(dob = dob, visitDate = visitDate, allowedAge = allowedAge) }
+
+  private fun isAnyVisitorWithoutADOB(visitors: Map<Long, LocalDate?>): Boolean = visitors.any { (_, dob) -> dob == null }
 
   private fun trackEvent(visit: VisitDto, reason: String) {
     try {
