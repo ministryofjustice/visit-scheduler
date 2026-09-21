@@ -49,6 +49,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.notify.NotifyCallbackNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.notify.NotifyCreateNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonercontactregistry.ContactWithOptionalPrisonerRelationshipDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonercontactregistry.RestrictionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.SessionCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.SessionIncentiveLevelGroupDto
@@ -97,6 +99,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.UUID.randomUUID
+import java.util.concurrent.ThreadLocalRandom
 
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
@@ -298,7 +301,7 @@ abstract class IntegrationTestBase {
 
   fun formatDateToString(localDate: LocalDate): String = localDate.format(DateTimeFormatter.ISO_DATE)
 
-  fun createApplicationAndVisit(
+  protected fun createApplicationAndVisit(
     prisonerId: String? = "testPrisonerId",
     sessionTemplate: SessionTemplate,
     visitStatus: VisitStatus? = VisitStatus.BOOKED,
@@ -307,8 +310,9 @@ abstract class IntegrationTestBase {
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
     visitContact: ContactDto = ContactDto(name = "Jane Doe", telephone = "01234 098765", email = "email@example.com"),
     userType: UserType = STAFF,
+    visitorIds: List<Pair<Long, Boolean>> = listOf(Pair(321L, false), Pair(621L, false)),
   ): Visit {
-    val application = createApplicationAndSave(prisonerId = prisonerId, sessionTemplate, sessionTemplate.prison.code, slotDate, applicationStatus = ACCEPTED, visitRestriction = visitRestriction, visitContact = visitContact, userType = userType)
+    val application = createApplicationAndSave(prisonerId = prisonerId, sessionTemplate, sessionTemplate.prison.code, slotDate, applicationStatus = ACCEPTED, visitRestriction = visitRestriction, visitContact = visitContact, userType = userType, visitorIds = visitorIds)
     return createVisitAndSave(visitStatus = visitStatus!!, visitSubStatus = visitSubStatus!!, applicationEntity = application, sessionTemplateLocal = sessionTemplate)
   }
 
@@ -344,6 +348,7 @@ abstract class IntegrationTestBase {
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
     visitContact: ContactDto = ContactDto(name = "Jane Doe", telephone = "01234 098765", email = "email@example.com"),
     userType: UserType = STAFF,
+    visitorIds: List<Pair<Long, Boolean>> = listOf(Pair(321L, false), Pair(621L, false)),
   ): Application {
     val sessionTemplateLocal = sessionTemplate ?: sessionTemplateDefault
     val slotDateLocal = slotDate ?: run {
@@ -361,8 +366,9 @@ abstract class IntegrationTestBase {
       userType = userType,
     )
     applicationEntityHelper.createContact(application = applicationEntity, visitContact.name, visitContact.telephone, visitContact.email, visitContact.languagePreference)
-    applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 321L, visitContact = true)
-    applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 621L, visitContact = false)
+    visitorIds.forEach { (nomisPersonId, visitContact) ->
+      applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = nomisPersonId, visitContact = visitContact)
+    }
     applicationEntityHelper.createSupport(application = applicationEntity, description = "Some More Text")
 
     return applicationEntityHelper.save(applicationEntity)
@@ -648,4 +654,30 @@ abstract class IntegrationTestBase {
 
     return queryParams
   }
+
+  protected fun createContactWithOptionalPrisonerRelationshipDto(
+    personId: Long = ThreadLocalRandom.current().nextLong(),
+    firstName: String = "John",
+    middleName: String? = null,
+    lastName: String = "Smith",
+    dateOfBirth: LocalDate? = null,
+    relationshipCode: String? = "OTH",
+    relationshipDescription: String? = "Other",
+    contactType: String? = "S",
+    contactTypeDescription: String? = "Social",
+    restrictions: List<RestrictionDto> = emptyList(),
+    approvedVisitor: Boolean,
+  ): ContactWithOptionalPrisonerRelationshipDto = ContactWithOptionalPrisonerRelationshipDto(
+    contactId = personId,
+    firstName = firstName,
+    middleName = middleName,
+    lastName = lastName,
+    dateOfBirth = dateOfBirth,
+    relationshipCode = relationshipCode,
+    relationshipDescription = relationshipDescription,
+    contactType = contactType,
+    contactTypeDescription = contactTypeDescription,
+    restrictions = restrictions,
+    approvedVisitor = approvedVisitor,
+  )
 }
