@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.NonAssociationCo
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionConflictType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionScheduleDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visit.allocation.VisitOrderPrisonerBalanceDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.CapacityNotFoundException
@@ -643,6 +644,8 @@ class SessionService(
     }
     return startDate
   }
+
+  fun getAgeRestrictedSessionTemplates(prisonCode: String) = sessionTemplateRepository.getAgeRestrictedSessionTemplatesForPrison(prisonCode).map { SessionTemplateDto(it) }
 }
 
 data class DateRange(
