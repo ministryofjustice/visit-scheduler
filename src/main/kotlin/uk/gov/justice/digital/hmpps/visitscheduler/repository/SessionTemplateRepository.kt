@@ -215,4 +215,9 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
     "SELECT new uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTimeSlotDto(st.startTime,st.endTime)  FROM SessionTemplate st WHERE st.reference = :reference",
   )
   fun getSessionTimeSlot(reference: String?): SessionTimeSlotDto?
+
+  @Query(
+    "SELECT st FROM SessionTemplate st WHERE st.isAgeRestricted = true and st.prison.code = :prisonCode",
+  )
+  fun getAgeRestrictedSessionTemplatesForPrison(prisonCode: String): List<SessionTemplate>
 }
