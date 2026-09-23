@@ -1,7 +1,8 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
 import org.springframework.stereotype.Service
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonVisitRequestRuleType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonVisitRequestRules
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonVisitRequestRulesRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.visit.request.rules.VisitRequestRuleFactory
@@ -12,24 +13,21 @@ class VisitRequestRuleCheckerService(
   private val prisonVisitRequestRulesRepository: PrisonVisitRequestRulesRepository,
   private val visitRequestRuleFactory: VisitRequestRuleFactory,
 ) {
-  fun getRequestReviewReasons(sessionRequest: SessionRequestInfo): List<PrisonVisitRequestRuleType> {
-    val failedRules = mutableListOf<PrisonVisitRequestRuleType>()
+  fun getRequestReviewReasons(prisonCode: String, prisonerId: String, visitorIds: List<Long>?, visitSessions: List<VisitSessionDto>) {
+    val sessionRequest = SessionRequestInfo(
+      prisonCode = prisonCode,
+      prisonerId = prisonerId,
+      visitorIds = visitorIds,
+      userType = UserType.STAFF,
+    )
+
     val rules = prisonVisitRequestRulesRepository.findActiveVisitRequestRulesByPrison(sessionRequest.prisonCode)
     rules.forEach { rule ->
-      checkVisitRequestRule(sessionRequest, rule)?.let {
-        failedRules.add(it)
-      }
+      checkVisitRequestRule(sessionRequest, visitSessions, rule)
     }
-
-    return failedRules.toList()
   }
 
-  private fun checkVisitRequestRule(sessionRequest: SessionRequestInfo, prisonVisitRequestRule: PrisonVisitRequestRules): PrisonVisitRequestRuleType? {
-    val checkResult = visitRequestRuleFactory.getRuleChecker(prisonVisitRequestRule)?.ruleCheck(sessionRequest, prisonVisitRequestRule) ?: false
-    if (checkResult) {
-      return prisonVisitRequestRule.ruleName
-    }
-
-    return null
+  private fun checkVisitRequestRule(sessionRequest: SessionRequestInfo, visitSessions: List<VisitSessionDto>, prisonVisitRequestRule: PrisonVisitRequestRules) {
+    visitRequestRuleFactory.getRuleChecker(prisonVisitRequestRule).ruleCheck(sessionRequest, visitSessions, prisonVisitRequestRule)
   }
 }

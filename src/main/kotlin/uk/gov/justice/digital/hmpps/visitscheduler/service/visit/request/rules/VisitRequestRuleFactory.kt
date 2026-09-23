@@ -7,7 +7,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonVisitRequestR
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonVisitRequestRules
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.rules.session.AlreadyRejectedVisitRequestRejectionRule
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.rules.session.MaxVisitsPerMonthVisitRequestRule
-import uk.gov.justice.digital.hmpps.visitscheduler.utils.rules.session.SessionRequestInfo
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.rules.session.VisitIntervalVisitRequestRule
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.rules.session.VisitRequestRule
 
@@ -21,7 +20,7 @@ class VisitRequestRuleFactory(
     val logger: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
-  fun getRuleChecker(prisonVisitRequestRules: PrisonVisitRequestRules): VisitRequestRule<SessionRequestInfo>? = when (prisonVisitRequestRules.ruleName) {
+  fun getRuleChecker(prisonVisitRequestRules: PrisonVisitRequestRules): VisitRequestRule = when (prisonVisitRequestRules.ruleName) {
     PrisonVisitRequestRuleType.VISIT_INTERVAL -> visitIntervalRule
     PrisonVisitRequestRuleType.VISITS_PER_MONTH -> maxVisitsPerMonthRule
     PrisonVisitRequestRuleType.ALREADY_REJECTED_VISIT -> alreadyRejectedVisitRequestRejectionRule

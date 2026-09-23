@@ -549,6 +549,7 @@ abstract class IntegrationTestBase {
     userName: String? = null,
     userType: UserType,
     youngestVisitorAge: Int? = null,
+    visitorIds: List<Long>? = null,
     authHttpHeaders: (HttpHeaders) -> Unit,
   ): ResponseSpec {
     val urlParams = getAvailableSessionsQueryParams(
@@ -559,6 +560,7 @@ abstract class IntegrationTestBase {
       username = userName,
       userType = userType,
       youngestVisitorAge = youngestVisitorAge,
+      visitorIds = visitorIds,
     )
 
     val uri = VISIT_SESSION_CONTROLLER_PATH + "?" + urlParams.joinToString("&")
@@ -617,6 +619,7 @@ abstract class IntegrationTestBase {
     username: String? = null,
     userType: UserType,
     youngestVisitorAge: Int? = null,
+    visitorIds: List<Long>? = null,
   ): List<String> {
     val queryParams = ArrayList<String>()
     queryParams.add("prisonId=$prisonCode")
@@ -650,6 +653,10 @@ abstract class IntegrationTestBase {
 
     youngestVisitorAge?.let {
       queryParams.add("youngestVisitorAge=$youngestVisitorAge")
+    }
+
+    visitorIds?.let {
+      queryParams.add("visitorIds=${visitorIds.joinToString(",")}")
     }
 
     return queryParams

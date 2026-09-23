@@ -37,7 +37,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonConfigService.C
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonConfigService.Companion.DEFAULT_BOOKING_MIN_DAYS
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionConflictsUtil
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionDatesUtil
-import uk.gov.justice.digital.hmpps.visitscheduler.utils.rules.session.SessionRequestInfo
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -112,6 +111,8 @@ class SessionService(
     usernameToExcludeFromReservedApplications: String? = null,
     userType: UserType,
     youngestVisitorAge: Int? = null,
+    visitorIds: List<Long>? = null,
+    addSessionConflictsAndBookedCount: Boolean = true,
   ): List<VisitSessionDto> {
     if (userType != UserType.STAFF) {
       throw ValidationException("Cannot call endpoint for userType - $userType")
@@ -128,6 +129,9 @@ class SessionService(
       usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications,
       userType = userType,
       youngestVisitorAge = youngestVisitorAge,
+      visitorIds = visitorIds,
+      addSessionConflictsAndBookedCount = addSessionConflictsAndBookedCount,
+
     )
   }
 
@@ -139,6 +143,8 @@ class SessionService(
     usernameToExcludeFromReservedApplications: String? = null,
     userType: UserType,
     youngestVisitorAge: Int? = null,
+    visitorIds: List<Long>? = null,
+    addSessionConflictsAndBookedCount: Boolean = true,
   ): List<VisitSessionDto> {
     val prisonCode = prison.code
     LOG.debug("Enter getVisitSessions prisonCode:${prison.code}, prisonerId : $prisonerId")
@@ -164,23 +170,29 @@ class SessionService(
       buildVisitSessionsUsingTemplate(it, dateRange.fromDate, dateRange.toDate)
     }
 
-    val sessionSlots = getSessionSlots(visitSessions)
+    if (addSessionConflictsAndBookedCount) {
+      val sessionSlots = getSessionSlots(visitSessions)
 
-    addSessionConflicts(
-      sessionTemplates = sessionTemplates,
-      visitSessions = visitSessions,
-      prisoner = prisoner,
-      prison = prison,
-      sessionSlots = sessionSlots,
-      dateRange = dateRange,
-      excludedApplicationReference = excludedApplicationReference,
-      usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications,
-      youngestVisitorAge = youngestVisitorAge,
-    )
+      addSessionConflicts(
+        sessionTemplates = sessionTemplates,
+        visitSessions = visitSessions,
+        prisoner = prisoner,
+        prison = prison,
+        sessionSlots = sessionSlots,
+        dateRange = dateRange,
+        excludedApplicationReference = excludedApplicationReference,
+        usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications,
+        youngestVisitorAge = youngestVisitorAge,
+      )
 
-    visitSessions = visitSessions.also {
-      populateBookedCount(sessionSlots, it, excludedApplicationReference, usernameToExcludeFromReservedApplications, true)
-    }.sortedWith(compareBy { it.startTimestamp }).also {
+      visitRequestRuleCheckerService.getRequestReviewReasons(prisonCode = prisonCode, prisonerId = prisonerId, visitorIds = visitorIds, visitSessions = visitSessions)
+
+      visitSessions.also {
+        populateBookedCount(sessionSlots, it, excludedApplicationReference, usernameToExcludeFromReservedApplications, true)
+      }
+    }
+
+    visitSessions = visitSessions.sortedWith(compareBy { it.startTimestamp }).also {
       LOG.info("Final count for sessions of ${it.size}, after filtering for prisoner $prisonerId, with date range $dateRange")
     }
 
@@ -197,6 +209,7 @@ class SessionService(
     usernameToExcludeFromReservedApplications: String?,
     userType: UserType,
     youngestVisitorAge: Int?,
+    visitorIds: List<Long>? = null,
   ): List<AvailableVisitSessionDto> {
     LOG.debug(
       "Enter getAvailableVisitSessions prisonCode:{}, prisonerId : {}, sessionRestriction: {}, dateRange - {}, excludedApplicationReference - {}, excludeReservedApplicationsForUser - {} ",
@@ -218,6 +231,8 @@ class SessionService(
       usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications,
       userType = userType,
       youngestVisitorAge = youngestVisitorAge,
+      visitorIds = visitorIds,
+      addSessionConflictsAndBookedCount = true,
     )
 
     // finally, filter out sessions without conflicts and with capacity
@@ -227,6 +242,7 @@ class SessionService(
           session.sessionConflicts.isEmpty() ||
             session.sessionConflicts.all { it.sessionConflict == SessionConflict.AGE_RESTRICTION },
         )
+        .and(session.sessionPrisonRuleFailures.isEmpty())
     }.map { AvailableVisitSessionDto(it, sessionRestriction) }.toList().also {
       LOG.info("Returning final count for public filtered sessions ${it.size} for prisonerId - $prisonerId, after applying capacity filtering")
     }
@@ -290,20 +306,6 @@ class SessionService(
           voBalance = voBalance,
           sessionsWithAgeRestrictionConflicts = sessionsWithAgeRestrictionConflicts,
         )
-      }
-
-      // TODO - this needs more work now as doing this for each session will be inefficient and a lot of redundant queries - around max visits per month will be fired
-      //  maybe we can have it as a separate endpoint that gets called when the user selects the session?
-      visitSessions.forEach { session ->
-        val sessionRequest = SessionRequestInfo(
-          prisonCode = prison.code,
-          prisonerId = prisoner.prisonerId,
-          visitSession = session,
-          visitorIds = null,
-          userType = UserType.STAFF,
-        )
-        val failedRules = visitRequestRuleCheckerService.getRequestReviewReasons(sessionRequest)
-        session.sessionPrisonRuleFailures = failedRules
       }
     }
   }

@@ -98,7 +98,10 @@ class VisitSessionController(
     @RequestParam
     @Parameter(description = "youngestVisitorAge", example = "18", required = false)
     youngestVisitorAge: Int? = null,
-  ): List<VisitSessionDto> = sessionService.getAllVisitSessions(prisonCode, prisonerId, minOverride = min, maxOverride = max, usernameToExcludeFromReservedApplications = username, userType = userType, youngestVisitorAge = youngestVisitorAge)
+    @RequestParam
+    @Parameter(description = "IDs of visitors", required = false)
+    visitorIds: List<Long>? = null,
+  ): List<VisitSessionDto> = sessionService.getAllVisitSessions(prisonCode, prisonerId, minOverride = min, maxOverride = max, usernameToExcludeFromReservedApplications = username, userType = userType, youngestVisitorAge = youngestVisitorAge, visitorIds = visitorIds)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(VISIT_SESSIONS_AVAILABLE_CONTROLLER_PATH)
@@ -171,7 +174,10 @@ class VisitSessionController(
     @RequestParam
     @Parameter(description = "youngestVisitorAge", example = "18", required = false)
     youngestVisitorAge: Int? = null,
-  ): List<AvailableVisitSessionDto> = sessionService.getOnlyAvailableVisitSessions(prisonCode, prisonerId, sessionRestriction, DateRange(fromDate, toDate), excludedApplicationReference, usernameToExcludeFromReservedApplications = username, userType = userType, youngestVisitorAge = youngestVisitorAge)
+    @RequestParam
+    @Parameter(description = "IDs of visitors", required = true)
+    visitorIds: List<Long>? = null,
+  ): List<AvailableVisitSessionDto> = sessionService.getOnlyAvailableVisitSessions(prisonCode, prisonerId, sessionRestriction, DateRange(fromDate, toDate), excludedApplicationReference, usernameToExcludeFromReservedApplications = username, userType = userType, youngestVisitorAge = youngestVisitorAge, visitorIds = visitorIds)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(GET_SESSION_SCHEDULE)

@@ -81,7 +81,7 @@ class VisitSessionDto(
   val sessionConflicts: MutableList<SessionConflictDto> = mutableListOf(),
 
   @param:Schema(description = "Session rule failures", required = false)
-  var sessionPrisonRuleFailures: List<PrisonVisitRequestRuleType> = listOf(),
+  var sessionPrisonRuleFailures: MutableList<PrisonVisitRequestRuleType> = mutableListOf(),
 ) {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

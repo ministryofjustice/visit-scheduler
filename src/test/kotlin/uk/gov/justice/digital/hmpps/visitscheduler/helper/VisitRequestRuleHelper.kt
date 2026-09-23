@@ -37,11 +37,9 @@ class VisitRequestRuleHelper(
 
   fun createAlreadyRejectedRequestRule(
     prisonCode: String = "MDI",
-    rejectionIntervalInHours: Int,
     totalRejectedVisits: Int,
   ) {
     val attributeNameAndValueMap = mapOf(
-      PrisonVisitRequestRuleConfigType.REJECTION_INTERVAL_IN_HOURS to rejectionIntervalInHours.toString(),
       PrisonVisitRequestRuleConfigType.TOTAL_REJECTIONS to totalRejectedVisits.toString(),
     )
     create(prisonCode, PrisonVisitRequestRuleType.ALREADY_REJECTED_VISIT, attributeNameAndValueMap)

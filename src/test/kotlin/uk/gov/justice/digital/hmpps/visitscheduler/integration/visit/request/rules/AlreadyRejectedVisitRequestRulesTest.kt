@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit.request.ru
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
@@ -25,7 +24,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestEventAuditRepo
 import java.time.LocalTime
 
 // TODO - enable this when these rules are checked the public service
-@Disabled("disabled till rules are checked on the public service")
 class AlreadyRejectedVisitRequestRulesTest : IntegrationTestBase() {
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
@@ -34,6 +32,11 @@ class AlreadyRejectedVisitRequestRulesTest : IntegrationTestBase() {
   private lateinit var visitorDetails: MutableSet<BookingRequestVisitorDetailsDto>
 
   private val prisonCode = "DFT"
+
+  private val visitor1Id = 321L
+  private val visitor2Id = 322L
+  private val visitor3Id = 323L
+  private val visitor4Id = 324L
 
   @Autowired
   private lateinit var testEventAuditRepository: TestEventAuditRepository
@@ -45,26 +48,26 @@ class AlreadyRejectedVisitRequestRulesTest : IntegrationTestBase() {
     reservedPublicApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, applicationStatus = IN_PROGRESS, userType = PUBLIC)
 
     visitorDetails = mutableSetOf()
-    visitorDetails.add(BookingRequestVisitorDetailsDto(321L, 21))
-    visitorDetails.add(BookingRequestVisitorDetailsDto(322L, 25))
-    visitorDetails.add(BookingRequestVisitorDetailsDto(323L, null))
+    visitorDetails.add(BookingRequestVisitorDetailsDto(visitor1Id, 21))
+    visitorDetails.add(BookingRequestVisitorDetailsDto(visitor2Id, 25))
+    visitorDetails.add(BookingRequestVisitorDetailsDto(visitor3Id, null))
   }
 
   @Test
-  fun `when visit was already rejected for same time and same visitor list within rejection rule hours then session is flagged`() {
+  fun `when visit was already rejected for same time and same visitor list then a session is flagged`() {
     // Given
     val visitDate = reservedPublicApplication.sessionSlot.slotDate
 
     // a visit for the same session and same visitor list was already rejected
     val rejectedVisit = visitEntityHelper.create(visitStatus = CANCELLED, visitSubStatus = VisitSubStatus.REJECTED, slotDate = visitDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111", "email@example.com"))
-    visitEntityHelper.createVisitor(visit = rejectedVisit, nomisPersonId = 321L, visitContact = false)
-    visitEntityHelper.createVisitor(visit = rejectedVisit, nomisPersonId = 322L, visitContact = false)
-    visitEntityHelper.createVisitor(visit = rejectedVisit, nomisPersonId = 323L, visitContact = false)
+    visitEntityHelper.createVisitor(visit = rejectedVisit, nomisPersonId = visitor1Id, visitContact = false)
+    visitEntityHelper.createVisitor(visit = rejectedVisit, nomisPersonId = visitor2Id, visitContact = false)
+    visitEntityHelper.createVisitor(visit = rejectedVisit, nomisPersonId = visitor3Id, visitContact = false)
     eventAuditEntityHelper.create(visit = rejectedVisit, type = EventAuditType.REQUESTED_VISIT)
     eventAuditEntityHelper.create(visit = rejectedVisit, type = EventAuditType.REQUESTED_VISIT_REJECTED)
     visitEntityHelper.save(rejectedVisit)
 
-    visitRequestRuleHelper.createAlreadyRejectedRequestRule(prisonCode, rejectionIntervalInHours = 4, totalRejectedVisits = 1)
+    visitRequestRuleHelper.createAlreadyRejectedRequestRule(prisonCode, totalRejectedVisits = 1)
 
     val prisonerId = reservedPublicApplication.prisonerId
     val prisonerDto = PrisonerSearchResultDto(prisonerNumber = prisonerId, "john", "smith", prisonId = reservedPublicApplication.prison.code)
@@ -72,35 +75,41 @@ class AlreadyRejectedVisitRequestRulesTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
 
     // When
-    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = roleVisitSchedulerHttpHeaders)
+    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, visitorIds = listOf(visitor1Id, visitor2Id, visitor3Id), authHttpHeaders = roleVisitSchedulerHttpHeaders)
 
     // Then
     responseResult.expectStatus().isOk
 
     val sessions = getResults(responseResult.expectBody())
-    // as there is 1 visit before and 1 visit after the visit date and hence less than allowed, the visit should not be flagged
-    val session = sessions.firstOrNull { it.sessionTemplateReference == sessionTemplateDefault.reference && it.startTimestamp.toLocalDate() == visitDate }
-    assertThat(session).isNotNull
-    assertThat(session!!.sessionPrisonRuleFailures.size).isEqualTo(1)
-    assertThat(session.sessionPrisonRuleFailures[0]).isEqualTo(PrisonVisitRequestRuleType.ALREADY_REJECTED_VISIT)
+
+    // as there are already rejected visits for the same slot and date, the visit should be flagged
+    val sessionsForSlotAndDate = sessions.filter { it.sessionTemplateReference == sessionTemplateDefault.reference && it.startTimestamp.toLocalDate() == visitDate }
+    sessionsForSlotAndDate.forEach {
+      assertThat(it.sessionPrisonRuleFailures.isNotEmpty()).isTrue
+      assertThat(it.sessionPrisonRuleFailures.size).isEqualTo(1)
+      assertThat(it.sessionPrisonRuleFailures[0]).isEqualTo(PrisonVisitRequestRuleType.ALREADY_REJECTED_VISIT)
+    }
+
+    val sessionsNotForVisitDate = sessions.filterNot { it.sessionTemplateReference == sessionTemplateDefault.reference && it.startTimestamp.toLocalDate() == visitDate }
+    assertThat(sessionsNotForVisitDate.any { it.sessionPrisonRuleFailures.isNotEmpty() }).isFalse
   }
 
   @Test
-  fun `when visit was already rejected for same time and same visitor list within rejection rule hours but below allowed rejection limit then visit is not automatically rejected`() {
+  fun `when visit was already rejected for same time and same visitor list then a session is not flagged`() {
     // Given
     val visitDate = reservedPublicApplication.sessionSlot.slotDate
 
     // a visit for the same session and same visitor list was already rejected
     val rejectedVisit = visitEntityHelper.create(visitStatus = CANCELLED, visitSubStatus = VisitSubStatus.REJECTED, slotDate = visitDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111", "email@example.com"))
-    visitEntityHelper.createVisitor(visit = rejectedVisit, nomisPersonId = 321L, visitContact = false)
-    visitEntityHelper.createVisitor(visit = rejectedVisit, nomisPersonId = 322L, visitContact = false)
-    visitEntityHelper.createVisitor(visit = rejectedVisit, nomisPersonId = 323L, visitContact = false)
+    visitEntityHelper.createVisitor(visit = rejectedVisit, nomisPersonId = visitor1Id, visitContact = false)
+    visitEntityHelper.createVisitor(visit = rejectedVisit, nomisPersonId = visitor2Id, visitContact = false)
+    visitEntityHelper.createVisitor(visit = rejectedVisit, nomisPersonId = visitor3Id, visitContact = false)
     eventAuditEntityHelper.create(visit = rejectedVisit, type = EventAuditType.REQUESTED_VISIT)
     eventAuditEntityHelper.create(visit = rejectedVisit, type = EventAuditType.REQUESTED_VISIT_REJECTED)
     visitEntityHelper.save(rejectedVisit)
 
     // total allowed rejection limit is 2
-    visitRequestRuleHelper.createAlreadyRejectedRequestRule(prisonCode, rejectionIntervalInHours = 4, totalRejectedVisits = 2)
+    visitRequestRuleHelper.createAlreadyRejectedRequestRule(prisonCode, totalRejectedVisits = 2)
 
     val prisonerId = reservedPublicApplication.prisonerId
     val prisonerDto = PrisonerSearchResultDto(prisonerNumber = prisonerId, "john", "smith", prisonId = reservedPublicApplication.prison.code)
@@ -114,30 +123,27 @@ class AlreadyRejectedVisitRequestRulesTest : IntegrationTestBase() {
     responseResult.expectStatus().isOk
 
     val sessions = getResults(responseResult.expectBody())
-    // as there are already 3 visits booked for the month and max visits allowed are 3, the session should be flagged
-    val session = sessions.firstOrNull { it.sessionTemplateReference == sessionTemplateDefault.reference && it.startTimestamp.toLocalDate() == visitDate }
-    assertThat(session).isNotNull
-    assertThat(session!!.sessionPrisonRuleFailures.size).isEqualTo(1)
-    assertThat(session.sessionPrisonRuleFailures[0]).isEqualTo(PrisonVisitRequestRuleType.VISITS_PER_MONTH)
+    // as there are less than allowed rejected visits for the same slot and date, the visit should not be flagged
+    assertThat(sessions.any { it.sessionPrisonRuleFailures.isNotEmpty() }).isFalse
   }
 
   @Test
-  fun `when visit was already rejected for same time but different visitor list within rejection rule hours then visit is not automatically rejected`() {
+  fun `when visit was already rejected for same time but different visitor list then a session is not flagged`() {
     // Given
     val visitDate = reservedPublicApplication.sessionSlot.slotDate
 
     // a visit for the same session but different visitor list was already rejected
     val rejectedVisit = visitEntityHelper.create(visitStatus = CANCELLED, visitSubStatus = VisitSubStatus.REJECTED, slotDate = visitDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111", "email@example.com"))
-    visitEntityHelper.createVisitor(visit = rejectedVisit, nomisPersonId = 321L, visitContact = false)
-    visitEntityHelper.createVisitor(visit = rejectedVisit, nomisPersonId = 322L, visitContact = false)
+    visitEntityHelper.createVisitor(visit = rejectedVisit, nomisPersonId = visitor1Id, visitContact = false)
+    visitEntityHelper.createVisitor(visit = rejectedVisit, nomisPersonId = visitor2Id, visitContact = false)
     // this visitor is different from the already rejected visit
-    visitEntityHelper.createVisitor(visit = rejectedVisit, nomisPersonId = 324L, visitContact = false)
+    visitEntityHelper.createVisitor(visit = rejectedVisit, nomisPersonId = visitor4Id, visitContact = false)
     eventAuditEntityHelper.create(visit = rejectedVisit, type = EventAuditType.REQUESTED_VISIT)
     eventAuditEntityHelper.create(visit = rejectedVisit, type = EventAuditType.REQUESTED_VISIT_REJECTED)
     visitEntityHelper.save(rejectedVisit)
 
     // total allowed rejection limit is 1
-    visitRequestRuleHelper.createAlreadyRejectedRequestRule(prisonCode, rejectionIntervalInHours = 4, totalRejectedVisits = 1)
+    visitRequestRuleHelper.createAlreadyRejectedRequestRule(prisonCode, totalRejectedVisits = 1)
 
     val prisonerId = reservedPublicApplication.prisonerId
     val prisonerDto = PrisonerSearchResultDto(prisonerNumber = prisonerId, "john", "smith", prisonId = reservedPublicApplication.prison.code)
@@ -145,36 +151,33 @@ class AlreadyRejectedVisitRequestRulesTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
 
     // When
-    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = roleVisitSchedulerHttpHeaders)
+    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, visitorIds = listOf(visitor1Id, visitor2Id, visitor3Id), authHttpHeaders = roleVisitSchedulerHttpHeaders)
 
     // Then
     responseResult.expectStatus().isOk
 
     val sessions = getResults(responseResult.expectBody())
-    // as there are already 3 visits booked for the month and max visits allowed are 3, the session should be flagged
-    val session = sessions.firstOrNull { it.sessionTemplateReference == sessionTemplateDefault.reference && it.startTimestamp.toLocalDate() == visitDate }
-    assertThat(session).isNotNull
-    assertThat(session!!.sessionPrisonRuleFailures.size).isEqualTo(1)
-    assertThat(session.sessionPrisonRuleFailures[0]).isEqualTo(PrisonVisitRequestRuleType.VISITS_PER_MONTH)
+    // as the rejected visits are not for the same visitor list, the visit should not be flagged
+    assertThat(sessions.any { it.sessionPrisonRuleFailures.isNotEmpty() }).isFalse
   }
 
   @Test
-  fun `when visit was already rejected but different session and same visitor list within rejection rule hours then visit is not automatically rejected`() {
+  fun `when visit was already rejected then session is flagged`() {
     // Given
     val sessionTemplate1 = sessionTemplateEntityHelper.create(prisonCode = reservedPublicApplication.prison.code, startTime = LocalTime.of(9, 0), endTime = LocalTime.of(10, 0))
     val visitDate = reservedPublicApplication.sessionSlot.slotDate
 
     // a visit for a different session and same visitor list was already rejected
     val rejectedVisit = visitEntityHelper.create(visitStatus = CANCELLED, visitSubStatus = VisitSubStatus.REJECTED, slotDate = visitDate, sessionTemplate = sessionTemplate1, visitContact = ContactDto("Jane Doe", "01111111111", "email@example.com"))
-    visitEntityHelper.createVisitor(visit = rejectedVisit, nomisPersonId = 321L, visitContact = false)
-    visitEntityHelper.createVisitor(visit = rejectedVisit, nomisPersonId = 322L, visitContact = false)
-    visitEntityHelper.createVisitor(visit = rejectedVisit, nomisPersonId = 323L, visitContact = false)
+    visitEntityHelper.createVisitor(visit = rejectedVisit, nomisPersonId = visitor1Id, visitContact = false)
+    visitEntityHelper.createVisitor(visit = rejectedVisit, nomisPersonId = visitor2Id, visitContact = false)
+    visitEntityHelper.createVisitor(visit = rejectedVisit, nomisPersonId = visitor3Id, visitContact = false)
     eventAuditEntityHelper.create(visit = rejectedVisit, type = EventAuditType.REQUESTED_VISIT)
     eventAuditEntityHelper.create(visit = rejectedVisit, type = EventAuditType.REQUESTED_VISIT_REJECTED)
     visitEntityHelper.save(rejectedVisit)
 
     // total allowed rejection limit is 1
-    visitRequestRuleHelper.createAlreadyRejectedRequestRule(prisonCode, rejectionIntervalInHours = 4, totalRejectedVisits = 1)
+    visitRequestRuleHelper.createAlreadyRejectedRequestRule(prisonCode, totalRejectedVisits = 1)
 
     val prisonerId = reservedPublicApplication.prisonerId
     val prisonerDto = PrisonerSearchResultDto(prisonerNumber = prisonerId, "john", "smith", prisonId = reservedPublicApplication.prison.code)
@@ -182,53 +185,22 @@ class AlreadyRejectedVisitRequestRulesTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
 
     // When
-    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = roleVisitSchedulerHttpHeaders)
+    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, visitorIds = listOf(visitor1Id, visitor2Id, visitor3Id), authHttpHeaders = roleVisitSchedulerHttpHeaders)
 
     // Then
     responseResult.expectStatus().isOk
 
     val sessions = getResults(responseResult.expectBody())
-    // as there are already 3 visits booked for the month and max visits allowed are 3, the session should be flagged
-    val session = sessions.firstOrNull { it.sessionTemplateReference == sessionTemplateDefault.reference && it.startTimestamp.toLocalDate() == visitDate }
-    assertThat(session).isNotNull
-    assertThat(session!!.sessionPrisonRuleFailures.size).isEqualTo(1)
-    assertThat(session.sessionPrisonRuleFailures[0]).isEqualTo(PrisonVisitRequestRuleType.VISITS_PER_MONTH)
-  }
+    // as there are already rejected visits for the same slot and date, the visit should be flagged
+    val sessionsForSlotAndDate = sessions.filter { it.sessionTemplateReference == sessionTemplate1.reference && it.startTimestamp.toLocalDate() == visitDate }
+    sessionsForSlotAndDate.forEach {
+      assertThat(it.sessionPrisonRuleFailures.isNotEmpty()).isTrue
+      assertThat(it.sessionPrisonRuleFailures.size).isEqualTo(1)
+      assertThat(it.sessionPrisonRuleFailures[0]).isEqualTo(PrisonVisitRequestRuleType.ALREADY_REJECTED_VISIT)
+    }
 
-  @Test
-  fun `when visit was already rejected for same time and same visitor list but before rejection rule hours then visit is not automatically rejected`() {
-    // Given
-    val visitDate = reservedPublicApplication.sessionSlot.slotDate
-
-    // a visit for a different session and same visitor list was already rejected
-    val rejectedVisit = visitEntityHelper.create(visitStatus = CANCELLED, visitSubStatus = VisitSubStatus.REJECTED, slotDate = visitDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111", "email@example.com"))
-    visitEntityHelper.createVisitor(visit = rejectedVisit, nomisPersonId = 321L, visitContact = false)
-    visitEntityHelper.createVisitor(visit = rejectedVisit, nomisPersonId = 322L, visitContact = false)
-    visitEntityHelper.createVisitor(visit = rejectedVisit, nomisPersonId = 323L, visitContact = false)
-    eventAuditEntityHelper.create(visit = rejectedVisit, type = EventAuditType.REQUESTED_VISIT)
-    val rejectedEventAudit = eventAuditEntityHelper.create(visit = rejectedVisit, type = EventAuditType.REQUESTED_VISIT_REJECTED)
-    testEventAuditRepository.updateCreateTimeStamp(rejectedEventAudit.id, rejectedEventAudit.createTimestamp.minusHours(5))
-    visitEntityHelper.save(rejectedVisit)
-
-    // total allowed rejection limit is 1
-    visitRequestRuleHelper.createAlreadyRejectedRequestRule(prisonCode, rejectionIntervalInHours = 4, totalRejectedVisits = 1)
-
-    val prisonerId = reservedPublicApplication.prisonerId
-    val prisonerDto = PrisonerSearchResultDto(prisonerNumber = prisonerId, "john", "smith", prisonId = reservedPublicApplication.prison.code)
-    prisonOffenderSearchMockServer.stubGetPrisoner(prisonerId, prisonerDto)
-    prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
-
-    // When
-    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = roleVisitSchedulerHttpHeaders)
-
-    // Then
-    responseResult.expectStatus().isOk
-
-    val sessions = getResults(responseResult.expectBody())
-    // as there is 1 visit before and 1 visit after the visit date and hence less than allowed, the visit should not be flagged
-    val session = sessions.firstOrNull { it.sessionTemplateReference == sessionTemplateDefault.reference && it.startTimestamp.toLocalDate() == visitDate }
-    assertThat(session).isNotNull
-    assertThat(session!!.sessionPrisonRuleFailures).isEmpty()
+    val sessionsNotForVisitDate = sessions.filterNot { it.sessionTemplateReference == sessionTemplate1.reference && it.startTimestamp.toLocalDate() == visitDate }
+    assertThat(sessionsNotForVisitDate.any { it.sessionPrisonRuleFailures.isNotEmpty() }).isFalse
   }
 
   private fun getResults(returnResult: BodyContentSpec): Array<VisitSessionDto> = objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)

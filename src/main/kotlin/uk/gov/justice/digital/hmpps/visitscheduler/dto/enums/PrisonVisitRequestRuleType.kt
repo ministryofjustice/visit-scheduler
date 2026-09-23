@@ -3,5 +3,5 @@ package uk.gov.justice.digital.hmpps.visitscheduler.dto.enums
 enum class PrisonVisitRequestRuleType(val config: List<PrisonVisitRequestRuleConfigType>) {
   VISIT_INTERVAL(listOf(PrisonVisitRequestRuleConfigType.INTERVAL_DAYS_BEFORE_AND_AFTER, PrisonVisitRequestRuleConfigType.VISITS_ALLOWED)),
   VISITS_PER_MONTH(listOf(PrisonVisitRequestRuleConfigType.MAX_VISITS_PER_MONTH)),
-  ALREADY_REJECTED_VISIT(listOf(PrisonVisitRequestRuleConfigType.REJECTION_INTERVAL_IN_HOURS, PrisonVisitRequestRuleConfigType.TOTAL_REJECTIONS)),
+  ALREADY_REJECTED_VISIT(listOf(PrisonVisitRequestRuleConfigType.TOTAL_REJECTIONS)),
 }

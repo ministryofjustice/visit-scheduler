@@ -37,7 +37,7 @@ class VisitIntervalRequestRulesTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when visits already booked are less than allowed limit for prison then visit sub status is set to AUTO_APPROVED`() {
+  fun `when visits already booked are less than allowed limit for prison then session is not flagged`() {
     // Given
     val visitDate = reservedPublicApplication.sessionSlot.slotDate
 
@@ -64,18 +64,16 @@ class VisitIntervalRequestRulesTest : IntegrationTestBase() {
 
     val sessions = getResults(responseResult.expectBody())
     // as there is 1 visit before and 1 visit after the visit date and hence less than allowed, the visit should not be flagged
-    val session = sessions.firstOrNull { it.sessionTemplateReference == sessionTemplateDefault.reference && it.startTimestamp.toLocalDate() == visitDate }
-    assertThat(session).isNotNull
-    assertThat(session!!.sessionPrisonRuleFailures).isEmpty()
+    assertThat(sessions.filter { it.sessionPrisonRuleFailures.isNotEmpty() }.size).isEqualTo(0)
   }
 
   @Test
-  fun `when visits already booked before visit date are more than allowed limit for prison then visit sub status is set to REQUESTED`() {
+  fun `when visits already booked before visit date are more than allowed limit for prison then session is flagged`() {
     // Given
     val visitDate = reservedPublicApplication.sessionSlot.slotDate
 
     val sessionTemplate1 = sessionTemplateEntityHelper.create(prisonCode = prisonCode, startTime = LocalTime.now().plusMinutes(5), endTime = LocalTime.now().plusHours(1))
-    // 2 visit exists on the previous day and 1 on the next day
+    // 2 visits exist on the previous day and 1 on the next day
     createBookedVisits(visitDate.minusDays(1), totalVisits = 2, sessionTemplate = sessionTemplate1)
     createBookedVisits(visitDate.plusDays(1), totalVisits = 1, sessionTemplate = sessionTemplate1)
 
@@ -104,7 +102,7 @@ class VisitIntervalRequestRulesTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when visits already booked after visit date are more than allowed limit for prison then visit sub status is set to REQUESTED`() {
+  fun `when visits already booked after visit date are more than allowed limit then session is flagged`() {
     // Given
     val visitDate = reservedPublicApplication.sessionSlot.slotDate
 
@@ -131,14 +129,19 @@ class VisitIntervalRequestRulesTest : IntegrationTestBase() {
 
     val sessions = getResults(responseResult.expectBody())
     // as there are 1 visit before and 2 visits after the visit date and hence more than allowed, the visit should be flagged
-    val session = sessions.firstOrNull { it.sessionTemplateReference == sessionTemplateDefault.reference && it.startTimestamp.toLocalDate() == visitDate }
-    assertThat(session).isNotNull
-    assertThat(session!!.sessionPrisonRuleFailures.size).isEqualTo(1)
-    assertThat(session.sessionPrisonRuleFailures[0]).isEqualTo(PrisonVisitRequestRuleType.VISIT_INTERVAL)
+    val sessionsForVisitDate = sessions.filter { it.startTimestamp.toLocalDate() == visitDate }
+    sessionsForVisitDate.forEach {
+      assertThat(it.sessionPrisonRuleFailures.isNotEmpty()).isTrue
+      assertThat(it.sessionPrisonRuleFailures.size).isEqualTo(1)
+      assertThat(it.sessionPrisonRuleFailures[0]).isEqualTo(PrisonVisitRequestRuleType.VISIT_INTERVAL)
+    }
+
+    val sessionsNotForVisitDate = sessions.filter { it.startTimestamp.toLocalDate() != visitDate }
+    assertThat(sessionsNotForVisitDate.any { it.sessionPrisonRuleFailures.isNotEmpty() }).isFalse
   }
 
   @Test
-  fun `when visits already booked for visit date are more than allowed limit for prison then visit sub status is set to REQUESTED`() {
+  fun `when visits already booked for visit date are more than allowed limit for prison then session is flagged`() {
     // Given
     val visitDate = reservedPublicApplication.sessionSlot.slotDate
 
@@ -166,10 +169,15 @@ class VisitIntervalRequestRulesTest : IntegrationTestBase() {
 
     val sessions = getResults(responseResult.expectBody())
     // as there are 1 visit before and 2 visits after the visit date and hence more than allowed, the visit should be flagged
-    val session = sessions.firstOrNull { it.sessionTemplateReference == sessionTemplateDefault.reference && it.startTimestamp.toLocalDate() == visitDate }
-    assertThat(session).isNotNull
-    assertThat(session!!.sessionPrisonRuleFailures.size).isEqualTo(1)
-    assertThat(session.sessionPrisonRuleFailures[0]).isEqualTo(PrisonVisitRequestRuleType.VISIT_INTERVAL)
+    val sessionsForVisitDate = sessions.filter { it.startTimestamp.toLocalDate() == visitDate }
+    sessionsForVisitDate.forEach {
+      assertThat(it.sessionPrisonRuleFailures.isNotEmpty()).isTrue
+      assertThat(it.sessionPrisonRuleFailures.size).isEqualTo(1)
+      assertThat(it.sessionPrisonRuleFailures[0]).isEqualTo(PrisonVisitRequestRuleType.VISIT_INTERVAL)
+    }
+
+    val sessionsNotForVisitDate = sessions.filter { it.startTimestamp.toLocalDate() != visitDate }
+    assertThat(sessionsNotForVisitDate.any { it.sessionPrisonRuleFailures.isNotEmpty() }).isFalse
   }
 
   private fun createBookedVisits(visitDate: LocalDate, totalVisits: Int, sessionTemplate: SessionTemplate) {
