@@ -72,7 +72,6 @@ class VisitService(
     }
 
     val booking = visitStoreService.createOrUpdateBooking(applicationReference, bookingRequestDto)
-
     return processBookingEvents(booking, bookingRequestDto)
   }
 
@@ -194,29 +193,24 @@ class VisitService(
     bookedVisitDto: VisitDto,
     bookingRequestDto: BookingRequestDto,
   ): VisitDto {
-    val eventType = if (bookedVisitDto.visitSubStatus == VisitSubStatus.REQUESTED) {
+    val eventType = if (bookingRequestDto.isRequestBooking == true) {
       EventAuditType.REQUESTED_VISIT
     } else {
       EventAuditType.BOOKED_VISIT
     }
 
-    // TODO - check event audit to be generated if the visit was AUTO_REJECTED and status became CANCELLED
     val bookingEventAuditDto = visitEventAuditService.updateVisitApplicationAndSaveEvent(bookedVisitDto, bookingRequestDto, eventType, text = null)
 
-    // TODO - check events to be generated if the visit was AUTO_REJECTED and status became CANCELLED
-    // TODO - check events to be generated if the visit was REQUESTED instead of AUTO_APPROVED
-    if (bookedVisitDto.visitStatus == VisitStatus.BOOKED) {
-      telemetryClientService.trackBookingEvent(bookedVisitDto, bookingEventAuditDto, bookingRequestDto)
+    telemetryClientService.trackBookingEvent(bookedVisitDto, bookingEventAuditDto, bookingRequestDto)
 
-      val snsDomainEventPublishDto = SnsDomainEventPublishDto(
-        bookedVisitDto.reference,
-        bookedVisitDto.createdTimestamp,
-        bookedVisitDto.modifiedTimestamp,
-        bookedVisitDto.prisonerId,
-        bookingEventAuditDto.id,
-      )
-      snsService.sendVisitBookedEvent(snsDomainEventPublishDto)
-    }
+    val snsDomainEventPublishDto = SnsDomainEventPublishDto(
+      bookedVisitDto.reference,
+      bookedVisitDto.createdTimestamp,
+      bookedVisitDto.modifiedTimestamp,
+      bookedVisitDto.prisonerId,
+      bookingEventAuditDto.id,
+    )
+    snsService.sendVisitBookedEvent(snsDomainEventPublishDto)
 
     return bookedVisitDto
   }
