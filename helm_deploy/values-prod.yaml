@@ -47,6 +47,11 @@ generic-service:
         DB_USER_PREPROD: "database_username"
         DB_PASS_PREPROD: "database_password"
         DB_HOST_PREPROD: "rds_instance_address"
+      hmpps-envoy-https-proxy-env:
+        HTTP_PROXY: "HTTP_PROXY"
+        HTTPS_PROXY: "HTTPS_PROXY"
+        NO_PROXY: "NO_PROXY"
+
 
 # CloudPlatform AlertManager receiver to route promethues alerts to slack
 # See https://user-guide.cloud-platform.service.justice.gov.uk/documentation/monitoring-an-app/how-to-create-alarms.html#creating-your-own-custom-alerts
