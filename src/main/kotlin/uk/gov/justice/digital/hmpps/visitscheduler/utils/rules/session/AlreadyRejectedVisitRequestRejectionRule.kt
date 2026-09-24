@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonVisitReque
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDate
+import java.time.LocalDateTime
 import kotlin.math.absoluteValue
 
 @Service
@@ -34,24 +35,37 @@ class AlreadyRejectedVisitRequestRejectionRule(private val visitRepository: Visi
     val fromDate = visitSessions.minOf { it.startTimestamp.toLocalDate() }
     val toDate = visitSessions.maxOf { it.startTimestamp.toLocalDate() }
     val rulesConfig = getConfigValues(prisonVisitRequestRules)
+    val rejectionTimeIntervalInHours = getRejectedVisitInterval(rulesConfig, prisonCode)
     val totalRejections = getTotalRejections(rulesConfig, prisonCode)
 
-    if (totalRejections == null) {
-      logger.error("Total rejections not set or set incorrectly for already rejected visit request rule for prison {}", prisonCode)
+    if (totalRejections == null || rejectionTimeIntervalInHours == null) {
+      logger.error("Total rejections or rejection interval not set or set incorrectly for already rejected visit request rule for prison {}", prisonCode)
       return
     }
+
+    val rejectedSince = LocalDateTime.now().minusHours(rejectionTimeIntervalInHours.toLong())
 
     val rejectedVisits = visitRepository.getRejectedVisitsForPrisoner(
       prisonCode = prisonCode,
       prisonerId = prisonerId,
       fromDate = fromDate,
       toDate = toDate,
+      rejectedSince = rejectedSince,
     ).sortedBy { it.sessionSlot.slotStart }
 
     visitSessions.forEach {
       if (getTotalRejectionsForSlot(it, rejectedVisits, sessionRequest.visitorIds) >= totalRejections) {
         it.sessionPrisonRuleFailures.add(PrisonVisitRequestRuleType.ALREADY_REJECTED_VISIT)
       }
+    }
+  }
+
+  private fun getRejectedVisitInterval(configValues: Map<PrisonVisitRequestRuleConfigType, String?>, prisonCode: String): Int? {
+    try {
+      return configValues[PrisonVisitRequestRuleConfigType.REJECTION_INTERVAL_IN_HOURS]?.toInt()?.absoluteValue
+    } catch (_: NumberFormatException) {
+      logger.error("NumberFormatException thrown while getting rejection interval for rejection check rule for prison {}", prisonCode)
+      return null
     }
   }
 

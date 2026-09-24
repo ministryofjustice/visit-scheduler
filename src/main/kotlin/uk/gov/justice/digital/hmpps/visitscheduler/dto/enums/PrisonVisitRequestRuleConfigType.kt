@@ -5,4 +5,5 @@ enum class PrisonVisitRequestRuleConfigType {
   VISITS_ALLOWED,
   MAX_VISITS_PER_MONTH,
   TOTAL_REJECTIONS,
+  REJECTION_INTERVAL_IN_HOURS,
 }

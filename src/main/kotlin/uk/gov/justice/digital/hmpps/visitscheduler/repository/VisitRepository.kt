@@ -678,8 +678,9 @@ interface VisitRepository :
       "AND p.code = :prisonCode " +
       "AND ea.type = 'REQUESTED_VISIT_REJECTED' " +
       "AND ss.slot_date >= :fromDate " +
-      "AND ss.slot_date <= :toDate ",
+      "AND ss.slot_date <= :toDate " +
+      "AND  ea.create_timestamp >= :rejectedSince ",
     nativeQuery = true,
   )
-  fun getRejectedVisitsForPrisoner(prisonerId: String, prisonCode: String, fromDate: LocalDate, toDate: LocalDate): List<Visit>
+  fun getRejectedVisitsForPrisoner(prisonerId: String, prisonCode: String, fromDate: LocalDate, toDate: LocalDate, rejectedSince: LocalDateTime): List<Visit>
 }
