@@ -14,6 +14,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.LastApprovedDateByVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitCountStats
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitCountsForPrisonerByDate
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitCountsForPrisonerByMonthAndYear
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -223,6 +225,46 @@ interface VisitRepository :
     @Param("prisonCode") prisonCode: String,
     @Param("visitDate") visitDate: LocalDate,
   ): List<Visit>
+
+  @Query(
+    "SELECT count(*) as bookedVisitsTotal, date_part('month', ss.slot_date ) as month, date_part('year', ss.slot_date ) as year " +
+      "FROM Visit v join session_slot ss on v.session_slot_id = ss.id " +
+      "join prison p on v.prison_id = p.id " +
+      "WHERE v.visit_status = 'BOOKED' AND " +
+      "v.prisoner_id = :prisonerId AND " +
+      "p.code = :prisonCode AND " +
+      "ss.slot_date >= :fromDate AND " +
+      "ss.slot_end <= :toDate " +
+      "GROUP BY month, year " +
+      "ORDER BY year, month",
+    nativeQuery = true,
+  )
+  fun getBookedVisitsCountForPrisonerByMonthAndYear(
+    @Param("prisonerId") prisonerId: String,
+    @Param("prisonCode") prisonCode: String,
+    @Param("fromDate") fromDate: LocalDate,
+    @Param("toDate") toDate: LocalDate,
+  ): List<VisitCountsForPrisonerByMonthAndYear>
+
+  @Query(
+    "SELECT count(*) as bookedVisitsTotal, ss.slot_date as visitDate " +
+      "FROM Visit v join session_slot ss on v.session_slot_id = ss.id " +
+      "join prison p on v.prison_id = p.id " +
+      "WHERE v.visit_status = 'BOOKED' AND " +
+      "v.prisoner_id = :prisonerId AND " +
+      "p.code = :prisonCode AND " +
+      "ss.slot_date >= :fromDate AND " +
+      "ss.slot_end <= :toDate " +
+      "GROUP BY ss.slot_date " +
+      "ORDER BY ss.slot_date",
+    nativeQuery = true,
+  )
+  fun getBookedVisitsCountForPrisonerByDate(
+    @Param("prisonerId") prisonerId: String,
+    @Param("prisonCode") prisonCode: String,
+    @Param("fromDate") fromDate: LocalDate,
+    @Param("toDate") toDate: LocalDate,
+  ): List<VisitCountsForPrisonerByDate>
 
   @Query(
     "SELECT v FROM Visit v WHERE " +
@@ -622,4 +664,23 @@ interface VisitRepository :
     "UPDATE Visit v set v.prisonerId = :newPrisonerId WHERE v.prisonerId = :oldPrisonerId",
   )
   fun updatePrisonerId(oldPrisonerId: String, newPrisonerId: String): Int
+
+  @Transactional(readOnly = true)
+  @Query(
+    "SELECT v.* " +
+      "FROM visit v " +
+      "INNER JOIN prison p ON p.id = v.prison_id " +
+      "INNER JOIN session_slot ss ON ss.id = v.session_slot_id " +
+      "INNER JOIN event_audit ea ON ea.booking_reference = v.reference " +
+      "WHERE v.prisoner_id = :prisonerId " +
+      "AND v.visit_status = 'CANCELLED' " +
+      "AND v.visit_sub_status = 'REJECTED' " +
+      "AND p.code = :prisonCode " +
+      "AND ea.type = 'REQUESTED_VISIT_REJECTED' " +
+      "AND ss.slot_date >= :fromDate " +
+      "AND ss.slot_date <= :toDate " +
+      "AND  ea.create_timestamp >= :rejectedSince ",
+    nativeQuery = true,
+  )
+  fun getRejectedVisitsForPrisoner(prisonerId: String, prisonCode: String, fromDate: LocalDate, toDate: LocalDate, rejectedSince: LocalDateTime): List<Visit>
 }
