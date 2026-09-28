@@ -12,6 +12,7 @@ import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpe
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.PRISONS_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
@@ -83,7 +84,7 @@ class GetVisitPrisonsTest : IntegrationTestBase() {
   @Test
   fun `get no supported prisons when public client is inactive`() {
     // Given
-    val clientType = STAFF
+    val clientType = PUBLIC
 
     val wde = prisonEntityHelper.create(prisonCode = "WDE")
     deActivateClient(wde, clientType)
