@@ -116,7 +116,7 @@ class SessionService(
     }
 
     val prison = prisonsService.findPrisonByCode(prisonCode)
-    val dateRange = getDateRange(prison, minOverride, maxOverride, clientType)
+    val dateRange = getDateRange(prison, minOverride, maxOverride, prisonClientType = clientType)
 
     return getVisitSessions(
       prison = prison,
