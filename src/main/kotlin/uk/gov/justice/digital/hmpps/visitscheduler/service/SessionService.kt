@@ -8,10 +8,10 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ConvictionStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType.NONE
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AvailableVisitSessionDto
@@ -108,15 +108,15 @@ class SessionService(
     minOverride: Int? = null,
     maxOverride: Int? = null,
     usernameToExcludeFromReservedApplications: String? = null,
-    userType: UserType,
+    clientType: PrisonClientType,
     youngestVisitorAge: Int? = null,
   ): List<VisitSessionDto> {
-    if (userType != UserType.STAFF) {
-      throw ValidationException("Cannot call endpoint for userType - $userType")
+    if (clientType != PrisonClientType.STAFF) {
+      throw ValidationException("Cannot call endpoint for clientType - $clientType")
     }
 
     val prison = prisonsService.findPrisonByCode(prisonCode)
-    val dateRange = getDateRange(prison, minOverride, maxOverride, userType)
+    val dateRange = getDateRange(prison, minOverride, maxOverride, clientType)
 
     return getVisitSessions(
       prison = prison,
@@ -124,7 +124,7 @@ class SessionService(
       dateRange = dateRange,
       excludedApplicationReference = currentApplicationReference,
       usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications,
-      userType = userType,
+      clientType = clientType,
       youngestVisitorAge = youngestVisitorAge,
     )
   }
@@ -135,7 +135,7 @@ class SessionService(
     dateRange: DateRange,
     excludedApplicationReference: String? = null,
     usernameToExcludeFromReservedApplications: String? = null,
-    userType: UserType,
+    clientType: PrisonClientType,
     youngestVisitorAge: Int? = null,
   ): List<VisitSessionDto> {
     val prisonCode = prison.code
@@ -147,7 +147,7 @@ class SessionService(
       prisonerValidationService.validatePrisonerIsFromPrison(it!!, prisonCode)
     }!!
 
-    var sessionTemplates = getAllSessionTemplatesForDateRange(prisonCode, dateRange).filter { sessionsByUserClientFilter(userType).test(it) }
+    var sessionTemplates = getAllSessionTemplatesForDateRange(prisonCode, dateRange).filter { sessionsByUserClientFilter(clientType).test(it) }
     LOG.debug("Retrieved {} sessions before beginning filtering for prisoner {}, with date range {}", sessionTemplates.size, prisonerId, dateRange)
 
     val prisonerHousingLevels = prisonerService.getPrisonerHousingLevels(prisonerId = prisonerId, prisonCode = prisonCode, sessionTemplates = sessionTemplates)
@@ -193,7 +193,7 @@ class SessionService(
     dateRange: DateRange,
     excludedApplicationReference: String?,
     usernameToExcludeFromReservedApplications: String?,
-    userType: UserType,
+    clientType: PrisonClientType,
     youngestVisitorAge: Int?,
   ): List<AvailableVisitSessionDto> {
     LOG.debug(
@@ -214,7 +214,7 @@ class SessionService(
       dateRange = dateRange,
       excludedApplicationReference = excludedApplicationReference,
       usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications,
-      userType = userType,
+      clientType = clientType,
       youngestVisitorAge = youngestVisitorAge,
     )
 
@@ -292,13 +292,13 @@ class SessionService(
     }
   }
 
-  private fun sessionsByUserClientFilter(userType: UserType): Predicate<SessionTemplate> = Predicate {
+  private fun sessionsByUserClientFilter(clientType: PrisonClientType): Predicate<SessionTemplate> = Predicate {
     it.clients.filter { userClient ->
       userClient.active
     }.map { userClient ->
-      userClient.userType
+      userClient.clientType
     }
-      .contains(userType)
+      .contains(clientType)
   }
 
   private fun hasSessionGotCapacity(session: VisitSessionDto, sessionRestriction: SessionRestriction): Boolean = when (sessionRestriction) {
@@ -394,12 +394,12 @@ class SessionService(
     prison: Prison,
     minOverride: Int? = null,
     maxOverride: Int? = null,
-    userType: UserType,
+    prisonClientType: PrisonClientType,
   ): DateRange {
     val today = LocalDate.now()
 
     // add 1 to the policyNoticeDaysMin to ensure we are adding whole days
-    val client = prison.clients.find { it.userType == userType }
+    val client = prison.clients.find { it.clientType == prisonClientType }
     val minPolicy = client?.policyNoticeDaysMin ?: DEFAULT_BOOKING_MIN_DAYS
     val min = minOverride ?: minPolicy.plus(1)
     val max = maxOverride ?: client?.policyNoticeDaysMax ?: DEFAULT_BOOKING_MAX_DAYS

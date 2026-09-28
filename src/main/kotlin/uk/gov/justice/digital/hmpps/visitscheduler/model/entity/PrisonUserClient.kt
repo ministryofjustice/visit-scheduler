@@ -12,7 +12,7 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType
 import java.time.LocalDateTime
 
 @Entity
@@ -28,7 +28,7 @@ class PrisonUserClient(
 
   @Enumerated(EnumType.STRING)
   @Column(name = "user_type")
-  val userType: UserType,
+  val clientType: PrisonClientType,
 
   @Column(name = "policy_notice_days_min")
   val policyNoticeDaysMin: Int,

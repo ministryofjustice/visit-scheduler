@@ -12,7 +12,7 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonUserClient
 import java.time.LocalDateTime
 
@@ -29,7 +29,7 @@ class SessionTemplateUserClient(
 
   @Enumerated(EnumType.STRING)
   @Column(name = "user_type")
-  val userType: UserType,
+  val clientType: PrisonClientType,
 
   @Column(name = "active")
   var active: Boolean,

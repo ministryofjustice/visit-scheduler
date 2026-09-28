@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AvailableVisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionScheduleDto
@@ -94,11 +94,11 @@ class VisitSessionController(
     username: String? = null,
     @RequestParam
     @Parameter(description = "userType", example = "STAFF", required = true)
-    userType: UserType,
+    userType: PrisonClientType,
     @RequestParam
     @Parameter(description = "youngestVisitorAge", example = "18", required = false)
     youngestVisitorAge: Int? = null,
-  ): List<VisitSessionDto> = sessionService.getAllVisitSessions(prisonCode, prisonerId, minOverride = min, maxOverride = max, usernameToExcludeFromReservedApplications = username, userType = userType, youngestVisitorAge = youngestVisitorAge)
+  ): List<VisitSessionDto> = sessionService.getAllVisitSessions(prisonCode, prisonerId, minOverride = min, maxOverride = max, usernameToExcludeFromReservedApplications = username, clientType = userType, youngestVisitorAge = youngestVisitorAge)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(VISIT_SESSIONS_AVAILABLE_CONTROLLER_PATH)
@@ -167,11 +167,11 @@ class VisitSessionController(
     username: String? = null,
     @RequestParam
     @Parameter(description = "userType", example = "STAFF", required = true)
-    userType: UserType,
+    userType: PrisonClientType,
     @RequestParam
     @Parameter(description = "youngestVisitorAge", example = "18", required = false)
     youngestVisitorAge: Int? = null,
-  ): List<AvailableVisitSessionDto> = sessionService.getOnlyAvailableVisitSessions(prisonCode, prisonerId, sessionRestriction, DateRange(fromDate, toDate), excludedApplicationReference, usernameToExcludeFromReservedApplications = username, userType = userType, youngestVisitorAge = youngestVisitorAge)
+  ): List<AvailableVisitSessionDto> = sessionService.getOnlyAvailableVisitSessions(prisonCode, prisonerId, sessionRestriction, DateRange(fromDate, toDate), excludedApplicationReference, usernameToExcludeFromReservedApplications = username, clientType = userType, youngestVisitorAge = youngestVisitorAge)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(GET_SESSION_SCHEDULE)

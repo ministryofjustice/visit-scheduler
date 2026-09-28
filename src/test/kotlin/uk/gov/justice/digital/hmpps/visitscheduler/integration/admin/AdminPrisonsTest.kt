@@ -25,9 +25,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonUserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdatePrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType.PUBLIC
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
@@ -163,17 +163,17 @@ class AdminPrisonsTest : IntegrationTestBase() {
     assertClientPrisonEntity(dto, prisonCode = "AWE", isActive = false, type = type)
   }
 
-  fun assertClientPrisonDto(dto: UserClientDto, isActive: Boolean, type: UserType) {
+  fun assertClientPrisonDto(dto: UserClientDto, isActive: Boolean, type: PrisonClientType) {
     assertThat(dto.active).isEqualTo(isActive)
-    assertThat(dto.userType).isEqualTo(type)
+    assertThat(dto.clientType).isEqualTo(type)
   }
 
-  fun assertClientPrisonEntity(dto: UserClientDto, prisonCode: String, isActive: Boolean, type: UserType) {
+  fun assertClientPrisonEntity(dto: UserClientDto, prisonCode: String, isActive: Boolean, type: PrisonClientType) {
     val client = testPrisonUserClientRepository.getPrisonClient(prisonCode, type)
     assertThat(client).isNotNull
     client?.let {
       assertThat(client.active).isEqualTo(isActive)
-      assertThat(client.userType).isEqualTo(type)
+      assertThat(client.clientType).isEqualTo(type)
     }
   }
 
@@ -200,8 +200,8 @@ class AdminPrisonsTest : IntegrationTestBase() {
     val min = 2
     val max = 28
     val clients = listOf(
-      PrisonUserClientDto(userType = PUBLIC, policyNoticeDaysMin = min, policyNoticeDaysMax = max, active = true),
-      PrisonUserClientDto(userType = STAFF, policyNoticeDaysMin = min, policyNoticeDaysMax = max, active = false),
+      PrisonUserClientDto(clientType = PUBLIC, policyNoticeDaysMin = min, policyNoticeDaysMax = max, active = true),
+      PrisonUserClientDto(clientType = STAFF, policyNoticeDaysMin = min, policyNoticeDaysMax = max, active = false),
     )
     val prisonDto = PrisonEntityHelper.createPrisonDto("AWE", true, clients = clients)
 
@@ -250,8 +250,8 @@ class AdminPrisonsTest : IntegrationTestBase() {
       weekStartDay = DayOfWeek.SUNDAY,
       remandVisitLimitPerWeek = 2,
       clients = listOf(
-        PrisonUserClientDto(userType = PUBLIC, policyNoticeDaysMin = 2, policyNoticeDaysMax = 32, active = true),
-        PrisonUserClientDto(userType = STAFF, policyNoticeDaysMin = 2, policyNoticeDaysMax = 32, active = true),
+        PrisonUserClientDto(clientType = PUBLIC, policyNoticeDaysMin = 2, policyNoticeDaysMax = 32, active = true),
+        PrisonUserClientDto(clientType = STAFF, policyNoticeDaysMin = 2, policyNoticeDaysMax = 32, active = true),
       ),
     )
 
@@ -305,8 +305,8 @@ class AdminPrisonsTest : IntegrationTestBase() {
       weekStartDay = DayOfWeek.FRIDAY,
       remandVisitLimitPerWeek = null,
       clients = listOf(
-        PrisonUserClientDto(userType = PUBLIC, policyNoticeDaysMin = 2, policyNoticeDaysMax = 32, active = true),
-        PrisonUserClientDto(userType = STAFF, policyNoticeDaysMin = 2, policyNoticeDaysMax = 32, active = true),
+        PrisonUserClientDto(clientType = PUBLIC, policyNoticeDaysMin = 2, policyNoticeDaysMax = 32, active = true),
+        PrisonUserClientDto(clientType = STAFF, policyNoticeDaysMin = 2, policyNoticeDaysMax = 32, active = true),
       ),
     )
 
@@ -394,19 +394,19 @@ class AdminPrisonsTest : IntegrationTestBase() {
     assertThat(prison.clients.size).isEqualTo(expectedClientCounts)
 
     if (isStaffActive != null) {
-      val client = prison.clients.first { it.userType == STAFF }
-      assertThat(client.userType).isEqualTo(STAFF)
+      val client = prison.clients.first { it.clientType == STAFF }
+      assertThat(client.clientType).isEqualTo(STAFF)
       assertThat(client.active).isEqualTo(isStaffActive)
     } else {
-      assertThat(prison.clients.firstOrNull { it.userType == STAFF }).isNull()
+      assertThat(prison.clients.firstOrNull { it.clientType == STAFF }).isNull()
     }
 
     if (isPublicActive != null) {
-      val client = prison.clients.first { it.userType == PUBLIC }
-      assertThat(client.userType).isEqualTo(PUBLIC)
+      val client = prison.clients.first { it.clientType == PUBLIC }
+      assertThat(client.clientType).isEqualTo(PUBLIC)
       assertThat(client.active).isEqualTo(isPublicActive)
     } else {
-      assertThat(prison.clients.firstOrNull { it.userType == PUBLIC }).isNull()
+      assertThat(prison.clients.firstOrNull { it.clientType == PUBLIC }).isNull()
     }
   }
 
@@ -430,19 +430,19 @@ class AdminPrisonsTest : IntegrationTestBase() {
       assertThat(prison.clients.size).isEqualTo(expectedClientCounts)
 
       if (isStaffActive != null) {
-        val client = prison.clients.first { it.userType == STAFF }
-        assertThat(client.userType).isEqualTo(STAFF)
+        val client = prison.clients.first { it.clientType == STAFF }
+        assertThat(client.clientType).isEqualTo(STAFF)
         assertThat(client.active).isEqualTo(isStaffActive)
       } else {
-        assertThat(prison.clients.firstOrNull { it.userType == STAFF }).isNull()
+        assertThat(prison.clients.firstOrNull { it.clientType == STAFF }).isNull()
       }
 
       if (isPublicActive != null) {
-        val client = prison.clients.first { it.userType == PUBLIC }
-        assertThat(client.userType).isEqualTo(PUBLIC)
+        val client = prison.clients.first { it.clientType == PUBLIC }
+        assertThat(client.clientType).isEqualTo(PUBLIC)
         assertThat(client.active).isEqualTo(isPublicActive)
       } else {
-        assertThat(prison.clients.firstOrNull { it.userType == PUBLIC }).isNull()
+        assertThat(prison.clients.firstOrNull { it.clientType == PUBLIC }).isNull()
       }
 
       exceptedExcludeDate?.let {
