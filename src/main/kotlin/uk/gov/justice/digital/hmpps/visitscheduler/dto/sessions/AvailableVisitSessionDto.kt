@@ -31,6 +31,12 @@ data class AvailableVisitSessionDto(
   @param:Schema(description = "Session vo restriction", required = true)
   val visitOrderRestriction: SessionTemplateVisitOrderRestrictionType,
 
+  @param:Schema(description = "Determines if the age restriction is enabled for this session", example = "true", required = true)
+  val isAgeRestricted: Boolean,
+
+  @param:Schema(description = "Minimum required age for attending the session", example = "18", required = true)
+  val ageRestriction: Int,
+
   @param:Schema(description = "Session conflicts", required = false)
   val sessionConflicts: Set<PublicSessionConflict> = setOf(),
 ) {
@@ -40,6 +46,8 @@ data class AvailableVisitSessionDto(
     sessionTimeSlot = SessionTimeSlotDto(visitSession.startTimestamp.toLocalTime(), visitSession.endTimestamp.toLocalTime()),
     sessionRestriction = sessionRestriction,
     visitOrderRestriction = visitSession.visitOrderRestriction,
+    isAgeRestricted = visitSession.isAgeRestricted,
+    ageRestriction = visitSession.ageRestriction,
     sessionConflicts = visitSession.sessionConflicts.mapNotNull { it.sessionConflict.toPublicSessionConflict() }.toSet(),
   )
 }

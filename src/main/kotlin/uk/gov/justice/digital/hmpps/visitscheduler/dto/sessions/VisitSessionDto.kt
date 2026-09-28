@@ -70,6 +70,12 @@ class VisitSessionDto(
   @field:NotNull
   val endTimestamp: LocalDateTime,
 
+  @param:Schema(description = "Determines if the age restriction is enabled for this session", example = "true", required = true)
+  val isAgeRestricted: Boolean,
+
+  @param:Schema(description = "Minimum required age for attending the session", example = "18", required = true)
+  val ageRestriction: Int,
+
   @param:Schema(description = "Session conflicts", required = false)
   val sessionConflicts: MutableList<SessionConflictDto> = mutableListOf(),
 ) {

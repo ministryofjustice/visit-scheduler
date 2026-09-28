@@ -2487,6 +2487,8 @@ class GetSessionsTest : IntegrationTestBase() {
     assertThat(visitSessionResult.startTimestamp.dayOfWeek).isEqualTo(expectedSessionTemplate.dayOfWeek)
     assertThat(visitSessionResult.endTimestamp.dayOfWeek).isEqualTo(expectedSessionTemplate.dayOfWeek)
     assertThat(visitSessionResult.visitOrderRestriction).isEqualTo(expectedSessionTemplate.visitOrderRestriction)
+    assertThat(visitSessionResult.isAgeRestricted).isEqualTo(expectedSessionTemplate.isAgeRestricted)
+    assertThat(visitSessionResult.ageRestriction).isEqualTo(expectedSessionTemplate.ageRestriction)
   }
 
   private fun assertResponseLength(responseSpec: ResponseSpec, length: Int) {

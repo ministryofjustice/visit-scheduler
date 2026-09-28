@@ -39,6 +39,8 @@ class SessionConflictsUtilTest {
     endTimestamp = visitDate.atTime(11, 0),
     sessionConflicts = mutableListOf(),
     visitOrderRestriction = visitOrderRestriction,
+    isAgeRestricted = false,
+    ageRestriction = 18,
   )
 
   fun createDoubleBookedConflictSessionDto(
