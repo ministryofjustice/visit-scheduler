@@ -20,6 +20,11 @@ data class PrisonUserClientDto(
   @field:Min(0)
   var policyNoticeDaysMax: Int = 28,
 
+  @Deprecated("To be removed and replaced with clientType - use clientType instead")
+  @param:Schema(description = "User type", example = "STAFF", required = true)
+  @field:NotNull
+  val userType: PrisonClientType,
+
   @param:Schema(description = "Prison client type", example = "STAFF", required = true)
   @field:NotNull
   val clientType: PrisonClientType,
@@ -29,6 +34,7 @@ data class PrisonUserClientDto(
   var active: Boolean,
 ) {
   constructor(prisonUserClient: PrisonUserClient) : this(
+    userType = prisonUserClient.clientType,
     clientType = prisonUserClient.clientType,
     policyNoticeDaysMin = prisonUserClient.policyNoticeDaysMin,
     policyNoticeDaysMax = prisonUserClient.policyNoticeDaysMax,

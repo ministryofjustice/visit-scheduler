@@ -114,9 +114,11 @@ class PrisonEntityHelper(
     fun createPrisonDto(
       prisonCode: String = "AWE",
       activePrison: Boolean = true,
+      policyNoticeDaysMin: Int = 2,
+      policyNoticeDaysMax: Int = 28,
       clients: List<PrisonUserClientDto> = listOf(
-        PrisonUserClientDto(2, 28, STAFF, active = true),
-        PrisonUserClientDto(2, 28, PUBLIC, active = true),
+        PrisonUserClientDto(2, 28, STAFF, STAFF, active = true),
+        PrisonUserClientDto(2, 28, PUBLIC, PUBLIC, active = true),
       ),
       maxTotalVisitors: Int = 6,
       maxAdultVisitors: Int = 3,
@@ -127,6 +129,8 @@ class PrisonEntityHelper(
     ): PrisonDto = PrisonDto(
       code = prisonCode,
       active = activePrison,
+      policyNoticeDaysMin = policyNoticeDaysMin,
+      policyNoticeDaysMax = policyNoticeDaysMax,
       maxTotalVisitors = maxTotalVisitors,
       maxAdultVisitors = maxAdultVisitors,
       maxChildVisitors = maxChildVisitors,
@@ -144,8 +148,8 @@ class PrisonEntityHelper(
       weekStartDay: DayOfWeek = DayOfWeek.SUNDAY,
       remandVisitLimitPerWeek: Int = 2,
       clients: List<PrisonUserClientDto> = mutableListOf(
-        PrisonUserClientDto(2, 28, STAFF, active = true),
-        PrisonUserClientDto(2, 28, PUBLIC, active = true),
+        PrisonUserClientDto(2, 28, STAFF, STAFF, active = true),
+        PrisonUserClientDto(2, 28, PUBLIC, PUBLIC, active = true),
       ),
     ): UpdatePrisonDto = UpdatePrisonDto(
       maxTotalVisitors = maxTotalVisitors,

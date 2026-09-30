@@ -29,8 +29,8 @@ class GetSessionsByUserTypeBookingWindowsTest : IntegrationTestBase() {
 
   @BeforeEach
   internal fun setUpTests() {
-    val staffClient = PrisonUserClientDto(policyNoticeDaysMin = 0, policyNoticeDaysMax = 21, clientType = STAFF, active = true)
-    val publicClient = PrisonUserClientDto(policyNoticeDaysMin = 5, policyNoticeDaysMax = 29, clientType = PUBLIC, active = true)
+    val staffClient = PrisonUserClientDto(policyNoticeDaysMin = 0, policyNoticeDaysMax = 21, userType = STAFF, clientType = STAFF, active = true)
+    val publicClient = PrisonUserClientDto(policyNoticeDaysMin = 5, policyNoticeDaysMax = 29, userType = PUBLIC, clientType = PUBLIC, active = true)
     authHttpHeaders = setAuthorisation(roles = requiredRole)
     prison = prisonEntityHelper.create(prisonCode = prisonCode, clients = listOf(staffClient, publicClient))
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
