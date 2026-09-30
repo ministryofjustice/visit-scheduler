@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto
 
+import com.fasterxml.jackson.annotation.JsonAlias
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotNull
@@ -27,6 +28,7 @@ data class PrisonUserClientDto(
 
   @param:Schema(description = "Prison client type", example = "STAFF", required = true)
   @field:NotNull
+  @JsonAlias("userType")
   val clientType: PrisonClientType,
 
   @param:Schema(description = "is prison user client active", example = "true", required = true)
