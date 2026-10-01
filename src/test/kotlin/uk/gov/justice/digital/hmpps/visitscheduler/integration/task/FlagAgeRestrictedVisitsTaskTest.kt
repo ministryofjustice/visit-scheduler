@@ -20,8 +20,8 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonerContactRegistryClient
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitNotificationEventHelper
@@ -190,7 +190,7 @@ class FlagAgeRestrictedVisitsTaskTest : IntegrationTestBase() {
     permittedLocations: List<AllowedSessionLocationHierarchy>? = null,
     permittedCategories: List<PrisonerCategoryType>? = null,
     permittedIncentiveLevels: List<IncentiveLevel>? = null,
-    userTypes: List<UserType> = listOf(UserType.STAFF, UserType.PUBLIC),
+    clientTypes: List<PrisonClientType> = listOf(PrisonClientType.STAFF, PrisonClientType.PUBLIC),
     isAgeRestricted: Boolean,
     ageRestriction: Int,
   ): SessionTemplate {
@@ -218,7 +218,7 @@ class FlagAgeRestrictedVisitsTaskTest : IntegrationTestBase() {
       permittedLocationGroups = permittedLocationGroups,
       permittedCategories = permittedCategoryGroups,
       permittedIncentiveLevels = permittedIncentiveLevelGroups,
-      clients = userTypes.map { UserClientDto(it, true) },
+      clients = clientTypes.map { UserClientDto(it, true) },
       isAgeRestricted = isAgeRestricted,
       ageRestriction = ageRestriction,
     )

@@ -5,13 +5,12 @@ import jakarta.validation.Valid
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import java.time.DayOfWeek
 
 @Schema(description = "Prison dto")
 data class PrisonDto(
-
   @param:Schema(description = "prison code", example = "BHI", required = true)
   @field:NotNull
   var code: String,
@@ -21,11 +20,13 @@ data class PrisonDto(
   var active: Boolean = false,
 
   // TODO - we need to remove this once we start using the client booking windows
+  @Deprecated("to be removed - use client properties instead")
   @param:Schema(description = "minimum number of days notice from the current date to booked a visit", example = "2", required = true)
   @field:NotNull
   @field:Min(0)
   val policyNoticeDaysMin: Int,
 
+  @Deprecated("to be removed - use client properties instead")
   @param:Schema(description = "maximum number of days notice from the current date to booked a visit", example = "28", required = true)
   @field:NotNull
   @field:Min(0)
@@ -74,7 +75,7 @@ data class PrisonDto(
     weekStartDay = prisonEntity.weekStartDay,
     remandVisitLimitPerWeek = prisonEntity.remandVisitLimitPerWeek,
     // TODO - remove this once we use the client booking windows
-    policyNoticeDaysMin = prisonEntity.clients.first { it.userType == UserType.STAFF }.policyNoticeDaysMin,
-    policyNoticeDaysMax = prisonEntity.clients.first { it.userType == UserType.STAFF }.policyNoticeDaysMax,
+    policyNoticeDaysMin = prisonEntity.clients.first { it.clientType == PrisonClientType.STAFF }.policyNoticeDaysMin,
+    policyNoticeDaysMax = prisonEntity.clients.first { it.clientType == PrisonClientType.STAFF }.policyNoticeDaysMax,
   )
 }

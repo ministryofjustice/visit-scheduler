@@ -10,8 +10,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_SESSIONS_AVA
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_SESSION_CONTROLLER_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonUserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType.PUBLIC
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import java.time.DayOfWeek
@@ -29,8 +29,8 @@ class GetSessionsByUserTypeBookingWindowsTest : IntegrationTestBase() {
 
   @BeforeEach
   internal fun setUpTests() {
-    val staffClient = PrisonUserClientDto(policyNoticeDaysMin = 0, policyNoticeDaysMax = 21, userType = STAFF, active = true)
-    val publicClient = PrisonUserClientDto(policyNoticeDaysMin = 5, policyNoticeDaysMax = 29, userType = PUBLIC, active = true)
+    val staffClient = PrisonUserClientDto(policyNoticeDaysMin = 0, policyNoticeDaysMax = 21, userType = STAFF, clientType = STAFF, active = true)
+    val publicClient = PrisonUserClientDto(policyNoticeDaysMin = 5, policyNoticeDaysMax = 29, userType = PUBLIC, clientType = PUBLIC, active = true)
     authHttpHeaders = setAuthorisation(roles = requiredRole)
     prison = prisonEntityHelper.create(prisonCode = prisonCode, clients = listOf(staffClient, publicClient))
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
@@ -44,7 +44,7 @@ class GetSessionsByUserTypeBookingWindowsTest : IntegrationTestBase() {
   @Test
   fun `when get visit sessions called with userType STAFF only visit sessions for STAFF are returned`() {
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
     val today = LocalDate.now()
     val expectedSessionDates = (0L..21L).map { today.plusDays(it) }.toList()
 

@@ -11,9 +11,9 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType.PUBLIC
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
@@ -132,7 +132,7 @@ class SessionServiceRemandLimitTest {
     whenever(visitRepository.getBookedVisitsThatCountTowardsRemandLimit(any(), anyOrNull(), any(), anyOrNull())).thenReturn(listOf(visit1))
 
     // When
-    val sessions = sessionService.getAllVisitSessions(prisonCode, prisonerId, userType = STAFF)
+    val sessions = sessionService.getAllVisitSessions(prisonCode, prisonerId, clientType = STAFF)
 
     // Then
     assertThat(sessions).size().isEqualTo(2)
@@ -192,7 +192,7 @@ class SessionServiceRemandLimitTest {
     whenever(visitRepository.getBookedVisitsThatCountTowardsRemandLimit(any(), anyOrNull(), any(), anyOrNull())).thenReturn(listOf(visit1))
 
     // When
-    val sessions = sessionService.getAllVisitSessions(prisonCode, prisonerId, userType = STAFF)
+    val sessions = sessionService.getAllVisitSessions(prisonCode, prisonerId, clientType = STAFF)
 
     // Then
     assertThat(sessions).size().isEqualTo(2)
@@ -256,7 +256,7 @@ class SessionServiceRemandLimitTest {
     whenever(visitRepository.getBookedVisitsThatCountTowardsRemandLimit(any(), anyOrNull(), any(), anyOrNull())).thenReturn(listOf(visit1, visit2))
 
     // When
-    val sessions = sessionService.getAllVisitSessions(prisonCode, prisonerId, userType = STAFF)
+    val sessions = sessionService.getAllVisitSessions(prisonCode, prisonerId, clientType = STAFF)
 
     // Then
     assertThat(sessions).size().isEqualTo(2)
@@ -317,7 +317,7 @@ class SessionServiceRemandLimitTest {
     whenever(visitRepository.getBookedVisitsThatCountTowardsRemandLimit(any(), anyOrNull(), any(), anyOrNull())).thenReturn(listOf(visit1))
 
     // When
-    val sessions = sessionService.getAllVisitSessions(prisonCode, prisonerId, userType = STAFF)
+    val sessions = sessionService.getAllVisitSessions(prisonCode, prisonerId, clientType = STAFF)
 
     // Then
     assertThat(sessions).size().isEqualTo(2)
@@ -341,8 +341,8 @@ class SessionServiceRemandLimitTest {
   ).also {
     it.clients.addAll(
       listOf(
-        PrisonUserClient(prisonId = it.id, prison = it, userType = STAFF, policyNoticeDaysMin = noticeDaysMin, policyNoticeDaysMax = noticeDaysMax, active = true),
-        PrisonUserClient(prisonId = it.id, prison = it, userType = UserType.PUBLIC, policyNoticeDaysMin = noticeDaysMin, policyNoticeDaysMax = noticeDaysMax, active = true),
+        PrisonUserClient(prisonId = it.id, prison = it, clientType = STAFF, policyNoticeDaysMin = noticeDaysMin, policyNoticeDaysMax = noticeDaysMax, active = true),
+        PrisonUserClient(prisonId = it.id, prison = it, clientType = PUBLIC, policyNoticeDaysMin = noticeDaysMin, policyNoticeDaysMax = noticeDaysMax, active = true),
       ),
     )
   }

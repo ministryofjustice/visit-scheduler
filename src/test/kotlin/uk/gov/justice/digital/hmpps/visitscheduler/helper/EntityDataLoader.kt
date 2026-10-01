@@ -16,12 +16,12 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventAttributeType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType.PUBLIC
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VSIPReport
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
@@ -117,8 +117,8 @@ class PrisonEntityHelper(
       policyNoticeDaysMin: Int = 2,
       policyNoticeDaysMax: Int = 28,
       clients: List<PrisonUserClientDto> = listOf(
-        PrisonUserClientDto(2, 28, STAFF, active = true),
-        PrisonUserClientDto(2, 28, PUBLIC, active = true),
+        PrisonUserClientDto(2, 28, STAFF, STAFF, active = true),
+        PrisonUserClientDto(2, 28, PUBLIC, PUBLIC, active = true),
       ),
       maxTotalVisitors: Int = 6,
       maxAdultVisitors: Int = 3,
@@ -141,8 +141,6 @@ class PrisonEntityHelper(
     )
 
     fun updatePrisonDto(
-      policyNoticeDaysMin: Int = 10,
-      policyNoticeDaysMax: Int = 20,
       maxTotalVisitors: Int = 4,
       maxAdultVisitors: Int = 2,
       maxChildVisitors: Int = 2,
@@ -150,12 +148,10 @@ class PrisonEntityHelper(
       weekStartDay: DayOfWeek = DayOfWeek.SUNDAY,
       remandVisitLimitPerWeek: Int = 2,
       clients: List<PrisonUserClientDto> = mutableListOf(
-        PrisonUserClientDto(2, 28, STAFF, active = true),
-        PrisonUserClientDto(2, 28, PUBLIC, active = true),
+        PrisonUserClientDto(2, 28, STAFF, STAFF, active = true),
+        PrisonUserClientDto(2, 28, PUBLIC, PUBLIC, active = true),
       ),
     ): UpdatePrisonDto = UpdatePrisonDto(
-      policyNoticeDaysMin = policyNoticeDaysMin,
-      policyNoticeDaysMax = policyNoticeDaysMax,
       maxTotalVisitors = maxTotalVisitors,
       maxAdultVisitors = maxAdultVisitors,
       maxChildVisitors = maxChildVisitors,
@@ -195,7 +191,7 @@ class PrisonEntityHelper(
             active = true,
             policyNoticeDaysMin = policyNoticeDaysMin,
             policyNoticeDaysMax = policyNoticeDaysMax,
-            userType = STAFF,
+            clientType = STAFF,
           ),
         )
 
@@ -205,7 +201,7 @@ class PrisonEntityHelper(
             active = true,
             policyNoticeDaysMin = policyNoticeDaysMin,
             policyNoticeDaysMax = policyNoticeDaysMax,
-            userType = PUBLIC,
+            clientType = PUBLIC,
           ),
         )
       }
@@ -238,7 +234,7 @@ class PrisonEntityHelper(
             active = client.active,
             policyNoticeDaysMin = client.policyNoticeDaysMin,
             policyNoticeDaysMax = client.policyNoticeDaysMax,
-            userType = client.userType,
+            clientType = client.clientType,
           ),
         )
       }
@@ -252,9 +248,9 @@ class PrisonEntityHelper(
     active: Boolean,
     policyNoticeDaysMin: Int,
     policyNoticeDaysMax: Int,
-    userType: UserType,
+    clientType: PrisonClientType,
   ): PrisonUserClient {
-    val prisonUserClient = PrisonUserClient(prison = prison, prisonId = prison.id, active = active, userType = userType, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax)
+    val prisonUserClient = PrisonUserClient(prison = prison, prisonId = prison.id, active = active, clientType = clientType, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax)
     prison.clients.add(prisonUserClient)
     return prisonUserClient
   }
@@ -363,7 +359,7 @@ class VisitEntityHelper(
     outcomeStatus: OutcomeStatus? = null,
     createApplication: Boolean = true,
     visitContact: ContactDto? = null,
-    userType: UserType? = STAFF,
+    userType: UserType? = UserType.STAFF,
   ): Visit {
     val prison = prisonEntityHelper.create(prisonCode, activePrison, dontMakeClient = true)
     val sessionSlot = sessionSlotEntityHelper.create(sessionTemplate.reference, prison.id, slotDate, visitStart, visitEnd)
@@ -413,7 +409,7 @@ class VisitEntityHelper(
     outcomeStatus: OutcomeStatus? = null,
     createApplication: Boolean = true,
     createContact: Boolean = false,
-    userType: UserType? = STAFF,
+    userType: UserType? = UserType.STAFF,
   ): Visit {
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
     val sessionSlot = sessionSlotEntityHelper.create(prison.id, slotDate, visitStart, visitEnd)
@@ -592,7 +588,7 @@ class EventAuditEntityHelper(
     applicationMethodType: ApplicationMethodType = ApplicationMethodType.PHONE,
     type: EventAuditType = BOOKED_VISIT,
     text: String?,
-    userType: UserType = STAFF,
+    userType: UserType = UserType.STAFF,
   ): EventAudit {
     val actionedBy = createOrGetActionBy(actionedByValue, userType)
 
@@ -610,12 +606,12 @@ class EventAuditEntityHelper(
   }
 
   private fun createOrGetActionBy(actionedByValue: String? = null, userType: UserType): ActionedBy {
-    if (userType == SYSTEM) {
+    if (userType == UserType.SYSTEM) {
       assertNull(actionedByValue)
     }
 
-    val bookerReference: String? = if (userType == PUBLIC) actionedByValue else null
-    val userName: String? = if (userType == STAFF) actionedByValue else null
+    val bookerReference: String? = if (userType == UserType.PUBLIC) actionedByValue else null
+    val userName: String? = if (userType == UserType.STAFF) actionedByValue else null
 
     val actionBy = testActionedByRepository.findActionedBy(actionedByValue, userType)
 
@@ -813,13 +809,13 @@ class SessionTemplateEntityHelper(
       )
     }
 
-    clients.forEach { userType ->
+    clients.forEach { client ->
       sessionTemplateUserClientRepository.saveAndFlush(
         SessionTemplateUserClient(
           sessionTemplateId = sessionTemplate.id,
           sessionTemplate = sessionTemplate,
-          userType = userType.userType,
-          active = userType.active,
+          clientType = client.clientType,
+          active = client.active,
         ),
       )
     }
