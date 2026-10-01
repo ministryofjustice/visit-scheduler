@@ -4,7 +4,7 @@ import jakarta.validation.ValidationException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
 import java.time.LocalDate
@@ -45,7 +45,7 @@ class PrisonsService(
   }
 
   @Transactional(readOnly = true)
-  fun getSupportedPrisonCodes(type: UserType): List<String> = prisonRepository.getSupportedPrisons(type)
+  fun getSupportedPrisonCodes(type: PrisonClientType): List<String> = prisonRepository.getSupportedPrisons(type)
 
   @Transactional(readOnly = true)
   fun getPrisonCodes(): List<String> = prisonRepository.getPrisonCodes()

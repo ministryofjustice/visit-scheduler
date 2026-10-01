@@ -7,9 +7,9 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.HttpHeaders
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_SESSION_CONTROLLER_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.REMAND_VISITS_LIMIT_REACHED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType.NONE
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -54,12 +54,12 @@ class GetSessionsRemandLimitTest : IntegrationTestBase() {
     createVisits(remandPrisonerId, week3VisitDays, startDate.plusWeeks(2))
 
     // When
-    val responseSpec = callGetSessions(prisonCode, remandPrisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, remandPrisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
-    assertThat(visitSessionResults.size).isEqualTo(14)
+    assertThat(visitSessionResults.size).isEqualTo(15)
     val week1StartDate = startDate
     val week1EndDate = startDate.with(TemporalAdjusters.next(DayOfWeek.SUNDAY))
     val week2StartDate = week1EndDate.plusDays(1)
@@ -94,7 +94,7 @@ class GetSessionsRemandLimitTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, remandPrisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, remandPrisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -117,12 +117,12 @@ class GetSessionsRemandLimitTest : IntegrationTestBase() {
     createVisits(remandPrisonerId, week3VisitDays, startDate.plusWeeks(2))
 
     // When
-    val responseSpec = callGetSessions(prisonCode, remandPrisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, remandPrisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
-    assertThat(visitSessionResults.size).isEqualTo(14)
+    assertThat(visitSessionResults.size).isEqualTo(15)
     assertThat(visitSessionResults).noneMatch { it.sessionConflicts.map { sessionConflictDto -> sessionConflictDto.sessionConflict }.contains(REMAND_VISITS_LIMIT_REACHED) }
   }
 
@@ -152,12 +152,12 @@ class GetSessionsRemandLimitTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, remandPrisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, remandPrisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
-    assertThat(visitSessionResults.size).isEqualTo(14)
+    assertThat(visitSessionResults.size).isEqualTo(15)
     assertThat(visitSessionResults).noneMatch { it.sessionConflicts.map { sessionConflictDto -> sessionConflictDto.sessionConflict }.contains(REMAND_VISITS_LIMIT_REACHED) }
   }
 
@@ -167,12 +167,12 @@ class GetSessionsRemandLimitTest : IntegrationTestBase() {
     // no visits booked
 
     // When
-    val responseSpec = callGetSessions(prisonCode, remandPrisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, remandPrisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
-    assertThat(visitSessionResults.size).isEqualTo(14)
+    assertThat(visitSessionResults.size).isEqualTo(15)
     assertThat(visitSessionResults).noneMatch { it.sessionConflicts.map { sessionConflictDto -> sessionConflictDto.sessionConflict }.contains(REMAND_VISITS_LIMIT_REACHED) }
   }
 
@@ -188,12 +188,12 @@ class GetSessionsRemandLimitTest : IntegrationTestBase() {
     createVisits(convictedPrisonerId, week3VisitDays, startDate.plusWeeks(2))
 
     // When
-    val responseSpec = callGetSessions(prisonCode, convictedPrisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, convictedPrisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
-    assertThat(visitSessionResults.size).isEqualTo(14)
+    assertThat(visitSessionResults.size).isEqualTo(15)
     assertThat(visitSessionResults).noneMatch { it.sessionConflicts.map { sessionConflictDto -> sessionConflictDto.sessionConflict }.contains(REMAND_VISITS_LIMIT_REACHED) }
   }
 

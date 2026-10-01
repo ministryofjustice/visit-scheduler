@@ -9,7 +9,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonerContactRegistr
 import uk.gov.justice.digital.hmpps.visitscheduler.config.FlagVisitTaskConfiguration
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonsService
@@ -97,7 +97,7 @@ class FlagVisitsTask(
       reason = notifications.joinToString(", ") { it.description }
     } else {
       try {
-        sessions = sessionService.getAllVisitSessions(prisonCode = visit.prisonCode, prisonerId = visit.prisonerId, minOverride = noticeDays, maxOverride = noticeDays, userType = UserType.STAFF).filter { it.sessionTemplateReference == visit.sessionTemplateReference }
+        sessions = sessionService.getAllVisitSessions(prisonCode = visit.prisonCode, prisonerId = visit.prisonerId, minOverride = noticeDays, maxOverride = noticeDays, clientType = PrisonClientType.STAFF).filter { it.sessionTemplateReference == visit.sessionTemplateReference }
       } catch (e: Exception) {
         if (isRetry) {
           // only log this if the visit is being retried

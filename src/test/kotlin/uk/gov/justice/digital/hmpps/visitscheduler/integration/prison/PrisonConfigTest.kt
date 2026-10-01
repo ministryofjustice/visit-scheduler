@@ -14,8 +14,8 @@ import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonUserClientDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType.PUBLIC
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCreatePrison
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGetPrison
@@ -91,7 +91,7 @@ class PrisonConfigTest : IntegrationTestBase() {
   @Test
   fun `on create when notice days min is greater than policy notice days max`() {
     // Given
-    val staffClient = PrisonUserClientDto(29, 28, STAFF, active = true)
+    val staffClient = PrisonUserClientDto(29, 28, STAFF, STAFF, active = true)
     val createPrisonRequest = PrisonEntityHelper.createPrisonDto(clients = listOf(staffClient))
 
     // When
@@ -131,7 +131,7 @@ class PrisonConfigTest : IntegrationTestBase() {
   @Test
   fun `on create when notice days min and max is less than zero error is returned`() {
     // Given
-    val staffClient = PrisonUserClientDto(-1, -1, STAFF, active = true)
+    val staffClient = PrisonUserClientDto(-1, -1, STAFF, STAFF, active = true)
     val createPrisonRequest = PrisonEntityHelper.createPrisonDto(clients = listOf(staffClient))
 
     // When
@@ -163,8 +163,8 @@ class PrisonConfigTest : IntegrationTestBase() {
     // Given
     // prison already exists in DB
     prison = prisonEntityHelper.create()
-    val staffClient = PrisonUserClientDto(1, 23, STAFF, active = true)
-    val publicClient = PrisonUserClientDto(2, 28, PUBLIC, active = true)
+    val staffClient = PrisonUserClientDto(1, 23, STAFF, STAFF, active = true)
+    val publicClient = PrisonUserClientDto(2, 28, PUBLIC, PUBLIC, active = true)
     val updatePrisonRequest = PrisonEntityHelper.updatePrisonDto(clients = listOf(staffClient, publicClient))
     prisonEntityHelper.create(prison.code, prison.active)
 
@@ -201,7 +201,7 @@ class PrisonConfigTest : IntegrationTestBase() {
     // prison already exists in DB
     prison = prisonEntityHelper.create(policyNoticeDaysMin = 1, policyNoticeDaysMax = 28)
 
-    val staffClient = PrisonUserClientDto(29, 28, STAFF, active = true)
+    val staffClient = PrisonUserClientDto(29, 28, STAFF, STAFF, active = true)
     val updatePrisonRequest = PrisonEntityHelper.updatePrisonDto(clients = listOf(staffClient))
     prisonEntityHelper.create(prison.code, prison.active)
 
@@ -252,7 +252,7 @@ class PrisonConfigTest : IntegrationTestBase() {
     // Given
     // prison already exists in DB
     prison = prisonEntityHelper.create()
-    val staffClient = PrisonUserClientDto(-1, -1, STAFF, active = true)
+    val staffClient = PrisonUserClientDto(-1, -1, STAFF, STAFF, active = true)
 
     val updatePrisonRequest = PrisonEntityHelper.updatePrisonDto(clients = listOf(staffClient))
     prisonEntityHelper.create(prison.code, prison.active)
