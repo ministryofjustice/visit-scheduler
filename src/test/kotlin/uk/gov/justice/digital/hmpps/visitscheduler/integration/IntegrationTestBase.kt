@@ -40,6 +40,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CANC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.REQUESTED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.RESERVED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus.CANCELLATION
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
@@ -543,7 +544,7 @@ abstract class IntegrationTestBase {
     policyNoticeDaysMin: Int? = null,
     policyNoticeDaysMax: Int? = null,
     userName: String? = null,
-    userType: UserType,
+    clientType: PrisonClientType,
     youngestVisitorAge: Int? = null,
     authHttpHeaders: (HttpHeaders) -> Unit,
   ): ResponseSpec {
@@ -553,7 +554,7 @@ abstract class IntegrationTestBase {
       policyNoticeDaysMin = policyNoticeDaysMin,
       policyNoticeDaysMax = policyNoticeDaysMax,
       username = userName,
-      userType = userType,
+      clientType = clientType,
       youngestVisitorAge = youngestVisitorAge,
     )
 
@@ -574,7 +575,7 @@ abstract class IntegrationTestBase {
     policyNoticeDaysMax: Int = 28,
     excludedApplicationReference: String? = null,
     username: String? = null,
-    userType: UserType = UserType.PUBLIC,
+    clientType: PrisonClientType = PrisonClientType.PUBLIC,
     authHttpHeaders: (HttpHeaders) -> Unit,
     youngestVisitorAge: Int? = null,
   ): ResponseSpec {
@@ -593,7 +594,7 @@ abstract class IntegrationTestBase {
       policyNoticeDaysMax = policyNoticeDaysMax,
       excludedApplicationReference = excludedApplicationReference,
       username = username,
-      userType = userType,
+      clientType = clientType,
       youngestVisitorAge = youngestVisitorAge,
     ).joinToString("&")
 
@@ -611,7 +612,7 @@ abstract class IntegrationTestBase {
     policyNoticeDaysMax: Int? = null,
     excludedApplicationReference: String? = null,
     username: String? = null,
-    userType: UserType,
+    clientType: PrisonClientType,
     youngestVisitorAge: Int? = null,
   ): List<String> {
     val queryParams = ArrayList<String>()
@@ -642,7 +643,7 @@ abstract class IntegrationTestBase {
       queryParams.add("username=$username")
     }
 
-    queryParams.add("userType=${userType.name}")
+    queryParams.add("userType=${clientType.name}")
 
     youngestVisitorAge?.let {
       queryParams.add("youngestVisitorAge=$youngestVisitorAge")

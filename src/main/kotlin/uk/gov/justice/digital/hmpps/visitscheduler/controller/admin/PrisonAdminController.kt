@@ -21,7 +21,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonUserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdatePrisonDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonConfigService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonsService
 
@@ -272,7 +272,7 @@ class PrisonAdminController(
     prisonCode: String,
     @Schema(description = "type", example = "STAFF", required = true)
     @PathVariable
-    type: UserType,
+    type: PrisonClientType,
   ): PrisonUserClientDto = prisonConfigService.activatePrisonClient(prisonCode, type)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
@@ -308,6 +308,6 @@ class PrisonAdminController(
     prisonCode: String,
     @Schema(description = "type", example = "STAFF", required = true)
     @PathVariable
-    type: UserType,
+    type: PrisonClientType,
   ): PrisonUserClientDto = prisonConfigService.deActivatePrisonClient(prisonCode, type)
 }
