@@ -24,7 +24,6 @@ data class UpdatePrisonDto(
   @param:Schema(description = "The limit per prison week, the number of remand visits that can be booked per week")
   @field:Min(1)
   var remandVisitLimitPerWeek: Int?,
-  // TODO - change to val later
   @param:Schema(description = "prison user client", required = false)
-  var clients: List<PrisonUserClientDto>?,
+  val clients: List<PrisonUserClientDto>?,
 )
