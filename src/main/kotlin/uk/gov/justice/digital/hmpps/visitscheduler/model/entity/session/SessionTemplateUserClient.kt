@@ -28,7 +28,7 @@ class SessionTemplateUserClient(
   val sessionTemplate: SessionTemplate,
 
   @Enumerated(EnumType.STRING)
-  @Column(name = "user_type")
+  @Column(name = "client_type")
   val clientType: PrisonClientType,
 
   @Column(name = "active")
