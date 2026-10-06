@@ -200,8 +200,8 @@ class AdminPrisonsTest : IntegrationTestBase() {
     val min = 2
     val max = 28
     val clients = listOf(
-      PrisonUserClientDto(userType = PUBLIC, clientType = PUBLIC, policyNoticeDaysMin = min, policyNoticeDaysMax = max, active = true),
-      PrisonUserClientDto(userType = STAFF, clientType = STAFF, policyNoticeDaysMin = min, policyNoticeDaysMax = max, active = false),
+      PrisonUserClientDto(clientType = PUBLIC, policyNoticeDaysMin = min, policyNoticeDaysMax = max, active = true),
+      PrisonUserClientDto(clientType = STAFF, policyNoticeDaysMin = min, policyNoticeDaysMax = max, active = false),
     )
     val prisonDto = PrisonEntityHelper.createPrisonDto("AWE", true, clients = clients)
 
@@ -250,8 +250,8 @@ class AdminPrisonsTest : IntegrationTestBase() {
       weekStartDay = DayOfWeek.SUNDAY,
       remandVisitLimitPerWeek = 2,
       clients = listOf(
-        PrisonUserClientDto(userType = PUBLIC, clientType = PUBLIC, policyNoticeDaysMin = 2, policyNoticeDaysMax = 32, active = true),
-        PrisonUserClientDto(userType = STAFF, clientType = STAFF, policyNoticeDaysMin = 2, policyNoticeDaysMax = 32, active = true),
+        PrisonUserClientDto(clientType = PUBLIC, policyNoticeDaysMin = 2, policyNoticeDaysMax = 32, active = true),
+        PrisonUserClientDto(clientType = STAFF, policyNoticeDaysMin = 2, policyNoticeDaysMax = 32, active = true),
       ),
     )
 
@@ -305,8 +305,8 @@ class AdminPrisonsTest : IntegrationTestBase() {
       weekStartDay = DayOfWeek.FRIDAY,
       remandVisitLimitPerWeek = null,
       clients = listOf(
-        PrisonUserClientDto(userType = PUBLIC, clientType = PUBLIC, policyNoticeDaysMin = 2, policyNoticeDaysMax = 32, active = true),
-        PrisonUserClientDto(userType = STAFF, clientType = STAFF, policyNoticeDaysMin = 2, policyNoticeDaysMax = 32, active = true),
+        PrisonUserClientDto(clientType = PUBLIC, policyNoticeDaysMin = 2, policyNoticeDaysMax = 32, active = true),
+        PrisonUserClientDto(clientType = STAFF, policyNoticeDaysMin = 2, policyNoticeDaysMax = 32, active = true),
       ),
     )
 

@@ -54,8 +54,8 @@ fun prison(
   weekStartDay: DayOfWeek = DayOfWeek.MONDAY,
   remandVisitLimitPerWeek: Int = 3,
   clients: List<PrisonUserClientDto> = listOf(
-    PrisonUserClientDto(policyNoticeDaysMin, policyNoticeDaysMax, PrisonClientType.STAFF, PrisonClientType.STAFF, true),
-    PrisonUserClientDto(policyNoticeDaysMin, policyNoticeDaysMax, PrisonClientType.PUBLIC, PrisonClientType.PUBLIC, true),
+    PrisonUserClientDto(policyNoticeDaysMin, policyNoticeDaysMax, PrisonClientType.STAFF, true),
+    PrisonUserClientDto(policyNoticeDaysMin, policyNoticeDaysMax, PrisonClientType.PUBLIC, true),
   ),
 ): Prison {
   val prison = Prison(code = prisonCode, active = isActive, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears, weekStartDay, remandVisitLimitPerWeek)
