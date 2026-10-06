@@ -62,9 +62,6 @@ class PrisonConfigService(
   fun updatePrison(prisonCode: String, prisonDto: UpdatePrisonDto): PrisonDto {
     var prison = prisonsService.findPrisonByCode(prisonCode)
 
-    // TODO - remove this call and the below method once we enable client booking windows
-    setPrisonClients(prisonDto, prison)
-
     val maxTotalVisitors = prisonDto.maxTotalVisitors ?: prison.maxTotalVisitors
     val maxAdultVisitors = prisonDto.maxAdultVisitors ?: prison.maxAdultVisitors
     val maxChildVisitors = prisonDto.maxChildVisitors ?: prison.maxChildVisitors
@@ -94,7 +91,7 @@ class PrisonConfigService(
       prison = prisonRepository.saveAndFlush(prison)
       val clients = prisonDto.clients
 
-      clients?.forEach {
+      clients.forEach {
         prison.clients.add(
           PrisonUserClient(
             prisonId = prison.id,
@@ -163,12 +160,6 @@ class PrisonConfigService(
     // ensure the prison is enabled
     val prison = prisonsService.findPrisonByCode(prisonCode)
     return excludeDateService.getExcludeDates(prison.excludeDates)
-  }
-
-  private fun setPrisonClients(prisonDto: UpdatePrisonDto, prison: Prison) {
-    if (prisonDto.clients == null) {
-      prisonDto.clients = prison.clients.map { PrisonUserClientDto(it) }.toList()
-    }
   }
 
   private fun createOrUpdatePrisonClient(

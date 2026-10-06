@@ -1,0 +1,2 @@
+ALTER TABLE prison_user_client RENAME COLUMN user_type to client_type;
+ALTER TABLE prison_user_client RENAME CONSTRAINT prison_user_client_unq_prison_user_type to prison_user_client_unq_prison_client_type;
