@@ -88,8 +88,9 @@ abstract class NotificationTestBase : IntegrationTestBase() {
       assertThat(data["hasPhoneNumber"]).isEqualTo((visit.visitContact!!.telephone != null).toString())
       assertThat(data["hasEmail"]).isEqualTo((visit.visitContact!!.email != null).toString())
       assertThat(data["totalVisitors"]).isEqualTo(visit.visitors.size.toString())
-      val visitors = visit.visitors.map { visitor -> TelemetryClientService.VisitorDetails(visitor.nomisPersonId.toString(), null) }
-      assertThat(data["visitors"]).isEqualTo(objectMapper.writeValueAsString(visitors))
+      val expectedVisitors = visit.visitors.map { visitor -> TelemetryClientService.VisitorDetails(visitor.nomisPersonId.toString(), null) }
+      val actualVisitors = objectMapper.readValue(data["visitors"], Array<TelemetryClientService.VisitorDetails>::class.java)
+      assertThat(actualVisitors.toList()).containsExactlyInAnyOrderElementsOf(expectedVisitors)
       assertThat(data["reviewType"]).isEqualTo(type.reviewType)
       assertThat(LocalDateTime.parse(data["visitBooked"]).truncatedTo(MINUTES)).isEqualTo(visit.createTimestamp!!.truncatedTo(MINUTES).format(DateTimeFormatter.ISO_DATE_TIME))
 
