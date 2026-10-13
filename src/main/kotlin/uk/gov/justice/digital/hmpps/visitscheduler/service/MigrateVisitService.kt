@@ -53,7 +53,7 @@ class MigrateVisitService(
   private val applicationService: ApplicationService,
   private val prisonsService: PrisonsService,
   private val snsService: SnsService,
-  private val visitNotificationEventService: VisitNotificationEventService,
+  private val visitNotificationTransactionalService: VisitNotificationTransactionalService,
   private val migrationSessionTemplateMatcher: MigrationSessionTemplateMatcher,
   private val telemetryClient: TelemetryClient,
   private val sessionDatesUtil: SessionDatesUtil,
@@ -292,7 +292,7 @@ class MigrateVisitService(
     snsService.sendVisitCancelledEvent(snsDomainEventPublishDto)
 
     // delete all visit notifications and flag the event
-    visitNotificationEventService.deleteVisitAndPairedNotificationEvents(visitDto.reference, UnFlagEventReason.VISIT_CANCELLED_ON_NOMIS)
+    visitNotificationTransactionalService.deleteVisitAndPairedNotificationEvents(visitDto.reference, UnFlagEventReason.VISIT_CANCELLED_ON_NOMIS)
 
     return visitDto
   }

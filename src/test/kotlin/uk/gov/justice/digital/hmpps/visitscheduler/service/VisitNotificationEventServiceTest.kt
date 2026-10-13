@@ -20,7 +20,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAss
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.utils.PairedNotificationEventsUtil
 
 @ExtendWith(MockitoExtension::class)
 class VisitNotificationEventServiceTest {
@@ -30,9 +29,10 @@ class VisitNotificationEventServiceTest {
   private val visitNotificationEventRepository = mock<VisitNotificationEventRepository>()
   private val prisonerService = mock<PrisonerService>()
   private val prisonerContactRegistryClient = mock<PrisonerContactRegistryClient>()
-  private val pairedNotificationEventsUtil = mock<PairedNotificationEventsUtil>()
   private val activitiesApiClient = mock<ActivitiesApiClient>()
   private val alertsApiClient = mock<AlertsApiClient>()
+  private val visitNotificationTransactionalService = mock<VisitNotificationTransactionalService>()
+  private val visitEventAuditService = mock<VisitEventAuditService>()
 
   private lateinit var visitNotificationEventService: VisitNotificationEventService
 
@@ -45,12 +45,12 @@ class VisitNotificationEventServiceTest {
     visitNotificationEventService = VisitNotificationEventService(
       visitService = visitService,
       prisonerService = prisonerService,
-      visitNotificationFlaggingService = visitNotificationFlaggingService,
-      pairedNotificationEventsUtil = pairedNotificationEventsUtil,
       prisonerContactRegistryClient = prisonerContactRegistryClient,
       alertsApiClient = alertsApiClient,
       activitiesApiClient = activitiesApiClient,
       visitNotificationEventRepository = visitNotificationEventRepository,
+      visitNotificationTransactionalService = visitNotificationTransactionalService,
+      visitEventAuditService = visitEventAuditService,
     )
 
     whenever(prisonerService.getPrisoner(primaryNonAssociationNumber)).thenReturn(
