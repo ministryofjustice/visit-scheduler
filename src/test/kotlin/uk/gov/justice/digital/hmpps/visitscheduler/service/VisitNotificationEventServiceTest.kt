@@ -25,7 +25,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationE
 class VisitNotificationEventServiceTest {
 
   private val visitService = mock<VisitService>()
-  private val visitNotificationFlaggingService = mock<VisitNotificationFlaggingService>()
   private val visitNotificationEventRepository = mock<VisitNotificationEventRepository>()
   private val prisonerService = mock<PrisonerService>()
   private val prisonerContactRegistryClient = mock<PrisonerContactRegistryClient>()
@@ -102,7 +101,7 @@ class VisitNotificationEventServiceTest {
 
     // Then
     Mockito.verify(visitService, times(2)).getBookedVisits(any(), any(), any())
-    Mockito.verify(visitNotificationFlaggingService, times(0)).flagTrackEvents(any(), any(), any())
+    Mockito.verify(visitNotificationTransactionalService, times(1)).processVisitsWithNotifications(any())
     Mockito.verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
   }
 }

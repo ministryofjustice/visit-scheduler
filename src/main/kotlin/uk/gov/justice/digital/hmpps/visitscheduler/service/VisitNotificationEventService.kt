@@ -77,7 +77,6 @@ class VisitNotificationEventService(
     const val SOCIAL_CONTACT_TYPE: String = "S"
   }
 
-  @Transactional
   fun handleNonAssociations(notificationDto: NonAssociationChangedNotificationDto) {
     LOG.info("NonAssociations notification received : {}", notificationDto)
     if (NON_ASSOCIATION_CREATED == notificationDto.type) {
@@ -99,7 +98,6 @@ class VisitNotificationEventService(
     }
   }
 
-  @Transactional
   fun handleAddPrisonVisitBlockDate(prisonDateBlockedDto: PrisonDateBlockedDto) {
     LOG.info("PrisonVisitBlockDate notification received : {}", prisonDateBlockedDto)
     val affectedVisits = visitService.getBookedVisitsForDate(prisonCode = prisonDateBlockedDto.prisonCode, date = prisonDateBlockedDto.visitDate)
@@ -107,7 +105,6 @@ class VisitNotificationEventService(
     visitNotificationTransactionalService.processVisitsWithNotifications(processVisitNotificationDto)
   }
 
-  @Transactional
   fun handleRemovePrisonVisitBlockDate(prisonDateBlockedDto: PrisonDateBlockedDto) {
     LOG.info("RemovePrisonVisitBlockDate notification received : {}", prisonDateBlockedDto)
     val affectedNotifications = visitNotificationEventRepository.getEventsByVisitDate(
@@ -118,7 +115,6 @@ class VisitNotificationEventService(
     visitNotificationTransactionalService.deleteNotificationsThatAreNoLongerValid(affectedNotifications, PRISON_VISITS_BLOCKED_FOR_DATE, PRISON_EXCLUDE_DATE_REMOVED)
   }
 
-  @Transactional
   fun handleAddSessionVisitBlockDate(sessionDateBlockedDto: SessionDateBlockedDto) {
     LOG.info("Add session block date notification received : {}", sessionDateBlockedDto)
     with(sessionDateBlockedDto) {
@@ -128,7 +124,6 @@ class VisitNotificationEventService(
     }
   }
 
-  @Transactional
   fun handleRemoveSessionVisitBlockDate(sessionDateBlockedDto: SessionDateBlockedDto) {
     LOG.info("Remove session block date notification received : {}", sessionDateBlockedDto)
     with(sessionDateBlockedDto) {
@@ -138,7 +133,6 @@ class VisitNotificationEventService(
     }
   }
 
-  @Transactional
   fun handlePrisonerReleasedNotification(notificationDto: PrisonerReleasedNotificationDto) {
     LOG.info("PrisonerReleasedNotification notification received : {}", notificationDto)
 
@@ -148,7 +142,6 @@ class VisitNotificationEventService(
     visitNotificationTransactionalService.processVisitsWithNotifications(processVisitNotificationDto)
   }
 
-  @Transactional
   fun handlePrisonerRestrictionChangeNotification(notificationDto: PrisonerRestrictionChangeNotificationDto) {
     LOG.info("PrisonerRestrictionChange notification received")
     if (isNotificationDatesValid(notificationDto.validToDate)) {
@@ -164,7 +157,6 @@ class VisitNotificationEventService(
     }
   }
 
-  @Transactional
   fun handlePrisonerAlertCreatedUpdatedNotification(notificationDto: PrisonerAlertCreatedUpdatedNotificationDto) {
     LOG.info("handlePrisonerAlertCreatedUpdated notification received")
 
@@ -179,19 +171,16 @@ class VisitNotificationEventService(
     }
   }
 
-  @Transactional
   fun handlePrisonerAlertCreatedNotification(notificationDto: PrisonerAlertNotificationDto) {
     LOG.info("handlePrisonerAlertCreatedNotification notification received : {}", notificationDto)
     processAlertCreated(notificationDto)
   }
 
-  @Transactional
   fun handlePrisonerAlertUpdatedNotification(notificationDto: PrisonerAlertNotificationDto) {
     LOG.info("handlePrisonerAlertUpdatedNotification notification received : {}", notificationDto)
     processAlertUpdated(notificationDto)
   }
 
-  @Transactional
   fun handlePrisonerAlertDeletedNotification(notificationDto: PrisonerAlertNotificationDto) {
     LOG.info("handlePrisonerAlertDeletedNotification notification received : {}", notificationDto)
     processAlertDeleted(notificationDto)
@@ -308,7 +297,6 @@ class VisitNotificationEventService(
     }
   }
 
-  @Transactional
   fun handleVisitorUnapprovedNotification(notificationDto: VisitorApprovedUnapprovedNotificationDto) {
     LOG.info("handleVisitorUnapprovedNotification notification received : {}", notificationDto)
 
@@ -333,7 +321,6 @@ class VisitNotificationEventService(
     }
   }
 
-  @Transactional
   fun handleCourtVideoAppointmentCreatedNotification(notificationDto: CourtVideoAppointmentNotificationDto) {
     LOG.info("handleCourtVideoAppointmentCreatedNotification notification received : {}", notificationDto)
 
@@ -365,7 +352,6 @@ class VisitNotificationEventService(
     }
   }
 
-  @Transactional
   fun handleCourtVideoAppointmentUpdatedNotification(notificationDto: CourtVideoAppointmentNotificationDto) {
     LOG.info("handleCourtVideoAppointmentUpdatedNotification notification received : {}", notificationDto)
 
@@ -407,7 +393,6 @@ class VisitNotificationEventService(
     }
   }
 
-  @Transactional
   fun handleCourtVideoAppointmentCancelledDeletedNotification(notificationDto: CourtVideoAppointmentNotificationDto) {
     LOG.info("handleCourtVideoAppointmentCancelledDeletedNotification notification received : {}", notificationDto)
 
@@ -420,7 +405,6 @@ class VisitNotificationEventService(
     )
   }
 
-  @Transactional
   fun handleVisitorApprovedNotification(notificationDto: VisitorApprovedUnapprovedNotificationDto) {
     LOG.info("handleVisitorApprovedNotification notification received : {}", notificationDto)
 
@@ -448,7 +432,6 @@ class VisitNotificationEventService(
     }
   }
 
-  @Transactional
   fun handlePrisonerReceivedNotification(notificationDto: PrisonerReceivedNotificationDto) {
     LOG.info("PrisonerReceivedNotification notification received : {}", notificationDto)
 
@@ -464,14 +447,12 @@ class VisitNotificationEventService(
     visitNotificationTransactionalService.deleteNotificationsThatAreNoLongerValid(currentPrisonNotifications, PRISONER_RECEIVED_EVENT, PRISONER_RETURNED_TO_PRISON)
   }
 
-  @Transactional
   fun deleteExpiredNotificationEvents(): Int {
     val markedForRemovalList = visitNotificationEventRepository.findExpiredVisitNotificationEvents()
     visitNotificationEventRepository.deleteAll(markedForRemovalList)
     return markedForRemovalList.size
   }
 
-  @Transactional
   fun handlePrisonerContactRestrictionNotification(notificationDto: PrisonerContactRestrictionUpsertedNotificationDto) {
     LOG.info("PrisonerContactRestrictionUpsertedNotificationDto notification received : {}", notificationDto)
 
@@ -503,7 +484,6 @@ class VisitNotificationEventService(
     }
   }
 
-  @Transactional
   fun handleContactRestrictionNotification(notificationDto: ContactRestrictionUpsertedNotificationDto) {
     LOG.info("ContactRestrictionUpsertedNotificationDto notification received : {}", notificationDto)
 
@@ -626,9 +606,9 @@ class VisitNotificationEventService(
   ): Int {
     LOG.debug("getNotificationCountForPrison with prisonCode - {}, notificationEventTypes - {}", prisonCode, notificationEventTypes)
     return if (notificationEventTypes == null) {
-      this.visitNotificationEventRepository.getNotificationGroupsCountByPrisonCode(prisonCode) ?: 0
+      visitNotificationEventRepository.getNotificationGroupsCountByPrisonCode(prisonCode) ?: 0
     } else {
-      this.visitNotificationEventRepository.getNotificationGroupsCountByPrisonCode(prisonCode, notificationEventTypes.map { it.name }.toList()) ?: 0
+      visitNotificationEventRepository.getNotificationGroupsCountByPrisonCode(prisonCode, notificationEventTypes.map { it.name }.toList()) ?: 0
     }
   }
 
@@ -662,9 +642,8 @@ class VisitNotificationEventService(
   fun getNotificationsTypesForBookingReference(bookingReference: String): List<NotificationEventType> = visitNotificationEventRepository.getNotificationsTypesForBookingReference(bookingReference)
 
   @Transactional(readOnly = true)
-  fun getNotificationEventsForBookingReference(bookingReference: String): List<VisitNotificationEventDto> = this.visitNotificationEventRepository.findVisitNotificationEventByVisitReference(bookingReference).map { VisitNotificationEventDto(it) }
+  fun getNotificationEventsForBookingReference(bookingReference: String): List<VisitNotificationEventDto> = visitNotificationEventRepository.findVisitNotificationEventByVisitReference(bookingReference).map { VisitNotificationEventDto(it) }
 
-  @Transactional
   fun ignoreVisitNotifications(visitReference: String, ignoreVisitNotification: IgnoreVisitNotificationsDto): VisitDto {
     val visit = visitService.getBookedVisitByReference(visitReference)
     visitEventAuditService.saveIgnoreVisitNotificationEventAudit(ignoreVisitNotification.actionedBy, visit, ignoreVisitNotification.reason)
