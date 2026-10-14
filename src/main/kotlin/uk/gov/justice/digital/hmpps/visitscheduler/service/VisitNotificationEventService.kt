@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.service
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.client.ActivitiesApiClient
 import uk.gov.justice.digital.hmpps.visitscheduler.client.AlertsApiClient
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonerContactRegistryClient
@@ -551,17 +550,12 @@ class VisitNotificationEventService(
 
   private fun getValidToDateTime(validToDate: LocalDate?): LocalDateTime? = validToDate?.let { LocalDateTime.of(validToDate, LocalTime.MAX) }
 
-  @Transactional(readOnly = true)
   fun getNotificationCountForPrison(
     prisonCode: String,
     notificationEventTypes: List<NotificationEventType>?,
   ): Int {
     LOG.debug("getNotificationCountForPrison with prisonCode - {}, notificationEventTypes - {}", prisonCode, notificationEventTypes)
-    return if (notificationEventTypes == null) {
-      visitNotificationEventRepository.getNotificationGroupsCountByPrisonCode(prisonCode) ?: 0
-    } else {
-      visitNotificationEventRepository.getNotificationGroupsCountByPrisonCode(prisonCode, notificationEventTypes.map { it.name }.toList()) ?: 0
-    }
+    return visitNotificationTransactionalService.getNotificationCountForPrison(prisonCode, notificationEventTypes)
   }
 
   fun getFutureVisitsWithNotifications(prisonCode: String, notificationEventTypes: List<NotificationEventType>?): List<VisitNotificationsDto> {
@@ -590,11 +584,9 @@ class VisitNotificationEventService(
     return visitsWithNotifications.toList()
   }
 
-  @Transactional(readOnly = true)
-  fun getNotificationsTypesForBookingReference(bookingReference: String): List<NotificationEventType> = visitNotificationEventRepository.getNotificationsTypesForBookingReference(bookingReference)
+  fun getNotificationsTypesForBookingReference(bookingReference: String): List<NotificationEventType> = visitNotificationTransactionalService.getNotificationsTypesForBookingReference(bookingReference)
 
-  @Transactional(readOnly = true)
-  fun getNotificationEventsForBookingReference(bookingReference: String): List<VisitNotificationEventDto> = visitNotificationEventRepository.findVisitNotificationEventByVisitReference(bookingReference).map { VisitNotificationEventDto(it) }
+  fun getNotificationEventsForBookingReference(bookingReference: String): List<VisitNotificationEventDto> = visitNotificationTransactionalService.getNotificationEventsForBookingReference(bookingReference).map { VisitNotificationEventDto(it) }
 
   fun ignoreVisitNotifications(visitReference: String, ignoreVisitNotification: IgnoreVisitNotificationsDto): VisitDto {
     val visit = visitService.getBookedVisitByReference(visitReference)
