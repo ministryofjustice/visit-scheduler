@@ -4,10 +4,12 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.IgnoreVisitNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventAttributeType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.IGNORE_VISIT_NOTIFICATIONS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.ProcessVisitNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.SaveVisitNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
@@ -176,5 +178,26 @@ class VisitNotificationTransactionalService(
 
     // after deleting the visit notifications - update application insights
     visitNotificationFlaggingService.unFlagTrackEvents(visitNotificationEvent.visit.reference, listOf(visitNotificationEvent.type), pairedUnFlagEventReason, text)
+  }
+
+  fun ignoreVisitNotifications(visit: VisitDto, ignoreVisitNotification: IgnoreVisitNotificationsDto): VisitDto {
+    visitEventAuditService.saveIgnoreVisitNotificationEventAudit(ignoreVisitNotification.actionedBy, visit, ignoreVisitNotification.reason)
+    deleteVisitAndPairedNotificationEvents(visit.reference, IGNORE_VISIT_NOTIFICATIONS, ignoreVisitNotification.reason)
+    return visit
+  }
+
+  fun handleCourtVideoAppointment(currentVisitNotificationsForOriginalAppointment: List<VisitNotificationEvent>?, processVisitNotificationDto: ProcessVisitNotificationDto?) {
+    if (!currentVisitNotificationsForOriginalAppointment.isNullOrEmpty()) {
+      // Part 1 - Un-flag any visits that were flagged by the original appointment details
+      deleteNotificationsThatAreNoLongerValid(
+        currentVisitNotificationsForOriginalAppointment,
+        NotificationEventType.COURT_VIDEO_APPOINTMENT_CREATED_OR_UPDATED_EVENT,
+        UnFlagEventReason.COURT_VIDEO_APPOINTMENT_UPDATED,
+      )
+    }
+
+    if (processVisitNotificationDto != null) {
+      processVisitsWithNotifications(processVisitNotificationDto)
+    }
   }
 }

@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.client.AlertsApiClient
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonerContactRegistryClient
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.IgnoreVisitNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.activities.ActivitiesAppointmentInstanceDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.ActionedByDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonAssociationDomainEventType.NON_ASSOCIATION_CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonAssociationDomainEventType.NON_ASSOCIATION_CREATED
@@ -26,7 +27,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.VISITOR_RESTRICTION_UPSERTED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.VISITOR_UNAPPROVED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.IGNORE_VISIT_NOTIFICATIONS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.NON_ASSOCIATION_REMOVED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.PRISONER_ALERT_CODE_REMOVED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.PRISONER_RETURNED_TO_PRISON
@@ -326,71 +326,23 @@ class VisitNotificationEventService(
 
     val appointmentInstanceDetails = activitiesApiClient.getAppointmentInstanceDetails(notificationDto.appointmentInstanceId)
     if (appointmentInstanceDetails == null) {
-      LOG.warn("Appointment instance details not found for appointment instance ID ${notificationDto.appointmentInstanceId}, skipping processing / flagging of visits")
+      LOG.warn("Appointment instance details not found for appointment instance ID ${notificationDto.appointmentInstanceId} (create), skipping processing / flagging of visits")
       return
     }
 
-    // Start / End window is the appointment date start and end times with a 30-minute buffer applied to either side
-    val startWindow = appointmentInstanceDetails.appointmentDate.atTime(LocalTime.parse(appointmentInstanceDetails.startTime.trim(), DateTimeFormatter.ofPattern("HH:mm"))).minusMinutes(30)
-    val endWindow = appointmentInstanceDetails.appointmentDate.atTime(LocalTime.parse(appointmentInstanceDetails.endTime.trim(), DateTimeFormatter.ofPattern("HH:mm"))).plusMinutes(30)
-
-    val affectedVisits = visitService.getVisitsThatOverlapProvidedTimeWindow(
-      prisonerNumber = appointmentInstanceDetails.prisonerNumber,
-      prisonCode = appointmentInstanceDetails.prisonCode,
-      startDateTime = startWindow,
-      endDateTime = endWindow,
-    )
-
-    if (affectedVisits.isNotEmpty()) {
-      LOG.info("Flagging ${affectedVisits.size} visits for appointment instance ID ${notificationDto.appointmentInstanceId}")
-
-      val notificationAttributes = hashMapOf(
-        NotificationEventAttributeType.APPOINTMENT_INSTANCE_ID to notificationDto.appointmentInstanceId,
-      )
-      val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, NotificationEventType.COURT_VIDEO_APPOINTMENT_CREATED_OR_UPDATED_EVENT, notificationAttributes)
-      visitNotificationTransactionalService.processVisitsWithNotifications(processVisitNotificationDto)
-    }
+    handleCourtVideoAppointment(appointmentInstanceDetails, notificationDto.appointmentInstanceId, isUpdate = false)
   }
 
   fun handleCourtVideoAppointmentUpdatedNotification(notificationDto: CourtVideoAppointmentNotificationDto) {
     LOG.info("handleCourtVideoAppointmentUpdatedNotification notification received : {}", notificationDto)
 
-    val appointmentInstanceDetails = activitiesApiClient.getAppointmentInstanceDetails(notificationDto.appointmentInstanceId)
+    val appointmentInstanceDetails = getAppointmentInstanceDetails(notificationDto)
     if (appointmentInstanceDetails == null) {
-      LOG.warn("Appointment instance details not found for appointment instance ID ${notificationDto.appointmentInstanceId}, skipping processing / flagging of visits")
+      LOG.warn("Appointment instance details not found for appointment instance ID ${notificationDto.appointmentInstanceId} (update), skipping processing / flagging of visits")
       return
     }
 
-    // Part 1 - Un-flag any visits that were flagged by the original appointment details
-    val currentVisitNotificationsForOriginalAppointment = visitNotificationEventRepository.getCourtAppointmentCreatedVisitNotificationEvents(appointmentInstanceId = notificationDto.appointmentInstanceId)
-
-    visitNotificationTransactionalService.deleteNotificationsThatAreNoLongerValid(
-      currentVisitNotificationsForOriginalAppointment,
-      NotificationEventType.COURT_VIDEO_APPOINTMENT_CREATED_OR_UPDATED_EVENT,
-      UnFlagEventReason.COURT_VIDEO_APPOINTMENT_UPDATED,
-    )
-
-    // Part 2 - Re-search for visits that need to be flagged with the new appointment details
-    // Start / End window is the appointment date start and end times with a 30-minute buffer applied to either side
-    val startWindow = appointmentInstanceDetails.appointmentDate.atTime(LocalTime.parse(appointmentInstanceDetails.startTime.trim(), DateTimeFormatter.ofPattern("HH:mm"))).minusMinutes(30)
-    val endWindow = appointmentInstanceDetails.appointmentDate.atTime(LocalTime.parse(appointmentInstanceDetails.endTime.trim(), DateTimeFormatter.ofPattern("HH:mm"))).plusMinutes(30)
-
-    val affectedVisits = visitService.getVisitsThatOverlapProvidedTimeWindow(
-      prisonerNumber = appointmentInstanceDetails.prisonerNumber,
-      prisonCode = appointmentInstanceDetails.prisonCode,
-      startDateTime = startWindow,
-      endDateTime = endWindow,
-    )
-
-    if (affectedVisits.isNotEmpty()) {
-      LOG.info("Flagging ${affectedVisits.size} visits for appointment instance ID ${notificationDto.appointmentInstanceId}")
-
-      val notificationAttributes = hashMapOf(
-        NotificationEventAttributeType.APPOINTMENT_INSTANCE_ID to notificationDto.appointmentInstanceId,
-      )
-      val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, NotificationEventType.COURT_VIDEO_APPOINTMENT_CREATED_OR_UPDATED_EVENT, notificationAttributes)
-      visitNotificationTransactionalService.processVisitsWithNotifications(processVisitNotificationDto)
-    }
+    handleCourtVideoAppointment(appointmentInstanceDetails, notificationDto.appointmentInstanceId, isUpdate = true)
   }
 
   fun handleCourtVideoAppointmentCancelledDeletedNotification(notificationDto: CourtVideoAppointmentNotificationDto) {
@@ -646,8 +598,7 @@ class VisitNotificationEventService(
 
   fun ignoreVisitNotifications(visitReference: String, ignoreVisitNotification: IgnoreVisitNotificationsDto): VisitDto {
     val visit = visitService.getBookedVisitByReference(visitReference)
-    visitEventAuditService.saveIgnoreVisitNotificationEventAudit(ignoreVisitNotification.actionedBy, visit, ignoreVisitNotification.reason)
-    visitNotificationTransactionalService.deleteVisitAndPairedNotificationEvents(visitReference, IGNORE_VISIT_NOTIFICATIONS, ignoreVisitNotification.reason)
+    visitNotificationTransactionalService.ignoreVisitNotifications(visit, ignoreVisitNotification)
     return visit
   }
 
@@ -673,4 +624,40 @@ class VisitNotificationEventService(
   private fun getActionedBy(actionedBy: ActionedBy?): ActionedByDto = actionedBy?.let {
     ActionedByDto(it)
   } ?: ActionedByDto(userType = UserType.SYSTEM, userName = null, bookerReference = null)
+
+  private fun getAppointmentInstanceDetails(notificationDto: CourtVideoAppointmentNotificationDto): ActivitiesAppointmentInstanceDetailsDto? = activitiesApiClient.getAppointmentInstanceDetails(notificationDto.appointmentInstanceId)
+
+  private fun handleCourtVideoAppointment(appointmentInstanceDetails: ActivitiesAppointmentInstanceDetailsDto, appointmentInstanceId: String, isUpdate: Boolean) {
+    // Part 1 - Un-flag any visits that were flagged by the original appointment details
+    val currentVisitNotificationsForOriginalAppointment = if (isUpdate) {
+      visitNotificationEventRepository.getCourtAppointmentCreatedVisitNotificationEvents(appointmentInstanceId = appointmentInstanceId)
+    } else {
+      null
+    }
+
+    // Part 2 - Re-search for visits that need to be flagged with the new appointment details
+    // Start / End window is the appointment date start and end times with a 30-minute buffer applied to either side
+    val startWindow = appointmentInstanceDetails.appointmentDate.atTime(LocalTime.parse(appointmentInstanceDetails.startTime.trim(), DateTimeFormatter.ofPattern("HH:mm"))).minusMinutes(30)
+    val endWindow = appointmentInstanceDetails.appointmentDate.atTime(LocalTime.parse(appointmentInstanceDetails.endTime.trim(), DateTimeFormatter.ofPattern("HH:mm"))).plusMinutes(30)
+
+    val affectedVisits = visitService.getVisitsThatOverlapProvidedTimeWindow(
+      prisonerNumber = appointmentInstanceDetails.prisonerNumber,
+      prisonCode = appointmentInstanceDetails.prisonCode,
+      startDateTime = startWindow,
+      endDateTime = endWindow,
+    )
+
+    val processVisitNotificationDto = if (affectedVisits.isNotEmpty()) {
+      LOG.info("Flagging ${affectedVisits.size} visits for appointment instance ID $appointmentInstanceId")
+
+      val notificationAttributes = hashMapOf(
+        NotificationEventAttributeType.APPOINTMENT_INSTANCE_ID to appointmentInstanceId,
+      )
+      ProcessVisitNotificationDto(affectedVisits, NotificationEventType.COURT_VIDEO_APPOINTMENT_CREATED_OR_UPDATED_EVENT, notificationAttributes)
+    } else {
+      null
+    }
+
+    visitNotificationTransactionalService.handleCourtVideoAppointment(currentVisitNotificationsForOriginalAppointment, processVisitNotificationDto)
+  }
 }
