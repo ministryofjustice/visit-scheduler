@@ -29,7 +29,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.NON_ASSOCIATION_REMOVED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.PRISONER_ALERT_CODE_REMOVED
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.PRISONER_RETURNED_TO_PRISON
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.PRISON_EXCLUDE_DATE_REMOVED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.SESSION_EXCLUDE_DATE_REMOVED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.VISITOR_APPROVED
@@ -389,14 +388,15 @@ class VisitNotificationEventService(
 
     // First flag visits from all prisons excluding the one the prisoner has moved to.
     val affectedVisits = visitService.getFutureBookedVisitsExcludingPrisonAndExcludingRequestVisits(notificationDto.prisonerNumber, notificationDto.prisonCode)
-    if (affectedVisits.isNotEmpty()) {
-      val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, PRISONER_RECEIVED_EVENT, null)
-      visitNotificationTransactionalService.processVisitsWithNotifications(processVisitNotificationDto)
+    val processVisitNotificationDto = if (affectedVisits.isNotEmpty()) {
+      ProcessVisitNotificationDto(affectedVisits, PRISONER_RECEIVED_EVENT, null)
+    } else {
+      null
     }
 
     // Second un-flag visits from current prison if any are flagged, as they are now at this prison.
-    val currentPrisonNotifications = visitNotificationEventRepository.getEventsBy(notificationDto.prisonerNumber, notificationDto.prisonCode, PRISONER_RECEIVED_EVENT)
-    visitNotificationTransactionalService.deleteNotificationsThatAreNoLongerValid(currentPrisonNotifications, PRISONER_RECEIVED_EVENT, PRISONER_RETURNED_TO_PRISON)
+    val currentPrisonerReceivedNotificationsForPrison = visitNotificationEventRepository.getEventsBy(notificationDto.prisonerNumber, notificationDto.prisonCode, PRISONER_RECEIVED_EVENT)
+    visitNotificationTransactionalService.handlePrisonerReceivedNotification(currentPrisonerReceivedNotificationsForPrison, processVisitNotificationDto)
   }
 
   fun deleteExpiredNotificationEvents(): Int {

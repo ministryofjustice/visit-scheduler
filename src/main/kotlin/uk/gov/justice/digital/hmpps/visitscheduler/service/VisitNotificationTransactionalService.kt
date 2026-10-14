@@ -8,8 +8,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.IgnoreVisitNotificationsD
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventAttributeType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_RECEIVED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.IGNORE_VISIT_NOTIFICATIONS
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.PRISONER_RETURNED_TO_PRISON
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.ProcessVisitNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.SaveVisitNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
@@ -198,6 +200,18 @@ class VisitNotificationTransactionalService(
 
     if (processVisitNotificationDto != null) {
       processVisitsWithNotifications(processVisitNotificationDto)
+    }
+  }
+
+  fun handlePrisonerReceivedNotification(currentPrisonerReceivedNotificationsForPrison: List<VisitNotificationEvent>?, processVisitNotificationDto: ProcessVisitNotificationDto?) {
+    // First flag visits from all prisons excluding the one the prisoner has moved to.
+    if (processVisitNotificationDto != null) {
+      processVisitsWithNotifications(processVisitNotificationDto)
+    }
+
+    // Second un-flag visits from current prison if any are flagged, as they are now at this prison.
+    if (!currentPrisonerReceivedNotificationsForPrison.isNullOrEmpty()) {
+      deleteNotificationsThatAreNoLongerValid(currentPrisonerReceivedNotificationsForPrison, PRISONER_RECEIVED_EVENT, PRISONER_RETURNED_TO_PRISON)
     }
   }
 }
