@@ -47,15 +47,11 @@ class VisitService(
   private val eventAuditService: VisitEventAuditService,
   private val snsService: SnsService,
   private val updateVisitSummaryUtil: UpdateVisitSummaryUtil,
+  private val visitNotificationTransactionalService: VisitNotificationTransactionalService,
 ) {
-
   @Lazy
   @Autowired
   private lateinit var visitEventAuditService: VisitEventAuditService
-
-  @Lazy
-  @Autowired
-  private lateinit var visitNotificationEventService: VisitNotificationEventService
 
   @Autowired
   private lateinit var visitDtoBuilder: VisitDtoBuilder
@@ -300,7 +296,7 @@ class VisitService(
     } else {
       UnFlagEventReason.VISIT_CANCELLED
     }
-    visitNotificationEventService.deleteVisitAndPairedNotificationEvents(visitDto.reference, reason = unFlagEventReason)
+    visitNotificationTransactionalService.deleteVisitAndPairedNotificationEvents(visitDto.reference, reason = unFlagEventReason)
 
     return visitDto
   }
