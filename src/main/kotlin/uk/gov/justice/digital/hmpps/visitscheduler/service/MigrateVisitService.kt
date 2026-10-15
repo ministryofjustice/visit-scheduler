@@ -53,7 +53,7 @@ class MigrateVisitService(
   private val applicationService: ApplicationService,
   private val prisonsService: PrisonsService,
   private val snsService: SnsService,
-  private val visitNotificationEventService: VisitNotificationEventService,
+  private val visitNotificationTransactionalService: VisitNotificationTransactionalService,
   private val migrationSessionTemplateMatcher: MigrationSessionTemplateMatcher,
   private val telemetryClient: TelemetryClient,
   private val sessionDatesUtil: SessionDatesUtil,
@@ -282,6 +282,10 @@ class MigrateVisitService(
     val eventAuditDto = visitEventAuditService.saveCancelledMigratedEventAudit(cancelVisitDto, visitDto)
     sendMigratedTrackEvent(visitEntity, TelemetryVisitEvents.CANCELLED_VISIT_MIGRATED_EVENT)
 
+    // delete all visit notifications and flag the event
+    visitNotificationTransactionalService.deleteVisitAndPairedNotificationEvents(visitDto.reference, UnFlagEventReason.VISIT_CANCELLED_ON_NOMIS)
+
+    // send an SNS event
     val snsDomainEventPublishDto = SnsDomainEventPublishDto(
       visitDto.reference,
       visitDto.createdTimestamp,
@@ -290,9 +294,6 @@ class MigrateVisitService(
       eventAuditDto.id,
     )
     snsService.sendVisitCancelledEvent(snsDomainEventPublishDto)
-
-    // delete all visit notifications and flag the event
-    visitNotificationEventService.deleteVisitAndPairedNotificationEvents(visitDto.reference, UnFlagEventReason.VISIT_CANCELLED_ON_NOMIS)
 
     return visitDto
   }
