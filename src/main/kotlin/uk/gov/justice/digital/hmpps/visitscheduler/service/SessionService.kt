@@ -656,7 +656,7 @@ class SessionService(
     val nonAssociationSessions = visitSessions.filter { it.sessionConflicts.map { sessionConflictDto -> sessionConflictDto.sessionConflict }.contains(SessionConflict.NON_ASSOCIATION) }
     if (nonAssociationSessions.isNotEmpty()) {
       val totalNonAssociations = nonAssociationSessions.size
-      LOG.info(NON_ASSOCIATION_LOG_MSG, totalSessions.toString(), totalNonAssociations.toString(), prisonerId, prisonCode)
+      LOG.info(NON_ASSOCIATION_LOG_MSG, totalNonAssociations.toString(), totalSessions.toString(), prisonerId, prisonCode)
       telemetryClientService.trackUnavailableNonAssociationSessions(prisonerId = prisonerId, prisonCode = prisonCode, nonAssociationVisitSessions = nonAssociationSessions)
     }
   }
