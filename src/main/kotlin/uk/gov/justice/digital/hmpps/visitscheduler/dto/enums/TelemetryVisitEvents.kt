@@ -35,4 +35,7 @@ enum class TelemetryVisitEvents(val eventName: String) {
 
   // Prisoner merges
   MANUAL_MERGE_EVENT_FAILED_FOR_PRISONER("manual-prisoner-merge-event-failed"),
+
+  // Non-association sessions
+  NON_ASSOCIATION_SESSION("non-association-sessions"),
 }

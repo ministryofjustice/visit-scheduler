@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.REQUESTED_VISIT_AUTO_REJECTED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.REQUESTED_VISIT_REJECTED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.ADD_PRISON_EXCLUDE_DATE_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.ADD_SESSION_EXCLUDE_DATE_EVENT
@@ -41,6 +42,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting.OverbookedSessionsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting.SessionVisitCountsByDateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AdditionalSessionConflictInfoDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -261,6 +264,17 @@ class TelemetryClientService(
       TelemetryVisitEvents.VISIT_REQUEST_AUTO_REJECTED_EVENT,
       createVisitRequestApprovedOrRejectedTrackData(bookedVisitDto, eventAuditDto),
     )
+  }
+
+  fun trackUnavailableNonAssociationSessions(prisonerId: String, prisonCode: String, nonAssociationVisitSessions: List<VisitSessionDto>) {
+    val nonAssociationSessionsData = mutableMapOf<String, String>()
+    nonAssociationSessionsData["prisonerId"] = prisonerId
+    nonAssociationSessionsData["prisonId"] = prisonCode
+    nonAssociationSessionsData["totalSessionsUnavailable"] = nonAssociationVisitSessions.size.toString()
+    val nonAssociationVisitSessionsData = createNonAssociationSessionData(nonAssociationVisitSessions)
+    nonAssociationSessionsData["nonAssociationData"] = objectMapper.writeValueAsString(nonAssociationVisitSessionsData)
+
+    trackEvent(TelemetryVisitEvents.NON_ASSOCIATION_SESSION, nonAssociationSessionsData)
   }
 
   private fun trackEvent(visitEvent: TelemetryVisitEvents, properties: Map<String, String>) {
@@ -541,6 +555,42 @@ class TelemetryClientService(
       visitor.nomisPersonId.toString(),
       bookingRequestVisitorDetails?.firstOrNull { it.visitorId == visitor.nomisPersonId }?.visitorAge,
     )
+  }
+
+  private fun createNonAssociationSessionData(visitSessions: List<VisitSessionDto>): List<Map<String, String>> {
+    val nonAssociationSessions = mutableListOf<Map<String, String>>()
+
+    visitSessions.forEach { visitSession ->
+      val nonAssociationSessionMap = mutableMapOf<String, String>()
+      val nonAssociationAttributes = mutableListOf<List<Map<String, String>>>()
+      nonAssociationSessionMap["sessionTemplateReference"] = visitSession.sessionTemplateReference
+      nonAssociationSessionMap["sessionStartDate"] = formatDateToString(visitSession.startTimestamp.toLocalDate())
+      nonAssociationSessionMap["sessionStartTime"] = formatTimeToString(visitSession.startTimestamp.toLocalTime())
+      nonAssociationSessionMap["sessionEndTime"] = formatTimeToString(visitSession.endTimestamp.toLocalTime())
+
+      visitSession.sessionConflicts.filter { it.sessionConflict == SessionConflict.NON_ASSOCIATION }.forEach { sessionConflict ->
+        sessionConflict.additionalAttributes.forEach { attributes ->
+          val x = createNonAssociationAttributesData(attributes)
+          nonAssociationAttributes.add(x)
+        }
+      }
+
+      nonAssociationSessionMap["nonAssociationDetails"] = objectMapper.writeValueAsString(nonAssociationAttributes)
+      nonAssociationSessions.add(nonAssociationSessionMap)
+    }
+
+    return nonAssociationSessions.toList()
+  }
+
+  private fun createNonAssociationAttributesData(additionalSessionConflicts: List<AdditionalSessionConflictInfoDto>): List<Map<String, String>> {
+    val nonAssociationAttributesData = mutableListOf<Map<String, String>>()
+    additionalSessionConflicts.forEach { sessionConflict ->
+      val attributeMap = mutableMapOf<String, String>()
+      attributeMap[sessionConflict.attributeName.name] = sessionConflict.attributeValue
+      nonAssociationAttributesData.add(attributeMap)
+    }
+
+    return nonAssociationAttributesData
   }
 
   data class VisitorDetails(

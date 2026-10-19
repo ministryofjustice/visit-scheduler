@@ -1,11 +1,19 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.session
 
+import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.mockito.ArgumentCaptor
+import org.mockito.Captor
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.isNull
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus.BAD_REQUEST
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
@@ -53,6 +61,12 @@ class GetSessionsTest : IntegrationTestBase() {
   private val prisonCode = "STC"
 
   private lateinit var authHttpHeaders: (HttpHeaders) -> Unit
+
+  @MockitoSpyBean
+  private lateinit var telemetryClientSpy: TelemetryClient
+
+  @Captor
+  lateinit var mapCapture: ArgumentCaptor<Map<String, String>>
 
   @BeforeEach
   internal fun setUpTests() {
@@ -1695,6 +1709,8 @@ class GetSessionsTest : IntegrationTestBase() {
         ),
       )
     }
+
+    verify(telemetryClientSpy, times(1)).trackEvent(eq("non-association-sessions"), mapCapture.capture(), isNull())
   }
 
   @Test
@@ -1761,6 +1777,8 @@ class GetSessionsTest : IntegrationTestBase() {
         ),
       )
     }
+
+    verify(telemetryClientSpy, times(1)).trackEvent(eq("non-association-sessions"), mapCapture.capture(), isNull())
   }
 
   @Test
@@ -1836,6 +1854,8 @@ class GetSessionsTest : IntegrationTestBase() {
         ),
       )
     }
+
+    verify(telemetryClientSpy, times(1)).trackEvent(eq("non-association-sessions"), mapCapture.capture(), isNull())
   }
 
   @Test
@@ -2028,6 +2048,8 @@ class GetSessionsTest : IntegrationTestBase() {
         ),
       )
     }
+
+    verify(telemetryClientSpy, times(1)).trackEvent(eq("non-association-sessions"), mapCapture.capture(), isNull())
   }
 
   @Test
