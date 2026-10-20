@@ -65,7 +65,6 @@ class SessionService(
 ) {
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
-    const val NON_ASSOCIATION_LOG_MSG = "{} of {} visit sessions not available to prisonerId - {} at prison {} - due to non-associations."
   }
 
   @Transactional(readOnly = true)
@@ -656,7 +655,8 @@ class SessionService(
     val nonAssociationSessions = visitSessions.filter { it.sessionConflicts.map { sessionConflictDto -> sessionConflictDto.sessionConflict }.contains(SessionConflict.NON_ASSOCIATION) }
     if (nonAssociationSessions.isNotEmpty()) {
       val totalNonAssociations = nonAssociationSessions.size
-      LOG.info(NON_ASSOCIATION_LOG_MSG, totalNonAssociations.toString(), totalSessions.toString(), prisonerId, prisonCode)
+      val logMessage = "{} of {} visit sessions not available to prisonerId - {} at prison {} - due to non-associations."
+      LOG.info(logMessage, totalNonAssociations.toString(), totalSessions.toString(), prisonerId, prisonCode)
       telemetryClientService.trackUnavailableNonAssociationSessions(prisonerId = prisonerId, prisonCode = prisonCode, nonAssociationVisitSessions = nonAssociationSessions)
     }
   }
