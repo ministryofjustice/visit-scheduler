@@ -1482,7 +1482,7 @@ class GetSessionsTest : IntegrationTestBase() {
     callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
-    verify(telemetryClientSpy, times(0)).trackEvent(any(), any(), any())
+    verify(telemetryClientSpy, times(0)).trackEvent(any(), any(), isNull())
   }
 
   @Test
