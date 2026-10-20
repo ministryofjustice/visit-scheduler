@@ -559,8 +559,8 @@ class TelemetryClientService(
 
   private fun createNonAssociationSessionData(visitSessions: List<VisitSessionDto>): List<NonAssociationSessionDetails> {
     val nonAssociationSessions = mutableListOf<NonAssociationSessionDetails>()
-    val nonAssociationAttributes = mutableListOf<NonAssociationDetails>()
     visitSessions.forEach { visitSession ->
+      val nonAssociationAttributes = mutableListOf<NonAssociationDetails>()
       visitSession.sessionConflicts.filter { it.sessionConflict == SessionConflict.NON_ASSOCIATION }.forEach { sessionConflict ->
         sessionConflict.additionalAttributes.forEach { attributes ->
           nonAssociationAttributes.add(createNonAssociationAttributesData(attributes))
