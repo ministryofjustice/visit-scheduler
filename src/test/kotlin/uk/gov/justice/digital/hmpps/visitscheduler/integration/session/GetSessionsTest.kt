@@ -1,11 +1,21 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.session
 
+import com.microsoft.applicationinsights.TelemetryClient
+import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.mockito.ArgumentCaptor
+import org.mockito.Captor
+import org.mockito.kotlin.any
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.isNull
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus.BAD_REQUEST
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
@@ -32,10 +42,12 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAss
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AdditionalSessionConflictInfoDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionConflictAttribute
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionConflictType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryClientService
 import java.time.DayOfWeek.MONDAY
 import java.time.DayOfWeek.SATURDAY
 import java.time.DayOfWeek.SUNDAY
@@ -53,6 +65,12 @@ class GetSessionsTest : IntegrationTestBase() {
   private val prisonCode = "STC"
 
   private lateinit var authHttpHeaders: (HttpHeaders) -> Unit
+
+  @MockitoSpyBean
+  private lateinit var telemetryClientSpy: TelemetryClient
+
+  @Captor
+  lateinit var mapCapture: ArgumentCaptor<Map<String, String>>
 
   @BeforeEach
   internal fun setUpTests() {
@@ -1461,10 +1479,10 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
+    callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
-    assertResponseLength(responseSpec, 4)
+    verify(telemetryClientSpy, times(0)).trackEvent(any(), any(), isNull())
   }
 
   @Test
@@ -1488,6 +1506,7 @@ class GetSessionsTest : IntegrationTestBase() {
 
     // Then
     assertResponseLength(responseSpec, 4)
+    verify(telemetryClientSpy, times(0)).trackEvent(any(), any(), any())
   }
 
   @Test
@@ -1534,6 +1553,7 @@ class GetSessionsTest : IntegrationTestBase() {
     assertThat(visitSessionDtos[1].sessionConflicts).isEmpty()
     assertThat(visitSessionDtos[2].sessionConflicts).isEmpty()
     assertThat(visitSessionDtos[3].sessionConflicts).isEmpty()
+    verify(telemetryClientSpy, times(0)).trackEvent(any(), any(), any())
   }
 
   @Test
@@ -1608,6 +1628,7 @@ class GetSessionsTest : IntegrationTestBase() {
     assertThat(visitSessionDtos[2].sessionConflicts).hasSize(1)
     assertThat(visitSessionDtos[2].sessionConflicts.map { it.sessionConflict }).contains(SessionConflict.DOUBLE_BOOKING_OR_RESERVATION)
     assertThat(visitSessionDtos[3].sessionConflicts).isEmpty()
+    verify(telemetryClientSpy, times(0)).trackEvent(any(), any(), any())
   }
 
   @Test
@@ -1644,6 +1665,7 @@ class GetSessionsTest : IntegrationTestBase() {
 
     // Then
     assertResponseLength(responseSpec, 4)
+    verify(telemetryClientSpy, times(0)).trackEvent(any(), any(), any())
   }
 
   @Test
@@ -1695,6 +1717,26 @@ class GetSessionsTest : IntegrationTestBase() {
         ),
       )
     }
+
+    verify(telemetryClientSpy, times(1)).trackEvent(eq("non-association-sessions"), mapCapture.capture(), isNull())
+    verify(telemetryClientSpy).trackEvent(
+      eq("non-association-sessions"),
+      org.mockito.kotlin.check { event ->
+        Assertions.assertThat(event["prisonerId"]).isEqualTo(prisonerId)
+        Assertions.assertThat(event["prisonId"]).isEqualTo(prisonCode)
+        Assertions.assertThat(event["totalSessionsUnavailable"]).isEqualTo("1")
+        val nonAssociationSessionDetails = getNonAssociationDetails(event["nonAssociationData"])
+        Assertions.assertThat(nonAssociationSessionDetails.size).isEqualTo(1)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionTemplateReference).isEqualTo(sessionTemplate.reference)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionDate).isEqualTo(visit.sessionSlot.slotDate)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionStartTime).isEqualTo(sessionTemplate.startTime)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionEndTime).isEqualTo(sessionTemplate.endTime)
+        Assertions.assertThat(nonAssociationSessionDetails[0].nonAssociationDetails).containsExactlyInAnyOrder(
+          TelemetryClientService.NonAssociationDetails(associationPrisonerId, SessionConflictType.VISIT.name, visit.reference),
+        )
+      },
+      isNull(),
+    )
   }
 
   @Test
@@ -1761,6 +1803,26 @@ class GetSessionsTest : IntegrationTestBase() {
         ),
       )
     }
+
+    verify(telemetryClientSpy, times(1)).trackEvent(eq("non-association-sessions"), mapCapture.capture(), isNull())
+    verify(telemetryClientSpy).trackEvent(
+      eq("non-association-sessions"),
+      org.mockito.kotlin.check { event ->
+        Assertions.assertThat(event["prisonerId"]).isEqualTo(prisonerId)
+        Assertions.assertThat(event["prisonId"]).isEqualTo(prisonCode)
+        Assertions.assertThat(event["totalSessionsUnavailable"]).isEqualTo("1")
+        val nonAssociationSessionDetails = getNonAssociationDetails(event["nonAssociationData"])
+        Assertions.assertThat(nonAssociationSessionDetails.size).isEqualTo(1)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionTemplateReference).isEqualTo(sessionTemplate.reference)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionDate).isEqualTo(nonAssociationVisit.sessionSlot.slotDate)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionStartTime).isEqualTo(sessionTemplate.startTime)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionEndTime).isEqualTo(sessionTemplate.endTime)
+        Assertions.assertThat(nonAssociationSessionDetails[0].nonAssociationDetails).containsExactlyInAnyOrder(
+          TelemetryClientService.NonAssociationDetails(associationPrisonerId, SessionConflictType.VISIT.name, nonAssociationVisit.reference),
+        )
+      },
+      isNull(),
+    )
   }
 
   @Test
@@ -1836,6 +1898,27 @@ class GetSessionsTest : IntegrationTestBase() {
         ),
       )
     }
+
+    verify(telemetryClientSpy, times(1)).trackEvent(eq("non-association-sessions"), mapCapture.capture(), isNull())
+    verify(telemetryClientSpy).trackEvent(
+      eq("non-association-sessions"),
+      org.mockito.kotlin.check { event ->
+        Assertions.assertThat(event["prisonerId"]).isEqualTo(prisonerId)
+        Assertions.assertThat(event["prisonId"]).isEqualTo(prisonCode)
+        Assertions.assertThat(event["totalSessionsUnavailable"]).isEqualTo("1")
+        val nonAssociationSessionDetails = getNonAssociationDetails(event["nonAssociationData"])
+        Assertions.assertThat(nonAssociationSessionDetails.size).isEqualTo(1)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionTemplateReference).isEqualTo(sessionTemplate.reference)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionDate).isEqualTo(visit1.sessionSlot.slotDate)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionStartTime).isEqualTo(sessionTemplate.startTime)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionEndTime).isEqualTo(sessionTemplate.endTime)
+        Assertions.assertThat(nonAssociationSessionDetails[0].nonAssociationDetails).containsExactlyInAnyOrder(
+          TelemetryClientService.NonAssociationDetails(associationPrisonerId1, SessionConflictType.VISIT.name, visit1.reference),
+          TelemetryClientService.NonAssociationDetails(associationPrisonerId2, SessionConflictType.VISIT.name, visit2.reference),
+        )
+      },
+      isNull(),
+    )
   }
 
   @Test
@@ -1874,6 +1957,7 @@ class GetSessionsTest : IntegrationTestBase() {
 
     // Then
     assertResponseLength(responseSpec, 4)
+    verify(telemetryClientSpy, times(0)).trackEvent(any(), any(), any())
   }
 
   @Test
@@ -1910,6 +1994,7 @@ class GetSessionsTest : IntegrationTestBase() {
 
     // Then
     assertResponseLength(responseSpec, 4)
+    verify(telemetryClientSpy, times(0)).trackEvent(any(), any(), any())
   }
 
   @Test
@@ -1945,6 +2030,7 @@ class GetSessionsTest : IntegrationTestBase() {
 
     // Then
     assertResponseLength(responseSpec, 4)
+    verify(telemetryClientSpy, times(0)).trackEvent(any(), any(), any())
   }
 
   @Test
@@ -1975,7 +2061,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // session 2 is only available for prisoners in Wing B
-    sessionTemplateEntityHelper.create(
+    val sessionTemplate2 = sessionTemplateEntityHelper.create(
       validFromDate = validFromDate,
       dayOfWeek = validFromDate.dayOfWeek,
       prisonCode = prisonCode,
@@ -2028,6 +2114,26 @@ class GetSessionsTest : IntegrationTestBase() {
         ),
       )
     }
+
+    verify(telemetryClientSpy, times(1)).trackEvent(eq("non-association-sessions"), mapCapture.capture(), isNull())
+    verify(telemetryClientSpy).trackEvent(
+      eq("non-association-sessions"),
+      org.mockito.kotlin.check { event ->
+        Assertions.assertThat(event["prisonerId"]).isEqualTo(prisonerId)
+        Assertions.assertThat(event["prisonId"]).isEqualTo(prisonCode)
+        Assertions.assertThat(event["totalSessionsUnavailable"]).isEqualTo("1")
+        val nonAssociationSessionDetails = getNonAssociationDetails(event["nonAssociationData"])
+        Assertions.assertThat(nonAssociationSessionDetails.size).isEqualTo(1)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionTemplateReference).isEqualTo(sessionTemplate2.reference)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionDate).isEqualTo(visit.sessionSlot.slotDate)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionStartTime).isEqualTo(sessionTemplate2.startTime)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionEndTime).isEqualTo(sessionTemplate2.endTime)
+        Assertions.assertThat(nonAssociationSessionDetails[0].nonAssociationDetails).containsExactlyInAnyOrder(
+          TelemetryClientService.NonAssociationDetails(associationPrisonerId, SessionConflictType.VISIT.name, visit.reference),
+        )
+      },
+      isNull(),
+    )
   }
 
   @Test
@@ -2058,7 +2164,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // session 2 is only available for prisoners in Wing B
-    sessionTemplateEntityHelper.create(
+    val sessionTemplate2 = sessionTemplateEntityHelper.create(
       validFromDate = validFromDate,
       dayOfWeek = validFromDate.dayOfWeek,
       prisonCode = prisonCode,
@@ -2112,6 +2218,26 @@ class GetSessionsTest : IntegrationTestBase() {
         ),
       )
     }
+
+    verify(telemetryClientSpy, times(1)).trackEvent(eq("non-association-sessions"), mapCapture.capture(), isNull())
+    verify(telemetryClientSpy).trackEvent(
+      eq("non-association-sessions"),
+      org.mockito.kotlin.check { event ->
+        Assertions.assertThat(event["prisonerId"]).isEqualTo(prisonerId)
+        Assertions.assertThat(event["prisonId"]).isEqualTo(prisonCode)
+        Assertions.assertThat(event["totalSessionsUnavailable"]).isEqualTo("1")
+        val nonAssociationSessionDetails = getNonAssociationDetails(event["nonAssociationData"])
+        Assertions.assertThat(nonAssociationSessionDetails.size).isEqualTo(1)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionTemplateReference).isEqualTo(sessionTemplate2.reference)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionDate).isEqualTo(application.sessionSlot.slotDate)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionStartTime).isEqualTo(sessionTemplate2.startTime)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionEndTime).isEqualTo(sessionTemplate2.endTime)
+        Assertions.assertThat(nonAssociationSessionDetails[0].nonAssociationDetails).containsExactlyInAnyOrder(
+          TelemetryClientService.NonAssociationDetails(associationPrisonerId, SessionConflictType.APPLICATION.name, null),
+        )
+      },
+      isNull(),
+    )
   }
 
   @Test
@@ -2174,6 +2300,7 @@ class GetSessionsTest : IntegrationTestBase() {
 
     assertThat(sessions.map { it.startTimestamp.toLocalDate() }).contains(visit.sessionSlot.slotDate)
     assertThat(sessions.size).isEqualTo(4)
+    verify(telemetryClientSpy, times(0)).trackEvent(any(), any(), any())
   }
 
   @Test
@@ -2235,6 +2362,7 @@ class GetSessionsTest : IntegrationTestBase() {
 
     assertThat(sessions.map { it.startTimestamp.toLocalDate() }).contains(application.sessionSlot.slotDate)
     assertThat(sessions.size).isEqualTo(4)
+    verify(telemetryClientSpy, times(0)).trackEvent(any(), any(), any())
   }
 
   @Test
@@ -2513,4 +2641,6 @@ class GetSessionsTest : IntegrationTestBase() {
   }
 
   private fun getResults(returnResult: BodyContentSpec): Array<VisitSessionDto> = objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)
+
+  private fun getNonAssociationDetails(nonAssociationSessionDetails: String?): List<TelemetryClientService.NonAssociationSessionDetails> = objectMapper.readValue(nonAssociationSessionDetails, Array<TelemetryClientService.NonAssociationSessionDetails>::class.java).toList()
 }

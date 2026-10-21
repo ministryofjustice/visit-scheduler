@@ -61,6 +61,7 @@ class SessionService(
   private val prisonerSessionValidationService: PrisonerSessionValidationService,
   private val visitOrderBalanceService: VisitOrderBalanceService,
   private val sessionConflictsUtil: SessionConflictsUtil,
+  private val telemetryClientService: TelemetryClientService,
 ) {
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
@@ -175,6 +176,9 @@ class SessionService(
       usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications,
       youngestVisitorAge = youngestVisitorAge,
     )
+
+    // TODO - remove this once the override a session is allowed
+    logNonAssociationSessions(prisonerId = prisonerId, prisonCode = prisonCode, visitSessions = visitSessions)
 
     visitSessions = visitSessions.also {
       populateBookedCount(sessionSlots, it, excludedApplicationReference, usernameToExcludeFromReservedApplications, true)
@@ -645,6 +649,17 @@ class SessionService(
   }
 
   fun getAgeRestrictedSessionTemplates(prisonCode: String) = sessionTemplateRepository.getAgeRestrictedSessionTemplatesForPrison(prisonCode).map { SessionTemplateDto(it) }
+
+  private fun logNonAssociationSessions(prisonerId: String, prisonCode: String, visitSessions: List<VisitSessionDto>) {
+    val totalSessions = visitSessions.size
+    val nonAssociationSessions = visitSessions.filter { it.sessionConflicts.map { sessionConflictDto -> sessionConflictDto.sessionConflict }.contains(SessionConflict.NON_ASSOCIATION) }
+    if (nonAssociationSessions.isNotEmpty()) {
+      val totalNonAssociations = nonAssociationSessions.size
+      val logMessage = "{} of {} visit sessions not available to prisonerId - {} at prison {} - due to non-associations."
+      LOG.info(logMessage, totalNonAssociations.toString(), totalSessions.toString(), prisonerId, prisonCode)
+      telemetryClientService.trackUnavailableNonAssociationSessions(prisonerId = prisonerId, prisonCode = prisonCode, nonAssociationVisitSessions = nonAssociationSessions)
+    }
+  }
 }
 
 data class DateRange(

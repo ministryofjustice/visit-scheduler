@@ -78,6 +78,7 @@ class SessionServiceTest {
   private val sessionValidationService = mock<PrisonerSessionValidationService>()
   private val visitOrderBalanceService = mock<VisitOrderBalanceService>()
   private val sessionConflictsUtil = SessionConflictsUtil()
+  private val telemetryClientService = mock<TelemetryClientService>()
 
   private lateinit var sessionService: SessionService
 
@@ -194,6 +195,7 @@ class SessionServiceTest {
         sessionConflictsUtil = sessionConflictsUtil,
         sessionTemplateExcludeDateRepository = sessionTemplateExcludeDateRepository,
         visitOrderBalanceService = visitOrderBalanceService,
+        telemetryClientService = telemetryClientService,
       )
     }
 
@@ -505,6 +507,7 @@ class SessionServiceTest {
         sessionConflictsUtil = sessionConflictsUtil,
         sessionTemplateExcludeDateRepository = sessionTemplateExcludeDateRepository,
         visitOrderBalanceService = visitOrderBalanceService,
+        telemetryClientService = telemetryClientService,
       )
     }
 
@@ -853,6 +856,7 @@ class SessionServiceTest {
         sessionTemplateExcludeDateRepository = sessionTemplateExcludeDateRepository,
         sessionConflictsUtil = sessionConflictsUtil,
         visitOrderBalanceService = visitOrderBalanceService,
+        telemetryClientService = telemetryClientService,
       )
     }
 
