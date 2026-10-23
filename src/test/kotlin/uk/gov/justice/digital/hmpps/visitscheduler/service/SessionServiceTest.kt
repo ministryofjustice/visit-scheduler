@@ -55,6 +55,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateExc
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionConflictsUtil
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionCountsUtil
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionDatesUtil
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -79,6 +80,7 @@ class SessionServiceTest {
   private val visitOrderBalanceService = mock<VisitOrderBalanceService>()
   private val sessionConflictsUtil = SessionConflictsUtil()
   private val telemetryClientService = mock<TelemetryClientService>()
+  private val sessionCountsUtil = SessionCountsUtil()
 
   private lateinit var sessionService: SessionService
 
@@ -196,6 +198,7 @@ class SessionServiceTest {
         sessionTemplateExcludeDateRepository = sessionTemplateExcludeDateRepository,
         visitOrderBalanceService = visitOrderBalanceService,
         telemetryClientService = telemetryClientService,
+        sessionCountsUtil = sessionCountsUtil,
       )
     }
 
@@ -508,6 +511,7 @@ class SessionServiceTest {
         sessionTemplateExcludeDateRepository = sessionTemplateExcludeDateRepository,
         visitOrderBalanceService = visitOrderBalanceService,
         telemetryClientService = telemetryClientService,
+        sessionCountsUtil = sessionCountsUtil,
       )
     }
 
@@ -857,6 +861,7 @@ class SessionServiceTest {
         sessionConflictsUtil = sessionConflictsUtil,
         visitOrderBalanceService = visitOrderBalanceService,
         telemetryClientService = telemetryClientService,
+        sessionCountsUtil = sessionCountsUtil,
       )
     }
 

@@ -36,6 +36,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonConfigService.Companion.DEFAULT_BOOKING_MAX_DAYS
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonConfigService.Companion.DEFAULT_BOOKING_MIN_DAYS
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionConflictsUtil
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionCountType
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionCountsUtil
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionDatesUtil
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -62,6 +64,7 @@ class SessionService(
   private val visitOrderBalanceService: VisitOrderBalanceService,
   private val sessionConflictsUtil: SessionConflictsUtil,
   private val telemetryClientService: TelemetryClientService,
+  private val sessionCountsUtil: SessionCountsUtil,
 ) {
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
@@ -177,14 +180,15 @@ class SessionService(
       youngestVisitorAge = youngestVisitorAge,
     )
 
-    // TODO - remove this once the override a session is allowed
-    logNonAssociationSessions(prisonerId = prisonerId, prisonCode = prisonCode, visitSessions = visitSessions)
-
     visitSessions = visitSessions.also {
       populateBookedCount(sessionSlots, it, excludedApplicationReference, usernameToExcludeFromReservedApplications, true)
     }.sortedWith(compareBy { it.startTimestamp }).also {
       LOG.info("Final count for sessions of ${it.size}, after filtering for prisoner $prisonerId, with date range $dateRange")
     }
+
+    // TODO - remove this once the override a session is allowed
+    logSessionCounts(prisonerId = prisonerId, prisonCode = prisonCode, visitSessions = visitSessions)
+    logNonAssociationSessions(prisonerId = prisonerId, prisonCode = prisonCode, visitSessions = visitSessions)
 
     return visitSessions
   }
@@ -224,7 +228,7 @@ class SessionService(
 
     // finally, filter out sessions without conflicts and with capacity
     return visitSessions.filter { session ->
-      hasSessionGotCapacity(session, sessionRestriction)
+      sessionCountsUtil.hasSessionGotCapacity(session, sessionRestriction)
         .and(
           session.sessionConflicts.isEmpty() ||
             session.sessionConflicts.all { it.sessionConflict == SessionConflict.AGE_RESTRICTION },
@@ -303,11 +307,6 @@ class SessionService(
       userClient.clientType
     }
       .contains(clientType)
-  }
-
-  private fun hasSessionGotCapacity(session: VisitSessionDto, sessionRestriction: SessionRestriction): Boolean = when (sessionRestriction) {
-    SessionRestriction.CLOSED -> (session.closedVisitCapacity > 0 && (session.closedVisitCapacity > (session.closedVisitBookedCount ?: 0)))
-    SessionRestriction.OPEN -> (session.openVisitCapacity > 0 && (session.openVisitCapacity > (session.openVisitBookedCount ?: 0)))
   }
 
   private fun getDoubleBookingOrReservationSessions(
@@ -651,13 +650,23 @@ class SessionService(
   fun getAgeRestrictedSessionTemplates(prisonCode: String) = sessionTemplateRepository.getAgeRestrictedSessionTemplatesForPrison(prisonCode).map { SessionTemplateDto(it) }
 
   private fun logNonAssociationSessions(prisonerId: String, prisonCode: String, visitSessions: List<VisitSessionDto>) {
-    val totalSessions = visitSessions.size
     val nonAssociationSessions = visitSessions.filter { it.sessionConflicts.map { sessionConflictDto -> sessionConflictDto.sessionConflict }.contains(SessionConflict.NON_ASSOCIATION) }
     if (nonAssociationSessions.isNotEmpty()) {
-      val totalNonAssociations = nonAssociationSessions.size
-      val logMessage = "{} of {} visit sessions not available to prisonerId - {} at prison {} - due to non-associations."
-      LOG.info(logMessage, totalNonAssociations.toString(), totalSessions.toString(), prisonerId, prisonCode)
       telemetryClientService.trackUnavailableNonAssociationSessions(prisonerId = prisonerId, prisonCode = prisonCode, nonAssociationVisitSessions = nonAssociationSessions)
+    }
+  }
+
+  private fun logSessionCounts(prisonerId: String, prisonCode: String, visitSessions: List<VisitSessionDto>) {
+    val sessionCounts = sessionCountsUtil.getSessionCounts(visitSessions)
+
+    val nonAssociationSessionCounts = sessionCounts[SessionCountType.UNAVAILABLE_NON_ASSOCIATION] ?: 0
+    val availableToBookSessionCounts = sessionCounts[SessionCountType.TOTAL_SESSIONS] ?: 0
+    val fullyBookedSessionCounts = sessionCounts[SessionCountType.UNAVAILABLE_FULLY_BOOKED] ?: 0
+    val alreadyBookedSessionCounts = sessionCounts[SessionCountType.UNAVAILABLE_ALREADY_BOOKED] ?: 0
+
+    if (nonAssociationSessionCounts > 0) {
+      val logMessage = "{} visit sessions not available to prisonerId - {} at prison {} - due to non-associations. {} total visit sessions of which {} already booked and {} fully booked."
+      LOG.info(logMessage, nonAssociationSessionCounts, prisonerId, prisonCode, availableToBookSessionCounts, alreadyBookedSessionCounts, fullyBookedSessionCounts)
     }
   }
 }
