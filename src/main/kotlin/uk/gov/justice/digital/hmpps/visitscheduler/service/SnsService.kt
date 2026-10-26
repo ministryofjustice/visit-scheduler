@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import tools.jackson.databind.ObjectMapper
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.SnsDomainEventPublishDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import uk.gov.justice.hmpps.sqs.publish
 import java.time.LocalDateTime
@@ -61,6 +62,7 @@ class SnsService(
         additionalInformation = AdditionalInformation(
           reference = visit.reference,
           eventAuditId = visit.eventAuditId,
+          visitType = visit.visitType,
         ),
       ),
     )
@@ -77,6 +79,7 @@ class SnsService(
         additionalInformation = AdditionalInformation(
           reference = visit.reference,
           eventAuditId = visit.eventAuditId,
+          visitType = visit.visitType,
         ),
       ),
     )
@@ -118,6 +121,7 @@ class SnsService(
         additionalInformation = AdditionalInformation(
           reference = visit.reference,
           eventAuditId = visit.eventAuditId,
+          visitType = visit.visitType,
         ),
       ),
     )
@@ -134,6 +138,7 @@ class SnsService(
         additionalInformation = AdditionalInformation(
           reference = details.reference,
           eventAuditId = details.eventAuditId,
+          visitType = details.visitType,
         ),
       ),
     )
@@ -143,6 +148,7 @@ class SnsService(
 internal data class AdditionalInformation(
   val reference: String,
   val eventAuditId: Long,
+  val visitType: VisitType,
 )
 
 internal data class HMPPSDomainEvent(

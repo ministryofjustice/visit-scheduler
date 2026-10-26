@@ -5,9 +5,12 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EnumSource
 import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.isNull
+import org.mockito.kotlin.never
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
@@ -30,6 +33,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCreateVisitFromExternalSystem
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGet
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.callPostByJsonString
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
@@ -120,10 +125,71 @@ class CreateVisitFromExternalSystemTest : IntegrationTestBase() {
 
     // Then
     val visitEntity = testVisitRepository.findByReference(visitDto.reference)
+    assertThat(visitEntity.userType).isEqualTo(UserType.PRISONER)
     assertAuditEvent(visitDto, visitEntity)
 
     // And
     assertBookedEvent(visitDto)
+  }
+
+  @ParameterizedTest
+  @EnumSource(UserType::class)
+  fun `External video visit is stored audited and published with its visit type`(userType: UserType) {
+    val request = createVisitFromExternalSystemDto.copy(visitType = VisitType.SOCIAL_VIDEO, userType = userType)
+    val response = callCreateVisitFromExternalSystem(webTestClient, roleVisitSchedulerHttpHeaders, request)
+    response.expectStatus().isOk
+    val visit = getVisitDto(response)
+    val storedVisit = testVisitRepository.findByReference(visit.reference)
+
+    assertThat(visit.visitType).isEqualTo(VisitType.SOCIAL_VIDEO)
+    assertThat(visit.userType).isEqualTo(userType)
+    assertThat(storedVisit.visitType).isEqualTo(VisitType.SOCIAL_VIDEO)
+    assertThat(storedVisit.userType).isEqualTo(userType)
+    assertThat(visit.sessionTemplateReference).isNull()
+    assertThat(visit.visitExternalSystemDetails?.clientVisitReference).isEqualTo(request.clientVisitReference)
+    assertAuditEvent(visit, storedVisit)
+    assertBookedEvent(visit)
+
+    callGet(webTestClient, "/visits/external-system/${request.clientVisitReference}", roleVisitSchedulerHttpHeaders)
+      .expectStatus().isOk
+      .expectBody().jsonPath("$[0]").isEqualTo(visit.reference)
+    callGet(webTestClient, "/visits/${visit.reference}", roleVisitSchedulerHttpHeaders)
+      .expectStatus().isOk
+      .expectBody().jsonPath("$.visitType").isEqualTo("SOCIAL_VIDEO")
+  }
+
+  @ParameterizedTest
+  @EnumSource(UserType::class)
+  fun `External social visit accepts a source without changing audit behaviour`(userType: UserType) {
+    val response = callCreateVisitFromExternalSystem(webTestClient, roleVisitSchedulerHttpHeaders, createVisitFromExternalSystemDto.copy(userType = userType))
+    response.expectStatus().isOk
+    val visit = getVisitDto(response)
+    val storedVisit = testVisitRepository.findByReference(visit.reference)
+    assertThat(visit.userType).isEqualTo(userType)
+    assertThat(storedVisit.userType).isEqualTo(userType)
+    assertAuditEvent(visit, storedVisit)
+    assertBookedEvent(visit)
+  }
+
+  @Test
+  fun `Missing userType defaults to PRISONER for video visits`() {
+    val request = objectMapper.writeValueAsString(createVisitFromExternalSystemDto.copy(visitType = VisitType.SOCIAL_VIDEO))
+      .replace(",\"userType\":\"PRISONER\"", "")
+    assertThat(request).doesNotContain("\"userType\"")
+    val response = callPostByJsonString(request, webTestClient, POST_VISIT_FROM_EXTERNAL_SYSTEM, roleVisitSchedulerHttpHeaders)
+    response.expectStatus().isOk
+    val visit = getVisitDto(response)
+    assertThat(visit.userType).isEqualTo(UserType.PRISONER)
+    assertThat(testVisitRepository.findByReference(visit.reference).userType).isEqualTo(UserType.PRISONER)
+  }
+
+  @Test
+  fun `Unknown userType is rejected`() {
+    val request = objectMapper.writeValueAsString(createVisitFromExternalSystemDto).replace("\"PRISONER\"", "\"INVALID\"")
+    callPostByJsonString(request, webTestClient, POST_VISIT_FROM_EXTERNAL_SYSTEM, roleVisitSchedulerHttpHeaders)
+      .expectStatus().isBadRequest
+    assertThat(testVisitRepository.count()).isZero()
+    verify(snsService, never()).sendVisitBookedEvent(any())
   }
 
   private fun assertAuditEvent(visitDto: VisitDto, visitEntity: Visit) {
@@ -169,6 +235,11 @@ class CreateVisitFromExternalSystemTest : IntegrationTestBase() {
     )
     verify(telemetryClient, times(1)).trackEvent(eq("visit-booked"), any(), isNull())
 
-    verify(snsService, times(1)).sendVisitBookedEvent(any<SnsDomainEventPublishDto>())
+    verify(snsService, times(1)).sendVisitBookedEvent(
+      org.mockito.kotlin.check<SnsDomainEventPublishDto> {
+        assertThat(it.reference).isEqualTo(visit.reference)
+        assertThat(it.visitType).isEqualTo(visit.visitType)
+      },
+    )
   }
 }

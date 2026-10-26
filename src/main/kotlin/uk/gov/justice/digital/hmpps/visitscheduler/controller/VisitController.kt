@@ -518,7 +518,7 @@ class VisitController(
   @ResponseStatus(HttpStatus.OK)
   @Operation(
     summary = "Create a visit which already exists in an external system",
-    description = "The visit is assumed to have been validated at this point, this endpoint does not check that this visit is valid.",
+    description = "Supports SOCIAL and SOCIAL_VIDEO visits. The visit is assumed to have been validated at this point, this endpoint does not check that this visit is valid.",
     requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
       content = [
         Content(
@@ -603,7 +603,7 @@ class VisitController(
   @ResponseStatus(HttpStatus.OK)
   @Operation(
     summary = "Update visit which already exists in an external system",
-    description = "The visit is assumed to have been validated at this point, this endpoint does not check that this visit is valid.",
+    description = "Supports SOCIAL and SOCIAL_VIDEO visits. The existing visit type cannot be changed. The visit is assumed to have been validated at this point, this endpoint does not check that this visit is valid.",
     requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
       content = [
         Content(

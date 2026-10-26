@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.IGNORE_VISIT_NOTIFICATIONS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.PRISONER_RETURNED_TO_PRISON
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.ProcessVisitNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.SaveVisitNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
@@ -35,7 +36,7 @@ class VisitNotificationTransactionalService(
   }
 
   fun processVisitsWithNotifications(processVisitNotificationDto: ProcessVisitNotificationDto) {
-    val affectedVisits = processVisitNotificationDto.affectedVisits
+    val affectedVisits = processVisitNotificationDto.affectedVisits.filter { it.visitType == VisitType.SOCIAL }
 
     affectedVisits.forEach {
       val bookingEventAudit = visitEventAuditService.getLastEventForBooking(it.reference)

@@ -279,7 +279,7 @@ class VisitStoreService(
         visitRoom = createVisitFromExternalSystemDto.visitRoom,
         visitStatus = BOOKED,
         visitSubStatus = VisitSubStatus.AUTO_APPROVED,
-        userType = UserType.PRISONER,
+        userType = createVisitFromExternalSystemDto.userType,
       ),
     )
 

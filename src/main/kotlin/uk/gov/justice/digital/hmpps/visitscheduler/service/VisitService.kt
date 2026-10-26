@@ -205,6 +205,7 @@ class VisitService(
       bookedVisitDto.modifiedTimestamp,
       bookedVisitDto.prisonerId,
       bookingEventAuditDto.id,
+      bookedVisitDto.visitType,
     )
     snsService.sendVisitBookedEvent(snsDomainEventPublishDto)
 
@@ -225,6 +226,7 @@ class VisitService(
       bookedVisitDto.modifiedTimestamp,
       bookedVisitDto.prisonerId,
       bookingEventAuditDto.id,
+      bookedVisitDto.visitType,
     )
     snsService.sendVisitBookedEvent(snsDomainEventPublishDto)
 
@@ -245,6 +247,7 @@ class VisitService(
       updatedVisitDto.modifiedTimestamp,
       updatedVisitDto.prisonerId,
       bookingEventAuditDto.id,
+      updatedVisitDto.visitType,
     )
     snsService.sendChangedVisitBookedEvent(snsDomainEventPublishDto)
 
@@ -269,6 +272,7 @@ class VisitService(
       visitAfterUpdate.modifiedTimestamp,
       visitAfterUpdate.prisonerId,
       updatedEventAuditDto.id,
+      visitAfterUpdate.visitType,
     )
     snsService.sendChangedVisitBookedEvent(snsDomainEventPublishDto)
   }
@@ -287,6 +291,7 @@ class VisitService(
       visitDto.modifiedTimestamp,
       visitDto.prisonerId,
       cancelledEventAuditDto.id,
+      visitDto.visitType,
     )
     snsService.sendVisitCancelledEvent(snsDomainEventPublishDto)
 
@@ -398,6 +403,9 @@ class VisitService(
   ): VisitDto {
     val existingVisit =
       visitRepository.findBookedVisit(bookingReference) ?: throw VisitNotFoundException("Visit $bookingReference not found")
+    if (existingVisit.visitType != updateVisitFromExternalSystemDto.visitType) {
+      throw ValidationException("Visit type cannot be changed")
+    }
     val existingVisitDto = visitDtoBuilder.build(existingVisit)
 
     val updatedVisitDto = visitStoreService.updateVisitFromExternalSystem(updateVisitFromExternalSystemDto, existingVisit)

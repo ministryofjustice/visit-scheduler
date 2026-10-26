@@ -5,9 +5,12 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EnumSource
 import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.isNull
+import org.mockito.kotlin.never
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
@@ -146,6 +149,61 @@ class UpdateVisitFromExternalSystemTest : IntegrationTestBase() {
     responseSpec.expectStatus().isNotFound
   }
 
+  @Test
+  fun `Update a video visit publishes its type without changing its source`() {
+    val visit = createExternalVisit(VisitType.SOCIAL_VIDEO)
+    val request = updateVisitFromExternalSystemDto.copy(visitType = VisitType.SOCIAL_VIDEO)
+    val response = callUpdateVisitFromExternalSystem(webTestClient, roleVisitSchedulerHttpHeaders, visit.reference, request)
+    response.expectStatus().isOk
+    val updatedVisit = getVisitDto(response)
+    val storedVisit = testVisitRepository.findByReference(visit.reference)
+
+    assertThat(updatedVisit.visitType).isEqualTo(VisitType.SOCIAL_VIDEO)
+    assertThat(updatedVisit.userType).isEqualTo(UserType.STAFF)
+    assertThat(updatedVisit.startTimestamp).isEqualTo(request.startTimestamp)
+    assertThat(updatedVisit.visitRoom).isEqualTo(request.visitRoom)
+    assertThat(updatedVisit.visitRestriction).isEqualTo(request.visitRestriction)
+    assertThat(updatedVisit.visitExternalSystemDetails?.clientVisitReference).isEqualTo("external-video-reference")
+    assertThat(storedVisit.visitType).isEqualTo(VisitType.SOCIAL_VIDEO)
+    assertThat(storedVisit.userType).isEqualTo(UserType.STAFF)
+    assertAuditEvent(updatedVisit, storedVisit)
+    assertUpdatedEvent(visit, updatedVisit)
+  }
+
+  @ParameterizedTest
+  @EnumSource(VisitType::class)
+  fun `External update cannot change a visit type`(existingType: VisitType) {
+    val visit = createExternalVisit(existingType)
+    val requestedType = if (existingType == VisitType.SOCIAL) VisitType.SOCIAL_VIDEO else VisitType.SOCIAL
+    callUpdateVisitFromExternalSystem(
+      webTestClient,
+      roleVisitSchedulerHttpHeaders,
+      visit.reference,
+      updateVisitFromExternalSystemDto.copy(visitType = requestedType),
+    ).expectStatus().isBadRequest
+
+    assertThat(testVisitRepository.findByReference(visit.reference).visitType).isEqualTo(existingType)
+    assertThat(testVisitRepository.findByReference(visit.reference).visitRoom).isEqualTo("A1")
+    verify(snsService, never()).sendChangedVisitBookedEvent(any())
+  }
+
+  private fun createExternalVisit(type: VisitType): Visit {
+    val visit = visitEntityHelper.create(
+      prisonCode = "MKI",
+      visitRoom = "A1",
+      slotDate = LocalDate.now(),
+      visitStart = LocalTime.of(9, 0),
+      visitEnd = LocalTime.of(10, 0),
+      visitType = type,
+      activePrison = true,
+      createContact = true,
+      createApplication = false,
+      userType = UserType.STAFF,
+    )
+    visitEntityHelper.createVisitExternalSystemClientReference(visit, "external-video-reference")
+    return visitEntityHelper.save(visit)
+  }
+
   private fun assertAuditEvent(visitDto: VisitDto, visitEntity: Visit) {
     val eventAudit = this.eventAuditRepository.findLastEventByBookingReference(visitDto.reference)
     assertThat(eventAudit.type).isEqualTo(EventAuditType.UPDATED_VISIT)
@@ -165,7 +223,7 @@ class UpdateVisitFromExternalSystemTest : IntegrationTestBase() {
       eq("visit-booked"),
       org.mockito.kotlin.check {
         assertThat(it["reference"]).isEqualTo(updatedVisitDto.reference)
-        assertThat(it["applicationReference"]).isEqualTo(updatedVisitDto.applicationReference)
+        assertThat(it["applicationReference"]).isEqualTo(updatedVisitDto.applicationReference ?: "")
         assertThat(it["prisonerId"]).isEqualTo(updatedVisitDto.prisonerId)
         assertThat(it["prisonId"]).isEqualTo(updatedVisitDto.prisonCode)
         assertThat(it["visitStatus"]).isEqualTo(updatedVisitDto.visitStatus.name)
@@ -197,6 +255,11 @@ class UpdateVisitFromExternalSystemTest : IntegrationTestBase() {
     )
     verify(telemetryClient, times(1)).trackEvent(eq("visit-booked"), any(), isNull())
 
-    verify(snsService, times(1)).sendChangedVisitBookedEvent(any<SnsDomainEventPublishDto>())
+    verify(snsService, times(1)).sendChangedVisitBookedEvent(
+      org.mockito.kotlin.check<SnsDomainEventPublishDto> {
+        assertThat(it.reference).isEqualTo(updatedVisitDto.reference)
+        assertThat(it.visitType).isEqualTo(updatedVisitDto.visitType)
+      },
+    )
   }
 }
