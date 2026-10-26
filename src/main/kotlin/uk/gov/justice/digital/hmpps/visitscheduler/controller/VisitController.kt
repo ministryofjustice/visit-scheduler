@@ -518,7 +518,7 @@ class VisitController(
   @ResponseStatus(HttpStatus.OK)
   @Operation(
     summary = "Create a visit which already exists in an external system",
-    description = "Supports SOCIAL and SOCIAL_VIDEO visits. SOCIAL_VIDEO visits are externally managed and excluded from normal social visit operations. The optional userType defaults to PRISONER and classifies the visit, not the audit actor. The visit is assumed to have been validated at this point, this endpoint does not check that this visit is valid.",
+    description = "Supports SOCIAL and SOCIAL_VIDEO visits. The visit is assumed to have been validated at this point, this endpoint does not check that this visit is valid.",
     requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
       content = [
         Content(
