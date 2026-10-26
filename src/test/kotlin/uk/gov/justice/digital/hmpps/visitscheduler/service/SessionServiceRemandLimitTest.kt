@@ -26,6 +26,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateExc
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionConflictsUtil
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionCountsUtil
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionDatesUtil
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -47,6 +48,7 @@ class SessionServiceRemandLimitTest {
   private val visitOrderBalanceService = mock<VisitOrderBalanceService>()
   private val telemetryClientService = mock<TelemetryClientService>()
   private val sessionConflictsUtil = SessionConflictsUtil()
+  private val sessionCountsUtil = SessionCountsUtil()
 
   private lateinit var sessionService: SessionService
 
@@ -84,6 +86,7 @@ class SessionServiceRemandLimitTest {
       visitOrderBalanceService = visitOrderBalanceService,
       sessionConflictsUtil = sessionConflictsUtil,
       telemetryClientService = telemetryClientService,
+      sessionCountsUtil = sessionCountsUtil,
     )
   }
 
