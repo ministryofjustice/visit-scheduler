@@ -40,6 +40,7 @@ interface VisitRepository :
       "WHERE v.prisoner_id IN :prisonerIds AND " +
       "v.prison_id = :prisonId AND " +
       "sl.slot_date = :sessionDate AND " +
+      "v.visit_type = 'SOCIAL' AND " +
       "v.visit_status = 'BOOKED'",
     nativeQuery = true,
   )
@@ -54,6 +55,7 @@ interface VisitRepository :
       "WHERE v.prisonerId in (:prisonerIds) AND " +
       "v.prisonId = :prisonId AND " +
       "sl.slotDate in (:sessionDates) AND " +
+      "v.visitType = 'SOCIAL' AND " +
       "v.visitStatus = 'BOOKED'",
   )
   fun getBookedVisitsForPrisonersAndDates(
@@ -65,6 +67,7 @@ interface VisitRepository :
   @Query(
     "SELECT count(v) > 0 FROM Visit v " +
       "WHERE v.sessionSlot.sessionTemplateReference = :sessionTemplateReference AND " +
+      "v.visitType = 'SOCIAL' AND " +
       "(cast(:slotDate as date)  is null OR v.sessionSlot.slotDate >= :slotDate) ",
   )
   fun hasVisitsForSessionTemplate(
@@ -75,6 +78,7 @@ interface VisitRepository :
   @Query(
     "SELECT count(v) > 0 FROM Visit v " +
       "WHERE v.sessionSlot.sessionTemplateReference = :sessionTemplateReference AND " +
+      "v.visitType = 'SOCIAL' AND " +
       "(cast(:slotDate as date)  is null OR v.sessionSlot.slotDate >= :slotDate) AND " +
       "v.visitStatus = 'BOOKED'",
   )
@@ -87,6 +91,7 @@ interface VisitRepository :
     "SELECT v.visit_restriction AS visitRestriction, COUNT(*) AS count  FROM visit v " +
       "WHERE v.session_slot_id = :sessionSlotId AND " +
       "v.visit_restriction in ('OPEN','CLOSED') AND " +
+      "v.visit_type = 'SOCIAL' AND " +
       "v.visit_status = 'BOOKED' " +
       "GROUP BY v.visit_restriction",
     nativeQuery = true,
@@ -100,6 +105,7 @@ interface VisitRepository :
       "count( vv.nomis_person_id ) as visitorCount " +
       "from visit v left outer join visit_visitor vv on v.id = vv.visit_id " +
       "WHERE v.session_slot_id = :sessionSlotId AND " +
+      "v.visit_type = 'SOCIAL' AND " +
       "v.visit_restriction in ('OPEN','CLOSED') " +
       "GROUP BY v.visit_restriction, v.visit_status",
     nativeQuery = true,
@@ -110,6 +116,7 @@ interface VisitRepository :
     "SELECT COUNT(*) AS count  FROM visit v " +
       "WHERE v.session_slot_id = :sessionSlotId AND " +
       "v.visit_restriction = 'OPEN' AND " +
+      "v.visit_type = 'SOCIAL' AND " +
       "v.visit_status = 'BOOKED' ",
     nativeQuery = true,
   )
@@ -119,6 +126,7 @@ interface VisitRepository :
     "SELECT COUNT(*) AS count  FROM visit v " +
       "WHERE v.session_slot_id = :sessionSlotId AND " +
       "v.visit_restriction = 'CLOSED' AND " +
+      "v.visit_type = 'SOCIAL' AND " +
       "v.visit_status = 'BOOKED' ",
     nativeQuery = true,
   )
@@ -128,6 +136,7 @@ interface VisitRepository :
     "SELECT v.visit_restriction AS visitRestriction, COUNT(*) AS count  FROM visit v " +
       "WHERE v.session_slot_id = :sessionSlotId AND " +
       "v.visit_restriction in ('OPEN','CLOSED') AND " +
+      "v.visit_type = 'SOCIAL' AND " +
       "v.visit_status = 'CANCELLED' " +
       "GROUP BY v.visit_restriction",
     nativeQuery = true,
@@ -176,6 +185,7 @@ interface VisitRepository :
   @Query(
     "SELECT CASE WHEN (COUNT(v) > 0) THEN TRUE ELSE FALSE END FROM Visit v " +
       "WHERE v.visitStatus = 'BOOKED'  AND " +
+      "v.visitType = 'SOCIAL' AND " +
       "(v.prisonerId = :prisonerId) AND " +
       "(v.sessionSlotId = :sessionSlotId) AND " +
       "(:#{#excludeVisitReference} is null OR v.reference != :excludeVisitReference)",
@@ -189,6 +199,7 @@ interface VisitRepository :
   @Query(
     "SELECT v FROM Visit v " +
       "WHERE v.visitStatus = 'BOOKED'  AND " +
+      "v.visitType = 'SOCIAL' AND " +
       "(v.prisonerId = :prisonerId) AND " +
       "(v.sessionSlotId = :sessionSlotId) AND " +
       "(:#{#excludeVisitReference} is null OR v.reference != :excludeVisitReference)",
@@ -202,6 +213,7 @@ interface VisitRepository :
   @Query(
     "SELECT v FROM Visit v " +
       "WHERE v.visitStatus = 'BOOKED'  AND " +
+      "v.visitType = 'SOCIAL' AND " +
       "(v.prisonerId = :prisonerId) AND " +
       "(v.sessionSlot.id IN (:sessionSlotIds))",
   )
@@ -213,6 +225,7 @@ interface VisitRepository :
   @Query(
     "SELECT v  FROM Visit v " +
       "WHERE v.visitStatus = 'BOOKED' AND " +
+      "v.visitType = 'SOCIAL' AND " +
       "v.prisonerId = :prisonerId AND " +
       "v.prison.code = :prisonCode AND " +
       "v.sessionSlot.slotDate >= :visitDate " +
@@ -226,6 +239,7 @@ interface VisitRepository :
 
   @Query(
     "SELECT v FROM Visit v WHERE " +
+      "v.visitType = 'SOCIAL' AND " +
       "(:#{#prisonerId} is null OR v.prisonerId = :prisonerId)  AND  " +
       "(:#{#prisonCode} is null OR v.prison.code = :prisonCode) AND " +
       "(:#{#visitStatusList} is null OR v.visitStatus in :visitStatusList) AND " +
@@ -245,6 +259,7 @@ interface VisitRepository :
   @Query(
     "SELECT v  FROM Visit v " +
       "WHERE v.sessionSlot.slotStart >= :startDateTime AND " +
+      "v.visitType = 'SOCIAL' AND " +
       "v.prisonerId = :prisonerId AND " +
       "(:#{#prisonCode} is null OR v.prison.code = :prisonCode) AND " +
       "(cast(:endDateTime as date) is null OR v.sessionSlot.slotEnd < :endDateTime) ORDER BY v.sessionSlot.slotStart,v.id",
@@ -259,6 +274,7 @@ interface VisitRepository :
   @Query(
     "SELECT v FROM Visit v " +
       "WHERE v.prisonerId = :prisonerId AND " +
+      "v.visitType = 'SOCIAL' AND " +
       "v.prison.code = :prisonCode AND " +
       "v.visitStatus = 'BOOKED' AND " +
       "v.sessionSlot.slotEnd >= :startDateTime AND " +
@@ -275,6 +291,7 @@ interface VisitRepository :
   @Query(
     "SELECT v  FROM Visit v " +
       "WHERE v.sessionSlot.slotStart >= :startDateTime AND " +
+      "v.visitType = 'SOCIAL' AND " +
       "v.prisonerId = :prisonerId AND " +
       "(:#{#prisonCode} is null OR v.prison.code = :prisonCode) AND " +
       "v.visitStatus = 'BOOKED' AND " +
@@ -294,6 +311,7 @@ interface VisitRepository :
       "JOIN prison p ON v.prison_id = p.id " +
       "LEFT JOIN session_template st ON sl.session_template_reference = st.reference " +
       "WHERE sl.slot_start >= :startDateTime AND " +
+      "v.visit_type = 'SOCIAL' AND " +
       "v.prisoner_id = :prisonerId AND " +
       "(:prisonCode is null OR p.code = :prisonCode) AND " +
       "v.visit_status = 'BOOKED' AND " +
@@ -316,6 +334,7 @@ interface VisitRepository :
       JOIN prison p ON v.prison_id = p.id
       LEFT JOIN session_template st ON sl.session_template_reference = st.reference
       WHERE sl.slot_date >= :startDate AND
+      v.visit_type = 'SOCIAL' AND
       sl.slot_date <= :endDate AND
       v.prisoner_id = :prisonerId AND
       p.code = :prisonCode AND
@@ -336,6 +355,7 @@ interface VisitRepository :
   @Query(
     "SELECT v  FROM Visit v " +
       "WHERE v.sessionSlot.slotStart >= :startDateTime AND " +
+      "v.visitType = 'SOCIAL' AND " +
       "v.prisonerId = :prisonerId AND " +
       "(:#{#prisonCode} is null OR v.prison.code = :prisonCode) AND " +
       "v.visitStatus = 'BOOKED' AND " +
@@ -354,6 +374,7 @@ interface VisitRepository :
     "SELECT v FROM Visit v " +
       "LEFT JOIN VisitVisitor vv ON v.id = vv.visitId " +
       "WHERE v.sessionSlot.slotStart >= :startDateTime AND " +
+      "v.visitType = 'SOCIAL' AND " +
       "vv.nomisPersonId = :visitorId AND " +
       "v.visitStatus = 'BOOKED' AND " +
       "(:#{#prisonerId} is null OR v.prisonerId = :prisonerId) AND " +
@@ -371,6 +392,7 @@ interface VisitRepository :
       "LEFT JOIN prison p ON v.prison_id = p.id " +
       "LEFT JOIN session_slot sl ON v.session_slot_id = sl.id " +
       "WHERE v.prisoner_id = :prisonerId AND " +
+      "v.visit_type = 'SOCIAL' AND " +
       "v.visit_status = 'BOOKED' AND " +
       "(v.visit_sub_status = 'AUTO_APPROVED' OR v.visit_sub_status = 'APPROVED') AND " +
       "p.code != :excludedPrisonCode AND " +
@@ -385,6 +407,7 @@ interface VisitRepository :
   @Query(
     "SELECT v FROM Visit v WHERE " +
       " (v.sessionSlot.sessionTemplateReference = :sessionTemplateReference)  AND " +
+      "v.visitType = 'SOCIAL' AND " +
       "(:#{#visitStatusList} is null OR v.visitStatus in :visitStatusList) AND " +
       "(:#{#visitRestrictions} is null OR v.visitRestriction in :visitRestrictions) AND " +
       "v.sessionSlot.slotDate >= :fromDate  AND " +
@@ -404,9 +427,10 @@ interface VisitRepository :
   @Query(
     "SELECT v FROM Visit v WHERE " +
       " (v.sessionSlot.sessionTemplateReference = :sessionTemplateReference)  AND " +
+      "v.visitType = 'SOCIAL' AND " +
       "v.sessionSlot.slotDate >= :fromDate AND " +
       "v.visitStatus = 'BOOKED' AND " +
-      "(:#{#toDate} is null OR v.sessionSlot.slotDate <= :toDate) " +
+      "(cast(:toDate as date) is null OR v.sessionSlot.slotDate <= :toDate) " +
       " ORDER BY v.createTimestamp",
   )
   fun findBookedVisitsBySessionTemplateReference(
@@ -418,6 +442,7 @@ interface VisitRepository :
   @Query(
     "SELECT v FROM Visit v WHERE " +
       " (v.sessionSlot.sessionTemplateReference is NULL)  AND " +
+      "v.visitType = 'SOCIAL' AND " +
       "(:#{#visitStatusList} is null OR v.visitStatus in :visitStatusList) AND " +
       "(:#{#visitRestrictions} is null OR v.visitRestriction in :visitRestrictions) AND " +
       "v.sessionSlot.slotDate >= :fromDate  AND " +
@@ -436,6 +461,7 @@ interface VisitRepository :
   @Query(
     "SELECT v FROM Visit v WHERE " +
       " v.visitStatus = 'BOOKED'  AND " +
+      "v.visitType = 'SOCIAL' AND " +
       "(:#{#prisonCode} is null OR v.prison.code = :prisonCode) AND " +
       "(CAST(:date AS DATE) is null OR v.sessionSlot.slotDate = :date) " +
       " ORDER BY v.sessionSlot.slotStart,v.id",
@@ -445,6 +471,7 @@ interface VisitRepository :
   @Query(
     "SELECT v FROM Visit v WHERE " +
       " v.visitStatus = 'BOOKED'  AND " +
+      "v.visitType = 'SOCIAL' AND " +
       "(v.sessionSlot.sessionTemplateReference = :sessionTemplateReference) AND " +
       "(v.sessionSlot.slotDate = :date) " +
       " ORDER BY v.sessionSlot.slotStart,v.id",
@@ -459,6 +486,7 @@ interface VisitRepository :
       " WHERE ab.booker_reference = :bookerReference " +
       " AND v.visit_status = 'BOOKED' " +
       " AND ss.slot_start >= CURRENT_TIMESTAMP " +
+      " AND v.visit_type = 'SOCIAL' " +
       " AND v.user_type = 'PUBLIC'",
     nativeQuery = true,
   )
@@ -472,6 +500,7 @@ interface VisitRepository :
       " WHERE ab.booker_reference = :bookerReference " +
       " AND v.visit_status = 'BOOKED' " +
       " AND ss.slot_start < CURRENT_TIMESTAMP " +
+      " AND v.visit_type = 'SOCIAL' " +
       "AND v.user_type = 'PUBLIC'",
     nativeQuery = true,
   )
@@ -483,13 +512,14 @@ interface VisitRepository :
       " INNER JOIN actioned_by ab on ab.id = ea.actioned_by_id" +
       " WHERE ab.booker_reference = :bookerReference " +
       " AND v.visit_status = 'CANCELLED' " +
+      " AND v.visit_type = 'SOCIAL' " +
       " AND v.user_type = 'PUBLIC'",
     nativeQuery = true,
   )
   fun getPublicCanceledVisitsByBookerReference(bookerReference: String): List<Visit>
 
   @Query(
-    "SELECT v FROM Visit v WHERE v.reference in :bookingReferences order by v.modifyTimestamp",
+    "SELECT v FROM Visit v WHERE v.visitType = 'SOCIAL' AND v.reference in :bookingReferences order by v.modifyTimestamp",
   )
   fun findVisitsByReferences(bookingReferences: List<String>): List<Visit>
 
@@ -505,6 +535,7 @@ interface VisitRepository :
       "INNER JOIN prison p ON p.id = v.prison_id " +
       "INNER JOIN session_slot sl ON sl.id = v.session_slot_id " +
       "WHERE p.code = :prisonCode AND " +
+      "v.visit_type = 'SOCIAL' AND " +
       "sl.slot_start >= NOW() AND " +
       "v.visit_status = 'BOOKED' AND " +
       "v.visit_sub_status = 'REQUESTED' ",
@@ -518,6 +549,7 @@ interface VisitRepository :
       "INNER JOIN prison p ON p.id = v.prison_id " +
       "INNER JOIN session_slot sl ON sl.id = v.session_slot_id " +
       "WHERE p.code = :prisonCode AND " +
+      "v.visit_type = 'SOCIAL' AND " +
       "sl.slot_start >= NOW() AND " +
       "v.visit_status = 'BOOKED' AND " +
       "v.visit_sub_status = 'REQUESTED' ",
@@ -549,6 +581,7 @@ interface VisitRepository :
       "INNER JOIN prison_user_client pc ON p.id = pc.prison_id " +
       "INNER JOIN session_slot sl ON sl.id = v.session_slot_id " +
       "WHERE v.visit_status = 'BOOKED' " +
+      "AND v.visit_type = 'SOCIAL' " +
       "AND v.visit_sub_status = 'REQUESTED' " +
       "AND sl.slot_start >= NOW() " +
       "AND pc.client_type = 'PUBLIC' " +
@@ -564,6 +597,7 @@ interface VisitRepository :
       "INNER JOIN prison p ON p.id = v.prison_id " +
       "INNER JOIN session_slot sl ON sl.id = v.session_slot_id " +
       "WHERE v.prisoner_id = :prisonerId " +
+      "AND v.visit_type = 'SOCIAL' " +
       "AND v.visit_status = 'BOOKED' " +
       "AND v.visit_sub_status = 'REQUESTED' " +
       "AND sl.slot_start >= NOW() ",
@@ -578,6 +612,7 @@ interface VisitRepository :
       "INNER JOIN prison p ON p.id = v.prison_id " +
       "INNER JOIN session_slot sl ON sl.id = v.session_slot_id " +
       "WHERE v.prisoner_id = :prisonerId " +
+      "AND v.visit_type = 'SOCIAL' " +
       "AND v.visit_status = 'BOOKED' " +
       "AND v.visit_sub_status = 'REQUESTED' " +
       "AND p.code != :excludedPrisonCode " +
@@ -599,6 +634,7 @@ interface VisitRepository :
       "join visit v on vv.visit_id  = v.id  " +
       "join event_audit ea on v.reference = ea.booking_reference " +
       "where v.prisoner_id = :prisonerId " +
+      "and v.visit_type = 'SOCIAL' " +
       "and v.visit_status = 'BOOKED' " +
       "and vv.nomis_person_id in (:nomisPersonIds)  " +
       "and ea.type in ('BOOKED_VISIT', 'REQUESTED_VISIT_APPROVED', 'MIGRATED_VISIT') " +

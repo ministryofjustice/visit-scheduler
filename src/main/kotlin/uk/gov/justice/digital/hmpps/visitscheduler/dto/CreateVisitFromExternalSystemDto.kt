@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import java.time.LocalDateTime
@@ -24,7 +25,7 @@ data class CreateVisitFromExternalSystemDto(
   @param:Schema(description = "Visit Room", example = "A1", required = true)
   @field:NotBlank
   val visitRoom: String,
-  @param:Schema(description = "Visit Type", example = "SOCIAL", required = true)
+  @param:Schema(description = "Visit type. SOCIAL_VIDEO is supported only through external-system visit endpoints.", example = "SOCIAL", required = true)
   @field:NotNull
   val visitType: VisitType,
   @param:Schema(description = "Visit Restriction", example = "OPEN", required = true)
@@ -47,4 +48,7 @@ data class CreateVisitFromExternalSystemDto(
   val visitors: Set<@Valid VisitorDto>? = setOf(),
   @param:Schema(description = "Additional support associated with the visit")
   val visitorSupport: VisitorSupportDto? = null,
+  @param:Schema(description = "Source of the visit, not the audit actor", defaultValue = "PRISONER", required = false)
+  @field:NotNull
+  val userType: UserType = UserType.PRISONER,
 )

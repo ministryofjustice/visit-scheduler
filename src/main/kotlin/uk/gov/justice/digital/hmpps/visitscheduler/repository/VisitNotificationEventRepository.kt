@@ -16,6 +16,7 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
       " JOIN session_slot ss on ss.id  = v.session_slot_id " +
       " JOIN prison p on p.id  = v.prison_id " +
       " WHERE ss.slot_date >= NOW() " +
+      " AND v.visit_type = 'SOCIAL' " +
       " AND v.prisoner_id = :prisonerNumber " +
       " AND p.code = :prisonCode " +
       " AND vne.type=:#{#notificationEvent.name()}" +
@@ -36,6 +37,7 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
       " JOIN visit_visitor vv on vv.visit_id = v.id " +
       " JOIN visit_notification_event_attribute vnea on vnea.visit_notification_event_id = vne.id " +
       " WHERE ss.slot_date >= NOW() " +
+      " AND v.visit_type = 'SOCIAL' " +
       " AND v.prisoner_id = :prisonerNumber " +
       " AND p.code = :prisonCode " +
       " AND vv.nomis_person_id = :visitorId " +
@@ -59,6 +61,7 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
       " JOIN visit_notification_event_attribute restriction_id on restriction_id.visit_notification_event_id = vne.id " +
       " JOIN visit_notification_event_attribute visitor_id on visitor_id.visit_notification_event_id = vne.id " +
       " WHERE ss.slot_start >= NOW() " +
+      " AND v.visit_type = 'SOCIAL' " +
       " AND v.visit_status = 'BOOKED' " +
       " AND v.visit_sub_status IN ('APPROVED', 'AUTO_APPROVED', 'REQUESTED') " +
       " AND vne.type=:#{#notificationEvent.name()}" +
@@ -81,6 +84,7 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
       " JOIN session_slot ss on ss.id  = v.session_slot_id " +
       " JOIN visit_notification_event_attribute vnea on vnea.visit_notification_event_id = vne.id " +
       " WHERE ss.slot_date >= CURRENT_DATE " +
+      " AND v.visit_type = 'SOCIAL' " +
       " AND v.prisoner_id = :prisonerNumber " +
       " AND vne.type IN (:notificationEventTypes)" +
       " AND vnea.attribute_name = 'ALERT_UUID' " +
@@ -100,6 +104,7 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
       " JOIN session_slot ss on ss.id  = v.session_slot_id " +
       " JOIN prison p on p.id  = v.prison_id " +
       " WHERE ss.slot_date >= :slotDate" +
+      " AND v.visit_type = 'SOCIAL' " +
       " AND ss.slot_date < (CAST(:slotDate AS DATE) + CAST('1 day' AS INTERVAL))" +
       " AND p.code = :prisonCode " +
       " AND vne.type=:#{#notificationEvent.name()}" +
@@ -117,6 +122,7 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
       " JOIN visit v on v.id  = vne.visit_id " +
       " JOIN session_slot ss on ss.id  = v.session_slot_id " +
       " WHERE ss.slot_date = :slotDate" +
+      " AND v.visit_type = 'SOCIAL' " +
       " AND ss.session_template_reference = :sessionTemplateReference " +
       " AND vne.type=:#{#notificationEvent.name()}" +
       " ORDER BY vne.id",
@@ -136,6 +142,7 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
       " JOIN session_slot ss ON ss.id = v.session_slot_id " +
       " JOIN prison p ON p.id = v.prison_id AND p.code = :prisonCode " +
       "WHERE v.visit_status = 'BOOKED' " +
+      "AND v.visit_type = 'SOCIAL' " +
       "AND v.visit_sub_status IN ('APPROVED', 'AUTO_APPROVED') " +
       "AND ss.slot_start  >= NOW()",
     nativeQuery = true,
@@ -149,6 +156,7 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
       " JOIN session_slot ss ON ss.id = v.session_slot_id " +
       " JOIN prison p ON p.id = v.prison_id AND p.code = :prisonCode " +
       "WHERE v.visit_status = 'BOOKED' " +
+      "AND v.visit_type = 'SOCIAL' " +
       "AND v.visit_sub_status IN ('APPROVED', 'AUTO_APPROVED') " +
       "  AND ss.slot_start >= NOW() " +
       "  AND vne.type IN (:notificationEventTypes)",
@@ -172,6 +180,7 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
       " JOIN prison p on p.id  = v.prison_id  AND p.code= :prisonCode " +
       " JOIN session_slot ss on ss.id  = v.session_slot_id " +
       "WHERE v.visit_status = 'BOOKED' " +
+      "AND v.visit_type = 'SOCIAL' " +
       "AND v.visit_sub_status IN ('APPROVED', 'AUTO_APPROVED') " +
       "AND ss.slot_start >= NOW()  " +
       " ORDER BY ss.slot_start, v.id",
@@ -185,6 +194,7 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
       " JOIN prison p on p.id  = v.prison_id  AND p.code= :prisonCode " +
       " JOIN session_slot ss on ss.id  = v.session_slot_id " +
       " WHERE v.visit_status = 'BOOKED' AND ss.slot_start >= NOW()  " +
+      "AND v.visit_type = 'SOCIAL' " +
       "AND v.visit_sub_status IN ('APPROVED', 'AUTO_APPROVED') " +
       "  AND vne.type IN (:notificationEventTypes) " +
       " ORDER BY ss.slot_start, v.id",
@@ -194,8 +204,9 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
 
   @Query(
     "select vne.* FROM visit_notification_event vne " +
+      "JOIN visit v ON v.id = vne.visit_id " +
       "JOIN visit_notification_event_attribute vnea on vne.id = vnea.visit_notification_event_id " +
-      "WHERE vnea.attribute_name = 'PAIRED_VISIT' " +
+      "WHERE v.visit_type = 'SOCIAL' AND vnea.attribute_name = 'PAIRED_VISIT' " +
       "AND vnea.attribute_value = :visitReference",
     nativeQuery = true,
   )
@@ -204,20 +215,22 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
   @Query(
     "SELECT vne.type FROM visit_notification_event vne JOIN visit v " +
       "ON vne.visit_id = v.id " +
-      "WHERE v.reference=:bookingReference GROUP by vne.type order by vne.type",
+      "WHERE v.visit_type = 'SOCIAL' AND v.reference=:bookingReference GROUP by vne.type order by vne.type",
     nativeQuery = true,
   )
   fun getNotificationsTypesForBookingReference(@Param("bookingReference") bookingReference: String): List<NotificationEventType>
 
   @Query(
     "select vne.* FROM visit_notification_event vne " +
+      "JOIN visit v ON v.id = vne.visit_id " +
       "JOIN visit_notification_event_attribute vnea on vne.id = vnea.visit_notification_event_id " +
-      "WHERE vnea.attribute_name = 'APPOINTMENT_INSTANCE_ID' " +
+      "WHERE v.visit_type = 'SOCIAL' AND vnea.attribute_name = 'APPOINTMENT_INSTANCE_ID' " +
       "AND vnea.attribute_value = :appointmentInstanceId",
     nativeQuery = true,
   )
   fun getCourtAppointmentCreatedVisitNotificationEvents(appointmentInstanceId: String): List<VisitNotificationEvent>
 
+  @Query("SELECT vne FROM VisitNotificationEvent vne WHERE vne.visit.reference = :reference AND vne.visit.visitType = 'SOCIAL'")
   fun findVisitNotificationEventByVisitReference(
     reference: String,
   ): List<VisitNotificationEvent>

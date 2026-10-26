@@ -25,6 +25,7 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
       " COUNT(CASE WHEN v.visit_restriction = 'CLOSED' THEN 1 END) AS closed  FROM visit v " +
       " JOIN session_slot sl on sl.id = v.session_slot_id " +
       " WHERE sl.session_template_reference = :reference" +
+      " AND v.visit_type = 'SOCIAL'" +
       " AND sl.slot_start >= :visitsFromDate" +
       " AND (cast(:visitsToDate as date) is null OR sl.slot_end <= :visitsToDate)" +
       " AND visit_status = 'BOOKED'" +
@@ -41,6 +42,7 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
     "select sl.slot_date as visitDate, v.visit_restriction as visitRestriction, count(*) as visitCount from visit v " +
       " JOIN session_slot sl on sl.id = v.session_slot_id " +
       " WHERE sl.session_template_reference = :reference" +
+      " AND v.visit_type = 'SOCIAL'" +
       " AND sl.slot_date >= :visitsFromDate" +
       " AND (cast(:visitsToDate as date) is null OR sl.slot_date < (CAST(:visitsToDate AS DATE) + CAST('1 day' AS INTERVAL)))" +
       " AND visit_status = :visitStatus " +

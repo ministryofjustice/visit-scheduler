@@ -287,3 +287,15 @@ To run the CircleCI trivy scan locally download and install trivy, build the vis
 ```
 trivy image visit-scheduler_visit-scheduler
 ```
+
+## Externally managed social video visits
+
+`SOCIAL_VIDEO` visits are created through and updated through the external API. The visit type cannot be changed
+on update. External client-reference lookups and individual visit-reference reads remain available for integrations.
+
+Video visits are excluded from normal social-visit searches, validation, capacity,
+notification flagging, scheduled flagging and operational reports.
+They publish the existing `prison-visit.booked`, `prison-visit.changed`
+and `prison-visit.cancelled` SNS events. All published visit events include
+`additionalInformation.visitType`, with the value `SOCIAL` or `SOCIAL_VIDEO`;
+there are no dedicated video event types.

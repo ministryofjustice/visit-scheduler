@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
+import jakarta.validation.ValidationException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -20,6 +21,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.ApplicationDtoBui
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.IN_PROGRESS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.notify.LanguagePreference
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendException
@@ -87,6 +89,9 @@ class ApplicationService(
   ): ApplicationDto {
     val existingVisit =
       visitRepo.findBookedVisit(bookingReference) ?: throw VisitNotFoundException("Visit $bookingReference not found")
+    if (existingVisit.visitType != VisitType.SOCIAL) {
+      throw ValidationException("SOCIAL_VIDEO visits can only be updated through the external-system endpoint")
+    }
     validateBookingChange(existingVisit, createApplicationDto, bookingReference)
 
     val application = createApplication(createApplicationDto, existingVisit)

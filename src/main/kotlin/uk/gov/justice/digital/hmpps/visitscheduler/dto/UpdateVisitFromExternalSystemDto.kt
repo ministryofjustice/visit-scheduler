@@ -12,7 +12,7 @@ data class UpdateVisitFromExternalSystemDto(
   @param:Schema(description = "Visit Room", example = "A1", required = true)
   @field:NotBlank
   val visitRoom: String,
-  @param:Schema(description = "Visit Type", example = "SOCIAL", required = true)
+  @param:Schema(description = "Visit type. SOCIAL_VIDEO is supported only through external-system visit endpoints. The existing visit type cannot be changed.", example = "SOCIAL", required = true)
   @field:NotNull
   val visitType: VisitType,
   @param:Schema(description = "Visit Restriction", example = "OPEN", required = true)

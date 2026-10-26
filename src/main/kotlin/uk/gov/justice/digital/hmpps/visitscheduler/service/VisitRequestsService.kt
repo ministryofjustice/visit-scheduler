@@ -78,6 +78,7 @@ class VisitRequestsService(
       modifiedTimestamp = approveRejectResponseDto.visitDto.modifiedTimestamp, // Not used.
       prisonerId = approveRejectResponseDto.visitDto.prisonerId,
       eventAuditId = approveRejectResponseDto.eventAuditDto.id,
+      visitType = approveRejectResponseDto.visitDto.visitType,
     )
 
     telemetryClientService.trackVisitRequestApprovedOrRejectedEvent(approveRejectResponseDto.visitDto, approveRejectResponseDto.eventAuditDto, isApproved)
@@ -129,6 +130,7 @@ class VisitRequestsService(
         modifiedTimestamp = autoRejectResponseDto.visitDto.modifiedTimestamp, // Not used.
         prisonerId = autoRejectResponseDto.visitDto.prisonerId,
         eventAuditId = autoRejectResponseDto.eventAuditDto.id,
+        visitType = autoRejectResponseDto.visitDto.visitType,
       )
       snsService.sendVisitCancelledEvent(snsDomainEventPublishDto)
     }

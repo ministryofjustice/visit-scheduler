@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
 import com.microsoft.applicationinsights.TelemetryClient
+import jakarta.validation.ValidationException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -23,6 +24,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.notify.LanguagePreference
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.MigrateVisitInFutureException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
@@ -81,6 +83,9 @@ class MigrateVisitService(
   private lateinit var capitaliseUtil: CapitaliseUtil
 
   fun migrateVisit(migrateVisitRequest: MigrateVisitRequestDto): String {
+    if (migrateVisitRequest.visitType != VisitType.SOCIAL) {
+      throw ValidationException("SOCIAL_VIDEO visits can only be created through the external-system endpoint")
+    }
     if (isVisitTooFarInTheFuture(migrateVisitRequest.startTimestamp)) {
       throw MigrateVisitInFutureException("Visit more than $migrateMaxMonthsInFuture months in future, will not be migrated!")
     }
@@ -269,6 +274,9 @@ class MigrateVisitService(
     }
 
     val visitEntity = visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("Canceled migrated visit $reference not found ")
+    if (visitEntity.visitType != VisitType.SOCIAL) {
+      throw ValidationException("SOCIAL_VIDEO visits cannot be cancelled through the migration endpoint")
+    }
 
     visitEntity.visitStatus = CANCELLED
     visitEntity.visitSubStatus = VisitSubStatus.CANCELLED
@@ -292,6 +300,7 @@ class MigrateVisitService(
       visitDto.modifiedTimestamp,
       visitDto.prisonerId,
       eventAuditDto.id,
+      visitDto.visitType,
     )
     snsService.sendVisitCancelledEvent(snsDomainEventPublishDto)
 
