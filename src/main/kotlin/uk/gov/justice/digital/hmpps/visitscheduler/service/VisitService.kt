@@ -73,9 +73,14 @@ class VisitService(
 
   fun createVisitFromExternalSystem(createVisitFromExternalSystemDto: CreateVisitFromExternalSystemDto): VisitDto {
     validateExternalVisitActionedBy(createVisitFromExternalSystemDto.actionedBy, createVisitFromExternalSystemDto.userType)
+    val actionedBy = resolveExternalVisitActionedBy(
+      createVisitFromExternalSystemDto.actionedBy,
+      createVisitFromExternalSystemDto.userType,
+      createVisitFromExternalSystemDto.prisonerId,
+    )
     val booking = visitStoreService.createVisitFromExternalSystem(createVisitFromExternalSystemDto)
 
-    return processCreateVisitFromExternalSystemEvents(booking, createVisitFromExternalSystemDto)
+    return processCreateVisitFromExternalSystemEvents(booking, createVisitFromExternalSystemDto, actionedBy)
   }
 
   fun updateBookedVisit(applicationReference: String, bookingRequestDto: BookingRequestDto): VisitDto {
@@ -216,9 +221,10 @@ class VisitService(
   private fun processCreateVisitFromExternalSystemEvents(
     bookedVisitDto: VisitDto,
     createVisitFromExternalSystemDto: CreateVisitFromExternalSystemDto,
+    actionedBy: String,
   ): VisitDto {
     val bookingEventAuditDto = visitEventAuditService.saveBookingEventAudit(
-      actionedByValue = createVisitFromExternalSystemDto.actionedBy ?: bookedVisitDto.prisonerId,
+      actionedByValue = actionedBy,
       visit = bookedVisitDto,
       type = EventAuditType.BOOKED_VISIT,
       applicationMethodType = createVisitFromExternalSystemDto.applicationMethodType ?: ApplicationMethodType.BY_PRISONER,
@@ -244,9 +250,10 @@ class VisitService(
     existingVisitDto: VisitDto,
     updatedVisitDto: VisitDto,
     updateVisitFromExternalSystemDto: UpdateVisitFromExternalSystemDto,
+    actionedBy: String,
   ): VisitDto {
     val bookingEventAuditDto = visitEventAuditService.saveBookingEventAudit(
-      actionedByValue = updateVisitFromExternalSystemDto.actionedBy ?: updatedVisitDto.prisonerId,
+      actionedByValue = actionedBy,
       visit = updatedVisitDto,
       type = EventAuditType.UPDATED_VISIT,
       applicationMethodType = updateVisitFromExternalSystemDto.applicationMethodType ?: ApplicationMethodType.BY_PRISONER,
@@ -418,6 +425,11 @@ class VisitService(
     validateExternalVisitActionedBy(updateVisitFromExternalSystemDto.actionedBy, updateVisitFromExternalSystemDto.userType)
     val existingVisit =
       visitRepository.findBookedVisit(bookingReference) ?: throw VisitNotFoundException("Visit $bookingReference not found")
+    val actionedBy = resolveExternalVisitActionedBy(
+      updateVisitFromExternalSystemDto.actionedBy,
+      updateVisitFromExternalSystemDto.userType,
+      existingVisit.prisonerId,
+    )
     if (existingVisit.visitType != updateVisitFromExternalSystemDto.visitType) {
       throw ValidationException("Visit type cannot be changed")
     }
@@ -425,13 +437,22 @@ class VisitService(
 
     val updatedVisitDto = visitStoreService.updateVisitFromExternalSystem(updateVisitFromExternalSystemDto, existingVisit)
 
-    return processUpdateVisitFromExternalSystemEvents(existingVisitDto, updatedVisitDto, updateVisitFromExternalSystemDto)
+    return processUpdateVisitFromExternalSystemEvents(existingVisitDto, updatedVisitDto, updateVisitFromExternalSystemDto, actionedBy)
   }
 
   private fun validateExternalVisitActionedBy(actionedBy: String?, userType: UserType?) {
     if ((userType == UserType.STAFF || userType == UserType.PUBLIC) && actionedBy.isNullOrBlank()) {
       throw ValidationException("actionedBy must be provided for STAFF or PUBLIC users")
     }
+  }
+
+  private fun resolveExternalVisitActionedBy(actionedBy: String?, userType: UserType?, prisonerId: String): String {
+    val effectiveUserType = userType ?: UserType.PRISONER
+    val effectiveActionedBy = if (effectiveUserType == UserType.PRISONER) prisonerId else actionedBy ?: prisonerId
+    if ((effectiveUserType == UserType.STAFF || effectiveUserType == UserType.PRISONER) && effectiveActionedBy.length > 60) {
+      throw ValidationException("Audit username must not exceed 60 characters")
+    }
+    return effectiveActionedBy
   }
 
   @Transactional(readOnly = true)

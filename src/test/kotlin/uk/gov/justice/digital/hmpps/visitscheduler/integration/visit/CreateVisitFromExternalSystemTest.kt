@@ -179,7 +179,7 @@ class CreateVisitFromExternalSystemTest : IntegrationTestBase() {
 
   @ParameterizedTest
   @EnumSource(UserType::class)
-  fun `External creation audits the supplied actor using internal booking conventions`(userType: UserType) {
+  fun `Create an external visit records the audit identity for each user type`(userType: UserType) {
     val request = createVisitFromExternalSystemDto.copy(userType = userType)
     val response = callCreateVisitFromExternalSystem(webTestClient, roleVisitSchedulerHttpHeaders, request)
     response.expectStatus().isOk
@@ -189,6 +189,71 @@ class CreateVisitFromExternalSystemTest : IntegrationTestBase() {
     assertThat(storedVisit.userType).isEqualTo(UserType.PRISONER)
     assertAuditEvent(visit, storedVisit, request)
     assertBookedEvent(visit)
+  }
+
+  @ParameterizedTest
+  @CsvSource("PRISONER,actionedBy", "omitted,actionedBy", "null,actionedBy", "PRISONER,username", "omitted,username", "null,username")
+  fun `when userType is prisoner or not supplied then creating a visit uses the prisoner ID for the audit`(userType: String, identityField: String) {
+    val request = objectMapper.valueToTree(createVisitFromExternalSystemDto) as ObjectNode
+    request.remove("actionedBy")
+    request.put(identityField, "misleading-staff-user".repeat(4))
+    when (userType) {
+      "omitted" -> request.remove("userType")
+      "null" -> request.putNull("userType")
+      else -> request.put("userType", userType)
+    }
+
+    assertOptionalAuditMetadata(request)
+  }
+
+  @ParameterizedTest
+  @CsvSource("60,actionedBy", "61,actionedBy", "60,username", "61,username")
+  fun `Create an external visit accepts a 60 character staff username but rejects 61 characters`(length: Int, identityField: String) {
+    val request = objectMapper.valueToTree(createVisitFromExternalSystemDto.copy(userType = UserType.STAFF)) as ObjectNode
+    request.remove("actionedBy")
+    request.put(identityField, "s".repeat(length))
+
+    if (length == 60) {
+      assertOptionalAuditMetadata(request)
+    } else {
+      assertUsernameExceeding60CharactersRejected(request)
+    }
+  }
+
+  @ParameterizedTest
+  @CsvSource("60,PRISONER", "61,PRISONER", "60,omitted", "61,omitted", "60,null", "61,null")
+  fun `Create an external visit accepts a 60 character prisoner ID but rejects 61 characters`(length: Int, userType: String) {
+    val request = objectMapper.valueToTree(createVisitFromExternalSystemDto.copy(prisonerId = "p".repeat(length), actionedBy = "ignored")) as ObjectNode
+    when (userType) {
+      "omitted" -> request.remove("userType")
+      "null" -> request.putNull("userType")
+      else -> request.put("userType", userType)
+    }
+    if (length == 60) {
+      assertOptionalAuditMetadata(request)
+    } else {
+      assertUsernameExceeding60CharactersRejected(request)
+    }
+  }
+
+  @ParameterizedTest
+  @CsvSource("PUBLIC,actionedBy", "PUBLIC,username", "SYSTEM,actionedBy", "SYSTEM,username")
+  fun `Create an external visit accepts actionedBy longer than 60 characters for public and system users`(userType: UserType, identityField: String) {
+    val request = objectMapper.valueToTree(createVisitFromExternalSystemDto.copy(userType = userType)) as ObjectNode
+    request.remove("actionedBy")
+    request.put(identityField, "b".repeat(61))
+    assertOptionalAuditMetadata(request)
+  }
+
+  private fun assertUsernameExceeding60CharactersRejected(request: ObjectNode) {
+    callPostByJsonString(objectMapper.writeValueAsString(request), webTestClient, POST_VISIT_FROM_EXTERNAL_SYSTEM, roleVisitSchedulerHttpHeaders)
+      .expectStatus().isBadRequest
+      .expectBody().jsonPath("$.developerMessage").isEqualTo("Audit username must not exceed 60 characters")
+
+    assertThat(testVisitRepository.count()).isZero()
+    assertThat(eventAuditRepository.count()).isZero()
+    verify(snsService, never()).sendVisitBookedEvent(any())
+    verify(telemetryClient, never()).trackEvent(eq("visit-booked"), any(), isNull())
   }
 
   @ParameterizedTest
@@ -303,7 +368,7 @@ class CreateVisitFromExternalSystemTest : IntegrationTestBase() {
   private fun assertAuditEvent(visitDto: VisitDto, visitEntity: Visit, request: CreateVisitFromExternalSystemDto = createVisitFromExternalSystemDto) {
     val eventAudit = this.eventAuditRepository.findLastEventByBookingReference(visitDto.reference)
     val userType = request.userType ?: UserType.PRISONER
-    val actionedBy = request.actionedBy ?: visitDto.prisonerId
+    val actionedBy = if (userType == UserType.PRISONER) visitDto.prisonerId else request.actionedBy
     assertThat(eventAudit.type).isEqualTo(EventAuditType.BOOKED_VISIT)
     assertThat(eventAudit.actionedBy).isNotNull()
     assertThat(eventAudit.actionedBy.userType).isEqualTo(userType)
