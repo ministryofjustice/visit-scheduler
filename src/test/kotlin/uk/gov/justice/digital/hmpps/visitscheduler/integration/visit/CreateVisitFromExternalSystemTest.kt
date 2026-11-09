@@ -6,10 +6,13 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.EnumSource
+import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.isNull
+import org.mockito.kotlin.never
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
@@ -17,6 +20,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
+import tools.jackson.databind.node.ObjectNode
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.POST_VISIT_FROM_EXTERNAL_SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitFromExternalSystemDto
@@ -58,6 +62,9 @@ class CreateVisitFromExternalSystemTest : IntegrationTestBase() {
 
   private val prisonId = "MKI"
   private val createVisitFromExternalSystemDto = CreateVisitFromExternalSystemDto(
+    actionedBy = "external-booking-user",
+    applicationMethodType = ApplicationMethodType.PHONE,
+    userType = UserType.STAFF,
     prisonerId = "AF34567G",
     prisonId = prisonId,
     clientName = "client-name",
@@ -158,10 +165,9 @@ class CreateVisitFromExternalSystemTest : IntegrationTestBase() {
 
   @ParameterizedTest
   @EnumSource(VisitType::class)
-  fun `External visits are created as PRISONER without a user type in the request`(visitType: VisitType) {
-    val request = objectMapper.writeValueAsString(createVisitFromExternalSystemDto.copy(visitType = visitType))
-    assertThat(request).doesNotContain("\"userType\"")
-    val response = callPostByJsonString(request, webTestClient, POST_VISIT_FROM_EXTERNAL_SYSTEM, roleVisitSchedulerHttpHeaders)
+  fun `Supplied actor type does not change the external visit source`(visitType: VisitType) {
+    val request = createVisitFromExternalSystemDto.copy(visitType = visitType)
+    val response = callCreateVisitFromExternalSystem(webTestClient, roleVisitSchedulerHttpHeaders, request)
     response.expectStatus().isOk
     val visit = getVisitDto(response)
     val storedVisit = testVisitRepository.findByReference(visit.reference)
@@ -172,28 +178,139 @@ class CreateVisitFromExternalSystemTest : IntegrationTestBase() {
   }
 
   @ParameterizedTest
-  @EnumSource(VisitType::class)
-  fun `Caller supplied user type cannot override PRISONER for external visits`(visitType: VisitType) {
-    val request = objectMapper.writeValueAsString(createVisitFromExternalSystemDto.copy(visitType = visitType))
-      .replaceFirst("{", "{\"userType\":\"STAFF\",")
-    val response = callPostByJsonString(request, webTestClient, POST_VISIT_FROM_EXTERNAL_SYSTEM, roleVisitSchedulerHttpHeaders)
+  @EnumSource(UserType::class)
+  fun `External creation audits the supplied actor using internal booking conventions`(userType: UserType) {
+    val request = createVisitFromExternalSystemDto.copy(userType = userType)
+    val response = callCreateVisitFromExternalSystem(webTestClient, roleVisitSchedulerHttpHeaders, request)
     response.expectStatus().isOk
     val visit = getVisitDto(response)
     assertThat(visit.userType).isEqualTo(UserType.PRISONER)
     val storedVisit = testVisitRepository.findByReference(visit.reference)
     assertThat(storedVisit.userType).isEqualTo(UserType.PRISONER)
-    assertAuditEvent(visit, storedVisit)
+    assertAuditEvent(visit, storedVisit, request)
     assertBookedEvent(visit)
   }
 
-  private fun assertAuditEvent(visitDto: VisitDto, visitEntity: Visit) {
+  @ParameterizedTest
+  @EnumSource(value = UserType::class, names = ["STAFF", "PUBLIC"])
+  fun `External creation accepts username as an input alias and serializes actionedBy`(userType: UserType) {
+    val expected = createVisitFromExternalSystemDto.copy(actionedBy = "alias-booking-user", userType = userType)
+    val request = objectMapper.valueToTree(expected) as ObjectNode
+    request.remove("actionedBy")
+    request.put("username", expected.actionedBy)
+
+    val deserialized = objectMapper.treeToValue(request, CreateVisitFromExternalSystemDto::class.java)
+    assertThat(deserialized).isEqualTo(expected)
+    val serialized: ObjectNode = objectMapper.valueToTree(deserialized)
+    assertThat(serialized.has("username")).isFalse()
+    assertThat(serialized["actionedBy"].asString()).isEqualTo(expected.actionedBy)
+
+    assertOptionalAuditMetadata(request)
+  }
+
+  @ParameterizedTest
+  @EnumSource(ApplicationMethodType::class)
+  fun `External creation audits the supplied application method`(applicationMethodType: ApplicationMethodType) {
+    val request = createVisitFromExternalSystemDto.copy(applicationMethodType = applicationMethodType)
+    val response = callCreateVisitFromExternalSystem(webTestClient, roleVisitSchedulerHttpHeaders, request)
+    response.expectStatus().isOk
+    val visit = getVisitDto(response)
+    assertAuditEvent(visit, testVisitRepository.findByReference(visit.reference), request)
+    assertBookedEvent(visit)
+  }
+
+  @ParameterizedTest
+  @CsvSource("actionedBy,false", "actionedBy,true", "applicationMethodType,false", "applicationMethodType,true", "userType,false", "userType,true", "all,false", "all,true")
+  fun `External creation defaults missing or null audit metadata independently`(field: String, explicitNull: Boolean) {
+    val request = objectMapper.valueToTree(createVisitFromExternalSystemDto.copy(userType = UserType.PRISONER)) as ObjectNode
+    val fields = if (field == "all") listOf("actionedBy", "applicationMethodType", "userType") else listOf(field)
+    fields.forEach {
+      if (explicitNull) request.putNull(it) else request.remove(it)
+    }
+
+    assertOptionalAuditMetadata(request)
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = ["actionedBy", "applicationMethodType", "userType"])
+  fun `External creation accepts a single supplied audit field`(suppliedField: String) {
+    val request = objectMapper.valueToTree(createVisitFromExternalSystemDto.copy(userType = UserType.PRISONER)) as ObjectNode
+    listOf("actionedBy", "applicationMethodType", "userType").filter { it != suppliedField }.forEach { request.remove(it) }
+
+    assertOptionalAuditMetadata(request)
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = UserType::class, names = ["PRISONER", "SYSTEM"])
+  fun `External creation supports prisoner and system actors with a defaulted identity`(userType: UserType) {
+    val request = objectMapper.valueToTree(createVisitFromExternalSystemDto.copy(actionedBy = null, applicationMethodType = null, userType = userType)) as ObjectNode
+    assertOptionalAuditMetadata(request)
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = UserType::class, names = ["STAFF", "PUBLIC"])
+  fun `External creation accepts staff and public identities with a defaulted application method`(userType: UserType) {
+    val request = objectMapper.valueToTree(createVisitFromExternalSystemDto.copy(applicationMethodType = null, userType = userType)) as ObjectNode
+    assertOptionalAuditMetadata(request)
+  }
+
+  @ParameterizedTest
+  @CsvSource("STAFF,omitted", "STAFF,null", "STAFF,empty", "STAFF,blank", "PUBLIC,omitted", "PUBLIC,null", "PUBLIC,empty", "PUBLIC,blank")
+  fun `External creation rejects staff or public actors without a nonblank identity`(userType: UserType, identity: String) {
+    val request = objectMapper.valueToTree(createVisitFromExternalSystemDto.copy(userType = userType)) as ObjectNode
+    when (identity) {
+      "omitted" -> request.remove("actionedBy")
+      "null" -> request.putNull("actionedBy")
+      "empty" -> request.put("actionedBy", "")
+      "blank" -> request.put("actionedBy", " \t\n")
+    }
+
+    callPostByJsonString(objectMapper.writeValueAsString(request), webTestClient, POST_VISIT_FROM_EXTERNAL_SYSTEM, roleVisitSchedulerHttpHeaders)
+      .expectStatus().isBadRequest
+      .expectBody().jsonPath("$.developerMessage").isEqualTo("actionedBy must be provided for STAFF or PUBLIC users")
+
+    assertThat(testVisitRepository.count()).isZero()
+    assertThat(eventAuditRepository.count()).isZero()
+    verify(snsService, never()).sendVisitBookedEvent(any())
+  }
+
+  private fun assertOptionalAuditMetadata(request: ObjectNode) {
+    val response = callPostByJsonString(objectMapper.writeValueAsString(request), webTestClient, POST_VISIT_FROM_EXTERNAL_SYSTEM, roleVisitSchedulerHttpHeaders)
+    response.expectStatus().isOk
+    val visit = getVisitDto(response)
+    val storedVisit = testVisitRepository.findByReference(visit.reference)
+
+    assertThat(visit.userType).isEqualTo(UserType.PRISONER)
+    assertThat(storedVisit.userType).isEqualTo(UserType.PRISONER)
+    assertAuditEvent(visit, storedVisit, objectMapper.treeToValue(request, CreateVisitFromExternalSystemDto::class.java))
+    assertBookedEvent(visit)
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = ["applicationMethodType", "userType"])
+  fun `External creation rejects invalid audit enums`(field: String) {
+    val request = objectMapper.valueToTree(createVisitFromExternalSystemDto) as ObjectNode
+    request.put(field, "INVALID")
+
+    callPostByJsonString(objectMapper.writeValueAsString(request), webTestClient, POST_VISIT_FROM_EXTERNAL_SYSTEM, roleVisitSchedulerHttpHeaders)
+      .expectStatus().isBadRequest
+
+    assertThat(testVisitRepository.count()).isZero()
+    assertThat(eventAuditRepository.count()).isZero()
+    verify(snsService, never()).sendVisitBookedEvent(any())
+  }
+
+  private fun assertAuditEvent(visitDto: VisitDto, visitEntity: Visit, request: CreateVisitFromExternalSystemDto = createVisitFromExternalSystemDto) {
     val eventAudit = this.eventAuditRepository.findLastEventByBookingReference(visitDto.reference)
+    val userType = request.userType ?: UserType.PRISONER
+    val actionedBy = request.actionedBy ?: visitDto.prisonerId
     assertThat(eventAudit.type).isEqualTo(EventAuditType.BOOKED_VISIT)
     assertThat(eventAudit.actionedBy).isNotNull()
-    assertThat(eventAudit.actionedBy.userType).isEqualTo(UserType.PRISONER)
-    assertThat(eventAudit.actionedBy.userName).isEqualTo(visitDto.prisonerId)
-    assertThat(eventAudit.actionedBy.bookerReference).isNull()
-    assertThat(eventAudit.applicationMethodType).isEqualTo(ApplicationMethodType.BY_PRISONER)
+    assertThat(eventAudit.actionedBy.userType).isEqualTo(userType)
+    val expectedUsername = actionedBy.takeIf { userType == UserType.STAFF || userType == UserType.PRISONER }
+    assertThat(eventAudit.actionedBy.userName).isEqualTo(expectedUsername)
+    assertThat(eventAudit.actionedBy.bookerReference).isEqualTo(actionedBy.takeIf { userType == UserType.PUBLIC })
+    assertThat(eventAudit.applicationMethodType).isEqualTo(request.applicationMethodType ?: ApplicationMethodType.BY_PRISONER)
     assertThat(eventAudit.bookingReference).isEqualTo(visitEntity.reference)
     assertThat(eventAudit.sessionTemplateReference).isNull()
   }
@@ -219,9 +336,7 @@ class CreateVisitFromExternalSystemTest : IntegrationTestBase() {
         assertThat(it["totalVisitors"]).isEqualTo(visit.visitors.size.toString())
         val visitors = visit.visitors.map { visitor -> TelemetryClientService.VisitorDetails(visitor.nomisPersonId.toString(), null) }
         assertThat(it["visitors"]).isEqualTo(objectMapper.writeValueAsString(visitors))
-        eventAudit.actionedBy.userName?.let { value ->
-          assertThat(it["actionedBy"]).isEqualTo(value)
-        }
+        assertThat(it["actionedBy"]).isEqualTo(eventAudit.actionedBy.userName ?: eventAudit.actionedBy.bookerReference)
         assertThat(it["source"]).isEqualTo(eventAudit.actionedBy.userType.name)
         assertThat(it["applicationMethodType"]).isEqualTo(eventAudit.applicationMethodType.name)
       },
