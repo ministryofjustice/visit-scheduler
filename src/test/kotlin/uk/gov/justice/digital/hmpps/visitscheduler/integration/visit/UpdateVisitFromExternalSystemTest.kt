@@ -6,7 +6,9 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.EnumSource
+import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.isNull
@@ -15,9 +17,11 @@ import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
+import org.springframework.http.MediaType
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
+import tools.jackson.databind.node.ObjectNode
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.PUT_VISIT_FROM_EXTERNAL_SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.SnsDomainEventPublishDto
@@ -59,6 +63,9 @@ class UpdateVisitFromExternalSystemTest : IntegrationTestBase() {
 
   private val reference = "v9-d7-ed-7u"
   private val updateVisitFromExternalSystemDto = UpdateVisitFromExternalSystemDto(
+    actionedBy = "external-updating-user",
+    applicationMethodType = ApplicationMethodType.EMAIL,
+    userType = UserType.STAFF,
     visitRoom = "B1",
     visitType = VisitType.SOCIAL,
     visitRestriction = VisitRestriction.CLOSED,
@@ -171,6 +178,221 @@ class UpdateVisitFromExternalSystemTest : IntegrationTestBase() {
   }
 
   @ParameterizedTest
+  @EnumSource(UserType::class)
+  fun `Update an external visit records the audit identity for each user type without changing the visit source`(userType: UserType) {
+    val visit = createExternalVisit(VisitType.SOCIAL)
+    val request = updateVisitFromExternalSystemDto.copy(userType = userType)
+    val response = callUpdateVisitFromExternalSystem(webTestClient, roleVisitSchedulerHttpHeaders, visit.reference, request)
+    response.expectStatus().isOk
+    val updatedVisit = getVisitDto(response)
+    val storedVisit = testVisitRepository.findByReference(visit.reference)
+
+    assertThat(updatedVisit.userType).isEqualTo(UserType.STAFF)
+    assertThat(storedVisit.userType).isEqualTo(UserType.STAFF)
+    assertAuditEvent(updatedVisit, storedVisit, request)
+    assertUpdatedEvent(visit, updatedVisit)
+  }
+
+  @ParameterizedTest
+  @CsvSource("PRISONER,actionedBy", "omitted,actionedBy", "null,actionedBy", "PRISONER,username", "omitted,username", "null,username")
+  fun `when userType is prisoner or not supplied then updating a visit uses the prisoner ID for the audit`(userType: String, identityField: String) {
+    val request = objectMapper.valueToTree(updateVisitFromExternalSystemDto) as ObjectNode
+    request.remove("actionedBy")
+    request.put(identityField, "misleading-staff-user".repeat(4))
+    when (userType) {
+      "omitted" -> request.remove("userType")
+      "null" -> request.putNull("userType")
+      else -> request.put("userType", userType)
+    }
+
+    assertOptionalAuditMetadata(request)
+  }
+
+  @ParameterizedTest
+  @CsvSource("60,actionedBy", "61,actionedBy", "60,username", "61,username")
+  fun `Update an external visit accepts a 60 character staff username but rejects 61 characters`(length: Int, identityField: String) {
+    val request = objectMapper.valueToTree(updateVisitFromExternalSystemDto.copy(userType = UserType.STAFF)) as ObjectNode
+    request.remove("actionedBy")
+    request.put(identityField, "s".repeat(length))
+
+    if (length == 60) {
+      assertOptionalAuditMetadata(request)
+    } else {
+      assertUsernameExceeding60CharactersRejected(request, createExternalVisit(VisitType.SOCIAL))
+    }
+  }
+
+  @ParameterizedTest
+  @CsvSource("60,PRISONER", "61,PRISONER", "60,omitted", "61,omitted", "60,null", "61,null")
+  fun `Update an external visit accepts a 60 character prisoner ID but rejects 61 characters`(length: Int, userType: String) {
+    val visit = createExternalVisit(VisitType.SOCIAL, prisonerId = "p".repeat(length))
+    val request = objectMapper.valueToTree(updateVisitFromExternalSystemDto.copy(actionedBy = "ignored")) as ObjectNode
+    when (userType) {
+      "omitted" -> request.remove("userType")
+      "null" -> request.putNull("userType")
+      else -> request.put("userType", userType)
+    }
+    if (length == 60) {
+      assertOptionalAuditMetadata(request, visit)
+    } else {
+      assertUsernameExceeding60CharactersRejected(request, visit)
+    }
+  }
+
+  @ParameterizedTest
+  @CsvSource("PUBLIC,actionedBy", "PUBLIC,username", "SYSTEM,actionedBy", "SYSTEM,username")
+  fun `Update an external visit accepts actionedBy longer than 60 characters for public and system users`(userType: UserType, identityField: String) {
+    val request = objectMapper.valueToTree(updateVisitFromExternalSystemDto.copy(userType = userType)) as ObjectNode
+    request.remove("actionedBy")
+    request.put(identityField, "b".repeat(61))
+    assertOptionalAuditMetadata(request)
+  }
+
+  private fun assertUsernameExceeding60CharactersRejected(request: ObjectNode, visit: Visit) {
+    webTestClient.put().uri(PUT_VISIT_FROM_EXTERNAL_SYSTEM.replace("{reference}", visit.reference))
+      .headers(roleVisitSchedulerHttpHeaders)
+      .contentType(MediaType.APPLICATION_JSON)
+      .bodyValue(objectMapper.writeValueAsString(request))
+      .exchange()
+      .expectStatus().isBadRequest
+      .expectBody().jsonPath("$.developerMessage").isEqualTo("Audit username must not exceed 60 characters")
+
+    assertThat(testVisitRepository.findByReference(visit.reference).visitRoom).isEqualTo("A1")
+    assertThat(eventAuditRepository.findAllByBookingReference(visit.reference)).isEmpty()
+    verify(snsService, never()).sendChangedVisitBookedEvent(any())
+    verify(telemetryClient, never()).trackEvent(eq("visit-booked"), any(), isNull())
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = UserType::class, names = ["STAFF", "PUBLIC"])
+  fun `External update accepts username as an input alias and serializes actionedBy`(userType: UserType) {
+    val expected = updateVisitFromExternalSystemDto.copy(actionedBy = "alias-updating-user", userType = userType)
+    val request = objectMapper.valueToTree(expected) as ObjectNode
+    request.remove("actionedBy")
+    request.put("username", expected.actionedBy)
+
+    val deserialized = objectMapper.treeToValue(request, UpdateVisitFromExternalSystemDto::class.java)
+    assertThat(deserialized).isEqualTo(expected)
+    val serialized: ObjectNode = objectMapper.valueToTree(deserialized)
+    assertThat(serialized.has("username")).isFalse()
+    assertThat(serialized["actionedBy"].asString()).isEqualTo(expected.actionedBy)
+
+    assertOptionalAuditMetadata(request)
+  }
+
+  @ParameterizedTest
+  @EnumSource(ApplicationMethodType::class)
+  fun `External update audits the supplied application method`(applicationMethodType: ApplicationMethodType) {
+    val visit = createExternalVisit(VisitType.SOCIAL)
+    val request = updateVisitFromExternalSystemDto.copy(applicationMethodType = applicationMethodType)
+    val response = callUpdateVisitFromExternalSystem(webTestClient, roleVisitSchedulerHttpHeaders, visit.reference, request)
+    response.expectStatus().isOk
+    val updatedVisit = getVisitDto(response)
+
+    assertAuditEvent(updatedVisit, testVisitRepository.findByReference(visit.reference), request)
+    assertUpdatedEvent(visit, updatedVisit)
+  }
+
+  @ParameterizedTest
+  @CsvSource("actionedBy,false", "actionedBy,true", "applicationMethodType,false", "applicationMethodType,true", "userType,false", "userType,true", "all,false", "all,true")
+  fun `External update defaults missing or null audit metadata independently`(field: String, explicitNull: Boolean) {
+    val request = objectMapper.valueToTree(updateVisitFromExternalSystemDto.copy(userType = UserType.PRISONER)) as ObjectNode
+    val fields = if (field == "all") listOf("actionedBy", "applicationMethodType", "userType") else listOf(field)
+    fields.forEach {
+      if (explicitNull) request.putNull(it) else request.remove(it)
+    }
+
+    assertOptionalAuditMetadata(request)
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = ["actionedBy", "applicationMethodType", "userType"])
+  fun `External update accepts a single supplied audit field`(suppliedField: String) {
+    val request = objectMapper.valueToTree(updateVisitFromExternalSystemDto.copy(userType = UserType.PRISONER)) as ObjectNode
+    listOf("actionedBy", "applicationMethodType", "userType").filter { it != suppliedField }.forEach { request.remove(it) }
+
+    assertOptionalAuditMetadata(request)
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = UserType::class, names = ["PRISONER", "SYSTEM"])
+  fun `External update supports prisoner and system actors with a defaulted identity`(userType: UserType) {
+    val request = objectMapper.valueToTree(updateVisitFromExternalSystemDto.copy(actionedBy = null, applicationMethodType = null, userType = userType)) as ObjectNode
+    assertOptionalAuditMetadata(request)
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = UserType::class, names = ["STAFF", "PUBLIC"])
+  fun `External update accepts staff and public identities with a defaulted application method`(userType: UserType) {
+    val request = objectMapper.valueToTree(updateVisitFromExternalSystemDto.copy(applicationMethodType = null, userType = userType)) as ObjectNode
+    assertOptionalAuditMetadata(request)
+  }
+
+  @ParameterizedTest
+  @CsvSource("STAFF,omitted", "STAFF,null", "STAFF,empty", "STAFF,blank", "PUBLIC,omitted", "PUBLIC,null", "PUBLIC,empty", "PUBLIC,blank")
+  fun `External update rejects staff or public actors without a nonblank identity`(userType: UserType, identity: String) {
+    val request = objectMapper.valueToTree(updateVisitFromExternalSystemDto.copy(userType = userType)) as ObjectNode
+    when (identity) {
+      "omitted" -> request.remove("actionedBy")
+      "null" -> request.putNull("actionedBy")
+      "empty" -> request.put("actionedBy", "")
+      "blank" -> request.put("actionedBy", " \t\n")
+    }
+    val visit = createExternalVisit(VisitType.SOCIAL)
+
+    webTestClient.put().uri(PUT_VISIT_FROM_EXTERNAL_SYSTEM.replace("{reference}", visit.reference))
+      .headers(roleVisitSchedulerHttpHeaders)
+      .contentType(MediaType.APPLICATION_JSON)
+      .bodyValue(objectMapper.writeValueAsString(request))
+      .exchange()
+      .expectStatus().isBadRequest
+      .expectBody().jsonPath("$.developerMessage").isEqualTo("actionedBy must be provided for STAFF or PUBLIC users")
+
+    assertThat(testVisitRepository.findByReference(visit.reference).visitRoom).isEqualTo("A1")
+    assertThat(eventAuditRepository.findAllByBookingReference(visit.reference)).isEmpty()
+    verify(snsService, never()).sendChangedVisitBookedEvent(any())
+  }
+
+  private fun assertOptionalAuditMetadata(request: ObjectNode, visit: Visit = createExternalVisit(VisitType.SOCIAL)) {
+    val response = webTestClient.put().uri(PUT_VISIT_FROM_EXTERNAL_SYSTEM.replace("{reference}", visit.reference))
+      .headers(roleVisitSchedulerHttpHeaders)
+      .contentType(MediaType.APPLICATION_JSON)
+      .bodyValue(objectMapper.writeValueAsString(request))
+      .exchange()
+    response.expectStatus().isOk
+    val updatedVisit = getVisitDto(response)
+    val storedVisit = testVisitRepository.findByReference(visit.reference)
+
+    assertThat(updatedVisit.userType).isEqualTo(UserType.STAFF)
+    assertThat(storedVisit.userType).isEqualTo(UserType.STAFF)
+    assertAuditEvent(updatedVisit, storedVisit, objectMapper.treeToValue(request, UpdateVisitFromExternalSystemDto::class.java))
+    assertUpdatedEvent(visit, updatedVisit)
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = ["applicationMethodType", "userType"])
+  fun `External update rejects invalid audit enums`(field: String) {
+    val request = objectMapper.valueToTree(updateVisitFromExternalSystemDto) as ObjectNode
+    request.put(field, "INVALID")
+
+    assertInvalidAuditMetadata(request)
+  }
+
+  private fun assertInvalidAuditMetadata(request: ObjectNode) {
+    val visit = createExternalVisit(VisitType.SOCIAL)
+    webTestClient.put().uri(PUT_VISIT_FROM_EXTERNAL_SYSTEM.replace("{reference}", visit.reference))
+      .headers(roleVisitSchedulerHttpHeaders)
+      .contentType(MediaType.APPLICATION_JSON)
+      .bodyValue(objectMapper.writeValueAsString(request))
+      .exchange()
+      .expectStatus().isBadRequest
+
+    assertThat(testVisitRepository.findByReference(visit.reference).visitRoom).isEqualTo("A1")
+    assertThat(eventAuditRepository.findAllByBookingReference(visit.reference)).isEmpty()
+    verify(snsService, never()).sendChangedVisitBookedEvent(any())
+  }
+
+  @ParameterizedTest
   @EnumSource(VisitType::class)
   fun `External update cannot change a visit type`(existingType: VisitType) {
     val visit = createExternalVisit(existingType)
@@ -187,8 +409,9 @@ class UpdateVisitFromExternalSystemTest : IntegrationTestBase() {
     verify(snsService, never()).sendChangedVisitBookedEvent(any())
   }
 
-  private fun createExternalVisit(type: VisitType): Visit {
+  private fun createExternalVisit(type: VisitType, prisonerId: String = "testPrisonerId"): Visit {
     val visit = visitEntityHelper.create(
+      prisonerId = prisonerId,
       prisonCode = "MKI",
       visitRoom = "A1",
       slotDate = LocalDate.now(),
@@ -204,20 +427,24 @@ class UpdateVisitFromExternalSystemTest : IntegrationTestBase() {
     return visitEntityHelper.save(visit)
   }
 
-  private fun assertAuditEvent(visitDto: VisitDto, visitEntity: Visit) {
+  private fun assertAuditEvent(visitDto: VisitDto, visitEntity: Visit, request: UpdateVisitFromExternalSystemDto = updateVisitFromExternalSystemDto) {
     val eventAudit = this.eventAuditRepository.findLastEventByBookingReference(visitDto.reference)
+    val userType = request.userType ?: UserType.PRISONER
+    val actionedBy = if (userType == UserType.PRISONER) visitDto.prisonerId else request.actionedBy
     assertThat(eventAudit.type).isEqualTo(EventAuditType.UPDATED_VISIT)
     assertThat(eventAudit.actionedBy).isNotNull()
-    assertThat(eventAudit.actionedBy.userType).isEqualTo(UserType.PRISONER)
-    assertThat(eventAudit.actionedBy.userName).isEqualTo(visitDto.prisonerId)
-    assertThat(eventAudit.actionedBy.bookerReference).isNull()
-    assertThat(eventAudit.applicationMethodType).isEqualTo(ApplicationMethodType.BY_PRISONER)
+    assertThat(eventAudit.actionedBy.userType).isEqualTo(userType)
+    val expectedUsername = actionedBy.takeIf { userType == UserType.STAFF || userType == UserType.PRISONER }
+    assertThat(eventAudit.actionedBy.userName).isEqualTo(expectedUsername)
+    assertThat(eventAudit.actionedBy.bookerReference).isEqualTo(actionedBy.takeIf { userType == UserType.PUBLIC })
+    assertThat(eventAudit.applicationMethodType).isEqualTo(request.applicationMethodType ?: ApplicationMethodType.BY_PRISONER)
     assertThat(eventAudit.bookingReference).isEqualTo(visitEntity.reference)
     assertThat(eventAudit.sessionTemplateReference).isNull()
   }
 
   private fun assertUpdatedEvent(visit: Visit, updatedVisitDto: VisitDto) {
     val datetimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
+    val eventAudit = eventAuditRepository.findLastEventByBookingReference(updatedVisitDto.reference)
 
     verify(telemetryClient).trackEvent(
       eq("visit-booked"),
@@ -238,9 +465,9 @@ class UpdateVisitFromExternalSystemTest : IntegrationTestBase() {
         assertThat(it["totalVisitors"]).isEqualTo(updatedVisitDto.visitors.size.toString())
         val visitors = updatedVisitDto.visitors.map { visitor -> TelemetryClientService.VisitorDetails(visitor.nomisPersonId.toString(), null) }
         assertThat(it["visitors"]).isEqualTo(objectMapper.writeValueAsString(visitors))
-        assertThat(it["actionedBy"]).isEqualTo(updatedVisitDto.prisonerId)
-        assertThat(it["source"]).isEqualTo(UserType.PRISONER.toString())
-        assertThat(it["applicationMethodType"]).isEqualTo(ApplicationMethodType.BY_PRISONER.toString())
+        assertThat(it["actionedBy"]).isEqualTo(eventAudit.actionedBy.userName ?: eventAudit.actionedBy.bookerReference)
+        assertThat(it["source"]).isEqualTo(eventAudit.actionedBy.userType.name)
+        assertThat(it["applicationMethodType"]).isEqualTo(eventAudit.applicationMethodType.name)
         assertThat(it["isUpdated"]).isEqualTo("true")
         assertThat(it["supportRequired"]).isEqualTo(updateVisitFromExternalSystemDto.visitorSupport?.description)
         assertThat(it["hasSessionChanged"]).isEqualTo("true")

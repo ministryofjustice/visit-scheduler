@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitNoteDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
@@ -53,6 +54,9 @@ internal class VisitStoreServiceTest {
   @DisplayName("createVisitFromExternalSystem")
   inner class CreateVisitFromExternalSystem {
     private val createVisitFromExternalSystemDto = CreateVisitFromExternalSystemDto(
+      actionedBy = "external-user",
+      applicationMethodType = ApplicationMethodType.PHONE,
+      userType = UserType.STAFF,
       prisonerId = "AF34567G",
       prisonId = "MKI",
       clientName = "client_name",
@@ -150,6 +154,9 @@ internal class VisitStoreServiceTest {
   @DisplayName("updateVisitFromExternalSystem")
   inner class UpdateVisitFromExternalSystem {
     private val updateVisitFromExternalSystemDto = UpdateVisitFromExternalSystemDto(
+      actionedBy = "external-user",
+      applicationMethodType = ApplicationMethodType.EMAIL,
+      userType = UserType.STAFF,
       visitRoom = "A1",
       visitType = VisitType.SOCIAL,
       visitRestriction = VisitRestriction.OPEN,
