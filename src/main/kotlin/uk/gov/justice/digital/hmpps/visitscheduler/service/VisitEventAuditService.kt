@@ -29,7 +29,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.ActionedBy
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
-import java.lang.reflect.InvocationTargetException
 import java.time.LocalDateTime
 
 @Service
@@ -131,9 +130,9 @@ class VisitEventAuditService(
     ),
   )
 
-  fun getLastEventForBooking(bookingReference: String): EventAuditDto? = eventAuditTransactionalService.getLastEventForBooking(bookingReference)?.let { EventAuditDto(it) }
+  fun getLastEventForBooking(bookingReference: String): EventAuditDto? = eventAuditTransactionalService.getLastEventForBooking(bookingReference)
 
-  fun getLastEventForBookingOrMigration(bookingReference: String): EventAuditDto? = eventAuditTransactionalService.getLastEventForBookingOrMigration(bookingReference)?.let { EventAuditDto(it) }
+  fun getLastEventForBookingOrMigration(bookingReference: String): EventAuditDto? = eventAuditTransactionalService.getLastEventForBookingOrMigration(bookingReference)
 
   fun getBookedOrMigratedUser(bookingReference: String): ActionedBy? = eventAuditTransactionalService.getBookedOrMigratedUser(bookingReference)
 
@@ -147,27 +146,21 @@ class VisitEventAuditService(
       // This should not happen as application reference should always be set here
       throw IllegalArgumentException("Visit application reference is not set")
     }
-    try {
-      eventAuditTransactionalService.updateVisitApplication(
-        applicationReference = bookedVisitDto.applicationReference,
-        bookingReference = bookedVisitDto.reference,
-        applicationMethodType = bookingRequestDto.applicationMethodType,
-      )
-    } catch (_: InvocationTargetException) {
-      LOG.error("Audit log does not exist for ${bookedVisitDto.applicationReference}")
-    }
 
-    return saveBookingEventAudit(
-      bookingRequestDto.actionedBy,
-      bookedVisitDto,
-      eventType,
-      bookingRequestDto.applicationMethodType,
+    val eventAudit = eventAuditTransactionalService.updateVisitApplicationAndSaveEvent(
+      applicationReference = bookedVisitDto.applicationReference,
+      actionedByValue = bookingRequestDto.actionedBy,
+      bookedVisitDto = bookedVisitDto,
+      eventAuditType = eventType,
+      applicationMethodType = bookingRequestDto.applicationMethodType,
       userType = bookingRequestDto.userType,
       text = text,
     )
+
+    return EventAuditDto(eventAudit)
   }
 
-  fun findByBookingReferenceOrderById(bookingReference: String): List<EventAuditDto> = eventAuditTransactionalService.findByBookingReferenceOrderById(bookingReference).map { EventAuditDto(it) }
+  fun findByBookingReferenceOrderById(bookingReference: String): List<EventAuditDto> = eventAuditTransactionalService.findByBookingReferenceOrderById(bookingReference)
 
   private fun saveCancelledEventAudit(actionedByValue: String, userType: UserType, applicationMethodType: ApplicationMethodType, visit: VisitDto): EventAuditDto {
     val eventAuditType = if (visit.visitSubStatus == VisitSubStatus.WITHDRAWN) {

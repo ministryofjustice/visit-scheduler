@@ -2,6 +2,8 @@ package uk.gov.justice.digital.hmpps.visitscheduler.service
 
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
@@ -13,6 +15,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.ActionedBy
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.ActionedByRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.EventAuditRepository
+import java.lang.reflect.InvocationTargetException
 import java.time.LocalDateTime
 
 @Service
@@ -56,22 +59,16 @@ class VisitEventAuditTransactionalService(
   }
 
   @Transactional(readOnly = true)
-  fun getLastEventForBooking(bookingReference: String): EventAudit? = eventAuditRepository.findLastBookedVisitEventByBookingReference(bookingReference)
+  fun getLastEventForBooking(bookingReference: String): EventAuditDto? = eventAuditRepository.findLastBookedVisitEventByBookingReference(bookingReference)?.let { EventAuditDto(it) }
 
   @Transactional(readOnly = true)
-  fun getLastEventForBookingOrMigration(bookingReference: String): EventAudit? = eventAuditRepository.findLastBookedOrMigratedVisitEventByBookingReference(bookingReference)
+  fun getLastEventForBookingOrMigration(bookingReference: String): EventAuditDto? = eventAuditRepository.findLastBookedOrMigratedVisitEventByBookingReference(bookingReference)?.let { EventAuditDto(it) }
 
   @Transactional(readOnly = true)
   fun getBookedOrMigratedUser(bookingReference: String): ActionedBy? = eventAuditRepository.getLastBookedOrMigratedUser(bookingReference)
 
   @Transactional(readOnly = true)
-  fun findByBookingReferenceOrderById(bookingReference: String): List<EventAudit> = eventAuditRepository.findByBookingReferenceOrderById(bookingReference)
-
-  fun updateVisitApplication(
-    applicationReference: String,
-    bookingReference: String,
-    applicationMethodType: ApplicationMethodType,
-  ) = eventAuditRepository.updateVisitApplication(applicationReference, bookingReference, applicationMethodType)
+  fun findByBookingReferenceOrderById(bookingReference: String): List<EventAuditDto> = eventAuditRepository.findByBookingReferenceOrderById(bookingReference).map { eventAudit -> EventAuditDto(eventAudit) }.toList()
 
   fun createOrGetActionBy(actionedByValue: String? = null, userType: UserType): ActionedBy {
     var bookerReference: String? = null
@@ -108,4 +105,41 @@ class VisitEventAuditTransactionalService(
   fun saveAllAuditEvents(eventAudits: List<EventAudit>) {
     eventAuditRepository.saveAll(eventAudits)
   }
+
+  fun updateVisitApplicationAndSaveEvent(
+    applicationReference: String,
+    actionedByValue: String,
+    bookedVisitDto: VisitDto,
+    eventAuditType: EventAuditType,
+    applicationMethodType: ApplicationMethodType,
+    userType: UserType,
+    text: String? = null,
+  ): EventAudit {
+    try {
+      updateVisitApplication(
+        applicationReference = applicationReference,
+        bookingReference = bookedVisitDto.reference,
+        applicationMethodType = applicationMethodType,
+      )
+    } catch (e: InvocationTargetException) {
+      throw e
+    }
+
+    return saveEventAudit(
+      actionedByValue = actionedByValue,
+      userType = userType,
+      bookingReference = bookedVisitDto.reference,
+      applicationReference = bookedVisitDto.applicationReference,
+      sessionTemplateReference = bookedVisitDto.sessionTemplateReference,
+      eventAuditType = eventAuditType,
+      applicationMethodType = applicationMethodType,
+      text = text,
+    )
+  }
+
+  private fun updateVisitApplication(
+    applicationReference: String,
+    bookingReference: String,
+    applicationMethodType: ApplicationMethodType,
+  ) = eventAuditRepository.updateVisitApplication(applicationReference, bookingReference, applicationMethodType)
 }
