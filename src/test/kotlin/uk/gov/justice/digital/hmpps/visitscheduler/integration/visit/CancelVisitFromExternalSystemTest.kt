@@ -7,15 +7,12 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.kotlin.any
-import org.mockito.kotlin.doAnswer
-import org.mockito.kotlin.doThrow
 import org.mockito.kotlin.never
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
-import org.springframework.transaction.support.TransactionSynchronizationManager
 import tools.jackson.databind.node.ObjectNode
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.CANCEL_VISIT_FROM_EXTERNAL_SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitFromExternalSystemDto
@@ -30,7 +27,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.service.PublishEventException
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryClientService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitNotificationTransactionalService
@@ -85,6 +81,39 @@ class CancelVisitFromExternalSystemTest : IntegrationTestBase() {
     assertThat(eventAuditRepository.findAllByBookingReference(visit.reference)).hasSize(1)
     verify(snsService, times(1)).sendVisitCancelledEvent(any())
     verify(telemetryClientService, times(1)).trackCancelBookingEvent(any(), any(), any())
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = UserType::class, names = ["STAFF", "PRISONER"])
+  fun `Cancel an external visit returns 400 when actionedBy exceeds 60 characters`(userType: UserType) {
+    val visit = createVisit()
+    cancel(visit.reference, request.copy(userType = userType, actionedBy = "s".repeat(61)))
+      .expectStatus().isBadRequest
+    assertVisitNotCancelled(visit)
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = UserType::class, names = ["STAFF", "PRISONER"])
+  fun `Cancel an external visit accepts actionedBy with 60 characters`(userType: UserType) {
+    val visit = createVisit()
+    val cancellation = request.copy(userType = userType, actionedBy = "s".repeat(60))
+
+    cancel(visit.reference, cancellation).expectStatus().isOk
+
+    assertThat(testVisitRepository.findByReference(visit.reference).visitStatus).isEqualTo(VisitStatus.CANCELLED)
+    assertThat(eventAuditRepository.findAllByBookingReference(visit.reference)).hasSize(1)
+    verify(snsService).sendVisitCancelledEvent(any())
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = UserType::class, names = ["PUBLIC", "SYSTEM"])
+  fun `Cancel an external visit accepts actionedBy exceeding 60 characters for public or system users`(userType: UserType) {
+    val visit = createVisit()
+    cancel(visit.reference, request.copy(userType = userType, actionedBy = "s".repeat(61))).expectStatus().isOk
+
+    assertThat(testVisitRepository.findByReference(visit.reference).visitStatus).isEqualTo(VisitStatus.CANCELLED)
+    assertThat(eventAuditRepository.findAllByBookingReference(visit.reference)).hasSize(1)
+    verify(snsService).sendVisitCancelledEvent(any())
   }
 
   @ParameterizedTest

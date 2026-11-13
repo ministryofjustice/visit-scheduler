@@ -13,6 +13,7 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.verifyNoMoreInteractions
 import org.mockito.kotlin.whenever
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
@@ -89,6 +90,18 @@ class VisitServiceTest {
     whenever(request.prisonerId).thenReturn("p".repeat(61))
 
     val exception = assertThrows<ValidationException> { visitService.createVisitFromExternalSystem(request) }
+    assertThat(exception.message).isEqualTo("Audit username must not exceed 60 characters")
+    verifyNoServiceOrRepositoryCalls()
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = UserType::class, names = ["STAFF", "PRISONER"])
+  fun `when actionedBy exceeds 60 characters then the visit is not cancelled`(userType: UserType) {
+    val request = mock<CancelVisitFromExternalSystemDto>()
+    whenever(request.userType).thenReturn(userType)
+    whenever(request.actionedBy).thenReturn("s".repeat(61))
+
+    val exception = assertThrows<ValidationException> { visitService.cancelVisitFromExternalSystem("visit-reference", request) }
     assertThat(exception.message).isEqualTo("Audit username must not exceed 60 characters")
     verifyNoServiceOrRepositoryCalls()
   }

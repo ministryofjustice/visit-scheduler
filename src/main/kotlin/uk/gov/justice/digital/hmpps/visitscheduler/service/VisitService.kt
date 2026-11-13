@@ -131,6 +131,7 @@ class VisitService(
   }
 
   fun cancelVisitFromExternalSystem(reference: String, request: CancelVisitFromExternalSystemDto): VisitDto {
+    validateAuditUsernameLength(request.actionedBy, request.userType)
     val cancelVisitDto = CancelVisitDto(
       cancelOutcome = request.cancelOutcome,
       actionedBy = request.actionedBy,
@@ -465,10 +466,14 @@ class VisitService(
 
   private fun resolveExternalVisitActionedBy(actionedBy: String?, userType: UserType, prisonerId: String): String {
     val effectiveActionedBy = if (userType == UserType.PRISONER) prisonerId else actionedBy ?: prisonerId
-    if ((userType == UserType.STAFF || userType == UserType.PRISONER) && effectiveActionedBy.length > 60) {
+    validateAuditUsernameLength(effectiveActionedBy, userType)
+    return effectiveActionedBy
+  }
+
+  private fun validateAuditUsernameLength(actionedBy: String, userType: UserType) {
+    if ((userType == UserType.STAFF || userType == UserType.PRISONER) && actionedBy.length > 60) {
       throw ValidationException("Audit username must not exceed 60 characters")
     }
-    return effectiveActionedBy
   }
 
   @Transactional(readOnly = true)
