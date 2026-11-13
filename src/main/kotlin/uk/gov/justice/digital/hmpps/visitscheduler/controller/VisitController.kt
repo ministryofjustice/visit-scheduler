@@ -605,7 +605,7 @@ class VisitController(
   @ResponseStatus(HttpStatus.OK)
   @Operation(
     summary = "Update visit which already exists in an external system",
-    description = "Supports SOCIAL and SOCIAL_VIDEO visits. clientName must exactly match the stored external client name; visits without external-system details cannot be updated here. The existing visit type cannot be changed. The visit is assumed to have been validated at this point, this endpoint does not check that this visit is valid.",
+    description = "Supports SOCIAL and SOCIAL_VIDEO visits. Omitted, null or blank clientName skips the ownership check. A nonblank clientName must exactly match the stored external client name; visits without external-system details are rejected when a nonblank clientName is supplied. The existing visit type cannot be changed. The visit is assumed to have been validated at this point, this endpoint does not check that this visit is valid.",
     requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
       content = [
         Content(
@@ -655,7 +655,7 @@ class VisitController(
   @ResponseStatus(HttpStatus.OK)
   @Operation(
     summary = "Cancel a visit owned by an external system",
-    description = "clientName must exactly match the stored external client name, including for an already cancelled visit. Visits without external-system details cannot be cancelled here. Existing cancellation rules apply.",
+    description = "Omitted, null or blank clientName skips the ownership check. A nonblank clientName must exactly match the stored external client name, including for an already cancelled visit. Visits without external-system details are rejected when a nonblank clientName is supplied. Existing cancellation rules apply.",
     responses = [
       ApiResponse(responseCode = "200", description = "Visit cancelled or already cancelled"),
       ApiResponse(responseCode = "400", description = "Invalid cancellation request", content = [Content(schema = Schema(implementation = ErrorResponse::class))]),

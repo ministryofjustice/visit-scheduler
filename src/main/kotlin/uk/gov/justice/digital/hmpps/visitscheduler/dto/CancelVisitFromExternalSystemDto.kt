@@ -8,9 +8,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 
 data class CancelVisitFromExternalSystemDto(
-  @param:Schema(description = "Client name. Must exactly match the client that created the visit.", required = true)
-  @field:NotBlank
-  val clientName: String,
+  @param:Schema(description = "Optional client name. Omitted, null or blank values skip the ownership check. A nonblank value must exactly match the stored external client name, including for an already cancelled visit.", required = false, nullable = true)
+  val clientName: String? = null,
 
   @param:Schema(description = "Outcome - status and text", required = true)
   @field:Valid

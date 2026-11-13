@@ -138,6 +138,28 @@ class CreateVisitFromExternalSystemTest : IntegrationTestBase() {
     assertBookedEvent(visitDto)
   }
 
+  @ParameterizedTest
+  @ValueSource(strings = ["missing", "null", "", " ", "\t"])
+  fun `Create an external visit still rejects missing null or blank clientName`(clientName: String) {
+    val request = objectMapper.valueToTree(createVisitFromExternalSystemDto) as ObjectNode
+    when (clientName) {
+      "missing" -> request.remove("clientName")
+      "null" -> request.putNull("clientName")
+      else -> request.put("clientName", clientName)
+    }
+
+    callPostByJsonString(
+      objectMapper.writeValueAsString(request),
+      webTestClient,
+      POST_VISIT_FROM_EXTERNAL_SYSTEM,
+      roleVisitSchedulerHttpHeaders,
+    ).expectStatus().isBadRequest
+
+    assertThat(testVisitRepository.findAll()).isEmpty()
+    assertThat(eventAuditRepository.findAll()).isEmpty()
+    verify(snsService, never()).sendVisitBookedEvent(any())
+  }
+
   @Test
   fun `External video visit is stored audited and published with its visit type`() {
     val request = createVisitFromExternalSystemDto.copy(visitType = VisitType.SOCIAL_VIDEO)
