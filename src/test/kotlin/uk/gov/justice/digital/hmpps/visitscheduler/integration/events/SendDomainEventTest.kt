@@ -9,6 +9,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.isNull
@@ -22,6 +24,7 @@ import software.amazon.awssdk.services.sqs.model.QueueAttributeName
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.SnsDomainEventPublishDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.ACCEPTED
@@ -31,17 +34,22 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCancelVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.service.HMPPSDomainEvent
+import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService
+import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService.Companion.EVENT_PRISON_CHANGED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService.Companion.EVENT_PRISON_VISIT_BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService.Companion.EVENT_PRISON_VISIT_BOOKED_DESC
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService.Companion.EVENT_PRISON_VISIT_CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService.Companion.EVENT_PRISON_VISIT_CANCELLED_DESC
+import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService.Companion.EVENT_PRISON_VISIT_REQUEST_APPROVED
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService.Companion.EVENT_PRISON_VISIT_VERSION
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService.Companion.EVENT_ZONE_ID
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
+import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
@@ -49,6 +57,9 @@ class SendDomainEventTest : IntegrationTestBase() {
 
   @Autowired
   protected lateinit var hmppsQueueService: HmppsQueueService
+
+  @Autowired
+  private lateinit var snsService: SnsService
 
   @MockitoSpyBean
   private lateinit var telemetryClient: TelemetryClient
@@ -64,6 +75,53 @@ class SendDomainEventTest : IntegrationTestBase() {
     @BeforeEach
     fun `clear queues`() {
       testSqsClient.purgeQueue(PurgeQueueRequest.builder().queueUrl(testQueueUrl).build())
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+      "SOCIAL, prison-visit.booked",
+      "SOCIAL_VIDEO, prison-visit.booked",
+      "SOCIAL, prison-visit.changed",
+      "SOCIAL_VIDEO, prison-visit.changed",
+      "SOCIAL, prison-visit.cancelled",
+      "SOCIAL_VIDEO, prison-visit.cancelled",
+      "SOCIAL, prison-visit-request.approved",
+      "SOCIAL_VIDEO, prison-visit-request.approved",
+    )
+    fun `existing events include the visit type in additional information`(visitType: VisitType, eventType: String) {
+      val timestamp = LocalDateTime.of(2026, 10, 26, 10, 0)
+      val visit = SnsDomainEventPublishDto(
+        reference = "aa-bb-cc-dd",
+        createdTimestamp = timestamp,
+        modifiedTimestamp = timestamp,
+        prisonerId = "A1234BC",
+        eventAuditId = 12345,
+        visitType = visitType,
+      )
+
+      when (eventType) {
+        EVENT_PRISON_VISIT_BOOKED -> snsService.sendVisitBookedEvent(visit)
+        EVENT_PRISON_CHANGED_VISIT -> snsService.sendChangedVisitBookedEvent(visit)
+        EVENT_PRISON_VISIT_CANCELLED -> snsService.sendVisitCancelledEvent(visit)
+        EVENT_PRISON_VISIT_REQUEST_APPROVED -> snsService.sendVisitRequestApprovedEvent(visit)
+        else -> error("Unexpected event type: $eventType")
+      }
+
+      await untilCallTo { testQueueEventMessageCount() } matches { it == 1 }
+      val requestJson = testSqsClient.receiveMessage(ReceiveMessageRequest.builder().queueUrl(testQueueUrl).build()).join().messages().single().body()
+      val (message, attributes) = objectMapper.readValue(requestJson, HMPPSMessage::class.java)
+      val event = objectMapper.readValue(message, HMPPSDomainEvent::class.java)
+      val json = objectMapper.readTree(message)
+
+      assertThat(attributes.eventType.Value).isEqualTo(eventType)
+      assertThat(event.eventType).isEqualTo(eventType)
+      assertThat(event.version).isEqualTo(EVENT_PRISON_VISIT_VERSION)
+      assertThat(event.prisonerId).isEqualTo(visit.prisonerId)
+      assertThat(event.additionalInformation.reference).isEqualTo(visit.reference)
+      assertThat(event.additionalInformation.eventAuditId).isEqualTo(visit.eventAuditId)
+      assertThat(event.additionalInformation.visitType).isEqualTo(visitType)
+      assertThat(json["additionalInformation"]["visitType"].asString()).isEqualTo(visitType.name)
+      assertThat(json.get("visitType")).isNull()
     }
 
     @Test
@@ -99,6 +157,7 @@ class SendDomainEventTest : IntegrationTestBase() {
       assertThat(prisonerId).isEqualTo(visit?.prisonerId)
       assertThat(additionalInformation.reference).isEqualTo(visit.reference)
       assertThat(additionalInformation.eventAuditId).isNotNull()
+      assertThat(additionalInformation.visitType).isEqualTo(VisitType.SOCIAL)
 
       // And
       verify(telemetryClient).trackEvent(
@@ -164,6 +223,7 @@ class SendDomainEventTest : IntegrationTestBase() {
       assertThat(prisonerId).isEqualTo(visit.prisonerId)
       assertThat(additionalInformation.reference).isEqualTo(visit.reference)
       assertThat(additionalInformation.eventAuditId).isNotNull()
+      assertThat(additionalInformation.visitType).isEqualTo(VisitType.SOCIAL)
 
       // And
       verify(telemetryClient).trackEvent(

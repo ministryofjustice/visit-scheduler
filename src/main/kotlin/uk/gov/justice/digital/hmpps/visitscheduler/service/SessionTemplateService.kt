@@ -12,7 +12,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTempl
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTemplateRangeType.HISTORIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ExcludeDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
@@ -192,7 +192,7 @@ class SessionTemplateService(
 
     val sessionTemplateEntitySave = sessionTemplateRepository.saveAndFlush(sessionTemplateEntity)
 
-    val clients = createSessionTemplateDto.clients.map { SessionTemplateUserClient(sessionTemplateId = sessionTemplateEntitySave.id, sessionTemplate = sessionTemplateEntitySave, userType = it.userType, active = it.active) }
+    val clients = createSessionTemplateDto.clients.map { SessionTemplateUserClient(sessionTemplateId = sessionTemplateEntitySave.id, sessionTemplate = sessionTemplateEntitySave, clientType = it.clientType, active = it.active) }
     sessionTemplateEntitySave.clients.addAll(clients)
 
     return SessionTemplateDto(
@@ -290,7 +290,7 @@ class SessionTemplateService(
           SessionTemplateUserClient(
             sessionTemplate = updatedSessionTemplateEntity,
             sessionTemplateId = updatedSessionTemplateEntity.id,
-            userType = userClient.userType,
+            clientType = userClient.clientType,
             active = userClient.active,
           ),
         )
@@ -654,31 +654,31 @@ class SessionTemplateService(
   }
 
   @Transactional
-  fun activateSessionTemplateClient(sessionTemplateReference: String, type: UserType): UserClientDto = createOrUpdateSessionTemplateClient(sessionTemplateReference, type, true)
+  fun activateSessionTemplateClient(sessionTemplateReference: String, type: PrisonClientType): UserClientDto = createOrUpdateSessionTemplateClient(sessionTemplateReference, type, true)
 
   @Transactional
-  fun deActivateSessionTemplateClient(sessionTemplateReference: String, type: UserType): UserClientDto = createOrUpdateSessionTemplateClient(sessionTemplateReference, type, false)
+  fun deActivateSessionTemplateClient(sessionTemplateReference: String, type: PrisonClientType): UserClientDto = createOrUpdateSessionTemplateClient(sessionTemplateReference, type, false)
 
   private fun createOrUpdateSessionTemplateClient(
     sessionTemplateReference: String,
-    userType: UserType,
+    clientType: PrisonClientType,
     active: Boolean,
   ): UserClientDto {
     val sessionTemplateUserClient: SessionTemplateUserClient
-    if (sessionTemplateUserClientRepository.doesSessionTemplateClientExist(sessionTemplateReference, userType)) {
-      sessionTemplateUserClient = sessionTemplateUserClientRepository.getSessionTemplateClient(sessionTemplateReference, userType)
+    if (sessionTemplateUserClientRepository.doesSessionTemplateClientExist(sessionTemplateReference, clientType)) {
+      sessionTemplateUserClient = sessionTemplateUserClientRepository.getSessionTemplateClient(sessionTemplateReference, clientType)
       sessionTemplateUserClient.active = active
     } else {
       val sessionTemplate = getSessionTemplate(sessionTemplateReference)
       sessionTemplateUserClient = SessionTemplateUserClient(
         sessionTemplate = sessionTemplate,
         sessionTemplateId = sessionTemplate.id,
-        userType = userType,
+        clientType = clientType,
         active = active,
       )
       sessionTemplate.clients.add(sessionTemplateUserClient)
     }
-    return UserClientDto(sessionTemplateUserClient.userType, sessionTemplateUserClient.active)
+    return UserClientDto(sessionTemplateUserClient.clientType, sessionTemplateUserClient.active)
   }
 }
 

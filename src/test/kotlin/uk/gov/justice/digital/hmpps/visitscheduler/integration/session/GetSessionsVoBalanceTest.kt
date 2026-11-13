@@ -13,9 +13,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.client.VisitAllocationApiClient
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_SESSION_CONTROLLER_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visit.allocation.VisitOrderPrisonerBalanceDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -60,7 +60,7 @@ class GetSessionsVoBalanceTest : IntegrationTestBase() {
     val prisonerBalance = null
     visitAllocationApiMockServer.stubGetPrisonerVOBalance(prisonerId = remandPrisonerId, prisonerBalance)
     // When
-    val responseSpec = callGetSessions(prisonCode, remandPrisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, remandPrisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -79,7 +79,7 @@ class GetSessionsVoBalanceTest : IntegrationTestBase() {
     val prisonerBalance = VisitOrderPrisonerBalanceDto(prisonerId = convictedPrisonerId, voBalance = -1, pvoBalance = 3)
     visitAllocationApiMockServer.stubGetPrisonerVOBalance(prisonerId = convictedPrisonerId, prisonerBalance)
     // When
-    val responseSpec = callGetSessions(prisonCode, convictedPrisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, convictedPrisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -99,7 +99,7 @@ class GetSessionsVoBalanceTest : IntegrationTestBase() {
     val prisonerBalance = VisitOrderPrisonerBalanceDto(prisonerId = convictedPrisonerId, voBalance = 0, pvoBalance = 3)
     visitAllocationApiMockServer.stubGetPrisonerVOBalance(prisonerId = convictedPrisonerId, prisonerBalance)
     // When
-    val responseSpec = callGetSessions(prisonCode, convictedPrisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, convictedPrisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -119,7 +119,7 @@ class GetSessionsVoBalanceTest : IntegrationTestBase() {
     val prisonerBalance = VisitOrderPrisonerBalanceDto(prisonerId = convictedPrisonerId, voBalance = 1, pvoBalance = 0)
     visitAllocationApiMockServer.stubGetPrisonerVOBalance(prisonerId = convictedPrisonerId, prisonerBalance)
     // When
-    val responseSpec = callGetSessions(prisonCode, convictedPrisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, convictedPrisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -138,7 +138,7 @@ class GetSessionsVoBalanceTest : IntegrationTestBase() {
     val prisonerBalance = VisitOrderPrisonerBalanceDto(prisonerId = convictedPrisonerId, voBalance = 1, pvoBalance = -3)
     visitAllocationApiMockServer.stubGetPrisonerVOBalance(prisonerId = convictedPrisonerId, prisonerBalance)
     // When
-    val responseSpec = callGetSessions(prisonCode, convictedPrisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, convictedPrisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -158,7 +158,7 @@ class GetSessionsVoBalanceTest : IntegrationTestBase() {
     val prisonerBalance = VisitOrderPrisonerBalanceDto(prisonerId = convictedPrisonerId, voBalance = 4, pvoBalance = 0)
     visitAllocationApiMockServer.stubGetPrisonerVOBalance(prisonerId = convictedPrisonerId, prisonerBalance)
     // When
-    val responseSpec = callGetSessions(prisonCode, convictedPrisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, convictedPrisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -178,7 +178,7 @@ class GetSessionsVoBalanceTest : IntegrationTestBase() {
     val prisonerBalance = VisitOrderPrisonerBalanceDto(prisonerId = convictedPrisonerId, voBalance = 0, pvoBalance = 3)
     visitAllocationApiMockServer.stubGetPrisonerVOBalance(prisonerId = convictedPrisonerId, prisonerBalance)
     // When
-    val responseSpec = callGetSessions(prisonCode, convictedPrisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, convictedPrisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -197,7 +197,7 @@ class GetSessionsVoBalanceTest : IntegrationTestBase() {
     val prisonerBalance = VisitOrderPrisonerBalanceDto(prisonerId = convictedPrisonerId, voBalance = 0, pvoBalance = 0)
     visitAllocationApiMockServer.stubGetPrisonerVOBalance(prisonerId = convictedPrisonerId, prisonerBalance)
     // When
-    val responseSpec = callGetSessions(prisonCode, convictedPrisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, convictedPrisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -217,7 +217,7 @@ class GetSessionsVoBalanceTest : IntegrationTestBase() {
     val prisonerBalance = VisitOrderPrisonerBalanceDto(prisonerId = convictedPrisonerId, voBalance = -1, pvoBalance = -1)
     visitAllocationApiMockServer.stubGetPrisonerVOBalance(prisonerId = convictedPrisonerId, prisonerBalance)
     // When
-    val responseSpec = callGetSessions(prisonCode, convictedPrisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, convictedPrisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -237,7 +237,7 @@ class GetSessionsVoBalanceTest : IntegrationTestBase() {
     val prisonerBalance = VisitOrderPrisonerBalanceDto(prisonerId = convictedPrisonerId, voBalance = 1, pvoBalance = 0)
     visitAllocationApiMockServer.stubGetPrisonerVOBalance(prisonerId = convictedPrisonerId, prisonerBalance)
     // When
-    val responseSpec = callGetSessions(prisonCode, convictedPrisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, convictedPrisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -256,7 +256,7 @@ class GetSessionsVoBalanceTest : IntegrationTestBase() {
     val prisonerBalance = VisitOrderPrisonerBalanceDto(prisonerId = convictedPrisonerId, voBalance = -2, pvoBalance = 1)
     visitAllocationApiMockServer.stubGetPrisonerVOBalance(prisonerId = convictedPrisonerId, prisonerBalance)
     // When
-    val responseSpec = callGetSessions(prisonCode, convictedPrisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, convictedPrisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -275,7 +275,7 @@ class GetSessionsVoBalanceTest : IntegrationTestBase() {
     val prisonerBalance = VisitOrderPrisonerBalanceDto(prisonerId = convictedPrisonerId, voBalance = -2, pvoBalance = -4)
     visitAllocationApiMockServer.stubGetPrisonerVOBalance(prisonerId = convictedPrisonerId, prisonerBalance)
     // When
-    val responseSpec = callGetSessions(prisonCode, convictedPrisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, convictedPrisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -294,7 +294,7 @@ class GetSessionsVoBalanceTest : IntegrationTestBase() {
     val prisonerBalance = VisitOrderPrisonerBalanceDto(prisonerId = convictedPrisonerId, voBalance = 0, pvoBalance = 0)
     visitAllocationApiMockServer.stubGetPrisonerVOBalance(prisonerId = convictedPrisonerId, prisonerBalance)
     // When
-    val responseSpec = callGetSessions(prisonCode, convictedPrisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, convictedPrisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -313,7 +313,7 @@ class GetSessionsVoBalanceTest : IntegrationTestBase() {
     visitAllocationApiMockServer.stubGetPrisonerVOBalance(prisonerId = convictedPrisonerId, null)
 
     // When
-    val responseSpec = callGetSessions(prisonCode, convictedPrisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, convictedPrisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -332,7 +332,7 @@ class GetSessionsVoBalanceTest : IntegrationTestBase() {
     visitAllocationApiMockServer.stubGetPrisonerVOBalance(prisonerId = convictedPrisonerId, null, HttpStatus.NOT_FOUND)
 
     // When
-    val responseSpec = callGetSessions(prisonCode, convictedPrisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, convictedPrisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -350,7 +350,7 @@ class GetSessionsVoBalanceTest : IntegrationTestBase() {
     visitAllocationApiMockServer.stubGetPrisonerVOBalance(prisonerId = convictedPrisonerId, null, HttpStatus.INTERNAL_SERVER_ERROR)
 
     // When
-    val responseSpec = callGetSessions(prisonCode, convictedPrisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, convictedPrisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     responseSpec.expectStatus().is5xxServerError

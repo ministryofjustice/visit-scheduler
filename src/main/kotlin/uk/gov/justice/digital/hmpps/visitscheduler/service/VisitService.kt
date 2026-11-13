@@ -47,15 +47,11 @@ class VisitService(
   private val eventAuditService: VisitEventAuditService,
   private val snsService: SnsService,
   private val updateVisitSummaryUtil: UpdateVisitSummaryUtil,
+  private val visitNotificationTransactionalService: VisitNotificationTransactionalService,
 ) {
-
   @Lazy
   @Autowired
   private lateinit var visitEventAuditService: VisitEventAuditService
-
-  @Lazy
-  @Autowired
-  private lateinit var visitNotificationEventService: VisitNotificationEventService
 
   @Autowired
   private lateinit var visitDtoBuilder: VisitDtoBuilder
@@ -76,9 +72,16 @@ class VisitService(
   }
 
   fun createVisitFromExternalSystem(createVisitFromExternalSystemDto: CreateVisitFromExternalSystemDto): VisitDto {
+    val userType = createVisitFromExternalSystemDto.userType ?: UserType.PRISONER
+    validateExternalVisitActionedBy(createVisitFromExternalSystemDto.actionedBy, userType)
+    val actionedBy = resolveExternalVisitActionedBy(
+      createVisitFromExternalSystemDto.actionedBy,
+      userType,
+      createVisitFromExternalSystemDto.prisonerId,
+    )
     val booking = visitStoreService.createVisitFromExternalSystem(createVisitFromExternalSystemDto)
 
-    return processCreateVisitFromExternalSystemEvents(booking, createVisitFromExternalSystemDto)
+    return processCreateVisitFromExternalSystemEvents(booking, createVisitFromExternalSystemDto, actionedBy, userType)
   }
 
   fun updateBookedVisit(applicationReference: String, bookingRequestDto: BookingRequestDto): VisitDto {
@@ -209,6 +212,7 @@ class VisitService(
       bookedVisitDto.modifiedTimestamp,
       bookedVisitDto.prisonerId,
       bookingEventAuditDto.id,
+      bookedVisitDto.visitType,
     )
     snsService.sendVisitBookedEvent(snsDomainEventPublishDto)
 
@@ -218,8 +222,16 @@ class VisitService(
   private fun processCreateVisitFromExternalSystemEvents(
     bookedVisitDto: VisitDto,
     createVisitFromExternalSystemDto: CreateVisitFromExternalSystemDto,
+    actionedBy: String,
+    userType: UserType,
   ): VisitDto {
-    val bookingEventAuditDto = visitEventAuditService.saveBookingEventAudit(createVisitFromExternalSystemDto.prisonerId, bookedVisitDto, EventAuditType.BOOKED_VISIT, ApplicationMethodType.BY_PRISONER, UserType.PRISONER)
+    val bookingEventAuditDto = visitEventAuditService.saveBookingEventAudit(
+      actionedByValue = actionedBy,
+      visit = bookedVisitDto,
+      type = EventAuditType.BOOKED_VISIT,
+      applicationMethodType = createVisitFromExternalSystemDto.applicationMethodType ?: ApplicationMethodType.BY_PRISONER,
+      userType = userType,
+    )
 
     telemetryClientService.trackBookingEvent(bookedVisitDto, bookingEventAuditDto, bookingRequestDto = null)
 
@@ -229,6 +241,7 @@ class VisitService(
       bookedVisitDto.modifiedTimestamp,
       bookedVisitDto.prisonerId,
       bookingEventAuditDto.id,
+      bookedVisitDto.visitType,
     )
     snsService.sendVisitBookedEvent(snsDomainEventPublishDto)
 
@@ -238,8 +251,17 @@ class VisitService(
   private fun processUpdateVisitFromExternalSystemEvents(
     existingVisitDto: VisitDto,
     updatedVisitDto: VisitDto,
+    updateVisitFromExternalSystemDto: UpdateVisitFromExternalSystemDto,
+    actionedBy: String,
+    userType: UserType,
   ): VisitDto {
-    val bookingEventAuditDto = visitEventAuditService.saveBookingEventAudit(updatedVisitDto.prisonerId, updatedVisitDto, EventAuditType.UPDATED_VISIT, ApplicationMethodType.BY_PRISONER, UserType.PRISONER)
+    val bookingEventAuditDto = visitEventAuditService.saveBookingEventAudit(
+      actionedByValue = actionedBy,
+      visit = updatedVisitDto,
+      type = EventAuditType.UPDATED_VISIT,
+      applicationMethodType = updateVisitFromExternalSystemDto.applicationMethodType ?: ApplicationMethodType.BY_PRISONER,
+      userType = userType,
+    )
 
     telemetryClientService.trackUpdateBookingEvent(existingVisitDto, updatedVisitDto, bookingEventAuditDto)
 
@@ -249,6 +271,7 @@ class VisitService(
       updatedVisitDto.modifiedTimestamp,
       updatedVisitDto.prisonerId,
       bookingEventAuditDto.id,
+      updatedVisitDto.visitType,
     )
     snsService.sendChangedVisitBookedEvent(snsDomainEventPublishDto)
 
@@ -273,6 +296,7 @@ class VisitService(
       visitAfterUpdate.modifiedTimestamp,
       visitAfterUpdate.prisonerId,
       updatedEventAuditDto.id,
+      visitAfterUpdate.visitType,
     )
     snsService.sendChangedVisitBookedEvent(snsDomainEventPublishDto)
   }
@@ -291,6 +315,7 @@ class VisitService(
       visitDto.modifiedTimestamp,
       visitDto.prisonerId,
       cancelledEventAuditDto.id,
+      visitDto.visitType,
     )
     snsService.sendVisitCancelledEvent(snsDomainEventPublishDto)
 
@@ -300,7 +325,7 @@ class VisitService(
     } else {
       UnFlagEventReason.VISIT_CANCELLED
     }
-    visitNotificationEventService.deleteVisitAndPairedNotificationEvents(visitDto.reference, reason = unFlagEventReason)
+    visitNotificationTransactionalService.deleteVisitAndPairedNotificationEvents(visitDto.reference, reason = unFlagEventReason)
 
     return visitDto
   }
@@ -400,13 +425,37 @@ class VisitService(
     bookingReference: String,
     updateVisitFromExternalSystemDto: UpdateVisitFromExternalSystemDto,
   ): VisitDto {
+    val userType = updateVisitFromExternalSystemDto.userType ?: UserType.PRISONER
+    validateExternalVisitActionedBy(updateVisitFromExternalSystemDto.actionedBy, userType)
     val existingVisit =
       visitRepository.findBookedVisit(bookingReference) ?: throw VisitNotFoundException("Visit $bookingReference not found")
+    val actionedBy = resolveExternalVisitActionedBy(
+      updateVisitFromExternalSystemDto.actionedBy,
+      userType,
+      existingVisit.prisonerId,
+    )
+    if (existingVisit.visitType != updateVisitFromExternalSystemDto.visitType) {
+      throw ValidationException("Visit type cannot be changed")
+    }
     val existingVisitDto = visitDtoBuilder.build(existingVisit)
 
     val updatedVisitDto = visitStoreService.updateVisitFromExternalSystem(updateVisitFromExternalSystemDto, existingVisit)
 
-    return processUpdateVisitFromExternalSystemEvents(existingVisitDto, updatedVisitDto)
+    return processUpdateVisitFromExternalSystemEvents(existingVisitDto, updatedVisitDto, updateVisitFromExternalSystemDto, actionedBy, userType)
+  }
+
+  private fun validateExternalVisitActionedBy(actionedBy: String?, userType: UserType) {
+    if ((userType == UserType.STAFF || userType == UserType.PUBLIC) && actionedBy.isNullOrBlank()) {
+      throw ValidationException("actionedBy must be provided for STAFF or PUBLIC users")
+    }
+  }
+
+  private fun resolveExternalVisitActionedBy(actionedBy: String?, userType: UserType, prisonerId: String): String {
+    val effectiveActionedBy = if (userType == UserType.PRISONER) prisonerId else actionedBy ?: prisonerId
+    if ((userType == UserType.STAFF || userType == UserType.PRISONER) && effectiveActionedBy.length > 60) {
+      throw ValidationException("Audit username must not exceed 60 characters")
+    }
+    return effectiveActionedBy
   }
 
   @Transactional(readOnly = true)

@@ -17,7 +17,7 @@ class VisitRequestsApprovalRejectionService(
   private val visitRepository: VisitRepository,
   private val visitEventAuditService: VisitEventAuditService,
   private val visitDtoBuilder: VisitDtoBuilder,
-  private val visitNotificationEventService: VisitNotificationEventService,
+  private val visitNotificationTransactionalService: VisitNotificationTransactionalService,
   private val messageService: MessageService,
 ) {
   companion object {
@@ -52,7 +52,7 @@ class VisitRequestsApprovalRejectionService(
     } else {
       UnFlagEventReason.VISIT_REQUEST_REJECTED
     }
-    visitNotificationEventService.deleteVisitAndPairedNotificationEvents(actionedVisitDto.reference, unflagEventReason)
+    visitNotificationTransactionalService.deleteVisitAndPairedNotificationEvents(actionedVisitDto.reference, unflagEventReason)
 
     return VisitRequestApprovalRejectionResponseDto(actionedVisitDto, eventAuditDto)
   }
@@ -65,7 +65,7 @@ class VisitRequestsApprovalRejectionService(
     val actionedVisitDto = visitDtoBuilder.build(visitRepository.findByReference(visitReference)!!)
     val eventAuditDto = visitEventAuditService.saveVisitRequestAutoRejectedEventAudit(actionedVisitDto, rejectionText)
 
-    visitNotificationEventService.deleteVisitAndPairedNotificationEvents(actionedVisitDto.reference, UnFlagEventReason.VISIT_REQUEST_AUTO_REJECTED)
+    visitNotificationTransactionalService.deleteVisitAndPairedNotificationEvents(actionedVisitDto.reference, UnFlagEventReason.VISIT_REQUEST_AUTO_REJECTED)
 
     return VisitRequestApprovalRejectionResponseDto(visitDto = actionedVisitDto, eventAuditDto = eventAuditDto)
   }

@@ -9,8 +9,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_SESSION_CONT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.ACCEPTED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.IN_PROGRESS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.DOUBLE_BOOKING_OR_RESERVATION
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -61,7 +61,7 @@ class GetSessionsDoubleBookingTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -85,7 +85,7 @@ class GetSessionsDoubleBookingTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userName = null, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userName = null, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -112,7 +112,7 @@ class GetSessionsDoubleBookingTest : IntegrationTestBase() {
     eventAuditEntityHelper.create(application, actionedByValue = application.createdBy, type = EventAuditType.RESERVED_VISIT)
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userName = currentUser, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userName = currentUser, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -138,7 +138,7 @@ class GetSessionsDoubleBookingTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userName = currentUser, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userName = currentUser, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()

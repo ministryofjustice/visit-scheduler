@@ -79,7 +79,7 @@ data class SessionTemplateDto(
     includeLocationGroupType = sessionTemplateEntity.includeLocationGroupType,
     includeCategoryGroupType = sessionTemplateEntity.includeCategoryGroupType,
     includeIncentiveGroupType = sessionTemplateEntity.includeIncentiveGroupType,
-    clients = sessionTemplateEntity.clients.map { UserClientDto(it.userType, it.active) },
+    clients = sessionTemplateEntity.clients.map { UserClientDto(it.clientType, it.active) },
     visitOrderRestriction = sessionTemplateEntity.visitOrderRestriction,
     isAgeRestricted = sessionTemplateEntity.isAgeRestricted,
     ageRestriction = sessionTemplateEntity.ageRestriction,

@@ -38,6 +38,22 @@ channels:
       bindings:
         sns:
           is: notification service
+  prison-visit.changed:
+    description: Prison Visit Changed
+    publish:
+      message:
+        $ref: '#/components/messages/visit-event'
+      bindings:
+        sns:
+          is: notification service
+  prison-visit-request.approved:
+    description: Prison visit request approved
+    publish:
+      message:
+        $ref: '#/components/messages/visit-event'
+      bindings:
+        sns:
+          is: notification service
 components:
   messages:
     visit-event:
@@ -60,8 +76,6 @@ components:
             type: string
             format: datetime
             description: Timestamp this event occurred
-          visitType:
-            $ref: '#/components/schemas/VisitType'
           prisonerId:
             type: string
             description: Id of prisoner being visited
@@ -69,28 +83,32 @@ components:
             $ref: '#/components/schemas/AdditionalInformation'
     AdditionalInformation:
       type: object
-      description: Additional Information for this visit event
+      description: Additional Information for this visit event. Consumers of social visits must filter on visitType to exclude SOCIAL_VIDEO visits where appropriate.
+      required:
+        - reference
+        - eventAuditId
+        - visitType
       properties:
-        visitId:
+        reference:
           type: string
           description: Unique identifier for this visit
         eventAuditId:
-          type: string
+          type: integer
+          format: int64
           description: Unique identifier for event audit entry related to visit
-        NOMISvisitId:
-          type: string
-          description: NOMIS's identifier for this visit
+        visitType:
+          $ref: '#/components/schemas/VisitType'
     VisitType:
       type: string
       description: Visit Type
       enum:
-        - social
-        - family
-        - official
-        - legal
+        - SOCIAL
+        - SOCIAL_VIDEO
     VisitEventType:
       type: string
       description: Set of possible visit event types
       enum:
         - prison-visit.booked
         - prison-visit.cancelled
+        - prison-visit.changed
+        - prison-visit-request.approved

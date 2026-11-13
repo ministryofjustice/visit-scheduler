@@ -8,10 +8,10 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ConvictionStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType.NONE
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AvailableVisitSessionDto
@@ -36,6 +36,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonConfigService.Companion.DEFAULT_BOOKING_MAX_DAYS
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonConfigService.Companion.DEFAULT_BOOKING_MIN_DAYS
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionConflictsUtil
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionCountType
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionCountsUtil
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionDatesUtil
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -62,6 +64,8 @@ class SessionService(
   private val visitOrderBalanceService: VisitOrderBalanceService,
   private val visitRequestRuleCheckerService: VisitRequestRuleCheckerService,
   private val sessionConflictsUtil: SessionConflictsUtil,
+  private val telemetryClientService: TelemetryClientService,
+  private val sessionCountsUtil: SessionCountsUtil,
 ) {
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
@@ -109,17 +113,17 @@ class SessionService(
     minOverride: Int? = null,
     maxOverride: Int? = null,
     usernameToExcludeFromReservedApplications: String? = null,
-    userType: UserType,
+    clientType: PrisonClientType,
     youngestVisitorAge: Int? = null,
     visitorIds: List<Long>? = null,
     addSessionConflictsAndBookedCount: Boolean = true,
   ): List<VisitSessionDto> {
-    if (userType != UserType.STAFF) {
-      throw ValidationException("Cannot call endpoint for userType - $userType")
+    if (clientType != PrisonClientType.STAFF) {
+      throw ValidationException("Cannot call endpoint for clientType - $clientType")
     }
 
     val prison = prisonsService.findPrisonByCode(prisonCode)
-    val dateRange = getDateRange(prison, minOverride, maxOverride, userType)
+    val dateRange = getDateRange(prison, minOverride, maxOverride, clientType)
 
     return getVisitSessions(
       prison = prison,
@@ -127,7 +131,7 @@ class SessionService(
       dateRange = dateRange,
       excludedApplicationReference = currentApplicationReference,
       usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications,
-      userType = userType,
+      clientType = clientType,
       youngestVisitorAge = youngestVisitorAge,
       visitorIds = visitorIds,
       addSessionConflictsAndBookedCount = addSessionConflictsAndBookedCount,
@@ -141,7 +145,7 @@ class SessionService(
     dateRange: DateRange,
     excludedApplicationReference: String? = null,
     usernameToExcludeFromReservedApplications: String? = null,
-    userType: UserType,
+    clientType: PrisonClientType,
     youngestVisitorAge: Int? = null,
     visitorIds: List<Long>? = null,
     addSessionConflictsAndBookedCount: Boolean = true,
@@ -155,7 +159,7 @@ class SessionService(
       prisonerValidationService.validatePrisonerIsFromPrison(it!!, prisonCode)
     }!!
 
-    var sessionTemplates = getAllSessionTemplatesForDateRange(prisonCode, dateRange).filter { sessionsByUserClientFilter(userType).test(it) }
+    var sessionTemplates = getAllSessionTemplatesForDateRange(prisonCode, dateRange).filter { sessionsByUserClientFilter(clientType).test(it) }
     LOG.debug("Retrieved {} sessions before beginning filtering for prisoner {}, with date range {}", sessionTemplates.size, prisonerId, dateRange)
 
     val prisonerHousingLevels = prisonerService.getPrisonerHousingLevels(prisonerId = prisonerId, prisonCode = prisonCode, sessionTemplates = sessionTemplates)
@@ -196,6 +200,10 @@ class SessionService(
       LOG.info("Final count for sessions of ${it.size}, after filtering for prisoner $prisonerId, with date range $dateRange")
     }
 
+    // TODO - remove this once the override a session is allowed
+    logSessionCounts(prisonerId = prisonerId, prisonCode = prisonCode, visitSessions = visitSessions)
+    logNonAssociationSessions(prisonerId = prisonerId, prisonCode = prisonCode, visitSessions = visitSessions)
+
     return visitSessions
   }
 
@@ -207,7 +215,7 @@ class SessionService(
     dateRange: DateRange,
     excludedApplicationReference: String?,
     usernameToExcludeFromReservedApplications: String?,
-    userType: UserType,
+    clientType: PrisonClientType,
     youngestVisitorAge: Int?,
     visitorIds: List<Long>? = null,
   ): List<AvailableVisitSessionDto> {
@@ -229,7 +237,7 @@ class SessionService(
       dateRange = dateRange,
       excludedApplicationReference = excludedApplicationReference,
       usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications,
-      userType = userType,
+      clientType = clientType,
       youngestVisitorAge = youngestVisitorAge,
       visitorIds = visitorIds,
       addSessionConflictsAndBookedCount = true,
@@ -237,7 +245,7 @@ class SessionService(
 
     // finally, filter out sessions without conflicts and with capacity
     return visitSessions.filter { session ->
-      hasSessionGotCapacity(session, sessionRestriction)
+      sessionCountsUtil.hasSessionGotCapacity(session, sessionRestriction)
         .and(
           session.sessionConflicts.isEmpty() ||
             session.sessionConflicts.all { it.sessionConflict == SessionConflict.AGE_RESTRICTION },
@@ -310,18 +318,13 @@ class SessionService(
     }
   }
 
-  private fun sessionsByUserClientFilter(userType: UserType): Predicate<SessionTemplate> = Predicate {
+  private fun sessionsByUserClientFilter(clientType: PrisonClientType): Predicate<SessionTemplate> = Predicate {
     it.clients.filter { userClient ->
       userClient.active
     }.map { userClient ->
-      userClient.userType
+      userClient.clientType
     }
-      .contains(userType)
-  }
-
-  private fun hasSessionGotCapacity(session: VisitSessionDto, sessionRestriction: SessionRestriction): Boolean = when (sessionRestriction) {
-    SessionRestriction.CLOSED -> (session.closedVisitCapacity > 0 && (session.closedVisitCapacity > (session.closedVisitBookedCount ?: 0)))
-    SessionRestriction.OPEN -> (session.openVisitCapacity > 0 && (session.openVisitCapacity > (session.openVisitBookedCount ?: 0)))
+      .contains(clientType)
   }
 
   private fun getDoubleBookingOrReservationSessions(
@@ -412,14 +415,13 @@ class SessionService(
     prison: Prison,
     minOverride: Int? = null,
     maxOverride: Int? = null,
-    userType: UserType,
+    clientType: PrisonClientType,
   ): DateRange {
     val today = LocalDate.now()
 
-    // add 1 to the policyNoticeDaysMin to ensure we are adding whole days
-    val client = prison.clients.find { it.userType == userType }
+    val client = prison.clients.find { it.clientType == clientType }
     val minPolicy = client?.policyNoticeDaysMin ?: DEFAULT_BOOKING_MIN_DAYS
-    val min = minOverride ?: minPolicy.plus(1)
+    val min = minOverride ?: minPolicy
     val max = maxOverride ?: client?.policyNoticeDaysMax ?: DEFAULT_BOOKING_MAX_DAYS
 
     val requestedBookableStartDate = today.plusDays(min.toLong())
@@ -664,6 +666,27 @@ class SessionService(
   }
 
   fun getAgeRestrictedSessionTemplates(prisonCode: String) = sessionTemplateRepository.getAgeRestrictedSessionTemplatesForPrison(prisonCode).map { SessionTemplateDto(it) }
+
+  private fun logNonAssociationSessions(prisonerId: String, prisonCode: String, visitSessions: List<VisitSessionDto>) {
+    val nonAssociationSessions = visitSessions.filter { it.sessionConflicts.map { sessionConflictDto -> sessionConflictDto.sessionConflict }.contains(SessionConflict.NON_ASSOCIATION) }
+    if (nonAssociationSessions.isNotEmpty()) {
+      telemetryClientService.trackUnavailableNonAssociationSessions(prisonerId = prisonerId, prisonCode = prisonCode, nonAssociationVisitSessions = nonAssociationSessions)
+    }
+  }
+
+  private fun logSessionCounts(prisonerId: String, prisonCode: String, visitSessions: List<VisitSessionDto>) {
+    val sessionCounts = sessionCountsUtil.getSessionCounts(visitSessions)
+
+    val nonAssociationSessionCounts = sessionCounts[SessionCountType.UNAVAILABLE_NON_ASSOCIATION] ?: 0
+    val availableToBookSessionCounts = sessionCounts[SessionCountType.TOTAL_SESSIONS] ?: 0
+    val fullyBookedSessionCounts = sessionCounts[SessionCountType.UNAVAILABLE_FULLY_BOOKED] ?: 0
+    val alreadyBookedSessionCounts = sessionCounts[SessionCountType.UNAVAILABLE_ALREADY_BOOKED] ?: 0
+
+    if (nonAssociationSessionCounts > 0) {
+      val logMessage = "{} visit sessions not available to prisonerId - {} at prison {} - due to non-associations. {} total visit sessions of which {} already booked and {} fully booked."
+      LOG.info(logMessage, nonAssociationSessionCounts, prisonerId, prisonCode, availableToBookSessionCounts, alreadyBookedSessionCounts, fullyBookedSessionCounts)
+    }
+  }
 }
 
 data class DateRange(

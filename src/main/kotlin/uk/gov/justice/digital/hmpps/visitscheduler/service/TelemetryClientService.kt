@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.REQUESTED_VISIT_AUTO_REJECTED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.REQUESTED_VISIT_REJECTED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.ADD_PRISON_EXCLUDE_DATE_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.ADD_SESSION_EXCLUDE_DATE_EVENT
@@ -41,6 +42,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting.OverbookedSessionsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting.SessionVisitCountsByDateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AdditionalSessionConflictInfoDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionConflictAttribute
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -261,6 +265,16 @@ class TelemetryClientService(
       TelemetryVisitEvents.VISIT_REQUEST_AUTO_REJECTED_EVENT,
       createVisitRequestApprovedOrRejectedTrackData(bookedVisitDto, eventAuditDto),
     )
+  }
+
+  fun trackUnavailableNonAssociationSessions(prisonerId: String, prisonCode: String, nonAssociationVisitSessions: List<VisitSessionDto>) {
+    val nonAssociationSessionsData = mutableMapOf<String, String>()
+    nonAssociationSessionsData["prisonerId"] = prisonerId
+    nonAssociationSessionsData["prisonId"] = prisonCode
+    nonAssociationSessionsData["totalSessionsUnavailable"] = nonAssociationVisitSessions.size.toString()
+    val nonAssociationVisitSessionsData = createNonAssociationSessionData(nonAssociationVisitSessions)
+    nonAssociationSessionsData["nonAssociationData"] = objectMapper.writeValueAsString(nonAssociationVisitSessionsData)
+    trackEvent(TelemetryVisitEvents.NON_ASSOCIATION_SESSION, nonAssociationSessionsData)
   }
 
   private fun trackEvent(visitEvent: TelemetryVisitEvents, properties: Map<String, String>) {
@@ -543,8 +557,59 @@ class TelemetryClientService(
     )
   }
 
+  private fun createNonAssociationSessionData(visitSessions: List<VisitSessionDto>): List<NonAssociationSessionDetails> {
+    val nonAssociationSessions = mutableListOf<NonAssociationSessionDetails>()
+    visitSessions.forEach { visitSession ->
+      val nonAssociationAttributes = mutableListOf<NonAssociationDetails>()
+      visitSession.sessionConflicts.filter { it.sessionConflict == SessionConflict.NON_ASSOCIATION }.forEach { sessionConflict ->
+        sessionConflict.additionalAttributes.forEach { attributes ->
+          nonAssociationAttributes.add(createNonAssociationAttributesData(attributes))
+        }
+      }
+
+      nonAssociationSessions.add(
+        NonAssociationSessionDetails(
+          sessionTemplateReference = visitSession.sessionTemplateReference,
+          sessionDate = visitSession.startTimestamp.toLocalDate(),
+          sessionStartTime = visitSession.startTimestamp.toLocalTime(),
+          sessionEndTime = visitSession.endTimestamp.toLocalTime(),
+          nonAssociationDetails = nonAssociationAttributes,
+        ),
+      )
+    }
+
+    return nonAssociationSessions.toList()
+  }
+
+  private fun createNonAssociationAttributesData(additionalSessionConflicts: List<AdditionalSessionConflictInfoDto>): NonAssociationDetails {
+    val prisonerId = additionalSessionConflicts.first { it.attributeName == SessionConflictAttribute.PRISONER_NUMBER }.attributeValue
+    val conflictType = additionalSessionConflicts.first { it.attributeName == SessionConflictAttribute.CONFLICT_TYPE }.attributeValue
+    val reference = additionalSessionConflicts.firstOrNull { it.attributeName == SessionConflictAttribute.REFERENCE }?.attributeValue
+    val nonAssociationSessionDetails = NonAssociationDetails(
+      prisonerId = prisonerId,
+      conflictType = conflictType,
+      reference = reference,
+    )
+
+    return nonAssociationSessionDetails
+  }
+
   data class VisitorDetails(
     val visitorId: String,
     val age: Int?,
+  )
+
+  data class NonAssociationSessionDetails(
+    val sessionTemplateReference: String,
+    val sessionDate: LocalDate,
+    val sessionStartTime: LocalTime,
+    val sessionEndTime: LocalTime,
+    val nonAssociationDetails: List<NonAssociationDetails>,
+  )
+
+  data class NonAssociationDetails(
+    val prisonerId: String,
+    val conflictType: String,
+    val reference: String? = null,
   )
 }

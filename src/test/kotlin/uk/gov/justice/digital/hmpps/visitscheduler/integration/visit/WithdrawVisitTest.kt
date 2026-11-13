@@ -31,7 +31,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus.REQU
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus.WITHDRAWN
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCancelVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitNotificationEventService
+import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitNotificationTransactionalService
 
 @DisplayName("Put $VISIT_CANCEL to withdraw a requested visit.")
 class WithdrawVisitTest : IntegrationTestBase() {
@@ -43,7 +43,7 @@ class WithdrawVisitTest : IntegrationTestBase() {
   private lateinit var telemetryClient: TelemetryClient
 
   @MockitoSpyBean
-  private lateinit var visitNotificationEventServiceSpy: VisitNotificationEventService
+  private lateinit var visitNotificationTransactionalServiceSpy: VisitNotificationTransactionalService
 
   @Test
   fun `when a visit that was requested for the future is withdrawn the visit sub status is set to WITHDRAWN`() {
@@ -82,7 +82,7 @@ class WithdrawVisitTest : IntegrationTestBase() {
 
     assertHelper.assertCancelledVisitTelemetryClientEvents(visitCancelled, VISIT_CANCELLED_EVENT)
     assertCancelledDomainEvent(visitCancelled)
-    verify(visitNotificationEventServiceSpy, times(1)).deleteVisitAndPairedNotificationEvents(eq(requestedVisit.reference), eq(UnFlagEventReason.REQUESTED_VISIT_WITHDRAWN), eq(null))
+    verify(visitNotificationTransactionalServiceSpy, times(1)).deleteVisitAndPairedNotificationEvents(eq(requestedVisit.reference), eq(UnFlagEventReason.REQUESTED_VISIT_WITHDRAWN), eq(null))
   }
 
   @Test
@@ -125,7 +125,7 @@ class WithdrawVisitTest : IntegrationTestBase() {
     // just one event thrown
     assertHelper.assertCancelledVisitTelemetryClientEvents(visit1, VISIT_CANCELLED_EVENT)
     assertCancelledDomainEvent(visit1)
-    verify(visitNotificationEventServiceSpy, times(1)).deleteVisitAndPairedNotificationEvents(eq(requestedVisit.reference), eq(UnFlagEventReason.REQUESTED_VISIT_WITHDRAWN), eq(null))
+    verify(visitNotificationTransactionalServiceSpy, times(1)).deleteVisitAndPairedNotificationEvents(eq(requestedVisit.reference), eq(UnFlagEventReason.REQUESTED_VISIT_WITHDRAWN), eq(null))
   }
 
   @Test
@@ -166,7 +166,7 @@ class WithdrawVisitTest : IntegrationTestBase() {
 
     assertHelper.assertCancelledVisitTelemetryClientEvents(visitCancelled, VISIT_CANCELLED_EVENT)
     assertCancelledDomainEvent(visitCancelled)
-    verify(visitNotificationEventServiceSpy, times(1)).deleteVisitAndPairedNotificationEvents(eq(requestedVisit.reference), eq(UnFlagEventReason.REQUESTED_VISIT_WITHDRAWN), eq(null))
+    verify(visitNotificationTransactionalServiceSpy, times(1)).deleteVisitAndPairedNotificationEvents(eq(requestedVisit.reference), eq(UnFlagEventReason.REQUESTED_VISIT_WITHDRAWN), eq(null))
   }
 
   @Test
@@ -206,7 +206,7 @@ class WithdrawVisitTest : IntegrationTestBase() {
 
     assertHelper.assertCancelledVisitTelemetryClientEvents(visitCancelled, VISIT_CANCELLED_EVENT)
     assertCancelledDomainEvent(visitCancelled)
-    verify(visitNotificationEventServiceSpy, times(1)).deleteVisitAndPairedNotificationEvents(eq(requestedVisit.reference), eq(VISIT_CANCELLED), eq(null))
+    verify(visitNotificationTransactionalServiceSpy, times(1)).deleteVisitAndPairedNotificationEvents(eq(requestedVisit.reference), eq(VISIT_CANCELLED), eq(null))
   }
 
   @Test
@@ -242,7 +242,7 @@ class WithdrawVisitTest : IntegrationTestBase() {
     val visitCancelled = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
     assertThat(visitCancelled.reference).isEqualTo(reference)
     verify(telemetryClient, times(0)).trackEvent(any(), any(), any())
-    verify(visitNotificationEventServiceSpy, times(0)).deleteVisitAndPairedNotificationEvents(eq(requestedVisit.reference), eq(VISIT_CANCELLED), eq(null))
+    verify(visitNotificationTransactionalServiceSpy, times(0)).deleteVisitAndPairedNotificationEvents(eq(requestedVisit.reference), eq(VISIT_CANCELLED), eq(null))
   }
 
   fun assertCancelledDomainEvent(

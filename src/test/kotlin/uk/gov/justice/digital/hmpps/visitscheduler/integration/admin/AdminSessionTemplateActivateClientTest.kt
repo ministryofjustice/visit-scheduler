@@ -6,7 +6,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ACTIVATE_SESSION_TEMPLATE_CLIENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callActivateSessionTemplateClient
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGetSessionTemplate
@@ -32,7 +32,7 @@ class AdminSessionTemplateActivateClientTest : IntegrationTestBase() {
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
       isActive = true,
-      clients = listOf(UserClientDto(UserType.STAFF, false)),
+      clients = listOf(UserClientDto(PrisonClientType.STAFF, false)),
     )
 
     sessionTemplateWithActiveClient = sessionTemplateEntityHelper.create(
@@ -41,7 +41,7 @@ class AdminSessionTemplateActivateClientTest : IntegrationTestBase() {
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
       isActive = true,
-      clients = listOf(UserClientDto(UserType.STAFF, false)),
+      clients = listOf(UserClientDto(PrisonClientType.STAFF, false)),
     )
 
     sessionTemplateWithoutClient = sessionTemplateEntityHelper.create(
@@ -60,18 +60,18 @@ class AdminSessionTemplateActivateClientTest : IntegrationTestBase() {
     val reference = sessionTemplateWithClient.reference
 
     // When
-    var responseSpec = callActivateSessionTemplateClient(webTestClient, reference, userType = UserType.STAFF, setAuthorisation(roles = adminRole))
+    var responseSpec = callActivateSessionTemplateClient(webTestClient, reference, clientType = PrisonClientType.STAFF, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
     val userClient = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, UserClientDto::class.java)
 
-    Assertions.assertThat(userClient).isEqualTo(UserClientDto(UserType.STAFF, true))
+    Assertions.assertThat(userClient).isEqualTo(UserClientDto(PrisonClientType.STAFF, true))
 
     responseSpec = callGetSessionTemplate(webTestClient, reference, setAuthorisation(roles = adminRole))
     val sessionTemplate = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, SessionTemplateDto::class.java)
     Assertions.assertThat(sessionTemplate.clients.size).isEqualTo(1)
-    Assertions.assertThat(sessionTemplate.clients[0].userType).isEqualTo(UserType.STAFF)
+    Assertions.assertThat(sessionTemplate.clients[0].clientType).isEqualTo(PrisonClientType.STAFF)
     Assertions.assertThat(sessionTemplate.clients[0].active).isEqualTo(true)
   }
 
@@ -81,18 +81,18 @@ class AdminSessionTemplateActivateClientTest : IntegrationTestBase() {
     val reference = sessionTemplateWithActiveClient.reference
 
     // When
-    var responseSpec = callActivateSessionTemplateClient(webTestClient, reference, userType = UserType.STAFF, setAuthorisation(roles = adminRole))
+    var responseSpec = callActivateSessionTemplateClient(webTestClient, reference, clientType = PrisonClientType.STAFF, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
     val userClient = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, UserClientDto::class.java)
-    Assertions.assertThat(userClient).isEqualTo(UserClientDto(UserType.STAFF, true))
+    Assertions.assertThat(userClient).isEqualTo(UserClientDto(PrisonClientType.STAFF, true))
 
     responseSpec = callGetSessionTemplate(webTestClient, reference, setAuthorisation(roles = adminRole))
     val sessionTemplate = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, SessionTemplateDto::class.java)
     Assertions.assertThat(sessionTemplate.reference).isEqualTo(sessionTemplateWithActiveClient.reference)
     Assertions.assertThat(sessionTemplate.clients.size).isEqualTo(1)
-    Assertions.assertThat(sessionTemplate.clients[0].userType).isEqualTo(UserType.STAFF)
+    Assertions.assertThat(sessionTemplate.clients[0].clientType).isEqualTo(PrisonClientType.STAFF)
     Assertions.assertThat(sessionTemplate.clients[0].active).isEqualTo(true)
   }
 
@@ -102,18 +102,18 @@ class AdminSessionTemplateActivateClientTest : IntegrationTestBase() {
     val reference = sessionTemplateWithoutClient.reference
 
     // When
-    var responseSpec = callActivateSessionTemplateClient(webTestClient, reference, userType = UserType.STAFF, setAuthorisation(roles = adminRole))
+    var responseSpec = callActivateSessionTemplateClient(webTestClient, reference, clientType = PrisonClientType.STAFF, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
     val userClient = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, UserClientDto::class.java)
-    Assertions.assertThat(userClient).isEqualTo(UserClientDto(UserType.STAFF, true))
+    Assertions.assertThat(userClient).isEqualTo(UserClientDto(PrisonClientType.STAFF, true))
 
     responseSpec = callGetSessionTemplate(webTestClient, reference, setAuthorisation(roles = adminRole))
     val sessionTemplate = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, SessionTemplateDto::class.java)
     Assertions.assertThat(sessionTemplate.reference).isEqualTo(sessionTemplateWithoutClient.reference)
     Assertions.assertThat(sessionTemplate.clients.size).isEqualTo(1)
-    Assertions.assertThat(sessionTemplate.clients[0].userType).isEqualTo(UserType.STAFF)
+    Assertions.assertThat(sessionTemplate.clients[0].clientType).isEqualTo(PrisonClientType.STAFF)
     Assertions.assertThat(sessionTemplate.clients[0].active).isEqualTo(true)
   }
 
@@ -123,7 +123,7 @@ class AdminSessionTemplateActivateClientTest : IntegrationTestBase() {
     val reference = "i-do-not-exist"
 
     // When
-    val responseSpec = callActivateSessionTemplateClient(webTestClient, reference, userType = UserType.STAFF, setAuthorisation(roles = adminRole))
+    val responseSpec = callActivateSessionTemplateClient(webTestClient, reference, clientType = PrisonClientType.STAFF, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isNotFound
@@ -139,7 +139,7 @@ class AdminSessionTemplateActivateClientTest : IntegrationTestBase() {
     val responseSpec = callActivateSessionTemplateClient(
       webTestClient,
       sessionTemplateDefault.reference,
-      userType = UserType.STAFF,
+      clientType = PrisonClientType.STAFF,
       setAuthorisation(roles = nonAdminRole),
     )
 

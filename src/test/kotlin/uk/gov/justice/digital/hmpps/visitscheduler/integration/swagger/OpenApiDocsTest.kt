@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.swagger
 
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -45,5 +46,30 @@ class OpenApiDocsTest : IntegrationTestBase() {
       .exchange()
       .expectStatus().isOk
       .expectBody().jsonPath("info.version").isEqualTo(DateTimeFormatter.ISO_DATE.format(LocalDate.now()))
+  }
+
+  @Test
+  fun `external visit schemas advertise video visits and optional audit metadata`() {
+    val response = webTestClient.get()
+      .uri("/v3/api-docs")
+      .accept(MediaType.APPLICATION_JSON)
+      .exchange()
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.components.schemas.CreateVisitFromExternalSystemDto.properties.visitType.enum").isEqualTo(listOf("SOCIAL", "SOCIAL_VIDEO"))
+      .jsonPath("$.components.schemas.UpdateVisitFromExternalSystemDto.properties.visitType.enum").isEqualTo(listOf("SOCIAL", "SOCIAL_VIDEO"))
+      .jsonPath("$.components.schemas.VisitDto.properties.visitType.enum").isEqualTo(listOf("SOCIAL", "SOCIAL_VIDEO"))
+
+    listOf("CreateVisitFromExternalSystemDto", "UpdateVisitFromExternalSystemDto").forEach { schema ->
+      response
+        .jsonPath("$.components.schemas.$schema.properties.actionedBy").exists()
+        .jsonPath("$.components.schemas.$schema.properties.username").doesNotExist()
+        .jsonPath("$.components.schemas.$schema.properties.applicationMethodType.enum")
+        .isEqualTo(listOf("PHONE", "WEBSITE", "EMAIL", "IN_PERSON", "NOT_KNOWN", "NOT_APPLICABLE", "BY_PRISONER"))
+        .jsonPath("$.components.schemas.$schema.properties.userType.enum").isEqualTo(listOf("STAFF", "PUBLIC", "SYSTEM", "PRISONER"))
+        .jsonPath("$.components.schemas.$schema.required").value<List<String>> {
+          assertThat(it).doesNotContain("actionedBy", "applicationMethodType", "userType")
+        }
+    }
   }
 }

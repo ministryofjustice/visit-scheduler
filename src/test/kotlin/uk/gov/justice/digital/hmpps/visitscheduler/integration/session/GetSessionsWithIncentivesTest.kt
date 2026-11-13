@@ -9,7 +9,7 @@ import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpe
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_SESSION_CONTROLLER_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel.ENHANCED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel.STANDARD
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
@@ -61,7 +61,7 @@ class GetSessionsWithIncentivesTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -93,7 +93,7 @@ class GetSessionsWithIncentivesTest : IntegrationTestBase() {
 
     // When
 
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -124,7 +124,7 @@ class GetSessionsWithIncentivesTest : IntegrationTestBase() {
 
     // When
 
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -159,7 +159,7 @@ class GetSessionsWithIncentivesTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -194,7 +194,7 @@ class GetSessionsWithIncentivesTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()

@@ -7,9 +7,9 @@ import org.springframework.http.HttpHeaders
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.IN_PROGRESS
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonVisitRequestRuleType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
@@ -58,7 +58,7 @@ class MaxVisitsPerMonthRequestRulesTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
 
     // When
-    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = roleVisitSchedulerHttpHeaders)
+    val responseResult = callGetSessions(prisonCode, prisonerId, clientType = PrisonClientType.STAFF, authHttpHeaders = roleVisitSchedulerHttpHeaders)
 
     // Then
     responseResult.expectStatus().isOk
@@ -89,7 +89,7 @@ class MaxVisitsPerMonthRequestRulesTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
 
     // When
-    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = roleVisitSchedulerHttpHeaders)
+    val responseResult = callGetSessions(prisonCode, prisonerId, clientType = PrisonClientType.STAFF, authHttpHeaders = roleVisitSchedulerHttpHeaders)
 
     // Then
     responseResult.expectStatus().isOk
@@ -120,7 +120,7 @@ class MaxVisitsPerMonthRequestRulesTest : IntegrationTestBase() {
     prisonOffenderSearchMockServer.stubGetPrisoner(prisonerId, prisonerDto)
 
     // When
-    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = roleVisitSchedulerHttpHeaders)
+    val responseResult = callGetSessions(prisonCode, prisonerId, clientType = PrisonClientType.STAFF, authHttpHeaders = roleVisitSchedulerHttpHeaders)
 
     // Then
     responseResult.expectStatus().isOk

@@ -3,7 +3,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.repository
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 
 @Repository
@@ -14,10 +14,10 @@ interface PrisonRepository : JpaRepository<Prison, Long> {
   @Query(
     "SELECT p.code FROM Prison p " +
       " JOIN PrisonUserClient puc ON puc.prisonId = p.id " +
-      " WHERE p.active = true AND puc.userType = :type AND puc.active = true " +
+      " WHERE p.active = true AND puc.clientType = :type AND puc.active = true " +
       " ORDER BY p.code",
   )
-  fun getSupportedPrisons(type: UserType): List<String>
+  fun getSupportedPrisons(type: PrisonClientType): List<String>
 
   @Query(
     "SELECT p.code FROM Prison p " +

@@ -41,7 +41,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.getCancelVisitUrl
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitNotificationEventService
+import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitNotificationTransactionalService
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
@@ -66,7 +66,7 @@ class CancelVisitTest : IntegrationTestBase() {
   private lateinit var visitNotificationEventRepository: VisitNotificationEventRepository
 
   @MockitoSpyBean
-  private lateinit var visitNotificationEventServiceSpy: VisitNotificationEventService
+  private lateinit var visitNotificationTransactionalServiceSpy: VisitNotificationTransactionalService
 
   @Test
   fun `cancel visit by reference -  with outcome and outcome text`() {
@@ -101,7 +101,7 @@ class CancelVisitTest : IntegrationTestBase() {
 
     assertHelper.assertCancelVisitTelemetryClientEvents(visitCancelled, VISIT_CANCELLED_EVENT)
     assertCancelledDomainEvent(visitCancelled)
-    verify(visitNotificationEventServiceSpy, times(1)).deleteVisitAndPairedNotificationEvents(eq(visit.reference), eq(VISIT_CANCELLED), eq(null))
+    verify(visitNotificationTransactionalServiceSpy, times(1)).deleteVisitAndPairedNotificationEvents(eq(visit.reference), eq(VISIT_CANCELLED), eq(null))
   }
 
   @Test
@@ -134,7 +134,7 @@ class CancelVisitTest : IntegrationTestBase() {
 
     assertHelper.assertCancelVisitTelemetryClientEvents(visitCancelled, VISIT_CANCELLED_EVENT)
     assertCancelledDomainEvent(visitCancelled)
-    verify(visitNotificationEventServiceSpy, times(1)).deleteVisitAndPairedNotificationEvents(eq(visit.reference), eq(VISIT_CANCELLED), eq(null))
+    verify(visitNotificationTransactionalServiceSpy, times(1)).deleteVisitAndPairedNotificationEvents(eq(visit.reference), eq(VISIT_CANCELLED), eq(null))
   }
 
   @Test
@@ -170,7 +170,7 @@ class CancelVisitTest : IntegrationTestBase() {
     // just one event thrown
     assertHelper.assertCancelVisitTelemetryClientEvents(visit1, VISIT_CANCELLED_EVENT)
     assertCancelledDomainEvent(visit1)
-    verify(visitNotificationEventServiceSpy, times(1)).deleteVisitAndPairedNotificationEvents(eq(visit.reference), eq(VISIT_CANCELLED), eq(null))
+    verify(visitNotificationTransactionalServiceSpy, times(1)).deleteVisitAndPairedNotificationEvents(eq(visit.reference), eq(VISIT_CANCELLED), eq(null))
   }
 
   @Test
@@ -244,7 +244,7 @@ class CancelVisitTest : IntegrationTestBase() {
     assertHelper.assertCancelVisitTelemetryClientEvents(visitCancelled, VISIT_CANCELLED_EVENT)
     assertCancelledDomainEvent(visitCancelled)
 
-    verify(visitNotificationEventServiceSpy, times(1)).deleteVisitAndPairedNotificationEvents(eq(visit.reference), eq(VISIT_CANCELLED), eq(null))
+    verify(visitNotificationTransactionalServiceSpy, times(1)).deleteVisitAndPairedNotificationEvents(eq(visit.reference), eq(VISIT_CANCELLED), eq(null))
   }
 
   private fun sendApplicationToUpdateExistingBooking(
@@ -408,7 +408,7 @@ class CancelVisitTest : IntegrationTestBase() {
     // And
     val visitCancelled = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
     assertHelper.assertVisitCancellation(visitCancelled, OutcomeStatus.CANCELLATION, cancelVisitDto.actionedBy, NOT_KNOWN)
-    verify(visitNotificationEventServiceSpy, times(1)).deleteVisitAndPairedNotificationEvents(eq(visitCancelled.reference), eq(VISIT_CANCELLED), eq(null))
+    verify(visitNotificationTransactionalServiceSpy, times(1)).deleteVisitAndPairedNotificationEvents(eq(visitCancelled.reference), eq(VISIT_CANCELLED), eq(null))
   }
 
   @Test
@@ -438,7 +438,7 @@ class CancelVisitTest : IntegrationTestBase() {
     // And
     val visitCancelled = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
     assertHelper.assertVisitCancellation(visitCancelled, OutcomeStatus.CANCELLATION, cancelVisitDto.actionedBy, NOT_KNOWN)
-    verify(visitNotificationEventServiceSpy, times(1)).deleteVisitAndPairedNotificationEvents(eq(visit.reference), eq(VISIT_CANCELLED), eq(null))
+    verify(visitNotificationTransactionalServiceSpy, times(1)).deleteVisitAndPairedNotificationEvents(eq(visit.reference), eq(VISIT_CANCELLED), eq(null))
   }
 
   @Test
@@ -466,7 +466,7 @@ class CancelVisitTest : IntegrationTestBase() {
     // And
     val visitCancelled = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
     assertHelper.assertVisitCancellation(visitCancelled, OutcomeStatus.CANCELLATION, cancelVisitDto.actionedBy, NOT_KNOWN)
-    verify(visitNotificationEventServiceSpy, times(1)).deleteVisitAndPairedNotificationEvents(eq(visit.reference), eq(VISIT_CANCELLED), eq(null))
+    verify(visitNotificationTransactionalServiceSpy, times(1)).deleteVisitAndPairedNotificationEvents(eq(visit.reference), eq(VISIT_CANCELLED), eq(null))
   }
 
   @Test
@@ -538,7 +538,7 @@ class CancelVisitTest : IntegrationTestBase() {
 
     assertHelper.assertCancelVisitTelemetryClientEvents(visitCancelled, VISIT_CANCELLED_EVENT)
     assertCancelledDomainEvent(visitCancelled)
-    verify(visitNotificationEventServiceSpy, times(1)).deleteVisitAndPairedNotificationEvents(eq(visit.reference), eq(VISIT_CANCELLED), eq(null))
+    verify(visitNotificationTransactionalServiceSpy, times(1)).deleteVisitAndPairedNotificationEvents(eq(visit.reference), eq(VISIT_CANCELLED), eq(null))
   }
 
   fun assertCancelledDomainEvent(
@@ -640,7 +640,7 @@ class CancelVisitTest : IntegrationTestBase() {
     // And
     val visitCancelled = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
     assertHelper.assertVisitCancellation(visitCancelled, OutcomeStatus.CANCELLATION, CANCELLED_BY_USER, NOT_KNOWN, PUBLIC)
-    verify(visitNotificationEventServiceSpy, times(1)).deleteVisitAndPairedNotificationEvents(eq(visit.reference), eq(VISIT_CANCELLED), eq(null))
+    verify(visitNotificationTransactionalServiceSpy, times(1)).deleteVisitAndPairedNotificationEvents(eq(visit.reference), eq(VISIT_CANCELLED), eq(null))
   }
 
   fun assertUnFlagEvent(

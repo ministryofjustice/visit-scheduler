@@ -84,6 +84,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplica
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.PHONE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.MoveVisitsDto
@@ -528,24 +529,24 @@ fun callGetSessionTemplate(
 fun callActivateSessionTemplateClient(
   webTestClient: WebTestClient,
   sessionTemplateReference: String,
-  userType: UserType,
+  clientType: PrisonClientType,
   authHttpHeaders: (HttpHeaders) -> Unit,
 ): ResponseSpec = callPut(
   null,
   webTestClient,
-  getReferenceUrl(ACTIVATE_SESSION_TEMPLATE_CLIENT, sessionTemplateReference).replace("{type}", userType.name),
+  getReferenceUrl(ACTIVATE_SESSION_TEMPLATE_CLIENT, sessionTemplateReference).replace("{type}", clientType.name),
   authHttpHeaders,
 )
 
 fun callDeactivateSessionTemplateClient(
   webTestClient: WebTestClient,
   sessionTemplateReference: String,
-  userType: UserType,
+  clientType: PrisonClientType,
   authHttpHeaders: (HttpHeaders) -> Unit,
 ): ResponseSpec = callPut(
   null,
   webTestClient,
-  getReferenceUrl(DEACTIVATE_SESSION_TEMPLATE_CLIENT, sessionTemplateReference).replace("{type}", userType.name),
+  getReferenceUrl(DEACTIVATE_SESSION_TEMPLATE_CLIENT, sessionTemplateReference).replace("{type}", clientType.name),
   authHttpHeaders,
 )
 

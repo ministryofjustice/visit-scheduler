@@ -8,11 +8,10 @@ import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpe
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_SESSIONS_AVAILABLE_CONTROLLER_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_SESSION_CONTROLLER_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType.PUBLIC
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AvailableVisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -108,7 +107,7 @@ class GetSessionsByUserTypeTest : IntegrationTestBase() {
   @Test
   fun `when get visit sessions called with userType STAFF only visit sessions for STAFF are returned`() {
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -120,24 +119,12 @@ class GetSessionsByUserTypeTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when get visit sessions called with userType as SYSTEM a BAD_REQUEST error is returned`() {
-    // Given
-    val prisonerId = "A1234AA"
-
-    // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = SYSTEM, authHttpHeaders = setAuthorisation(roles = requiredRole))
-
-    // Then
-    responseSpec.expectStatus().isBadRequest
-  }
-
-  @Test
   fun `when get visit sessions called with userType as PUBLIC a BAD_REQUEST error is returned`() {
     // Given
     val prisonerId = "A1234AA"
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = PUBLIC, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = PUBLIC, authHttpHeaders = authHttpHeaders)
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -146,7 +133,7 @@ class GetSessionsByUserTypeTest : IntegrationTestBase() {
   @Test
   fun `when get available visit sessions called with userType STAFF only available visit sessions for STAFF are returned`() {
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, userType = STAFF, sessionRestriction = OPEN, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, clientType = STAFF, sessionRestriction = OPEN, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -159,7 +146,7 @@ class GetSessionsByUserTypeTest : IntegrationTestBase() {
   @Test
   fun `when get available visit sessions called with userType PUBLIC only available visit sessions for PUBLIC are returned`() {
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, userType = PUBLIC, sessionRestriction = OPEN, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, clientType = PUBLIC, sessionRestriction = OPEN, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -167,18 +154,6 @@ class GetSessionsByUserTypeTest : IntegrationTestBase() {
     assertThat(visitSessionResults.size).isEqualTo(2)
     assertAvailableVisitSession(visitSessionResults[0], nextAllowedDay, sessionTemplate2)
     assertAvailableVisitSession(visitSessionResults[1], nextAllowedDay, sessionTemplate3)
-  }
-
-  @Test
-  fun `when get available visit sessions called with userType SYSTEM no sessions are returned`() {
-    // When
-    val userType = SYSTEM
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, userType = userType, sessionRestriction = OPEN, authHttpHeaders = authHttpHeaders)
-
-    // Then
-    val returnResult = responseSpec.expectStatus().isOk.expectBody()
-    val visitSessionResults = getAvailableVisitSessionResults(returnResult)
-    assertThat(visitSessionResults.size).isEqualTo(0)
   }
 
   private fun getNextAllowedDay(): LocalDate {

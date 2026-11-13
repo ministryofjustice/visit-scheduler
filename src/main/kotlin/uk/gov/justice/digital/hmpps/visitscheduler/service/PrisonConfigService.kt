@@ -11,7 +11,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.ExcludeDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonUserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdatePrisonDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonUserClient
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
@@ -53,7 +53,7 @@ class PrisonConfigService(
     val newPrison = Prison(prisonDto)
     val savedPrison = prisonRepository.saveAndFlush(newPrison)
 
-    val clients = prisonDto.clients.map { PrisonUserClient(prisonId = savedPrison.id, prison = savedPrison, userType = it.userType, policyNoticeDaysMin = it.policyNoticeDaysMin, policyNoticeDaysMax = it.policyNoticeDaysMax, active = it.active) }
+    val clients = prisonDto.clients.map { PrisonUserClient(prisonId = savedPrison.id, prison = savedPrison, clientType = it.clientType, policyNoticeDaysMin = it.policyNoticeDaysMin, policyNoticeDaysMax = it.policyNoticeDaysMax, active = it.active) }
     savedPrison.clients.addAll(clients)
 
     return prisonsService.mapEntityToDto(savedPrison)
@@ -61,9 +61,6 @@ class PrisonConfigService(
 
   fun updatePrison(prisonCode: String, prisonDto: UpdatePrisonDto): PrisonDto {
     var prison = prisonsService.findPrisonByCode(prisonCode)
-
-    // TODO - remove this call and the below method once we enable client booking windows
-    setPrisonClients(prisonDto, prison)
 
     val maxTotalVisitors = prisonDto.maxTotalVisitors ?: prison.maxTotalVisitors
     val maxAdultVisitors = prisonDto.maxAdultVisitors ?: prison.maxAdultVisitors
@@ -94,12 +91,12 @@ class PrisonConfigService(
       prison = prisonRepository.saveAndFlush(prison)
       val clients = prisonDto.clients
 
-      clients?.forEach {
+      clients.forEach {
         prison.clients.add(
           PrisonUserClient(
             prisonId = prison.id,
             prison = prison,
-            userType = it.userType,
+            clientType = it.clientType,
             policyNoticeDaysMin = it.policyNoticeDaysMin,
             policyNoticeDaysMax = it.policyNoticeDaysMax,
             active = it.active,
@@ -123,10 +120,10 @@ class PrisonConfigService(
   }
 
   @Transactional
-  fun activatePrisonClient(prisonCode: String, type: UserType): PrisonUserClientDto = createOrUpdatePrisonClient(prisonCode, type, true)
+  fun activatePrisonClient(prisonCode: String, type: PrisonClientType): PrisonUserClientDto = createOrUpdatePrisonClient(prisonCode, type, true)
 
   @Transactional
-  fun deActivatePrisonClient(prisonCode: String, type: UserType): PrisonUserClientDto = createOrUpdatePrisonClient(prisonCode, type, false)
+  fun deActivatePrisonClient(prisonCode: String, type: PrisonClientType): PrisonUserClientDto = createOrUpdatePrisonClient(prisonCode, type, false)
 
   @Transactional
   fun deActivatePrison(prisonCode: String): PrisonDto {
@@ -165,34 +162,18 @@ class PrisonConfigService(
     return excludeDateService.getExcludeDates(prison.excludeDates)
   }
 
-  private fun setPrisonClients(prisonDto: UpdatePrisonDto, prison: Prison) {
-    if (prisonDto.clients == null) {
-      prisonDto.clients = prison.clients.map { PrisonUserClientDto(it) }.toList()
-
-      if (prisonDto.policyNoticeDaysMin != null || prisonDto.policyNoticeDaysMax != null) {
-        prisonDto.policyNoticeDaysMin?.let {
-          prisonDto.clients?.forEach { it.policyNoticeDaysMin = prisonDto.policyNoticeDaysMin }
-        }
-
-        prisonDto.policyNoticeDaysMax?.let {
-          prisonDto.clients?.forEach { it.policyNoticeDaysMax = prisonDto.policyNoticeDaysMax }
-        }
-      }
-    }
-  }
-
   private fun createOrUpdatePrisonClient(
     prisonCode: String,
-    userType: UserType,
+    prisonClientType: PrisonClientType,
     active: Boolean,
   ): PrisonUserClientDto {
     val prisonUserClient: PrisonUserClient
-    if (prisonUserClientRepository.doesPrisonClientExist(prisonCode, userType)) {
-      prisonUserClient = prisonUserClientRepository.getPrisonClient(prisonCode, userType)
+    if (prisonUserClientRepository.doesPrisonClientExist(prisonCode, prisonClientType)) {
+      prisonUserClient = prisonUserClientRepository.getPrisonClient(prisonCode, prisonClientType)
       prisonUserClient.active = active
     } else {
       val prison = prisonsService.findPrisonByCode(prisonCode)
-      prisonUserClient = PrisonUserClient(prison.id, prison, userType, policyNoticeDaysMin = DEFAULT_BOOKING_MIN_DAYS, policyNoticeDaysMax = DEFAULT_BOOKING_MAX_DAYS, active = active)
+      prisonUserClient = PrisonUserClient(prison.id, prison, prisonClientType, policyNoticeDaysMin = DEFAULT_BOOKING_MIN_DAYS, policyNoticeDaysMax = DEFAULT_BOOKING_MAX_DAYS, active = active)
       prison.clients.add(prisonUserClient)
     }
     return PrisonUserClientDto(prisonUserClient)
@@ -263,7 +244,7 @@ class PrisonConfigService(
             prisonCode,
             client.policyNoticeDaysMin.toString(),
             client.policyNoticeDaysMax.toString(),
-            client.userType.name,
+            client.clientType.name,
           ),
         )
       }

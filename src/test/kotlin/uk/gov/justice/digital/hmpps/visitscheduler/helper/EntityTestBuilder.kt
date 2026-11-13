@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.helper
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonUserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
@@ -53,13 +54,13 @@ fun prison(
   weekStartDay: DayOfWeek = DayOfWeek.MONDAY,
   remandVisitLimitPerWeek: Int = 3,
   clients: List<PrisonUserClientDto> = listOf(
-    PrisonUserClientDto(policyNoticeDaysMin, policyNoticeDaysMax, UserType.STAFF, true),
-    PrisonUserClientDto(policyNoticeDaysMin, policyNoticeDaysMax, UserType.PUBLIC, true),
+    PrisonUserClientDto(policyNoticeDaysMin, policyNoticeDaysMax, PrisonClientType.STAFF, true),
+    PrisonUserClientDto(policyNoticeDaysMin, policyNoticeDaysMax, PrisonClientType.PUBLIC, true),
   ),
 ): Prison {
   val prison = Prison(code = prisonCode, active = isActive, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears, weekStartDay, remandVisitLimitPerWeek)
   clients.forEach { client ->
-    PrisonUserClient(prisonId = prison.id, prison = prison, userType = client.userType, policyNoticeDaysMin = client.policyNoticeDaysMin, policyNoticeDaysMax = client.policyNoticeDaysMax, active = client.active).also {
+    PrisonUserClient(prisonId = prison.id, prison = prison, clientType = client.clientType, policyNoticeDaysMin = client.policyNoticeDaysMin, policyNoticeDaysMax = client.policyNoticeDaysMax, active = client.active).also {
       prison.clients.add(it)
     }
   }
@@ -85,7 +86,7 @@ fun sessionTemplate(
   includeCategoryGroupType: Boolean = true,
   includeIncentiveGroupType: Boolean = true,
   prison: Prison,
-  userTypes: List<UserType> = listOf(UserType.STAFF, UserType.PUBLIC),
+  clientTypes: List<PrisonClientType> = listOf(PrisonClientType.STAFF, PrisonClientType.PUBLIC),
   visitOrderRestrictionType: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
   isAgeRestricted: Boolean = false,
   ageRestriction: Int = 18,
@@ -115,7 +116,7 @@ fun sessionTemplate(
     ageRestriction = ageRestriction,
   ).also { it.reference = UUID.randomUUID().toString() }
 
-  sessionTemplate = addUserClients(sessionTemplate, userTypes)
+  sessionTemplate = addUserClients(sessionTemplate, clientTypes)
   return sessionTemplate
 }
 
@@ -146,7 +147,7 @@ fun sessionTemplate(
   includeLocationGroupType: Boolean = true,
   includeCategoryGroupType: Boolean = true,
   includeIncentiveGroupType: Boolean = true,
-  userTypes: List<UserType> = listOf(UserType.STAFF, UserType.PUBLIC),
+  clientTypes: List<PrisonClientType> = listOf(PrisonClientType.STAFF, PrisonClientType.PUBLIC),
   visitOrderRestrictionType: SessionTemplateVisitOrderRestrictionType = SessionTemplateVisitOrderRestrictionType.VO_PVO,
   isAgeRestricted: Boolean = false,
   ageRestriction: Int = 18,
@@ -161,8 +162,8 @@ fun sessionTemplate(
     weekStartDay = weekStartDay,
     remandVisitLimitPerWeek = remandVisitLimitPerWeek,
   )
-  val staffClient = PrisonUserClient(prisonId = prison.id, prison = prison, userType = UserType.STAFF, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax, active = true)
-  val publicClient = PrisonUserClient(prisonId = prison.id, prison = prison, userType = UserType.PUBLIC, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax, active = true)
+  val staffClient = PrisonUserClient(prisonId = prison.id, prison = prison, clientType = PrisonClientType.STAFF, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax, active = true)
+  val publicClient = PrisonUserClient(prisonId = prison.id, prison = prison, clientType = PrisonClientType.PUBLIC, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax, active = true)
   prison.clients.addAll(listOf(staffClient, publicClient))
 
   var sessionTemplate = SessionTemplate(
@@ -189,7 +190,7 @@ fun sessionTemplate(
     isAgeRestricted = isAgeRestricted,
     ageRestriction = ageRestriction,
   ).also { it.reference = UUID.randomUUID().toString() }
-  sessionTemplate = addUserClients(sessionTemplate, userTypes)
+  sessionTemplate = addUserClients(sessionTemplate, clientTypes)
 
   return sessionTemplate
 }
@@ -253,15 +254,15 @@ fun createVisit(
 
 private fun addUserClients(
   sessionTemplate: SessionTemplate,
-  userTypes: List<UserType>,
+  clientTypes: List<PrisonClientType>,
 ): SessionTemplate {
-  userTypes.forEach { userType ->
+  clientTypes.forEach { clientType ->
     sessionTemplate.clients.add(
       SessionTemplateUserClient(
         sessionTemplateId = sessionTemplate.id,
         sessionTemplate = sessionTemplate,
         active = true,
-        userType = userType,
+        clientType = clientType,
         createTimestamp = LocalDateTime.now(),
         modifyTimestamp = LocalDateTime.now(),
       ),

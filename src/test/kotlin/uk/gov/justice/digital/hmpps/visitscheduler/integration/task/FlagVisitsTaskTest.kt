@@ -22,9 +22,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonAssociationDomainEventType.NON_ASSOCIATION_CREATED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.NON_ASSOCIATION_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_RELEASED_EVENT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerReleaseReasonType.RELEASED
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
@@ -450,7 +450,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     permittedLocations: List<AllowedSessionLocationHierarchy>? = null,
     permittedCategories: List<PrisonerCategoryType>? = null,
     permittedIncentiveLevels: List<IncentiveLevel>? = null,
-    userTypes: List<UserType> = listOf(UserType.STAFF, UserType.PUBLIC),
+    clientTypes: List<PrisonClientType> = listOf(PrisonClientType.STAFF, PrisonClientType.PUBLIC),
   ): SessionTemplate {
     val permittedLocationGroups: MutableList<SessionLocationGroup> = mutableListOf()
     val permittedCategoryGroups: MutableList<SessionCategoryGroup> = mutableListOf()
@@ -476,7 +476,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
       permittedLocationGroups = permittedLocationGroups,
       permittedCategories = permittedCategoryGroups,
       permittedIncentiveLevels = permittedIncentiveLevelGroups,
-      clients = userTypes.map { UserClientDto(it, true) },
+      clients = clientTypes.map { UserClientDto(it, true) },
     )
   }
 }

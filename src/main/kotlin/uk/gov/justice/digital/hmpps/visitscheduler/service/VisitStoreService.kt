@@ -4,7 +4,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
@@ -42,13 +41,10 @@ class VisitStoreService(
   private val sessionSlotService: SessionSlotService,
   private val applicationValidationService: ApplicationValidationService,
   private val applicationService: ApplicationService,
+  private val visitNotificationTransactionalService: VisitNotificationTransactionalService,
   @param:Autowired private val visitDtoBuilder: VisitDtoBuilder,
   @param:Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int,
 ) {
-
-  @Lazy
-  @Autowired
-  private lateinit var visitNotificationEventService: VisitNotificationEventService
 
   @Autowired
   private lateinit var sessionTemplateService: SessionTemplateService
@@ -198,7 +194,7 @@ class VisitStoreService(
   }
 
   private fun handleVisitUpdateEvents(existingBooking: Visit) {
-    visitNotificationEventService.deleteVisitAndPairedNotificationEvents(existingBooking.reference, VISIT_UPDATED)
+    visitNotificationTransactionalService.deleteVisitAndPairedNotificationEvents(existingBooking.reference, VISIT_UPDATED)
   }
 
   fun cancelVisit(reference: String, cancelVisitDto: CancelVisitDto): VisitDto {

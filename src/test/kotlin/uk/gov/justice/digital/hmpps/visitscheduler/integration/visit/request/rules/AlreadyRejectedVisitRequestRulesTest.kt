@@ -10,9 +10,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestVisitorDeta
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.IN_PROGRESS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonVisitRequestRuleType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.VisitBalancesDto
@@ -75,7 +75,7 @@ class AlreadyRejectedVisitRequestRulesTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
 
     // When
-    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, visitorIds = listOf(visitor1Id, visitor2Id, visitor3Id), authHttpHeaders = roleVisitSchedulerHttpHeaders)
+    val responseResult = callGetSessions(prisonCode, prisonerId, clientType = PrisonClientType.STAFF, visitorIds = listOf(visitor1Id, visitor2Id, visitor3Id), authHttpHeaders = roleVisitSchedulerHttpHeaders)
 
     // Then
     responseResult.expectStatus().isOk
@@ -117,7 +117,7 @@ class AlreadyRejectedVisitRequestRulesTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
 
     // When
-    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = roleVisitSchedulerHttpHeaders)
+    val responseResult = callGetSessions(prisonCode, prisonerId, clientType = PrisonClientType.STAFF, authHttpHeaders = roleVisitSchedulerHttpHeaders)
 
     // Then
     responseResult.expectStatus().isOk
@@ -151,7 +151,7 @@ class AlreadyRejectedVisitRequestRulesTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
 
     // When
-    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, visitorIds = listOf(visitor1Id, visitor2Id, visitor3Id), authHttpHeaders = roleVisitSchedulerHttpHeaders)
+    val responseResult = callGetSessions(prisonCode, prisonerId, clientType = PrisonClientType.STAFF, visitorIds = listOf(visitor1Id, visitor2Id, visitor3Id), authHttpHeaders = roleVisitSchedulerHttpHeaders)
 
     // Then
     responseResult.expectStatus().isOk
@@ -185,7 +185,7 @@ class AlreadyRejectedVisitRequestRulesTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
 
     // When
-    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, visitorIds = listOf(visitor1Id, visitor2Id, visitor3Id), authHttpHeaders = roleVisitSchedulerHttpHeaders)
+    val responseResult = callGetSessions(prisonCode, prisonerId, clientType = PrisonClientType.STAFF, visitorIds = listOf(visitor1Id, visitor2Id, visitor3Id), authHttpHeaders = roleVisitSchedulerHttpHeaders)
 
     // Then
     responseResult.expectStatus().isOk
@@ -236,7 +236,7 @@ class AlreadyRejectedVisitRequestRulesTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
 
     // When
-    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, visitorIds = listOf(visitor1Id, visitor2Id, visitor3Id), authHttpHeaders = roleVisitSchedulerHttpHeaders)
+    val responseResult = callGetSessions(prisonCode, prisonerId, clientType = PrisonClientType.STAFF, visitorIds = listOf(visitor1Id, visitor2Id, visitor3Id), authHttpHeaders = roleVisitSchedulerHttpHeaders)
 
     // Then
     responseResult.expectStatus().isOk
@@ -289,7 +289,7 @@ class AlreadyRejectedVisitRequestRulesTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
 
     // When
-    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, visitorIds = listOf(visitor1Id, visitor2Id, visitor3Id), authHttpHeaders = roleVisitSchedulerHttpHeaders)
+    val responseResult = callGetSessions(prisonCode, prisonerId, clientType = PrisonClientType.STAFF, visitorIds = listOf(visitor1Id, visitor2Id, visitor3Id), authHttpHeaders = roleVisitSchedulerHttpHeaders)
 
     // Then
     responseResult.expectStatus().isOk

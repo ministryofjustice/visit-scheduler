@@ -27,7 +27,7 @@ import tools.jackson.databind.ObjectMapper
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ValidationErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.MoveVisitsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.RequestSessionTemplateVisitStatsDto
@@ -503,7 +503,7 @@ class SessionTemplateAdminController(
     reference: String,
     @Schema(description = "type", example = "STAFF", required = true)
     @PathVariable
-    type: UserType,
+    type: PrisonClientType,
   ): UserClientDto = sessionTemplateService.activateSessionTemplateClient(reference, type)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
@@ -539,6 +539,6 @@ class SessionTemplateAdminController(
     reference: String,
     @Schema(description = "type", example = "STAFF", required = true)
     @PathVariable
-    type: UserType,
+    type: PrisonClientType,
   ): UserClientDto = sessionTemplateService.deActivateSessionTemplateClient(reference, type)
 }

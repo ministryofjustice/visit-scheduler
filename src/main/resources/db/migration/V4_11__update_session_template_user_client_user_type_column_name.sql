@@ -1,0 +1,2 @@
+ALTER TABLE session_template_user_client RENAME COLUMN user_type to client_type;
+ALTER TABLE session_template_user_client ADD CONSTRAINT session_template_user_client_unq_prison_client_type UNIQUE (session_template_id, client_type);

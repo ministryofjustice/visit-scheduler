@@ -5,4 +5,5 @@ enum class VisitType(
   val description: String,
 ) {
   SOCIAL("Social"),
+  SOCIAL_VIDEO("Social video"),
 }

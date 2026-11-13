@@ -11,8 +11,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.Session
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.SessionDateRangeValidation
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.SessionTimeSlotValidation
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionTemplateVisitOrderRestrictionType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import java.time.DayOfWeek
 
 data class CreateSessionTemplateDto(
@@ -65,7 +65,7 @@ data class CreateSessionTemplateDto(
   val includeLocationGroupType: Boolean,
 
   @param:Schema(description = "Session template user clients.", required = false)
-  val clients: List<UserClientDto> = listOf(UserClientDto(UserType.STAFF, true), UserClientDto(UserType.PUBLIC, true)),
+  val clients: List<UserClientDto> = listOf(UserClientDto(PrisonClientType.STAFF, true), UserClientDto(PrisonClientType.PUBLIC, true)),
 
   @param:Schema(description = "Determines behaviour of category groups. True equates to these category groups being included, false equates to them being excluded.", required = true)
   val includeCategoryGroupType: Boolean,

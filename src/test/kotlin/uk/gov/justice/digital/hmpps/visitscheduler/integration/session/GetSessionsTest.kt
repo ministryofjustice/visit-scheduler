@@ -1,11 +1,21 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.session
 
+import com.microsoft.applicationinsights.TelemetryClient
+import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.mockito.ArgumentCaptor
+import org.mockito.Captor
+import org.mockito.kotlin.any
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.isNull
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus.BAD_REQUEST
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
@@ -14,13 +24,13 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.A
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.IN_PROGRESS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel.ENHANCED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel.STANDARD
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonClientType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType.A_EXCEPTIONAL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType.A_HIGH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType.A_PROVISIONAL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType.A_STANDARD
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType.B
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
@@ -32,11 +42,12 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAss
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AdditionalSessionConflictInfoDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionConflictAttribute
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionConflictType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
-import java.time.DayOfWeek.FRIDAY
+import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryClientService
 import java.time.DayOfWeek.MONDAY
 import java.time.DayOfWeek.SATURDAY
 import java.time.DayOfWeek.SUNDAY
@@ -54,6 +65,12 @@ class GetSessionsTest : IntegrationTestBase() {
   private val prisonCode = "STC"
 
   private lateinit var authHttpHeaders: (HttpHeaders) -> Unit
+
+  @MockitoSpyBean
+  private lateinit var telemetryClientSpy: TelemetryClient
+
+  @Captor
+  lateinit var mapCapture: ArgumentCaptor<Map<String, String>>
 
   @BeforeEach
   internal fun setUpTests() {
@@ -77,7 +94,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -107,7 +124,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -137,7 +154,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode = "AWE", prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode = "AWE", prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -169,7 +186,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode = "AWE", prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode = "AWE", prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -219,7 +236,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode = "AWE", prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode = "AWE", prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -275,7 +292,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode = "AWE", prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode = "AWE", prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -323,7 +340,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode = "AWE", prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode = "AWE", prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -394,7 +411,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -432,7 +449,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -464,7 +481,7 @@ class GetSessionsTest : IntegrationTestBase() {
 
     // When
 
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -495,7 +512,7 @@ class GetSessionsTest : IntegrationTestBase() {
 
     // When
 
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -530,7 +547,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -565,7 +582,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -604,7 +621,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -643,7 +660,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -671,7 +688,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -717,7 +734,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -762,7 +779,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -773,8 +790,7 @@ class GetSessionsTest : IntegrationTestBase() {
   @Test
   fun `bi weekly schedule - test for sunday change boundary`() {
     val today = LocalDate.now()
-    // as there is a day added now before returning the sessions this test needs to move back a day
-    val todayIsFridaySaturdayOrSunday = today.dayOfWeek in listOf(FRIDAY, SATURDAY, SUNDAY)
+    val todayIsSaturdayOrSunday = today.dayOfWeek in listOf(SATURDAY, SUNDAY)
 
     // Given
     val startFromWeek1 = today.with(TemporalAdjusters.next(MONDAY)).minusWeeks(1)
@@ -797,7 +813,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -805,8 +821,8 @@ class GetSessionsTest : IntegrationTestBase() {
 
     val visitSessionResults = getResults(returnResult)
     assertThat(visitSessionResults.size).isGreaterThan(2)
-    if (todayIsFridaySaturdayOrSunday) {
-      // On the weekend it skips to the other session template / schedule because we cannot book with in 24 hrs
+    if (todayIsSaturdayOrSunday) {
+      // At the weekend the minimum booking notice skips the current Sunday's session
       assertThat(visitSessionResults[0].visitRoom).isEqualTo("Alternate 2")
       assertThat(visitSessionResults[1].visitRoom).isEqualTo("Alternate 1")
     } else {
@@ -835,7 +851,7 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -867,7 +883,7 @@ class GetSessionsTest : IntegrationTestBase() {
 
     // When
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
-    val responseSpec = callGetSessions(prisonCode = prisonCode, prisonerId = prisonerId, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode = prisonCode, prisonerId = prisonerId, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -899,7 +915,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -935,7 +951,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, 0, 28, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, 0, 28, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -969,7 +985,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -997,7 +1013,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     assertNoResponse(responseSpec)
@@ -1017,7 +1033,7 @@ class GetSessionsTest : IntegrationTestBase() {
 
     // When
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
-    val responseSpec = callGetSessions(prisonCode, prisonerId, policyNoticeDaysMin, policyNoticeDaysMax, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, policyNoticeDaysMin, policyNoticeDaysMax, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     assertNoResponse(responseSpec)
@@ -1035,7 +1051,7 @@ class GetSessionsTest : IntegrationTestBase() {
 
     // When
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
-    val responseSpec = callGetSessions(prisonCode, prisonerId, policyNoticeDaysMin, policyNoticeDaysMax, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, policyNoticeDaysMin, policyNoticeDaysMax, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     assertNoResponse(responseSpec)
@@ -1052,7 +1068,7 @@ class GetSessionsTest : IntegrationTestBase() {
     sessionTemplateEntityHelper.create(validFromDate = nextAllowedDay, validToDate = nextAllowedDay)
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, policyNoticeDaysMin, policyNoticeDaysMax, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, policyNoticeDaysMin, policyNoticeDaysMax, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     assertNoResponse(responseSpec)
@@ -1067,7 +1083,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     assertNoResponse(responseSpec)
@@ -1082,7 +1098,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     assertNoResponse(responseSpec)
@@ -1160,7 +1176,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     assertBookCounts(responseSpec, openCount = 2, closeCount = 0)
@@ -1210,7 +1226,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     assertBookCounts(responseSpec, openCount = 0, closeCount = 0)
@@ -1303,7 +1319,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     assertBookCounts(responseSpec, openCount = 0, closeCount = 2)
@@ -1444,7 +1460,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     assertBookCounts(responseSpec, openCount = 5, closeCount = 1)
@@ -1463,10 +1479,10 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
-    assertResponseLength(responseSpec, 4)
+    verify(telemetryClientSpy, times(0)).trackEvent(any(), any(), isNull())
   }
 
   @Test
@@ -1486,10 +1502,11 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     assertResponseLength(responseSpec, 4)
+    verify(telemetryClientSpy, times(0)).trackEvent(any(), any(), any())
   }
 
   @Test
@@ -1522,7 +1539,7 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -1536,6 +1553,7 @@ class GetSessionsTest : IntegrationTestBase() {
     assertThat(visitSessionDtos[1].sessionConflicts).isEmpty()
     assertThat(visitSessionDtos[2].sessionConflicts).isEmpty()
     assertThat(visitSessionDtos[3].sessionConflicts).isEmpty()
+    verify(telemetryClientSpy, times(0)).trackEvent(any(), any(), any())
   }
 
   @Test
@@ -1596,7 +1614,7 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -1610,6 +1628,7 @@ class GetSessionsTest : IntegrationTestBase() {
     assertThat(visitSessionDtos[2].sessionConflicts).hasSize(1)
     assertThat(visitSessionDtos[2].sessionConflicts.map { it.sessionConflict }).contains(SessionConflict.DOUBLE_BOOKING_OR_RESERVATION)
     assertThat(visitSessionDtos[3].sessionConflicts).isEmpty()
+    verify(telemetryClientSpy, times(0)).trackEvent(any(), any(), any())
   }
 
   @Test
@@ -1642,10 +1661,11 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     assertResponseLength(responseSpec, 4)
+    verify(telemetryClientSpy, times(0)).trackEvent(any(), any(), any())
   }
 
   @Test
@@ -1678,7 +1698,7 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
 
     // When
-    val returnResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders).expectBody()
+    val returnResult = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders).expectBody()
 
     // Then
 
@@ -1697,6 +1717,26 @@ class GetSessionsTest : IntegrationTestBase() {
         ),
       )
     }
+
+    verify(telemetryClientSpy, times(1)).trackEvent(eq("non-association-sessions"), mapCapture.capture(), isNull())
+    verify(telemetryClientSpy).trackEvent(
+      eq("non-association-sessions"),
+      org.mockito.kotlin.check { event ->
+        Assertions.assertThat(event["prisonerId"]).isEqualTo(prisonerId)
+        Assertions.assertThat(event["prisonId"]).isEqualTo(prisonCode)
+        Assertions.assertThat(event["totalSessionsUnavailable"]).isEqualTo("1")
+        val nonAssociationSessionDetails = getNonAssociationDetails(event["nonAssociationData"])
+        Assertions.assertThat(nonAssociationSessionDetails.size).isEqualTo(1)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionTemplateReference).isEqualTo(sessionTemplate.reference)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionDate).isEqualTo(visit.sessionSlot.slotDate)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionStartTime).isEqualTo(sessionTemplate.startTime)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionEndTime).isEqualTo(sessionTemplate.endTime)
+        Assertions.assertThat(nonAssociationSessionDetails[0].nonAssociationDetails).containsExactlyInAnyOrder(
+          TelemetryClientService.NonAssociationDetails(associationPrisonerId, SessionConflictType.VISIT.name, visit.reference),
+        )
+      },
+      isNull(),
+    )
   }
 
   @Test
@@ -1742,7 +1782,7 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
 
     // When
-    val returnResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders).expectBody()
+    val returnResult = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders).expectBody()
 
     // Then
     val visitSessions = getResults(returnResult)
@@ -1763,6 +1803,26 @@ class GetSessionsTest : IntegrationTestBase() {
         ),
       )
     }
+
+    verify(telemetryClientSpy, times(1)).trackEvent(eq("non-association-sessions"), mapCapture.capture(), isNull())
+    verify(telemetryClientSpy).trackEvent(
+      eq("non-association-sessions"),
+      org.mockito.kotlin.check { event ->
+        Assertions.assertThat(event["prisonerId"]).isEqualTo(prisonerId)
+        Assertions.assertThat(event["prisonId"]).isEqualTo(prisonCode)
+        Assertions.assertThat(event["totalSessionsUnavailable"]).isEqualTo("1")
+        val nonAssociationSessionDetails = getNonAssociationDetails(event["nonAssociationData"])
+        Assertions.assertThat(nonAssociationSessionDetails.size).isEqualTo(1)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionTemplateReference).isEqualTo(sessionTemplate.reference)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionDate).isEqualTo(nonAssociationVisit.sessionSlot.slotDate)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionStartTime).isEqualTo(sessionTemplate.startTime)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionEndTime).isEqualTo(sessionTemplate.endTime)
+        Assertions.assertThat(nonAssociationSessionDetails[0].nonAssociationDetails).containsExactlyInAnyOrder(
+          TelemetryClientService.NonAssociationDetails(associationPrisonerId, SessionConflictType.VISIT.name, nonAssociationVisit.reference),
+        )
+      },
+      isNull(),
+    )
   }
 
   @Test
@@ -1814,7 +1874,7 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
 
     // When
-    val returnResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders).expectBody()
+    val returnResult = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders).expectBody()
 
     // Then
 
@@ -1838,6 +1898,27 @@ class GetSessionsTest : IntegrationTestBase() {
         ),
       )
     }
+
+    verify(telemetryClientSpy, times(1)).trackEvent(eq("non-association-sessions"), mapCapture.capture(), isNull())
+    verify(telemetryClientSpy).trackEvent(
+      eq("non-association-sessions"),
+      org.mockito.kotlin.check { event ->
+        Assertions.assertThat(event["prisonerId"]).isEqualTo(prisonerId)
+        Assertions.assertThat(event["prisonId"]).isEqualTo(prisonCode)
+        Assertions.assertThat(event["totalSessionsUnavailable"]).isEqualTo("1")
+        val nonAssociationSessionDetails = getNonAssociationDetails(event["nonAssociationData"])
+        Assertions.assertThat(nonAssociationSessionDetails.size).isEqualTo(1)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionTemplateReference).isEqualTo(sessionTemplate.reference)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionDate).isEqualTo(visit1.sessionSlot.slotDate)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionStartTime).isEqualTo(sessionTemplate.startTime)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionEndTime).isEqualTo(sessionTemplate.endTime)
+        Assertions.assertThat(nonAssociationSessionDetails[0].nonAssociationDetails).containsExactlyInAnyOrder(
+          TelemetryClientService.NonAssociationDetails(associationPrisonerId1, SessionConflictType.VISIT.name, visit1.reference),
+          TelemetryClientService.NonAssociationDetails(associationPrisonerId2, SessionConflictType.VISIT.name, visit2.reference),
+        )
+      },
+      isNull(),
+    )
   }
 
   @Test
@@ -1872,10 +1953,11 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     assertResponseLength(responseSpec, 4)
+    verify(telemetryClientSpy, times(0)).trackEvent(any(), any(), any())
   }
 
   @Test
@@ -1908,10 +1990,11 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     assertResponseLength(responseSpec, 4)
+    verify(telemetryClientSpy, times(0)).trackEvent(any(), any(), any())
   }
 
   @Test
@@ -1943,10 +2026,11 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     assertResponseLength(responseSpec, 4)
+    verify(telemetryClientSpy, times(0)).trackEvent(any(), any(), any())
   }
 
   @Test
@@ -1977,7 +2061,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // session 2 is only available for prisoners in Wing B
-    sessionTemplateEntityHelper.create(
+    val sessionTemplate2 = sessionTemplateEntityHelper.create(
       validFromDate = validFromDate,
       dayOfWeek = validFromDate.dayOfWeek,
       prisonCode = prisonCode,
@@ -2013,7 +2097,7 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetPrisonerHousingLocation(associationPrisonerId, "${prison.code}-A-1-C001")
 
     // When
-    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseResult = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val sessions = getResults(responseResult.expectBody())
@@ -2030,6 +2114,26 @@ class GetSessionsTest : IntegrationTestBase() {
         ),
       )
     }
+
+    verify(telemetryClientSpy, times(1)).trackEvent(eq("non-association-sessions"), mapCapture.capture(), isNull())
+    verify(telemetryClientSpy).trackEvent(
+      eq("non-association-sessions"),
+      org.mockito.kotlin.check { event ->
+        Assertions.assertThat(event["prisonerId"]).isEqualTo(prisonerId)
+        Assertions.assertThat(event["prisonId"]).isEqualTo(prisonCode)
+        Assertions.assertThat(event["totalSessionsUnavailable"]).isEqualTo("1")
+        val nonAssociationSessionDetails = getNonAssociationDetails(event["nonAssociationData"])
+        Assertions.assertThat(nonAssociationSessionDetails.size).isEqualTo(1)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionTemplateReference).isEqualTo(sessionTemplate2.reference)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionDate).isEqualTo(visit.sessionSlot.slotDate)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionStartTime).isEqualTo(sessionTemplate2.startTime)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionEndTime).isEqualTo(sessionTemplate2.endTime)
+        Assertions.assertThat(nonAssociationSessionDetails[0].nonAssociationDetails).containsExactlyInAnyOrder(
+          TelemetryClientService.NonAssociationDetails(associationPrisonerId, SessionConflictType.VISIT.name, visit.reference),
+        )
+      },
+      isNull(),
+    )
   }
 
   @Test
@@ -2060,7 +2164,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // session 2 is only available for prisoners in Wing B
-    sessionTemplateEntityHelper.create(
+    val sessionTemplate2 = sessionTemplateEntityHelper.create(
       validFromDate = validFromDate,
       dayOfWeek = validFromDate.dayOfWeek,
       prisonCode = prisonCode,
@@ -2096,7 +2200,7 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetPrisonerHousingLocation(associationPrisonerId, "${prison.code}-A-1-C001")
 
     // When
-    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders).expectBody()
+    val responseResult = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders).expectBody()
 
     // Then
     val sessions = getResults(responseResult)
@@ -2114,6 +2218,26 @@ class GetSessionsTest : IntegrationTestBase() {
         ),
       )
     }
+
+    verify(telemetryClientSpy, times(1)).trackEvent(eq("non-association-sessions"), mapCapture.capture(), isNull())
+    verify(telemetryClientSpy).trackEvent(
+      eq("non-association-sessions"),
+      org.mockito.kotlin.check { event ->
+        Assertions.assertThat(event["prisonerId"]).isEqualTo(prisonerId)
+        Assertions.assertThat(event["prisonId"]).isEqualTo(prisonCode)
+        Assertions.assertThat(event["totalSessionsUnavailable"]).isEqualTo("1")
+        val nonAssociationSessionDetails = getNonAssociationDetails(event["nonAssociationData"])
+        Assertions.assertThat(nonAssociationSessionDetails.size).isEqualTo(1)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionTemplateReference).isEqualTo(sessionTemplate2.reference)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionDate).isEqualTo(application.sessionSlot.slotDate)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionStartTime).isEqualTo(sessionTemplate2.startTime)
+        Assertions.assertThat(nonAssociationSessionDetails[0].sessionEndTime).isEqualTo(sessionTemplate2.endTime)
+        Assertions.assertThat(nonAssociationSessionDetails[0].nonAssociationDetails).containsExactlyInAnyOrder(
+          TelemetryClientService.NonAssociationDetails(associationPrisonerId, SessionConflictType.APPLICATION.name, null),
+        )
+      },
+      isNull(),
+    )
   }
 
   @Test
@@ -2169,13 +2293,14 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetPrisonerHousingLocation(associationPrisonerId, "$associationPrisonerPrison-A-1-C001")
 
     // When
-    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders).expectBody()
+    val responseResult = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders).expectBody()
 
     // Then
     val sessions = getResults(responseResult)
 
     assertThat(sessions.map { it.startTimestamp.toLocalDate() }).contains(visit.sessionSlot.slotDate)
     assertThat(sessions.size).isEqualTo(4)
+    verify(telemetryClientSpy, times(0)).trackEvent(any(), any(), any())
   }
 
   @Test
@@ -2230,13 +2355,14 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetPrisonerHousingLocation(associationPrisonerId, "$associationPrisonerPrison-A-1-C001")
 
     // When
-    val responseResult = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders).expectBody()
+    val responseResult = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders).expectBody()
 
     // Then
     val sessions = getResults(responseResult)
 
     assertThat(sessions.map { it.startTimestamp.toLocalDate() }).contains(application.sessionSlot.slotDate)
     assertThat(sessions.size).isEqualTo(4)
+    verify(telemetryClientSpy, times(0)).trackEvent(any(), any(), any())
   }
 
   @Test
@@ -2251,7 +2377,7 @@ class GetSessionsTest : IntegrationTestBase() {
 
     // When
     // get sessions call is being made with the incorrect prison Code
-    val responseSpec = callGetSessions(incorrectPrisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(incorrectPrisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
 
@@ -2286,7 +2412,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isNotFound.expectBody()
@@ -2320,7 +2446,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isNotFound.expectBody()
@@ -2354,7 +2480,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     responseSpec.expectStatus().isOk
@@ -2386,7 +2512,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, clientType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -2416,7 +2542,7 @@ class GetSessionsTest : IntegrationTestBase() {
     val responseSpec = callGetSessions(
       prisonCode = "AWE",
       prisonerId,
-      userType = STAFF,
+      clientType = STAFF,
       authHttpHeaders = authHttpHeaders,
       youngestVisitorAge = 16,
     )
@@ -2453,7 +2579,7 @@ class GetSessionsTest : IntegrationTestBase() {
     val responseSpec = callGetSessions(
       prisonCode = "AWE",
       prisonerId,
-      userType = STAFF,
+      clientType = STAFF,
       authHttpHeaders = authHttpHeaders,
       youngestVisitorAge = 16,
     )
@@ -2515,4 +2641,6 @@ class GetSessionsTest : IntegrationTestBase() {
   }
 
   private fun getResults(returnResult: BodyContentSpec): Array<VisitSessionDto> = objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)
+
+  private fun getNonAssociationDetails(nonAssociationSessionDetails: String?): List<TelemetryClientService.NonAssociationSessionDetails> = objectMapper.readValue(nonAssociationSessionDetails, Array<TelemetryClientService.NonAssociationSessionDetails>::class.java).toList()
 }

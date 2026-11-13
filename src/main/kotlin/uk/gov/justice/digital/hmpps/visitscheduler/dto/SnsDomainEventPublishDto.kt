@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.dto
 
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotNull
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import java.time.LocalDateTime
 
 @Schema(description = "Visit")
@@ -18,5 +19,6 @@ data class SnsDomainEventPublishDto(
   val prisonerId: String,
   @param:Schema(description = "Event audit id", example = "12345", required = true)
   val eventAuditId: Long,
-
+  @param:Schema(description = "Visit type", example = "SOCIAL", required = true)
+  val visitType: VisitType,
 )
