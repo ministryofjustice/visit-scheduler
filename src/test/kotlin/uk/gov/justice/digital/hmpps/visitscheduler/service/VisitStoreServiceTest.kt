@@ -154,6 +154,7 @@ internal class VisitStoreServiceTest {
   @DisplayName("updateVisitFromExternalSystem")
   inner class UpdateVisitFromExternalSystem {
     private val updateVisitFromExternalSystemDto = UpdateVisitFromExternalSystemDto(
+      clientName = "ext-user-client",
       actionedBy = "external-user",
       applicationMethodType = ApplicationMethodType.EMAIL,
       userType = UserType.STAFF,

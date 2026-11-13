@@ -12,6 +12,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import java.time.LocalDateTime
 
 data class UpdateVisitFromExternalSystemDto(
+  @param:Schema(description = "Client name. Must exactly match the client that created the visit.", required = true)
+  @field:NotBlank
+  val clientName: String,
   @param:JsonAlias("username")
   @param:Schema(description = "Identity of the user who actioned this request. Also accepts username as an input alias. Required and nonblank for STAFF (username, maximum 60 characters) or PUBLIC (booker reference). Ignored for PRISONER (including omitted or null userType), which always uses the visit's prisoner ID (maximum 60 characters). SYSTEM uses the shared system actor.", required = false)
   val actionedBy: String? = null,
