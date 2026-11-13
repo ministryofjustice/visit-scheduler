@@ -1,9 +1,11 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
+import jakarta.validation.ValidationException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.security.access.AccessDeniedException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
@@ -218,6 +220,26 @@ class VisitStoreService(
     }
 
     return visitDtoBuilder.build(visitRepository.saveAndFlush(visitEntity))
+  }
+
+  data class CancellationResult(val visit: VisitDto, val alreadyCancelled: Boolean)
+
+  fun cancelVisitFromExternalSystem(reference: String, clientName: String, cancelVisitDto: CancelVisitDto): CancellationResult {
+    val visit = visitRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit $reference not found")
+    validateExternalVisitClient(clientName, visit)
+    if (visit.visitStatus == CANCELLED) {
+      return CancellationResult(visitDtoBuilder.build(visit), alreadyCancelled = true)
+    }
+    return CancellationResult(cancelVisit(reference, cancelVisitDto), alreadyCancelled = false)
+  }
+
+  fun validateExternalVisitClient(clientName: String, visit: Visit) {
+    if (clientName.isBlank()) {
+      throw ValidationException("clientName must be provided")
+    }
+    if (visit.visitExternalSystemDetails?.clientName != clientName) {
+      throw AccessDeniedException("Client does not own this external visit")
+    }
   }
 
   private fun validateCancelRequest(cancelVisitDto: CancelVisitDto, visitEntity: Visit) {

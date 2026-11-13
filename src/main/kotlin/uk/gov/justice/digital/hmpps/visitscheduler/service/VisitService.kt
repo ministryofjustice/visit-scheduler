@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.SnsDomainEventPublishDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitFromExternalSystemDto
@@ -127,6 +128,18 @@ class VisitService(
 
     val cancelledVisit = visitStoreService.cancelVisit(reference, cancelVisitDto)
     return processCancelEvents(cancelledVisit, cancelVisitDto)
+  }
+
+  fun cancelVisitFromExternalSystem(reference: String, request: CancelVisitFromExternalSystemDto): VisitDto {
+    validateAuditUsernameLength(request.actionedBy, request.userType)
+    val cancelVisitDto = CancelVisitDto(
+      cancelOutcome = request.cancelOutcome,
+      actionedBy = request.actionedBy,
+      userType = request.userType,
+      applicationMethodType = request.applicationMethodType,
+    )
+    val result = visitStoreService.cancelVisitFromExternalSystem(reference, request.clientName, cancelVisitDto)
+    return if (result.alreadyCancelled) result.visit else processCancelEvents(result.visit, cancelVisitDto)
   }
 
   @Transactional(readOnly = true)
@@ -429,6 +442,7 @@ class VisitService(
     validateExternalVisitActionedBy(updateVisitFromExternalSystemDto.actionedBy, userType)
     val existingVisit =
       visitRepository.findBookedVisit(bookingReference) ?: throw VisitNotFoundException("Visit $bookingReference not found")
+    visitStoreService.validateExternalVisitClient(updateVisitFromExternalSystemDto.clientName, existingVisit)
     val actionedBy = resolveExternalVisitActionedBy(
       updateVisitFromExternalSystemDto.actionedBy,
       userType,
@@ -452,10 +466,14 @@ class VisitService(
 
   private fun resolveExternalVisitActionedBy(actionedBy: String?, userType: UserType, prisonerId: String): String {
     val effectiveActionedBy = if (userType == UserType.PRISONER) prisonerId else actionedBy ?: prisonerId
-    if ((userType == UserType.STAFF || userType == UserType.PRISONER) && effectiveActionedBy.length > 60) {
+    validateAuditUsernameLength(effectiveActionedBy, userType)
+    return effectiveActionedBy
+  }
+
+  private fun validateAuditUsernameLength(actionedBy: String, userType: UserType) {
+    if ((userType == UserType.STAFF || userType == UserType.PRISONER) && actionedBy.length > 60) {
       throw ValidationException("Audit username must not exceed 60 characters")
     }
-    return effectiveActionedBy
   }
 
   @Transactional(readOnly = true)
