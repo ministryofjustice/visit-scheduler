@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
-import jakarta.validation.ValidationException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -224,7 +223,7 @@ class VisitStoreService(
 
   data class CancellationResult(val visit: VisitDto, val alreadyCancelled: Boolean)
 
-  fun cancelVisitFromExternalSystem(reference: String, clientName: String, cancelVisitDto: CancelVisitDto): CancellationResult {
+  fun cancelVisitFromExternalSystem(reference: String, clientName: String?, cancelVisitDto: CancelVisitDto): CancellationResult {
     val visit = visitRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit $reference not found")
     validateExternalVisitClient(clientName, visit)
     if (visit.visitStatus == CANCELLED) {
@@ -233,11 +232,8 @@ class VisitStoreService(
     return CancellationResult(cancelVisit(reference, cancelVisitDto), alreadyCancelled = false)
   }
 
-  fun validateExternalVisitClient(clientName: String, visit: Visit) {
-    if (clientName.isBlank()) {
-      throw ValidationException("clientName must be provided")
-    }
-    if (visit.visitExternalSystemDetails?.clientName != clientName) {
+  fun validateExternalVisitClient(clientName: String?, visit: Visit) {
+    if (!clientName.isNullOrBlank() && visit.visitExternalSystemDetails?.clientName != clientName) {
       throw AccessDeniedException("Client does not own this external visit")
     }
   }

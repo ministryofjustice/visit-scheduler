@@ -162,7 +162,7 @@ class UpdateVisitFromExternalSystemTest : IntegrationTestBase() {
 
   @ParameterizedTest
   @ValueSource(strings = ["missing", "null", "", " ", "\t"])
-  fun `Update an external visit returns 400 when clientName is missing or blank`(clientName: String) {
+  fun `Update an external visit skips ownership when clientName is missing null or blank`(clientName: String) {
     val visit = createExternalVisit(VisitType.SOCIAL)
     val request = objectMapper.valueToTree(updateVisitFromExternalSystemDto) as ObjectNode
     when (clientName) {
@@ -171,14 +171,41 @@ class UpdateVisitFromExternalSystemTest : IntegrationTestBase() {
       else -> request.put("clientName", clientName)
     }
 
-    webTestClient.put().uri(PUT_VISIT_FROM_EXTERNAL_SYSTEM.replace("{reference}", visit.reference))
+    val response = webTestClient.put().uri(PUT_VISIT_FROM_EXTERNAL_SYSTEM.replace("{reference}", visit.reference))
       .headers(roleVisitSchedulerHttpHeaders)
       .contentType(MediaType.APPLICATION_JSON)
       .bodyValue(objectMapper.writeValueAsString(request))
       .exchange()
-      .expectStatus().isBadRequest
+      .expectStatus().isOk
 
-    assertVisitNotUpdated(visit)
+    val updatedVisit = getVisitDto(response)
+    val storedVisit = testVisitRepository.findByReference(visit.reference)
+    assertThat(storedVisit.visitRoom).isEqualTo(updateVisitFromExternalSystemDto.visitRoom)
+    assertThat(updatedVisit.visitExternalSystemDetails?.clientName).isEqualTo("MDI")
+    assertAuditEvent(updatedVisit, storedVisit)
+    assertUpdatedEvent(visit, updatedVisit)
+  }
+
+  @Test
+  fun `Update a visit without external details when clientName is omitted`() {
+    val visit = visitEntityHelper.create(
+      sessionTemplate = sessionTemplateDefault,
+      visitRoom = "A1",
+      visitContact = ContactDto(name = "Original contact", telephone = "09876543210", email = null),
+    )
+
+    val response = callUpdateVisitFromExternalSystem(
+      webTestClient,
+      roleVisitSchedulerHttpHeaders,
+      visit.reference,
+      updateVisitFromExternalSystemDto.copy(clientName = null),
+    ).expectStatus().isOk
+
+    val updatedVisit = getVisitDto(response)
+    assertThat(updatedVisit.visitRoom).isEqualTo(updateVisitFromExternalSystemDto.visitRoom)
+    assertThat(updatedVisit.visitExternalSystemDetails).isNull()
+    assertAuditEvent(updatedVisit, testVisitRepository.findByReference(visit.reference))
+    assertUpdatedEvent(visit, updatedVisit)
   }
 
   private fun assertVisitNotUpdated(visit: Visit) {

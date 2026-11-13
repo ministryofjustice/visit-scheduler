@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.NullAndEmptySource
 import org.junit.jupiter.params.provider.NullSource
 import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.junit.jupiter.MockitoExtension
@@ -56,6 +57,27 @@ internal class VisitStoreServiceTest {
   private val visitNotificationTransactionalService = mock<VisitNotificationTransactionalService>()
 
   private val visitStoreService: VisitStoreService = VisitStoreService(visitRepository, prisonRepository, sessionSlotService, applicationValidationService, applicationService, visitNotificationTransactionalService, visitDtoBuilder, 28)
+
+  @ParameterizedTest
+  @NullAndEmptySource
+  @ValueSource(strings = [" ", "\t", "\n"])
+  fun `when clientName is omitted or blank then ownership is not checked`(clientName: String?) {
+    val visit = mock<Visit>()
+
+    visitStoreService.validateExternalVisitClient(clientName, visit)
+
+    verifyNoInteractions(visit)
+  }
+
+  @Test
+  fun `when clientName exactly matches then ownership is accepted`() {
+    val visit = mock<Visit>()
+    val details = mock<VisitExternalSystemDetails>()
+    whenever(details.clientName).thenReturn("MDI")
+    whenever(visit.visitExternalSystemDetails).thenReturn(details)
+
+    visitStoreService.validateExternalVisitClient("MDI", visit)
+  }
 
   @ParameterizedTest
   @NullSource

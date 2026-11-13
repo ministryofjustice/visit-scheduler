@@ -140,7 +140,7 @@ class CancelVisitFromExternalSystemTest : IntegrationTestBase() {
 
   @ParameterizedTest
   @ValueSource(strings = ["missing", "null", "", " ", "\t"])
-  fun `Cancel an external visit returns 400 when clientName is missing or blank`(clientName: String) {
+  fun `Cancel an external visit without clientName is idempotent for missing null or blank`(clientName: String) {
     val visit = createVisit()
     val json = objectMapper.valueToTree(request) as ObjectNode
     when (clientName) {
@@ -149,8 +149,29 @@ class CancelVisitFromExternalSystemTest : IntegrationTestBase() {
       else -> json.put("clientName", clientName)
     }
 
-    cancelJson(visit.reference, objectMapper.writeValueAsString(json)).expectStatus().isBadRequest
-    assertVisitNotCancelled(visit)
+    val body = objectMapper.writeValueAsString(json)
+    val response = cancelJson(visit.reference, body).expectStatus().isOk.expectBody().returnResult()
+    cancelJson(visit.reference, body).expectStatus().isOk
+
+    val cancelledVisit = objectMapper.readValue(response.responseBody, VisitDto::class.java)
+    assertThat(cancelledVisit.visitStatus).isEqualTo(VisitStatus.CANCELLED)
+    assertThat(cancelledVisit.visitExternalSystemDetails?.clientName).isEqualTo("MDI")
+    assertThat(testVisitRepository.findByReference(visit.reference).outcomeStatus).isEqualTo(OutcomeStatus.PRISONER_CANCELLED)
+    assertHelper.assertVisitCancellation(cancelledVisit, OutcomeStatus.PRISONER_CANCELLED, request.actionedBy, request.applicationMethodType)
+    assertThat(eventAuditRepository.findAllByBookingReference(visit.reference)).hasSize(1)
+    verify(snsService, times(1)).sendVisitCancelledEvent(any())
+    verify(telemetryClientService, times(1)).trackCancelBookingEvent(any(), any(), any())
+  }
+
+  @Test
+  fun `Cancel a visit without external details when clientName is omitted`() {
+    val visit = createVisit(external = false)
+
+    cancel(visit.reference, request.copy(clientName = null)).expectStatus().isOk
+
+    assertThat(testVisitRepository.findByReference(visit.reference).visitStatus).isEqualTo(VisitStatus.CANCELLED)
+    assertThat(eventAuditRepository.findAllByBookingReference(visit.reference)).hasSize(1)
+    verify(snsService).sendVisitCancelledEvent(any())
   }
 
   @Test

@@ -49,6 +49,30 @@ class OpenApiDocsTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `external update and cancel schemas make clientName optional while creation requires it`() {
+    val response = webTestClient.get()
+      .uri("/v3/api-docs")
+      .accept(MediaType.APPLICATION_JSON)
+      .exchange()
+      .expectStatus().isOk
+      .expectBody()
+
+    listOf("UpdateVisitFromExternalSystemDto", "CancelVisitFromExternalSystemDto").forEach { schema ->
+      response
+        .jsonPath("$.components.schemas.$schema.required").value<List<String>> {
+          assertThat(it).doesNotContain("clientName")
+        }
+        .jsonPath("$.components.schemas.$schema.properties.clientName.description").value<String> {
+          assertThat(it).contains("Omitted, null or blank", "must exactly match")
+        }
+        .jsonPath("$.components.schemas.$schema.properties.clientName.minLength").doesNotExist()
+    }
+    response.jsonPath("$.components.schemas.CreateVisitFromExternalSystemDto.required").value<List<String>> {
+      assertThat(it).contains("clientName")
+    }
+  }
+
+  @Test
   fun `external visit schemas advertise video visits and optional audit metadata`() {
     val response = webTestClient.get()
       .uri("/v3/api-docs")
