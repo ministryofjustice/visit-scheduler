@@ -9,7 +9,6 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
-import org.springframework.security.access.AccessDeniedException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
@@ -131,19 +130,15 @@ class VisitService(
     return processCancelEvents(cancelledVisit, cancelVisitDto)
   }
 
-  @Transactional
   fun cancelVisitFromExternalSystem(reference: String, request: CancelVisitFromExternalSystemDto): VisitDto {
-    val visit = visitRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit $reference not found")
-    validateExternalVisitClient(request.clientName, visit)
-    return cancelVisit(
-      reference,
-      CancelVisitDto(
-        cancelOutcome = request.cancelOutcome,
-        actionedBy = request.actionedBy,
-        userType = request.userType,
-        applicationMethodType = request.applicationMethodType,
-      ),
+    val cancelVisitDto = CancelVisitDto(
+      cancelOutcome = request.cancelOutcome,
+      actionedBy = request.actionedBy,
+      userType = request.userType,
+      applicationMethodType = request.applicationMethodType,
     )
+    val result = visitStoreService.cancelVisitFromExternalSystem(reference, request.clientName, cancelVisitDto)
+    return if (result.alreadyCancelled) result.visit else processCancelEvents(result.visit, cancelVisitDto)
   }
 
   @Transactional(readOnly = true)
@@ -446,7 +441,7 @@ class VisitService(
     validateExternalVisitActionedBy(updateVisitFromExternalSystemDto.actionedBy, userType)
     val existingVisit =
       visitRepository.findBookedVisit(bookingReference) ?: throw VisitNotFoundException("Visit $bookingReference not found")
-    validateExternalVisitClient(updateVisitFromExternalSystemDto.clientName, existingVisit)
+    visitStoreService.validateExternalVisitClient(updateVisitFromExternalSystemDto.clientName, existingVisit)
     val actionedBy = resolveExternalVisitActionedBy(
       updateVisitFromExternalSystemDto.actionedBy,
       userType,
@@ -460,15 +455,6 @@ class VisitService(
     val updatedVisitDto = visitStoreService.updateVisitFromExternalSystem(updateVisitFromExternalSystemDto, existingVisit)
 
     return processUpdateVisitFromExternalSystemEvents(existingVisitDto, updatedVisitDto, updateVisitFromExternalSystemDto, actionedBy, userType)
-  }
-
-  private fun validateExternalVisitClient(clientName: String, visit: Visit) {
-    if (clientName.isBlank()) {
-      throw ValidationException("clientName must be provided")
-    }
-    if (visit.visitExternalSystemDetails?.clientName != clientName) {
-      throw AccessDeniedException("Client does not own this external visit")
-    }
   }
 
   private fun validateExternalVisitActionedBy(actionedBy: String?, userType: UserType) {

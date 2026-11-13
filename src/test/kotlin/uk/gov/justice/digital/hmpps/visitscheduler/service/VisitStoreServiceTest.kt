@@ -5,13 +5,19 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.NullSource
+import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.any
 import org.mockito.kotlin.atLeastOnce
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
+import org.mockito.kotlin.verifyNoInteractions
+import org.mockito.kotlin.verifyNoMoreInteractions
 import org.mockito.kotlin.whenever
+import org.springframework.security.access.AccessDeniedException
 import org.springframework.test.context.ActiveProfiles
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitFromExternalSystemDto
@@ -30,6 +36,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitExternalSystemDetails
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
@@ -49,6 +56,27 @@ internal class VisitStoreServiceTest {
   private val visitNotificationTransactionalService = mock<VisitNotificationTransactionalService>()
 
   private val visitStoreService: VisitStoreService = VisitStoreService(visitRepository, prisonRepository, sessionSlotService, applicationValidationService, applicationService, visitNotificationTransactionalService, visitDtoBuilder, 28)
+
+  @ParameterizedTest
+  @NullSource
+  @ValueSource(strings = ["another-client", "mdi", " MDI "])
+  fun `when clientName does not match then cancellation is not attempted`(owner: String?) {
+    val visit = mock<Visit>()
+    if (owner != null) {
+      val details = mock<VisitExternalSystemDetails>()
+      whenever(details.clientName).thenReturn(owner)
+      whenever(visit.visitExternalSystemDetails).thenReturn(details)
+    }
+    whenever(visitRepository.findByReference("visit-reference")).thenReturn(visit)
+
+    assertThrows<AccessDeniedException> {
+      visitStoreService.cancelVisitFromExternalSystem("visit-reference", "MDI", mock())
+    }
+
+    verify(visitRepository).findByReference("visit-reference")
+    verifyNoMoreInteractions(visitRepository)
+    verifyNoInteractions(visitDtoBuilder, visitNotificationTransactionalService)
+  }
 
   @Nested
   @DisplayName("createVisitFromExternalSystem")

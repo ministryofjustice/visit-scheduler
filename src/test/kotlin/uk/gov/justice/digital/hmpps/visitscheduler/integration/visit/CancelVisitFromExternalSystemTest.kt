@@ -7,12 +7,15 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.kotlin.any
+import org.mockito.kotlin.doAnswer
+import org.mockito.kotlin.doThrow
 import org.mockito.kotlin.never
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
+import org.springframework.transaction.support.TransactionSynchronizationManager
 import tools.jackson.databind.node.ObjectNode
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.CANCEL_VISIT_FROM_EXTERNAL_SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitFromExternalSystemDto
@@ -27,6 +30,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.service.PublishEventException
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryClientService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitNotificationTransactionalService
