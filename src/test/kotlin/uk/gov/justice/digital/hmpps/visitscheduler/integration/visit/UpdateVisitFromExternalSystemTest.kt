@@ -188,7 +188,11 @@ class UpdateVisitFromExternalSystemTest : IntegrationTestBase() {
 
   @Test
   fun `Update a visit without external details when clientName is omitted`() {
-    val visit = visitEntityHelper.create(sessionTemplate = sessionTemplateDefault, visitRoom = "A1", visitContact = ContactDto(name = "Original contact", telephone = "09876543210"))
+    val visit = visitEntityHelper.create(
+      sessionTemplate = sessionTemplateDefault,
+      visitRoom = "A1",
+      visitContact = ContactDto(name = "Original contact", telephone = "09876543210", email = null),
+    )
 
     val response = callUpdateVisitFromExternalSystem(
       webTestClient,
