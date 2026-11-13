@@ -5,6 +5,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditAttributeTypes
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PRISONER
@@ -13,6 +14,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.ActionedBy
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAuditAttribute
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.ActionedByRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.EventAuditRepository
 import java.lang.reflect.InvocationTargetException
@@ -33,10 +35,11 @@ class VisitEventAuditTransactionalService(
     eventAuditType: EventAuditType,
     applicationMethodType: ApplicationMethodType,
     text: String?,
+    auditAttributes: Map<EventAuditAttributeTypes, String>,
   ): EventAudit {
     val actionedBy = createOrGetActionBy(actionedByValue, userType)
 
-    val eventAudit = eventAuditRepository.saveAndFlush(
+    var eventAudit = eventAuditRepository.save(
       EventAudit(
         actionedBy = actionedBy,
         bookingReference = bookingReference,
@@ -48,8 +51,22 @@ class VisitEventAuditTransactionalService(
       ),
     )
 
+    auditAttributes.forEach { (auditAttributeType, value) ->
+      eventAudit.eventAuditAttributes.add(
+        EventAuditAttribute(
+          eventAuditId = eventAudit.id,
+          attributeName = auditAttributeType,
+          attributeValue = value,
+          eventAudit = eventAudit,
+        ),
+      )
+    }
+
+    eventAudit = eventAuditRepository.saveAndFlush(eventAudit)
+
     actionedBy.eventAuditList.add(eventAudit)
     actionedByRepository.saveAndFlush(actionedBy)
+
     return eventAudit
   }
 
@@ -114,6 +131,7 @@ class VisitEventAuditTransactionalService(
     applicationMethodType: ApplicationMethodType,
     userType: UserType,
     text: String? = null,
+    auditAttributes: Map<EventAuditAttributeTypes, String>,
   ): EventAudit {
     try {
       updateVisitApplication(
@@ -134,6 +152,7 @@ class VisitEventAuditTransactionalService(
       eventAuditType = eventAuditType,
       applicationMethodType = applicationMethodType,
       text = text,
+      auditAttributes = auditAttributes,
     )
   }
 

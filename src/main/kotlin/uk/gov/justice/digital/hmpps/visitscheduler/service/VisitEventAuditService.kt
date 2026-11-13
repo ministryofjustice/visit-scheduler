@@ -13,6 +13,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_APPLICABLE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.AutoRejectionReason
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditAttributeTypes
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CANCELLED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CHANGING_VISIT
@@ -54,6 +56,7 @@ class VisitEventAuditService(
       eventAuditType = if (application.reserved) RESERVED_VISIT else CHANGING_VISIT,
       applicationMethodType = applicationMethodType,
       text = null,
+      eventAuditAttributes = emptyMap(),
     ),
   )
 
@@ -74,6 +77,7 @@ class VisitEventAuditService(
       eventAuditType = type,
       applicationMethodType = applicationMethodType,
       text = text,
+      eventAuditAttributes = emptyMap(),
     ),
   )
 
@@ -91,6 +95,7 @@ class VisitEventAuditService(
       eventAuditType = IGNORE_VISIT_NOTIFICATIONS_EVENT,
       applicationMethodType = NOT_APPLICABLE,
       text = text,
+      eventAuditAttributes = emptyMap(),
     ),
   )
 
@@ -110,6 +115,7 @@ class VisitEventAuditService(
     eventAuditType = MIGRATED_VISIT,
     applicationMethodType = NOT_KNOWN,
     text = null,
+    eventAuditAttributes = emptyMap(),
   )
 
   fun updateCreateTimestamp(time: LocalDateTime, eventAudit: EventAudit): EventAuditDto {
@@ -127,6 +133,7 @@ class VisitEventAuditService(
       eventAuditType = EventAuditType.valueOf(type.name),
       applicationMethodType = NOT_KNOWN,
       text = null,
+      eventAuditAttributes = emptyMap(),
     ),
   )
 
@@ -155,6 +162,7 @@ class VisitEventAuditService(
       applicationMethodType = bookingRequestDto.applicationMethodType,
       userType = bookingRequestDto.userType,
       text = text,
+      auditAttributes = emptyMap(),
     )
 
     return EventAuditDto(eventAudit)
@@ -179,6 +187,7 @@ class VisitEventAuditService(
         eventAuditType = eventAuditType,
         applicationMethodType = applicationMethodType,
         text = null,
+        eventAuditAttributes = emptyMap(),
       ),
     )
   }
@@ -196,6 +205,7 @@ class VisitEventAuditService(
     eventAuditType = type,
     applicationMethodType = NOT_APPLICABLE,
     text = auditText,
+    eventAuditAttributes = emptyMap(),
   )
 
   fun saveVisitRequestApprovedOrRejectedEventAudit(
@@ -220,11 +230,12 @@ class VisitEventAuditService(
         applicationMethodType = ApplicationMethodType.WEBSITE,
         text = if (isApproved) null else visitRequestRejectionReason?.name,
         eventAuditType = eventType,
+        eventAuditAttributes = emptyMap(),
       ),
     )
   }
 
-  fun saveVisitRequestAutoRejectedEventAudit(visit: VisitDto, rejectionText: String): EventAuditDto = EventAuditDto(
+  fun saveVisitRequestAutoRejectedEventAudit(visit: VisitDto, autoRejectionReason: AutoRejectionReason): EventAuditDto = EventAuditDto(
     saveAuditEvent(
       actionedBy = null,
       userType = SYSTEM,
@@ -233,7 +244,8 @@ class VisitEventAuditService(
       sessionTemplateReference = visit.sessionTemplateReference,
       EventAuditType.REQUESTED_VISIT_AUTO_REJECTED,
       applicationMethodType = NOT_APPLICABLE,
-      text = rejectionText,
+      text = autoRejectionReason.description,
+      eventAuditAttributes = emptyMap(),
     ),
   )
 
@@ -266,6 +278,7 @@ class VisitEventAuditService(
     eventAuditType: EventAuditType,
     applicationMethodType: ApplicationMethodType,
     text: String?,
+    eventAuditAttributes: Map<EventAuditAttributeTypes, String>,
   ): EventAudit = eventAuditTransactionalService.saveEventAudit(
     actionedByValue = actionedBy,
     userType = userType,
@@ -275,5 +288,6 @@ class VisitEventAuditService(
     eventAuditType = eventAuditType,
     applicationMethodType = applicationMethodType,
     text = text,
+    auditAttributes = eventAuditAttributes,
   )
 }

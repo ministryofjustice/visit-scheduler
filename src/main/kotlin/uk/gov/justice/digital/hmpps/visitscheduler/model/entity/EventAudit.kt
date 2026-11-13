@@ -57,6 +57,9 @@ class EventAudit private constructor(
   @Column(nullable = true)
   val text: String? = null,
 
+  @OneToMany(fetch = FetchType.LAZY, cascade = [ALL], mappedBy = "eventAudit", orphanRemoval = true)
+  val eventAuditAttributes: MutableList<EventAuditAttribute> = mutableListOf(),
+
   @CreationTimestamp
   @Column
   val createTimestamp: LocalDateTime = LocalDateTime.now(),
@@ -64,7 +67,7 @@ class EventAudit private constructor(
   @OneToMany(fetch = FetchType.LAZY, cascade = [ALL], mappedBy = "eventAudit", orphanRemoval = true)
   val notifyHistory: MutableList<VisitNotifyHistory> = mutableListOf()
 
-  constructor(actionedBy: ActionedBy, bookingReference: String?, applicationReference: String?, sessionTemplateReference: String?, type: EventAuditType, applicationMethodType: ApplicationMethodType, text: String?) : this(
+  constructor(actionedBy: ActionedBy, bookingReference: String?, applicationReference: String?, sessionTemplateReference: String?, type: EventAuditType, applicationMethodType: ApplicationMethodType, text: String?, eventAuditAttributes: MutableList<EventAuditAttribute> = mutableListOf()) : this(
     actionedById = actionedBy.id,
     actionedBy = actionedBy,
     bookingReference = bookingReference,
@@ -73,5 +76,6 @@ class EventAudit private constructor(
     type = EventAuditType.valueOf(type.name),
     applicationMethodType = applicationMethodType,
     text = text,
+    eventAuditAttributes = eventAuditAttributes,
   )
 }
