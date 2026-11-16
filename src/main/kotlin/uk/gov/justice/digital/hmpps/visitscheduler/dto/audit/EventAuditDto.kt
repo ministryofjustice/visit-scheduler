@@ -48,7 +48,7 @@ class EventAuditDto(
   @field:NotBlank
   val createTimestamp: LocalDateTime = LocalDateTime.now(),
 
-  @param:Schema(description = "Booker audit attributes, empty list if no additional data associated", required = true)
+  @param:Schema(description = "Event audit attributes, empty list if no additional data associated", required = true)
   val auditAttributes: List<EventAuditAttributeDto>,
 ) {
   constructor(eventAuditEntity: EventAudit, notifyHistoryDtoBuilder: NotifyHistoryDtoBuilder) : this(
