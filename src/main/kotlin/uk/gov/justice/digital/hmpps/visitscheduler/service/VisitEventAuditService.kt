@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.service
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
@@ -24,19 +25,28 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.REQU
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.RESERVED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PRISONER
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRequestRejectionReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.ActionedBy
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAuditAttribute
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.ActionedByRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.EventAuditRepository
+import java.lang.reflect.InvocationTargetException
 import java.time.LocalDateTime
 
 @Service
+@Transactional
 class VisitEventAuditService(
-  private val eventAuditTransactionalService: VisitEventAuditTransactionalService,
+  val actionedByRepository: ActionedByRepository,
+  val eventAuditRepository: EventAuditRepository,
 ) {
+
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
   }
@@ -47,8 +57,8 @@ class VisitEventAuditService(
     visit: Visit? = null,
     applicationMethodType: ApplicationMethodType,
   ): EventAuditDto = EventAuditDto(
-    saveAuditEvent(
-      actionedBy = actionedByValue,
+    saveEventAudit(
+      actionedByValue = actionedByValue,
       userType = application.userType,
       bookingReference = visit?.reference,
       applicationReference = application.reference,
@@ -56,7 +66,7 @@ class VisitEventAuditService(
       eventAuditType = if (application.reserved) RESERVED_VISIT else CHANGING_VISIT,
       applicationMethodType = applicationMethodType,
       text = null,
-      eventAuditAttributes = emptyMap(),
+      auditAttributes = emptyMap(),
     ),
   )
 
@@ -68,8 +78,8 @@ class VisitEventAuditService(
     userType: UserType,
     text: String? = null,
   ): EventAuditDto = EventAuditDto(
-    saveAuditEvent(
-      actionedBy = actionedByValue,
+    saveEventAudit(
+      actionedByValue = actionedByValue,
       userType = userType,
       bookingReference = visit.reference,
       applicationReference = visit.applicationReference,
@@ -77,7 +87,7 @@ class VisitEventAuditService(
       eventAuditType = type,
       applicationMethodType = applicationMethodType,
       text = text,
-      eventAuditAttributes = emptyMap(),
+      auditAttributes = emptyMap(),
     ),
   )
 
@@ -86,8 +96,8 @@ class VisitEventAuditService(
     visit: VisitDto,
     text: String,
   ): EventAuditDto = EventAuditDto(
-    saveAuditEvent(
-      actionedBy = actionedByValue,
+    saveEventAudit(
+      actionedByValue = actionedByValue,
       userType = STAFF,
       bookingReference = visit.reference,
       applicationReference = visit.applicationReference,
@@ -95,7 +105,7 @@ class VisitEventAuditService(
       eventAuditType = IGNORE_VISIT_NOTIFICATIONS_EVENT,
       applicationMethodType = NOT_APPLICABLE,
       text = text,
-      eventAuditAttributes = emptyMap(),
+      auditAttributes = emptyMap(),
     ),
   )
 
@@ -106,8 +116,8 @@ class VisitEventAuditService(
   fun saveMigratedVisitEventAudit(
     migrateVisitRequest: MigrateVisitRequestDto,
     visitEntity: Visit,
-  ): EventAudit = saveAuditEvent(
-    actionedBy = migrateVisitRequest.actionedBy,
+  ): EventAudit = saveEventAudit(
+    actionedByValue = migrateVisitRequest.actionedBy,
     userType = STAFF,
     bookingReference = visitEntity.reference,
     applicationReference = visitEntity.getLastCompletedApplication()!!.reference,
@@ -115,17 +125,17 @@ class VisitEventAuditService(
     eventAuditType = MIGRATED_VISIT,
     applicationMethodType = NOT_KNOWN,
     text = null,
-    eventAuditAttributes = emptyMap(),
+    auditAttributes = emptyMap(),
   )
 
   fun updateCreateTimestamp(time: LocalDateTime, eventAudit: EventAudit): EventAuditDto {
-    val eventAuditUpdated = eventAuditTransactionalService.updateCreateTimestamp(time, eventAudit)
-    return EventAuditDto(eventAuditUpdated)
+    eventAuditRepository.updateCreateTimestamp(time, eventAudit.id)
+    return EventAuditDto(eventAudit)
   }
 
   fun saveNotificationEventAudit(type: NotificationEventType, impactedVisit: VisitDto): EventAuditDto = EventAuditDto(
-    saveAuditEvent(
-      actionedBy = null,
+    saveEventAudit(
+      actionedByValue = null,
       userType = SYSTEM,
       bookingReference = impactedVisit.reference,
       applicationReference = impactedVisit.applicationReference,
@@ -133,15 +143,22 @@ class VisitEventAuditService(
       eventAuditType = EventAuditType.valueOf(type.name),
       applicationMethodType = NOT_KNOWN,
       text = null,
-      eventAuditAttributes = emptyMap(),
+      auditAttributes = emptyMap(),
     ),
   )
 
-  fun getLastEventForBooking(bookingReference: String): EventAuditDto? = eventAuditTransactionalService.getLastEventForBooking(bookingReference)
+  @Transactional(readOnly = true)
+  fun getLastEventForBooking(bookingReference: String): EventAuditDto? = eventAuditRepository.findLastBookedVisitEventByBookingReference(bookingReference)?.let {
+    EventAuditDto(it)
+  }
 
-  fun getLastEventForBookingOrMigration(bookingReference: String): EventAuditDto? = eventAuditTransactionalService.getLastEventForBookingOrMigration(bookingReference)
+  @Transactional(readOnly = true)
+  fun getLastEventForBookingOrMigration(bookingReference: String): EventAuditDto? = eventAuditRepository.findLastBookedOrMigratedVisitEventByBookingReference(bookingReference)?.let {
+    EventAuditDto(it)
+  }
 
-  fun getBookedOrMigratedUser(bookingReference: String): ActionedBy? = eventAuditTransactionalService.getBookedOrMigratedUser(bookingReference)
+  @Transactional(readOnly = true)
+  fun getBookedOrMigratedUser(bookingReference: String): ActionedBy? = eventAuditRepository.getLastBookedOrMigratedUser(bookingReference)
 
   fun updateVisitApplicationAndSaveEvent(
     bookedVisitDto: VisitDto,
@@ -153,22 +170,23 @@ class VisitEventAuditService(
       // This should not happen as application reference should always be set here
       throw IllegalArgumentException("Visit application reference is not set")
     }
+    try {
+      eventAuditRepository.updateVisitApplication(bookedVisitDto.applicationReference, bookedVisitDto.reference, bookingRequestDto.applicationMethodType)
+    } catch (_: InvocationTargetException) {
+      LOG.error("Audit log does not exist for ${bookedVisitDto.applicationReference}")
+    }
 
-    val eventAudit = eventAuditTransactionalService.updateVisitApplicationAndSaveEvent(
-      applicationReference = bookedVisitDto.applicationReference,
-      actionedByValue = bookingRequestDto.actionedBy,
-      bookedVisitDto = bookedVisitDto,
-      eventAuditType = eventType,
-      applicationMethodType = bookingRequestDto.applicationMethodType,
+    return saveBookingEventAudit(
+      bookingRequestDto.actionedBy,
+      bookedVisitDto,
+      eventType,
+      bookingRequestDto.applicationMethodType,
       userType = bookingRequestDto.userType,
       text = text,
-      auditAttributes = emptyMap(),
     )
-
-    return EventAuditDto(eventAudit)
   }
 
-  fun findByBookingReferenceOrderById(bookingReference: String): List<EventAuditDto> = eventAuditTransactionalService.findByBookingReferenceOrderById(bookingReference)
+  fun findByBookingReferenceOrderById(bookingReference: String): List<EventAuditDto> = eventAuditRepository.findByBookingReferenceOrderById(bookingReference).map { EventAuditDto(it) }
 
   private fun saveCancelledEventAudit(actionedByValue: String, userType: UserType, applicationMethodType: ApplicationMethodType, visit: VisitDto): EventAuditDto {
     val eventAuditType = if (visit.visitSubStatus == VisitSubStatus.WITHDRAWN) {
@@ -178,8 +196,8 @@ class VisitEventAuditService(
     }
 
     return EventAuditDto(
-      saveAuditEvent(
-        actionedBy = actionedByValue,
+      saveEventAudit(
+        actionedByValue = actionedByValue,
         userType = userType,
         bookingReference = visit.reference,
         applicationReference = visit.applicationReference,
@@ -187,7 +205,7 @@ class VisitEventAuditService(
         eventAuditType = eventAuditType,
         applicationMethodType = applicationMethodType,
         text = null,
-        eventAuditAttributes = emptyMap(),
+        auditAttributes = emptyMap(),
       ),
     )
   }
@@ -196,8 +214,8 @@ class VisitEventAuditService(
     visitEntity: Visit,
     type: EventAuditType,
     auditText: String,
-  ): EventAudit = saveAuditEvent(
-    actionedBy = null,
+  ): EventAudit = saveEventAudit(
+    actionedByValue = null,
     userType = SYSTEM,
     bookingReference = visitEntity.reference,
     applicationReference = null,
@@ -205,7 +223,7 @@ class VisitEventAuditService(
     eventAuditType = type,
     applicationMethodType = NOT_APPLICABLE,
     text = auditText,
-    eventAuditAttributes = emptyMap(),
+    auditAttributes = emptyMap(),
   )
 
   fun saveVisitRequestApprovedOrRejectedEventAudit(
@@ -221,8 +239,8 @@ class VisitEventAuditService(
     }
 
     return EventAuditDto(
-      saveAuditEvent(
-        actionedBy = actionedByValue,
+      saveEventAudit(
+        actionedByValue = actionedByValue,
         userType = STAFF,
         bookingReference = visit.reference,
         applicationReference = visit.applicationReference,
@@ -230,14 +248,14 @@ class VisitEventAuditService(
         applicationMethodType = ApplicationMethodType.WEBSITE,
         text = if (isApproved) null else visitRequestRejectionReason?.name,
         eventAuditType = eventType,
-        eventAuditAttributes = emptyMap(),
+        auditAttributes = emptyMap(),
       ),
     )
   }
 
   fun saveVisitRequestAutoRejectedEventAudit(visit: VisitDto, autoRejectionReason: AutoRejectionReason): EventAuditDto = EventAuditDto(
-    saveAuditEvent(
-      actionedBy = null,
+    saveEventAudit(
+      actionedByValue = null,
       userType = SYSTEM,
       bookingReference = visit.reference,
       applicationReference = visit.applicationReference,
@@ -245,12 +263,12 @@ class VisitEventAuditService(
       EventAuditType.REQUESTED_VISIT_AUTO_REJECTED,
       applicationMethodType = NOT_APPLICABLE,
       text = autoRejectionReason.description,
-      eventAuditAttributes = emptyMap(),
+      auditAttributes = mapOf(EventAuditAttributeTypes.AUTO_REJECTION_REASON to autoRejectionReason.name),
     ),
   )
 
   fun saveMergeEventAudits(visits: List<VisitDto>, oldPrisonerNumber: String, newPrisonerNumber: String) {
-    val actionedBy = eventAuditTransactionalService.createOrGetActionBy(null, SYSTEM)
+    val actionedBy = createOrGetActionBy(null, SYSTEM)
     val eventAudits = mutableListOf<EventAudit>()
     visits.forEach { visit ->
       eventAudits.add(
@@ -266,11 +284,11 @@ class VisitEventAuditService(
       )
     }
 
-    eventAuditTransactionalService.saveAllAuditEvents(eventAudits)
+    eventAuditRepository.saveAll(eventAudits)
   }
 
-  private fun saveAuditEvent(
-    actionedBy: String?,
+  private fun saveEventAudit(
+    actionedByValue: String?,
     userType: UserType,
     bookingReference: String?,
     applicationReference: String?,
@@ -278,16 +296,70 @@ class VisitEventAuditService(
     eventAuditType: EventAuditType,
     applicationMethodType: ApplicationMethodType,
     text: String?,
-    eventAuditAttributes: Map<EventAuditAttributeTypes, String>,
-  ): EventAudit = eventAuditTransactionalService.saveEventAudit(
-    actionedByValue = actionedBy,
-    userType = userType,
-    bookingReference = bookingReference,
-    applicationReference = applicationReference,
-    sessionTemplateReference = sessionTemplateReference,
-    eventAuditType = eventAuditType,
-    applicationMethodType = applicationMethodType,
-    text = text,
-    auditAttributes = eventAuditAttributes,
-  )
+    auditAttributes: Map<EventAuditAttributeTypes, String>,
+  ): EventAudit {
+    val actionedBy = createOrGetActionBy(actionedByValue, userType)
+
+    var eventAudit = eventAuditRepository.save(
+      EventAudit(
+        actionedBy = actionedBy,
+        bookingReference = bookingReference,
+        applicationReference = applicationReference,
+        sessionTemplateReference = sessionTemplateReference,
+        type = eventAuditType,
+        applicationMethodType = applicationMethodType,
+        text = text,
+      ),
+    )
+
+    auditAttributes.forEach { (auditAttributeType, value) ->
+      eventAudit.eventAuditAttributes.add(
+        EventAuditAttribute(
+          eventAuditId = eventAudit.id,
+          attributeName = auditAttributeType,
+          attributeValue = value,
+          eventAudit = eventAudit,
+        ),
+      )
+    }
+
+    eventAudit = eventAuditRepository.saveAndFlush(eventAudit)
+
+    actionedBy.eventAuditList.add(eventAudit)
+    actionedByRepository.saveAndFlush(actionedBy)
+
+    return eventAudit
+  }
+
+  private fun createOrGetActionBy(actionedByValue: String? = null, userType: UserType): ActionedBy {
+    var bookerReference: String? = null
+    var userName: String? = null
+
+    val actionedBy = when (userType) {
+      PUBLIC -> {
+        bookerReference = actionedByValue!!
+        actionedByRepository.findActionedByForPublic(bookerReference)
+      }
+      STAFF -> {
+        userName = actionedByValue!!
+        actionedByRepository.findActionedByForStaff(userName)
+      }
+      SYSTEM -> {
+        actionedByRepository.findActionedByForSystem()
+      }
+      PRISONER -> {
+        userName = actionedByValue!!
+        actionedByRepository.findActionedByForPrisoner(prisonerId = userName)
+      }
+    }
+
+    return actionedBy
+      ?: actionedByRepository.saveAndFlush(
+        ActionedBy(
+          bookerReference = bookerReference,
+          userName = userName,
+          userType = userType,
+        ),
+      )
+  }
 }

@@ -15,10 +15,17 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.AutoRejectionReason.MINIMUM_BOOKING_WINDOW_REACHED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditAttributeTypes
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestEventAuditRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.task.AutoRejectVisitRequestsTask
 import java.time.LocalDate
@@ -29,6 +36,9 @@ class AutoRejectVisitRequestsScheduleTest : IntegrationTestBase() {
 
   @Autowired
   private lateinit var testVisitRepository: VisitRepository
+
+  @Autowired
+  lateinit var testEventAuditRepository: TestEventAuditRepository
 
   @Autowired
   private lateinit var autoRejectVisitRequestsTask: AutoRejectVisitRequestsTask
@@ -81,6 +91,10 @@ class AutoRejectVisitRequestsScheduleTest : IntegrationTestBase() {
     assertThat(visits.size).isEqualTo(3)
     assertThat(visits.filter { it.visitSubStatus == VisitSubStatus.AUTO_REJECTED }.size).isEqualTo(1)
     assertThat(visits.filter { it.visitSubStatus == VisitSubStatus.AUTO_REJECTED }.map { it.reference }.first()).isEqualTo(requestVisitForRejectionMdi.reference)
+
+    val auditEvents = testEventAuditRepository.getAuditByType(EventAuditType.REQUESTED_VISIT_AUTO_REJECTED)
+    assertThat(auditEvents).hasSize(1)
+    assertAutoRejectionAuditEvent(auditEvents[0], requestVisitForRejectionMdi)
   }
 
   @Test
@@ -123,6 +137,10 @@ class AutoRejectVisitRequestsScheduleTest : IntegrationTestBase() {
     assertThat(visits.size).isEqualTo(3)
     assertThat(visits.filter { it.visitSubStatus == VisitSubStatus.AUTO_REJECTED }.size).isEqualTo(1)
     assertThat(visits.filter { it.visitSubStatus == VisitSubStatus.AUTO_REJECTED }.map { it.reference }.first()).isEqualTo(requestVisitForRejectionHei.reference)
+
+    val auditEvents = testEventAuditRepository.getAuditByType(EventAuditType.REQUESTED_VISIT_AUTO_REJECTED)
+    assertThat(auditEvents).hasSize(1)
+    assertAutoRejectionAuditEvent(auditEvents[0], requestVisitForRejectionHei)
   }
 
   @Test
@@ -165,5 +183,22 @@ class AutoRejectVisitRequestsScheduleTest : IntegrationTestBase() {
     assertThat(visits.size).isEqualTo(3)
     assertThat(visits.filter { it.visitSubStatus == VisitSubStatus.AUTO_REJECTED }.size).isEqualTo(1)
     assertThat(visits.filter { it.visitSubStatus == VisitSubStatus.AUTO_REJECTED }.map { it.reference }.first()).isEqualTo(requestVisitForRejectionCfi.reference)
+
+    val auditEvents = testEventAuditRepository.getAuditByType(EventAuditType.REQUESTED_VISIT_AUTO_REJECTED)
+    assertThat(auditEvents).hasSize(1)
+    assertAutoRejectionAuditEvent(auditEvents[0], requestVisitForRejectionCfi)
+  }
+
+  private fun assertAutoRejectionAuditEvent(eventAudit: EventAudit, autoRejectedVisit: Visit) {
+    with(eventAudit) {
+      assertThat(bookingReference).isEqualTo(autoRejectedVisit.reference)
+      assertThat(applicationMethodType).isEqualTo(ApplicationMethodType.NOT_APPLICABLE)
+      assertThat(eventAuditAttributes.size).isEqualTo(1)
+      assertThat(eventAuditAttributes[0].attributeName).isEqualTo(EventAuditAttributeTypes.AUTO_REJECTION_REASON)
+      assertThat(eventAuditAttributes[0].attributeValue).isEqualTo(MINIMUM_BOOKING_WINDOW_REACHED.name)
+      assertThat(actionedBy.userType).isEqualTo(SYSTEM)
+      assertThat(actionedBy.bookerReference).isNull()
+      assertThat(actionedBy.userName).isNull()
+    }
   }
 }
