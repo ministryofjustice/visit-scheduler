@@ -324,10 +324,6 @@ class VisitEventAuditService(
     }
 
     eventAudit = eventAuditRepository.saveAndFlush(eventAudit)
-
-    actionedBy.eventAuditList.add(eventAudit)
-    actionedByRepository.saveAndFlush(actionedBy)
-
     return eventAudit
   }
 
