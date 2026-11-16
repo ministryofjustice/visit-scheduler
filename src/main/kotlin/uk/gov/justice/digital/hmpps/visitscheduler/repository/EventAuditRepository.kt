@@ -20,7 +20,7 @@ interface EventAuditRepository : JpaRepository<EventAudit, Long> {
 
   @Query(
     "select ea from EventAudit ea left join fetch ea.eventAuditAttributes " +
-      "where ea.bookingReference = :bookingReference",
+      "where ea.bookingReference = :bookingReference order by ea.id asc",
   )
   fun findByBookingReferenceOrderById(bookingReference: String): List<EventAudit>
 
