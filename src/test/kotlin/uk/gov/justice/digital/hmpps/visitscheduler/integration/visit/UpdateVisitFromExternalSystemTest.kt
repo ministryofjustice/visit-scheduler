@@ -63,6 +63,7 @@ class UpdateVisitFromExternalSystemTest : IntegrationTestBase() {
 
   private val reference = "v9-d7-ed-7u"
   private val updateVisitFromExternalSystemDto = UpdateVisitFromExternalSystemDto(
+    clientName = "MDI",
     actionedBy = "external-updating-user",
     applicationMethodType = ApplicationMethodType.EMAIL,
     userType = UserType.STAFF,
@@ -114,17 +115,7 @@ class UpdateVisitFromExternalSystemTest : IntegrationTestBase() {
   @Test
   fun `Update a visit from an external system`() {
     // Given
-    val visit = visitEntityHelper.create(
-      prisonCode = "MKI",
-      visitRoom = "A1",
-      slotDate = LocalDate.now(),
-      visitStart = LocalTime.now(),
-      visitEnd = LocalTime.now().plusHours(1),
-      visitType = VisitType.SOCIAL,
-      activePrison = true,
-      createContact = true,
-      createApplication = false,
-    )
+    val visit = createExternalVisit(VisitType.SOCIAL)
 
     // When
     val responseSpec = callUpdateVisitFromExternalSystem(webTestClient, roleVisitSchedulerHttpHeaders, visit.reference, updateVisitFromExternalSystemDto)
@@ -140,6 +131,64 @@ class UpdateVisitFromExternalSystemTest : IntegrationTestBase() {
 
     // And
     assertUpdatedEvent(visit, visitDto)
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = ["another-client", "mdi", " MDI ", "external-video-reference"])
+  fun `Update an external visit returns 403 when clientName does not match the owner`(clientName: String) {
+    val visit = createExternalVisit(VisitType.SOCIAL_VIDEO)
+    callUpdateVisitFromExternalSystem(
+      webTestClient,
+      roleVisitSchedulerHttpHeaders,
+      visit.reference,
+      updateVisitFromExternalSystemDto.copy(clientName = clientName, visitType = VisitType.SOCIAL_VIDEO),
+    ).expectStatus().isForbidden
+
+    assertVisitNotUpdated(visit)
+  }
+
+  @Test
+  fun `Update an external visit returns 403 when the visit has no external client`() {
+    val visit = visitEntityHelper.create(sessionTemplate = sessionTemplateDefault, visitRoom = "A1", createApplication = false)
+    callUpdateVisitFromExternalSystem(
+      webTestClient,
+      roleVisitSchedulerHttpHeaders,
+      visit.reference,
+      updateVisitFromExternalSystemDto,
+    ).expectStatus().isForbidden
+
+    assertVisitNotUpdated(visit)
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = ["missing", "null", "", " ", "\t"])
+  fun `Update an external visit returns 400 when clientName is missing or blank`(clientName: String) {
+    val visit = createExternalVisit(VisitType.SOCIAL)
+    val request = objectMapper.valueToTree(updateVisitFromExternalSystemDto) as ObjectNode
+    when (clientName) {
+      "missing" -> request.remove("clientName")
+      "null" -> request.putNull("clientName")
+      else -> request.put("clientName", clientName)
+    }
+
+    webTestClient.put().uri(PUT_VISIT_FROM_EXTERNAL_SYSTEM.replace("{reference}", visit.reference))
+      .headers(roleVisitSchedulerHttpHeaders)
+      .contentType(MediaType.APPLICATION_JSON)
+      .bodyValue(objectMapper.writeValueAsString(request))
+      .exchange()
+      .expectStatus().isBadRequest
+
+    assertVisitNotUpdated(visit)
+  }
+
+  private fun assertVisitNotUpdated(visit: Visit) {
+    val storedVisit = testVisitRepository.findByReference(visit.reference)
+    assertThat(storedVisit.visitRoom).isEqualTo("A1")
+    assertThat(storedVisit.visitType).isEqualTo(visit.visitType)
+    assertThat(storedVisit.visitExternalSystemDetails?.clientName).isEqualTo(visit.visitExternalSystemDetails?.clientName)
+    assertThat(eventAuditRepository.findAllByBookingReference(visit.reference)).isEmpty()
+    verify(snsService, never()).sendChangedVisitBookedEvent(any())
+    verify(telemetryClient, never()).trackEvent(eq("visit-booked"), any(), isNull())
   }
 
   @Test

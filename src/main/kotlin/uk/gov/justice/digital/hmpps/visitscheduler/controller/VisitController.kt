@@ -30,6 +30,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.config.ApplicationValidationE
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
@@ -56,6 +57,7 @@ const val GET_VISIT_BY_REFERENCE: String = "$VISIT_CONTROLLER_PATH/{reference}"
 const val GET_VISIT_REFERENCE_BY_CLIENT_REFERENCE: String = "$VISIT_CONTROLLER_PATH/external-system/{clientReference}"
 const val POST_VISIT_FROM_EXTERNAL_SYSTEM: String = "$VISIT_CONTROLLER_PATH/external-system"
 const val PUT_VISIT_FROM_EXTERNAL_SYSTEM: String = "$VISIT_CONTROLLER_PATH/external-system/{reference}"
+const val CANCEL_VISIT_FROM_EXTERNAL_SYSTEM: String = "$VISIT_CONTROLLER_PATH/external-system/{reference}/cancel"
 const val FIND_LAST_APPROVED_DATE_FOR_VISITORS_BY_PRISONER: String = "$VISIT_CONTROLLER_PATH/prisoner/{prisonerNumber}/visitors/last-approved-date"
 
 @RestController
@@ -603,7 +605,7 @@ class VisitController(
   @ResponseStatus(HttpStatus.OK)
   @Operation(
     summary = "Update visit which already exists in an external system",
-    description = "Supports SOCIAL and SOCIAL_VIDEO visits. The existing visit type cannot be changed. The visit is assumed to have been validated at this point, this endpoint does not check that this visit is valid.",
+    description = "Supports SOCIAL and SOCIAL_VIDEO visits. clientName must exactly match the stored external client name; visits without external-system details cannot be updated here. The existing visit type cannot be changed. The visit is assumed to have been validated at this point, this endpoint does not check that this visit is valid.",
     requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
       content = [
         Content(
@@ -647,6 +649,29 @@ class VisitController(
     @RequestBody @Valid
     updateVisitFromExternalSystemDto: UpdateVisitFromExternalSystemDto,
   ): VisitDto = visitService.updateVisitFromExternalSystem(reference, updateVisitFromExternalSystemDto)
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PutMapping(CANCEL_VISIT_FROM_EXTERNAL_SYSTEM)
+  @ResponseStatus(HttpStatus.OK)
+  @Operation(
+    summary = "Cancel a visit owned by an external system",
+    description = "clientName must exactly match the stored external client name, including for an already cancelled visit. Visits without external-system details cannot be cancelled here. Existing cancellation rules apply.",
+    responses = [
+      ApiResponse(responseCode = "200", description = "Visit cancelled or already cancelled"),
+      ApiResponse(responseCode = "400", description = "Invalid cancellation request", content = [Content(schema = Schema(implementation = ErrorResponse::class))]),
+      ApiResponse(responseCode = "401", description = "Unauthorized", content = [Content(schema = Schema(implementation = ErrorResponse::class))]),
+      ApiResponse(responseCode = "403", description = "Incorrect permissions or client does not own the visit", content = [Content(schema = Schema(implementation = ErrorResponse::class))]),
+      ApiResponse(responseCode = "404", description = "Visit not found", content = [Content(schema = Schema(implementation = ErrorResponse::class))]),
+    ],
+  )
+  fun cancelVisitFromExternalSystem(
+    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
+    @PathVariable
+    @NotBlank
+    reference: String,
+    @RequestBody @Valid
+    cancelVisitFromExternalSystemDto: CancelVisitFromExternalSystemDto,
+  ): VisitDto = visitService.cancelVisitFromExternalSystem(reference.trim(), cancelVisitFromExternalSystemDto)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @PostMapping(FIND_LAST_APPROVED_DATE_FOR_VISITORS_BY_PRISONER)
