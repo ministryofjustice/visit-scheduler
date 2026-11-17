@@ -2,7 +2,9 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.task
 
 import com.microsoft.applicationinsights.TelemetryClient
 import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider
+import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.check
@@ -11,6 +13,7 @@ import org.mockito.kotlin.isNull
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpHeaders
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
@@ -19,26 +22,22 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.AutoRejectionReason.MINIMUM_BOOKING_WINDOW_REACHED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditAttributeTypes
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitHistoryByReference
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestEventAuditRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.task.AutoRejectVisitRequestsTask
 import java.time.LocalDate
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("Auto reject visit requests cron tests")
 class AutoRejectVisitRequestsScheduleTest : IntegrationTestBase() {
+  private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
   @Autowired
-  private lateinit var testVisitRepository: VisitRepository
-
-  @Autowired
-  lateinit var testEventAuditRepository: TestEventAuditRepository
+  private lateinit var testVisitRepository: TestVisitRepository
 
   @Autowired
   private lateinit var autoRejectVisitRequestsTask: AutoRejectVisitRequestsTask
@@ -50,6 +49,11 @@ class AutoRejectVisitRequestsScheduleTest : IntegrationTestBase() {
   private lateinit var lockProvider: JdbcTemplateLockProvider
 
   private final val prisonerId = "ABC123QQ"
+
+  @BeforeEach
+  internal fun setUp() {
+    roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
+  }
 
   @Test
   fun `Auto reject visit requests which fit the criteria of auto rejection 0 day booking window`() {
@@ -92,9 +96,23 @@ class AutoRejectVisitRequestsScheduleTest : IntegrationTestBase() {
     assertThat(visits.filter { it.visitSubStatus == VisitSubStatus.AUTO_REJECTED }.size).isEqualTo(1)
     assertThat(visits.filter { it.visitSubStatus == VisitSubStatus.AUTO_REJECTED }.map { it.reference }.first()).isEqualTo(requestVisitForRejectionMdi.reference)
 
-    val auditEvents = testEventAuditRepository.getAuditByType(EventAuditType.REQUESTED_VISIT_AUTO_REJECTED)
-    assertThat(auditEvents).hasSize(1)
-    assertAutoRejectionAuditEvent(auditEvents[0], requestVisitForRejectionMdi)
+    // when - check the audit events
+    val responseSpec = callVisitHistoryByReference(webTestClient, requestVisitForRejectionMdi.reference, roleVisitSchedulerHttpHeaders)
+    // Then
+    responseSpec.expectStatus().isOk
+    val eventAuditList = getEventAuditList(responseSpec)
+
+    Assertions.assertThat(eventAuditList.size).isEqualTo(1)
+    assertAuditEvent(
+      eventAudit = eventAuditList[0],
+      expectedUserName = null,
+      expectedUserType = UserType.SYSTEM,
+      expectedAuditType = EventAuditType.REQUESTED_VISIT_AUTO_REJECTED,
+      expectedApplicationMethodType = ApplicationMethodType.NOT_APPLICABLE,
+      expectedSessionTemplateReference = mdiSessionTemplate.reference,
+      expectedText = "Auto rejected by minimum booking window system cron",
+      expectedAuditAttributes = mapOf(EventAuditAttributeTypes.AUTO_REJECTION_REASON to MINIMUM_BOOKING_WINDOW_REACHED.name),
+    )
   }
 
   @Test
@@ -138,9 +156,23 @@ class AutoRejectVisitRequestsScheduleTest : IntegrationTestBase() {
     assertThat(visits.filter { it.visitSubStatus == VisitSubStatus.AUTO_REJECTED }.size).isEqualTo(1)
     assertThat(visits.filter { it.visitSubStatus == VisitSubStatus.AUTO_REJECTED }.map { it.reference }.first()).isEqualTo(requestVisitForRejectionHei.reference)
 
-    val auditEvents = testEventAuditRepository.getAuditByType(EventAuditType.REQUESTED_VISIT_AUTO_REJECTED)
-    assertThat(auditEvents).hasSize(1)
-    assertAutoRejectionAuditEvent(auditEvents[0], requestVisitForRejectionHei)
+    // when - check the audit events
+    val responseSpec = callVisitHistoryByReference(webTestClient, requestVisitForRejectionHei.reference, roleVisitSchedulerHttpHeaders)
+    // Then
+    responseSpec.expectStatus().isOk
+    val eventAuditList = getEventAuditList(responseSpec)
+
+    Assertions.assertThat(eventAuditList.size).isEqualTo(1)
+    assertAuditEvent(
+      eventAudit = eventAuditList[0],
+      expectedUserName = null,
+      expectedUserType = UserType.SYSTEM,
+      expectedAuditType = EventAuditType.REQUESTED_VISIT_AUTO_REJECTED,
+      expectedApplicationMethodType = ApplicationMethodType.NOT_APPLICABLE,
+      expectedSessionTemplateReference = heiSessionTemplate.reference,
+      expectedText = "Auto rejected by minimum booking window system cron",
+      expectedAuditAttributes = mapOf(EventAuditAttributeTypes.AUTO_REJECTION_REASON to MINIMUM_BOOKING_WINDOW_REACHED.name),
+    )
   }
 
   @Test
@@ -184,21 +216,22 @@ class AutoRejectVisitRequestsScheduleTest : IntegrationTestBase() {
     assertThat(visits.filter { it.visitSubStatus == VisitSubStatus.AUTO_REJECTED }.size).isEqualTo(1)
     assertThat(visits.filter { it.visitSubStatus == VisitSubStatus.AUTO_REJECTED }.map { it.reference }.first()).isEqualTo(requestVisitForRejectionCfi.reference)
 
-    val auditEvents = testEventAuditRepository.getAuditByType(EventAuditType.REQUESTED_VISIT_AUTO_REJECTED)
-    assertThat(auditEvents).hasSize(1)
-    assertAutoRejectionAuditEvent(auditEvents[0], requestVisitForRejectionCfi)
-  }
+    // when - check the audit events
+    val responseSpec = callVisitHistoryByReference(webTestClient, requestVisitForRejectionCfi.reference, roleVisitSchedulerHttpHeaders)
+    // Then
+    responseSpec.expectStatus().isOk
+    val eventAuditList = getEventAuditList(responseSpec)
 
-  private fun assertAutoRejectionAuditEvent(eventAudit: EventAudit, autoRejectedVisit: Visit) {
-    with(eventAudit) {
-      assertThat(bookingReference).isEqualTo(autoRejectedVisit.reference)
-      assertThat(applicationMethodType).isEqualTo(ApplicationMethodType.NOT_APPLICABLE)
-      assertThat(eventAuditAttributes.size).isEqualTo(1)
-      assertThat(eventAuditAttributes[0].attributeName).isEqualTo(EventAuditAttributeTypes.AUTO_REJECTION_REASON)
-      assertThat(eventAuditAttributes[0].attributeValue).isEqualTo(MINIMUM_BOOKING_WINDOW_REACHED.name)
-      assertThat(actionedBy.userType).isEqualTo(SYSTEM)
-      assertThat(actionedBy.bookerReference).isNull()
-      assertThat(actionedBy.userName).isNull()
-    }
+    Assertions.assertThat(eventAuditList.size).isEqualTo(1)
+    assertAuditEvent(
+      eventAudit = eventAuditList[0],
+      expectedUserName = null,
+      expectedUserType = UserType.SYSTEM,
+      expectedAuditType = EventAuditType.REQUESTED_VISIT_AUTO_REJECTED,
+      expectedApplicationMethodType = ApplicationMethodType.NOT_APPLICABLE,
+      expectedSessionTemplateReference = cfiSessionTemplate.reference,
+      expectedText = "Auto rejected by minimum booking window system cron",
+      expectedAuditAttributes = mapOf(EventAuditAttributeTypes.AUTO_REJECTION_REASON to MINIMUM_BOOKING_WINDOW_REACHED.name),
+    )
   }
 }
