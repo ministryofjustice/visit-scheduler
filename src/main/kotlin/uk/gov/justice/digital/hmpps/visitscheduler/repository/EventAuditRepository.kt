@@ -13,30 +13,30 @@ import java.time.LocalDateTime
 
 @Repository
 interface EventAuditRepository : JpaRepository<EventAudit, Long> {
+  @Query(
+    "select ea from EventAudit ea left join fetch ea.eventAuditAttributes",
+  )
+  override fun findAll(): List<EventAudit>
+
+  @Query(
+    "select ea from EventAudit ea left join fetch ea.eventAuditAttributes " +
+      "where ea.bookingReference = :bookingReference order by ea.id asc",
+  )
   fun findByBookingReferenceOrderById(bookingReference: String): List<EventAudit>
 
   @Query(
-    "SELECT * FROM event_audit " +
-      "WHERE booking_reference = :bookingReference AND (type = 'BOOKED_VISIT' or type = 'REQUESTED_VISIT') " +
-      "ORDER BY id DESC LIMIT 1 ",
-    nativeQuery = true,
+    "SELECT ea FROM EventAudit ea left join fetch ea.eventAuditAttributes " +
+      "WHERE ea.bookingReference = :bookingReference AND (ea.type = 'BOOKED_VISIT' or ea.type = 'REQUESTED_VISIT') " +
+      "ORDER BY ea.id DESC LIMIT 1 ",
   )
   fun findLastBookedVisitEventByBookingReference(bookingReference: String): EventAudit?
 
   @Query(
-    "SELECT * FROM event_audit " +
-      "WHERE booking_reference = :bookingReference AND (type = 'BOOKED_VISIT' or type = 'MIGRATED_VISIT' or type = 'REQUESTED_VISIT') " +
-      "ORDER BY create_timestamp DESC LIMIT 1 ",
-    nativeQuery = true,
+    "SELECT ea FROM EventAudit ea left join fetch ea.eventAuditAttributes " +
+      "WHERE ea.bookingReference = :bookingReference AND (ea.type = 'BOOKED_VISIT' or ea.type = 'MIGRATED_VISIT' or ea.type = 'REQUESTED_VISIT') " +
+      "ORDER BY ea.createTimestamp DESC LIMIT 1 ",
   )
   fun findLastBookedOrMigratedVisitEventByBookingReference(bookingReference: String): EventAudit?
-
-  @Query(
-    "SELECT ea.actionedBy FROM EventAudit ea " +
-      " WHERE ea.bookingReference = :bookingReference AND ea.type in (uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.UPDATED_VISIT,uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.BOOKED_VISIT, uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.MIGRATED_VISIT, uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.REQUESTED_VISIT) " +
-      "ORDER BY ea.id DESC LIMIT 1 ",
-  )
-  fun getLastUserToUpdateBookingByReference(bookingReference: String): ActionedBy
 
   @Query(
     "SELECT ea.actionedBy FROM EventAudit ea " +
@@ -64,7 +64,8 @@ interface EventAuditRepository : JpaRepository<EventAudit, Long> {
   fun updateCreateTimestamp(createTimestamp: LocalDateTime, id: Long): Int
 
   @Query(
-    "Select ea from EventAudit ea where ea.actionedBy.bookerReference = :bookerReference" +
+    "SELECT ea FROM EventAudit ea left join fetch ea.eventAuditAttributes " +
+      " where ea.actionedBy.bookerReference = :bookerReference" +
       " and ea.type NOT IN (:ignoreEventTypes)",
   )
   fun getVisitEventsByBookingReference(bookerReference: String, ignoreEventTypes: List<EventAuditType>): List<EventAudit>

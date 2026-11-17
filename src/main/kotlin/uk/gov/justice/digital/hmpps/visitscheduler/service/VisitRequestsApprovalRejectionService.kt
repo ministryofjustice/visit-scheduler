@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApproveRejectionVisitRequestBodyDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitRequestApprovalRejectionResponseDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.AutoRejectionReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 
@@ -57,13 +58,13 @@ class VisitRequestsApprovalRejectionService(
     return VisitRequestApprovalRejectionResponseDto(actionedVisitDto, eventAuditDto)
   }
 
-  fun autoRejectRequestByVisitReference(visitReference: String, rejectionText: String): VisitRequestApprovalRejectionResponseDto {
+  fun autoRejectRequestByVisitReference(visitReference: String, autoRejectionReason: AutoRejectionReason): VisitRequestApprovalRejectionResponseDto {
     LOG.info("Entered VisitRequestsApprovalRejectionService - autoRejectRequestVisitsAtMinimumBookingWindow")
 
     visitRepository.autoRejectVisitRequestByReference(visitReference)
 
     val actionedVisitDto = visitDtoBuilder.build(visitRepository.findByReference(visitReference)!!)
-    val eventAuditDto = visitEventAuditService.saveVisitRequestAutoRejectedEventAudit(actionedVisitDto, rejectionText)
+    val eventAuditDto = visitEventAuditService.saveVisitRequestAutoRejectedEventAudit(actionedVisitDto, autoRejectionReason)
 
     visitNotificationTransactionalService.deleteVisitAndPairedNotificationEvents(actionedVisitDto.reference, UnFlagEventReason.VISIT_REQUEST_AUTO_REJECTED)
 
