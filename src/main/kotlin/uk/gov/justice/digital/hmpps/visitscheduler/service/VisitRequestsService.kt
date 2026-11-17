@@ -117,7 +117,7 @@ class VisitRequestsService(
     LOG.info("Found ${requestVisitsDueForAutoRejection.size} request visits due for auto rejection")
 
     requestVisitsDueForAutoRejection.forEach { visitRequest ->
-      val autoRejectResponseDto = visitRequestsApprovalRejectionService.autoRejectRequestByVisitReference(visitRequest.reference, autoRejectionReason.description)
+      val autoRejectResponseDto = visitRequestsApprovalRejectionService.autoRejectRequestByVisitReference(visitRequest.reference, autoRejectionReason)
 
       telemetryClientService.trackVisitRequestAutoRejectedEvent(
         autoRejectResponseDto.visitDto,

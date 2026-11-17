@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
@@ -32,8 +33,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDt
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationStatus.ACCEPTED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditAttributeTypes
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.BOOKED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CANCELLED_VISIT
@@ -677,4 +680,27 @@ abstract class IntegrationTestBase {
     restrictions = restrictions,
     approvedVisitor = approvedVisitor,
   )
+
+  protected fun assertAuditEvent(
+    eventAudit: EventAuditDto,
+    expectedUserName: String?,
+    expectedUserType: UserType,
+    expectedAuditType: EventAuditType,
+    expectedApplicationMethodType: ApplicationMethodType,
+    expectedSessionTemplateReference: String,
+    expectedText: String?,
+    expectedAuditAttributes: Map<EventAuditAttributeTypes, String>,
+  ) {
+    Assertions.assertThat(eventAudit.actionedBy.userName).isEqualTo(expectedUserName)
+    Assertions.assertThat(eventAudit.actionedBy.userType).isEqualTo(expectedUserType)
+    Assertions.assertThat(eventAudit.type).isEqualTo(expectedAuditType)
+    Assertions.assertThat(eventAudit.applicationMethodType).isEqualTo(expectedApplicationMethodType)
+    Assertions.assertThat(eventAudit.createTimestamp).isNotNull
+    Assertions.assertThat(eventAudit.sessionTemplateReference).isEqualTo(expectedSessionTemplateReference)
+    Assertions.assertThat(eventAudit.text).isEqualTo(expectedText)
+    Assertions.assertThat(eventAudit.auditAttributes.size).isEqualTo(expectedAuditAttributes.size)
+    val auditAttributeValues = eventAudit.auditAttributes.associate { it.attributeName to it.attributeValue }.toList()
+    val expectedAuditAttributesList = expectedAuditAttributes.toList()
+    Assertions.assertThat(auditAttributeValues).containsAll(expectedAuditAttributesList)
+  }
 }

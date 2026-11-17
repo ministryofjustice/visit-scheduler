@@ -4,6 +4,7 @@ import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_BY_REFERENCE
@@ -19,6 +20,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.EMAIL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.PHONE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.WEBSITE
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.AutoRejectionReason
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditAttributeTypes
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.BOOKED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CANCELLED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CHANGING_VISIT
@@ -26,7 +30,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.RESE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.UPDATED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus.PRISONER_CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction.OPEN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callApplicationForVisitChange
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCancelVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
@@ -36,12 +43,17 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.submitApplication
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.visit.application.ReserveSlotTest
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.task.AutoRejectVisitRequestsTask
 import java.time.DayOfWeek.SATURDAY
+import java.time.LocalDate
 
 @DisplayName("GET $GET_VISIT_BY_REFERENCE")
 class VisitHistoryByReferenceTest : IntegrationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
+
+  @Autowired
+  private lateinit var autoRejectVisitRequestsTask: AutoRejectVisitRequestsTask
 
   @BeforeEach
   internal fun setUp() {
@@ -73,62 +85,112 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
     val eventAuditList = getEventAuditList(responseSpec)
 
     Assertions.assertThat(eventAuditList.size).isEqualTo(7)
+    assertAuditEvent(
+      eventAudit = eventAuditList[0],
+      expectedUserName = "reserve_guy",
+      expectedUserType = STAFF,
+      expectedAuditType = RESERVED_VISIT,
+      expectedApplicationMethodType = PHONE,
+      expectedSessionTemplateReference = sessionTemplate.reference,
+      expectedText = null,
+      expectedAuditAttributes = emptyMap(),
+    )
 
-    Assertions.assertThat(eventAuditList[0].actionedBy.userName).isEqualTo("reserve_guy")
-    Assertions.assertThat(eventAuditList[0].actionedBy.userType).isEqualTo(STAFF)
-    Assertions.assertThat(eventAuditList[0].type).isEqualTo(RESERVED_VISIT)
-    Assertions.assertThat(eventAuditList[0].applicationMethodType).isEqualTo(PHONE)
-    Assertions.assertThat(eventAuditList[0].createTimestamp).isNotNull
-    Assertions.assertThat(eventAuditList[0].sessionTemplateReference).isEqualTo(sessionTemplate.reference)
-    Assertions.assertThat(eventAuditList[0].text).isNull()
+    assertAuditEvent(
+      eventAudit = eventAuditList[1],
+      expectedUserName = "booking_guy",
+      expectedUserType = STAFF,
+      expectedAuditType = BOOKED_VISIT,
+      expectedApplicationMethodType = PHONE,
+      expectedSessionTemplateReference = sessionTemplate.reference,
+      expectedText = null,
+      expectedAuditAttributes = emptyMap(),
+    )
 
-    Assertions.assertThat(eventAuditList[1].actionedBy.userName).isEqualTo("booking_guy")
-    Assertions.assertThat(eventAuditList[1].actionedBy.userType).isEqualTo(STAFF)
-    Assertions.assertThat(eventAuditList[1].type).isEqualTo(BOOKED_VISIT)
-    Assertions.assertThat(eventAuditList[1].applicationMethodType).isEqualTo(PHONE)
-    Assertions.assertThat(eventAuditList[1].createTimestamp).isNotNull
-    Assertions.assertThat(eventAuditList[1].sessionTemplateReference).isEqualTo(sessionTemplate.reference)
-    Assertions.assertThat(eventAuditList[1].text).isNull()
+    assertAuditEvent(
+      eventAudit = eventAuditList[2],
+      expectedUserName = "updated_by",
+      expectedUserType = STAFF,
+      expectedAuditType = CHANGING_VISIT,
+      expectedApplicationMethodType = EMAIL,
+      expectedSessionTemplateReference = sessionTemplate.reference,
+      expectedText = null,
+      expectedAuditAttributes = emptyMap(),
+    )
 
-    Assertions.assertThat(eventAuditList[2].actionedBy.userName).isEqualTo("updated_by")
-    Assertions.assertThat(eventAuditList[2].actionedBy.userType).isEqualTo(STAFF)
-    Assertions.assertThat(eventAuditList[2].type).isEqualTo(CHANGING_VISIT)
-    Assertions.assertThat(eventAuditList[2].applicationMethodType).isEqualTo(EMAIL)
-    Assertions.assertThat(eventAuditList[2].createTimestamp).isNotNull
-    Assertions.assertThat(eventAuditList[2].sessionTemplateReference).isEqualTo(sessionTemplate.reference)
-    Assertions.assertThat(eventAuditList[2].text).isNull()
+    assertAuditEvent(
+      eventAudit = eventAuditList[3],
+      expectedUserName = "booking_guy",
+      expectedUserType = STAFF,
+      expectedAuditType = UPDATED_VISIT,
+      expectedApplicationMethodType = EMAIL,
+      expectedSessionTemplateReference = sessionTemplate.reference,
+      expectedText = null,
+      expectedAuditAttributes = emptyMap(),
+    )
 
-    Assertions.assertThat(eventAuditList[3].actionedBy.userName).isEqualTo("booking_guy")
-    Assertions.assertThat(eventAuditList[3].actionedBy.userType).isEqualTo(STAFF)
-    Assertions.assertThat(eventAuditList[3].type).isEqualTo(UPDATED_VISIT)
-    Assertions.assertThat(eventAuditList[3].applicationMethodType).isEqualTo(EMAIL)
-    Assertions.assertThat(eventAuditList[3].createTimestamp).isNotNull
-    Assertions.assertThat(eventAuditList[3].sessionTemplateReference).isEqualTo(sessionTemplate.reference)
-    Assertions.assertThat(eventAuditList[3].text).isNull()
+    assertAuditEvent(
+      eventAudit = eventAuditList[4],
+      expectedUserName = "updated_by",
+      expectedUserType = STAFF,
+      expectedAuditType = CHANGING_VISIT,
+      expectedApplicationMethodType = EMAIL,
+      expectedSessionTemplateReference = sessionTemplate.reference,
+      expectedText = null,
+      expectedAuditAttributes = emptyMap(),
+    )
 
-    Assertions.assertThat(eventAuditList[4].actionedBy.userName).isEqualTo("updated_by")
-    Assertions.assertThat(eventAuditList[4].actionedBy.userType).isEqualTo(STAFF)
-    Assertions.assertThat(eventAuditList[4].type).isEqualTo(CHANGING_VISIT)
-    Assertions.assertThat(eventAuditList[4].applicationMethodType).isEqualTo(EMAIL)
-    Assertions.assertThat(eventAuditList[4].createTimestamp).isNotNull
-    Assertions.assertThat(eventAuditList[4].sessionTemplateReference).isEqualTo(sessionTemplate.reference)
-    Assertions.assertThat(eventAuditList[4].text).isNull()
+    assertAuditEvent(
+      eventAudit = eventAuditList[5],
+      expectedUserName = "booking_guy",
+      expectedUserType = STAFF,
+      expectedAuditType = UPDATED_VISIT,
+      expectedApplicationMethodType = EMAIL,
+      expectedSessionTemplateReference = sessionTemplate.reference,
+      expectedText = null,
+      expectedAuditAttributes = emptyMap(),
+    )
 
-    Assertions.assertThat(eventAuditList[5].actionedBy.userName).isEqualTo("booking_guy")
-    Assertions.assertThat(eventAuditList[5].actionedBy.userType).isEqualTo(STAFF)
-    Assertions.assertThat(eventAuditList[5].type).isEqualTo(UPDATED_VISIT)
-    Assertions.assertThat(eventAuditList[5].applicationMethodType).isEqualTo(EMAIL)
-    Assertions.assertThat(eventAuditList[5].createTimestamp).isNotNull
-    Assertions.assertThat(eventAuditList[5].sessionTemplateReference).isEqualTo(sessionTemplate.reference)
-    Assertions.assertThat(eventAuditList[5].text).isNull()
+    assertAuditEvent(
+      eventAudit = eventAuditList[6],
+      expectedUserName = "cancel_guy",
+      expectedUserType = STAFF,
+      expectedAuditType = CANCELLED_VISIT,
+      expectedApplicationMethodType = WEBSITE,
+      expectedSessionTemplateReference = sessionTemplate.reference,
+      expectedText = null,
+      expectedAuditAttributes = emptyMap(),
+    )
+  }
 
-    Assertions.assertThat(eventAuditList[6].actionedBy.userName).isEqualTo("cancel_guy")
-    Assertions.assertThat(eventAuditList[6].actionedBy.userType).isEqualTo(STAFF)
-    Assertions.assertThat(eventAuditList[6].type).isEqualTo(CANCELLED_VISIT)
-    Assertions.assertThat(eventAuditList[6].applicationMethodType).isEqualTo(WEBSITE)
-    Assertions.assertThat(eventAuditList[6].createTimestamp).isNotNull
-    Assertions.assertThat(eventAuditList[6].sessionTemplateReference).isEqualTo(sessionTemplate.reference)
-    Assertions.assertThat(eventAuditList[6].text).isNull()
+  @Test
+  fun `when visit history fetched for auto rejected visits then audit information is inserted correctly`() {
+    // Given
+    val sessionTemplate = sessionTemplateEntityHelper.create()
+    val prisonerId = "AA1234"
+
+    val requestVisitForRejectionMdi = createApplicationAndVisit(prisonerId = prisonerId, slotDate = LocalDate.now().plusDays(1), visitStatus = BOOKED, visitSubStatus = VisitSubStatus.REQUESTED, sessionTemplate = sessionTemplate)
+    visitEntityHelper.save(requestVisitForRejectionMdi)
+
+    // When
+    autoRejectVisitRequestsTask.autoRejectRequestVisits()
+    val responseSpec = callVisitHistoryByReference(webTestClient, requestVisitForRejectionMdi.reference, roleVisitSchedulerHttpHeaders)
+
+    // Then
+    responseSpec.expectStatus().isOk
+    val eventAuditList = getEventAuditList(responseSpec)
+
+    Assertions.assertThat(eventAuditList.size).isEqualTo(1)
+    assertAuditEvent(
+      eventAudit = eventAuditList[0],
+      expectedUserName = null,
+      expectedUserType = UserType.SYSTEM,
+      expectedAuditType = EventAuditType.REQUESTED_VISIT_AUTO_REJECTED,
+      expectedApplicationMethodType = ApplicationMethodType.NOT_APPLICABLE,
+      expectedSessionTemplateReference = sessionTemplate.reference,
+      expectedText = "Auto rejected by minimum booking window system cron",
+      expectedAuditAttributes = mapOf(EventAuditAttributeTypes.AUTO_REJECTION_REASON to AutoRejectionReason.MINIMUM_BOOKING_WINDOW_REACHED.name),
+    )
   }
 
   @Test
