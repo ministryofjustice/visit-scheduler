@@ -38,7 +38,7 @@ jobs:
     with:
       localstack-tag: "4"
       java-version: '25'
-      postgres-tag: "17"
+      postgres-tag: "18"
       postgres-db: visit_scheduler
       postgres-username: visit_scheduler
       postgres-password: visit_scheduler
