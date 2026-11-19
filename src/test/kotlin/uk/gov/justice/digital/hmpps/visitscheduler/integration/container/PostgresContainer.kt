@@ -30,7 +30,7 @@ object PostgresContainer {
 
     val logConsumer = Slf4jLogConsumer(log).withPrefix("postgresql")
 
-    return GenericContainer(DockerImageName.parse("postgres:16")).apply {
+    return GenericContainer(DockerImageName.parse("postgres:18")).apply {
       withEnv("HOSTNAME_EXTERNAL", "localhost")
       portBindings = listOf("5432:5432")
       withEnv("POSTGRES_DB", DBNAME)
