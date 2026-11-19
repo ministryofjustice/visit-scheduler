@@ -14,8 +14,6 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDO
 import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTestClient
 import org.springframework.http.HttpHeaders
 import org.springframework.test.context.ActiveProfiles
-import org.springframework.test.context.DynamicPropertyRegistry
-import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.transaction.annotation.Transactional
@@ -73,9 +71,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitNotifyHistoryHelp
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VsipReportingEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGet
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callPut
-import uk.gov.justice.digital.hmpps.visitscheduler.integration.container.LocalStackContainer
-import uk.gov.justice.digital.hmpps.visitscheduler.integration.container.LocalStackContainer.setLocalStackProperties
-import uk.gov.justice.digital.hmpps.visitscheduler.integration.container.PostgresContainer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.ActivitiesApiMockServer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.AlertsApiMockServer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.HmppsAuthExtension
@@ -264,30 +259,7 @@ abstract class IntegrationTestBase {
       alertsApiMockServer.stop()
       visitAllocationApiMockServer.stop()
     }
-
-    private val pgContainer = PostgresContainer.instance
-    private val lsContainer = LocalStackContainer.instance
-
-    @JvmStatic
-    @DynamicPropertySource
-    fun properties(registry: DynamicPropertyRegistry) {
-      pgContainer?.run {
-        registry.add("spring.datasource.url") { PostgresContainer.jdbcUrl }
-        registry.add("spring.datasource.username") { PostgresContainer.dbUsername }
-        registry.add("spring.datasource.password") { PostgresContainer.dbPassword }
-        registry.add("spring.datasource.placeholders.database_update_password") { PostgresContainer.dbPassword }
-        registry.add("spring.datasource.placeholders.database_read_only_password") { PostgresContainer.dbPassword }
-        registry.add("spring.flyway.url") { PostgresContainer.jdbcUrl }
-        registry.add("spring.flyway.user") { PostgresContainer.dbUsername }
-        registry.add("spring.flyway.password") { PostgresContainer.dbPassword }
-      }
-      lsContainer?.run {
-        setLocalStackProperties(lsContainer, registry)
-      }
-    }
   }
-
-  fun formatDateToString(dateTime: LocalDateTime): String = dateTime.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_DATE_TIME)
 
   fun formatStartSlotDateTimeToString(sessionSlot: SessionSlot): String = sessionSlot.slotStart.truncatedTo(ChronoUnit.SECONDS).format(
     DateTimeFormatter.ISO_DATE_TIME,
@@ -296,8 +268,6 @@ abstract class IntegrationTestBase {
   fun formatSlotEndDateTimeToString(sessionSlot: SessionSlot): String = sessionSlot.slotEnd.truncatedTo(ChronoUnit.SECONDS).format(
     DateTimeFormatter.ISO_DATE_TIME,
   )
-
-  fun formatDateToString(sessionSlot: SessionSlot): String = formatDateToString(sessionSlot.slotDate)
 
   fun formatDateToString(localDate: LocalDate): String = localDate.format(DateTimeFormatter.ISO_DATE)
 
