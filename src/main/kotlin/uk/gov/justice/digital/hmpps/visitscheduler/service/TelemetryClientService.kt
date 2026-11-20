@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service
 import tools.jackson.databind.ObjectMapper
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestVisitorDetailsDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ExcludeDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdatePrisonDto
@@ -141,7 +140,6 @@ class TelemetryClientService(
 
   fun trackCancelBookingEvent(
     visitDto: VisitDto,
-    cancelVisitDto: CancelVisitDto,
     eventAudit: EventAuditDto,
   ) {
     val eventsMap = createCancelVisitTrackData(visitDto, eventAudit)

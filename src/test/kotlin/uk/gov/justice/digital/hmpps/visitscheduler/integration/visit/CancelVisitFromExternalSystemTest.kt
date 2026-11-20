@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitFromExternalSy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
@@ -67,9 +68,9 @@ class CancelVisitFromExternalSystemTest : IntegrationTestBase() {
     assertThat(cancelledVisit.visitExternalSystemDetails?.clientName).isEqualTo("MDI")
     assertThat(cancelledVisit.visitExternalSystemDetails?.clientVisitReference).isEqualTo("external-reference")
     assertThat(testVisitRepository.findByReference(visit.reference).outcomeStatus).isEqualTo(OutcomeStatus.PRISONER_CANCELLED)
-    assertHelper.assertVisitCancellation(cancelledVisit, OutcomeStatus.PRISONER_CANCELLED, request.actionedBy, request.applicationMethodType)
+    assertHelper.assertVisitCancellation(cancelledVisit, OutcomeStatus.PRISONER_CANCELLED, "external-staff", request.applicationMethodType)
     verify(snsService).sendVisitCancelledEvent(any())
-    verify(telemetryClientService).trackCancelBookingEvent(any(), any(), any())
+    verify(telemetryClientService).trackCancelBookingEvent(any(), any())
   }
 
   @Test
@@ -80,23 +81,21 @@ class CancelVisitFromExternalSystemTest : IntegrationTestBase() {
 
     assertThat(eventAuditRepository.findAllByBookingReference(visit.reference)).hasSize(1)
     verify(snsService, times(1)).sendVisitCancelledEvent(any())
-    verify(telemetryClientService, times(1)).trackCancelBookingEvent(any(), any(), any())
+    verify(telemetryClientService, times(1)).trackCancelBookingEvent(any(), any())
   }
 
-  @ParameterizedTest
-  @EnumSource(value = UserType::class, names = ["STAFF", "PRISONER"])
-  fun `Cancel an external visit returns 400 when actionedBy exceeds 60 characters`(userType: UserType) {
+  @Test
+  fun `Cancel an external visit returns 400 when the staff username exceeds 60 characters`() {
     val visit = createVisit()
-    cancel(visit.reference, request.copy(userType = userType, actionedBy = "s".repeat(61)))
+    cancel(visit.reference, request.copy(actionedBy = "s".repeat(61)))
       .expectStatus().isBadRequest
     assertVisitNotCancelled(visit)
   }
 
-  @ParameterizedTest
-  @EnumSource(value = UserType::class, names = ["STAFF", "PRISONER"])
-  fun `Cancel an external visit accepts actionedBy with 60 characters`(userType: UserType) {
+  @Test
+  fun `Cancel an external visit accepts a staff username with 60 characters`() {
     val visit = createVisit()
-    val cancellation = request.copy(userType = userType, actionedBy = "s".repeat(60))
+    val cancellation = request.copy(actionedBy = "s".repeat(60))
 
     cancel(visit.reference, cancellation).expectStatus().isOk
 
@@ -106,13 +105,27 @@ class CancelVisitFromExternalSystemTest : IntegrationTestBase() {
   }
 
   @ParameterizedTest
-  @EnumSource(value = UserType::class, names = ["PUBLIC", "SYSTEM"])
-  fun `Cancel an external visit accepts actionedBy exceeding 60 characters for public or system users`(userType: UserType) {
+  @EnumSource(value = UserType::class, names = ["SYSTEM", "PRISONER"])
+  fun `Cancel records the same actor for omitted and explicit null actionedBy`(userType: UserType) {
+    val json = objectMapper.valueToTree(request.copy(userType = userType)) as ObjectNode
+    val actorIds = listOf(createVisit(), createVisit()).mapIndexed { index, visit ->
+      if (index == 0) json.remove("actionedBy") else json.putNull("actionedBy")
+      cancelJson(visit.reference, objectMapper.writeValueAsString(json)).expectStatus().isOk
+      assertCancellationActor(visit, userType)
+    }
+    if (userType == UserType.SYSTEM) {
+      assertThat(actorIds.distinct()).hasSize(1)
+    }
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = UserType::class, names = ["PUBLIC", "SYSTEM", "PRISONER"])
+  fun `Cancel uses the supplied identity only for the public booker`(userType: UserType) {
     val visit = createVisit()
     cancel(visit.reference, request.copy(userType = userType, actionedBy = "s".repeat(61))).expectStatus().isOk
 
     assertThat(testVisitRepository.findByReference(visit.reference).visitStatus).isEqualTo(VisitStatus.CANCELLED)
-    assertThat(eventAuditRepository.findAllByBookingReference(visit.reference)).hasSize(1)
+    assertCancellationActor(visit, userType, publicReference = "s".repeat(61))
     verify(snsService).sendVisitCancelledEvent(any())
   }
 
@@ -201,11 +214,21 @@ class CancelVisitFromExternalSystemTest : IntegrationTestBase() {
 
   private fun url(reference: String) = CANCEL_VISIT_FROM_EXTERNAL_SYSTEM.replace("{reference}", reference)
 
+  private fun assertCancellationActor(visit: Visit, userType: UserType, publicReference: String? = null): Long {
+    val audit = eventAuditRepository.findWithActorByBookingReference(visit.reference).single()
+    assertThat(audit.type).isEqualTo(EventAuditType.CANCELLED_VISIT)
+    assertThat(audit.applicationMethodType).isEqualTo(request.applicationMethodType)
+    assertThat(audit.actionedBy.userType).isEqualTo(userType)
+    assertThat(audit.actionedBy.userName).isEqualTo(visit.prisonerId.takeIf { userType == UserType.PRISONER })
+    assertThat(audit.actionedBy.bookerReference).isEqualTo(publicReference.takeIf { userType == UserType.PUBLIC })
+    return audit.actionedBy.id
+  }
+
   private fun assertVisitNotCancelled(visit: Visit) {
     assertThat(testVisitRepository.findByReference(visit.reference).visitStatus).isEqualTo(visit.visitStatus)
     assertThat(eventAuditRepository.findAllByBookingReference(visit.reference)).isEmpty()
     verify(snsService, never()).sendVisitCancelledEvent(any())
-    verify(telemetryClientService, never()).trackCancelBookingEvent(any(), any(), any())
+    verify(telemetryClientService, never()).trackCancelBookingEvent(any(), any())
     verify(visitNotificationTransactionalService, never()).deleteVisitAndPairedNotificationEvents(any(), any(), any())
   }
 

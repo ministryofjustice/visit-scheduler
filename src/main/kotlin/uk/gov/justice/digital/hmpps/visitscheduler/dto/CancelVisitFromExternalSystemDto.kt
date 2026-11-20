@@ -16,9 +16,8 @@ data class CancelVisitFromExternalSystemDto(
   @field:Valid
   val cancelOutcome: OutcomeDto,
 
-  @param:Schema(description = "Username for user who actioned this request. Maximum 60 characters for STAFF or PRISONER users.", required = true)
-  @field:NotBlank
-  val actionedBy: String,
+  @param:Schema(description = "Required and nonblank for STAFF (username, maximum 60 characters) or PUBLIC (booker reference). Ignored for PRISONER (uses the visit's prisoner ID) and SYSTEM (uses the shared system actor).", required = false)
+  val actionedBy: String? = null,
 
   @param:Schema(description = "User type", example = "STAFF", required = true)
   @field:NotNull
