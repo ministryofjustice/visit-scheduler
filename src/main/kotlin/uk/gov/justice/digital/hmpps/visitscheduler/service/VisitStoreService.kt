@@ -9,8 +9,9 @@ import org.springframework.security.access.AccessDeniedException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitFromExternalSystemDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
@@ -199,13 +200,11 @@ class VisitStoreService(
     visitNotificationTransactionalService.deleteVisitAndPairedNotificationEvents(existingBooking.reference, VISIT_UPDATED)
   }
 
-  fun cancelVisit(reference: String, cancelVisitDto: CancelVisitDto): VisitDto {
+  fun cancelVisit(reference: String, cancelOutcome: OutcomeDto, userType: UserType): VisitDto {
     val visitEntity = visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("Visit $reference not found")
-    validateCancelRequest(cancelVisitDto, visitEntity)
+    validateCancelRequest(userType, visitEntity)
 
-    val cancelOutcome = cancelVisitDto.cancelOutcome
-
-    if (visitEntity.visitSubStatus == VisitSubStatus.REQUESTED && cancelVisitDto.userType == UserType.PUBLIC) {
+    if (visitEntity.visitSubStatus == VisitSubStatus.REQUESTED && userType == UserType.PUBLIC) {
       visitEntity.visitSubStatus = VisitSubStatus.WITHDRAWN
     } else {
       visitEntity.visitSubStatus = VisitSubStatus.CANCELLED
@@ -222,15 +221,16 @@ class VisitStoreService(
     return visitDtoBuilder.build(visitRepository.saveAndFlush(visitEntity))
   }
 
-  data class CancellationResult(val visit: VisitDto, val alreadyCancelled: Boolean)
+  data class CancellationResult(val visit: VisitDto, val alreadyCancelled: Boolean, val actionedBy: String?)
 
-  fun cancelVisitFromExternalSystem(reference: String, clientName: String, cancelVisitDto: CancelVisitDto): CancellationResult {
+  fun cancelVisitFromExternalSystem(reference: String, request: CancelVisitFromExternalSystemDto): CancellationResult {
     val visit = visitRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit $reference not found")
-    validateExternalVisitClient(clientName, visit)
+    validateExternalVisitClient(request.clientName, visit)
+    val actionedBy = resolveExternalVisitActionedBy(request.actionedBy, request.userType, visit.prisonerId)
     if (visit.visitStatus == CANCELLED) {
-      return CancellationResult(visitDtoBuilder.build(visit), alreadyCancelled = true)
+      return CancellationResult(visitDtoBuilder.build(visit), alreadyCancelled = true, actionedBy = actionedBy)
     }
-    return CancellationResult(cancelVisit(reference, cancelVisitDto), alreadyCancelled = false)
+    return CancellationResult(cancelVisit(reference, request.cancelOutcome, request.userType), alreadyCancelled = false, actionedBy = actionedBy)
   }
 
   fun validateExternalVisitClient(clientName: String, visit: Visit) {
@@ -242,7 +242,7 @@ class VisitStoreService(
     }
   }
 
-  private fun validateCancelRequest(cancelVisitDto: CancelVisitDto, visitEntity: Visit) {
+  private fun validateCancelRequest(userType: UserType, visitEntity: Visit) {
     // do not check the visit date if it was a requested visit
     // as requested visits should be allowed to be withdrawn if auto rejection fails
     if (visitEntity.visitSubStatus == VisitSubStatus.REQUESTED) {
@@ -250,7 +250,7 @@ class VisitStoreService(
     }
 
     // STAFF is allowed to cancel older visits but not PUBLIC
-    val allowedCancellationDate = if (cancelVisitDto.userType == UserType.STAFF) {
+    val allowedCancellationDate = if (userType == UserType.STAFF) {
       getAllowedCancellationDate(visitCancellationDayLimit = visitCancellationDayLimit)
     } else {
       LocalDateTime.now()

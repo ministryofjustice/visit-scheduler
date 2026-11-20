@@ -95,14 +95,15 @@ class VisitServiceTest {
   }
 
   @ParameterizedTest
-  @EnumSource(value = UserType::class, names = ["STAFF", "PRISONER"])
-  fun `when actionedBy exceeds 60 characters then the visit is not cancelled`(userType: UserType) {
+  @EnumSource(value = UserType::class, names = ["STAFF", "PUBLIC"])
+  fun `when actionedBy is missing or blank for staff or public then the visit is not cancelled`(userType: UserType) {
     val request = mock<CancelVisitFromExternalSystemDto>()
     whenever(request.userType).thenReturn(userType)
-    whenever(request.actionedBy).thenReturn("s".repeat(61))
-
-    val exception = assertThrows<ValidationException> { visitService.cancelVisitFromExternalSystem("visit-reference", request) }
-    assertThat(exception.message).isEqualTo("Audit username must not exceed 60 characters")
+    listOf(null, "", " ", "\t\n").forEach { identity ->
+      whenever(request.actionedBy).thenReturn(identity)
+      val exception = assertThrows<ValidationException> { visitService.cancelVisitFromExternalSystem("visit-reference", request) }
+      assertThat(exception.message).isEqualTo("actionedBy must be provided for STAFF or PUBLIC users")
+    }
     verifyNoServiceOrRepositoryCalls()
   }
 

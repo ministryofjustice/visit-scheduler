@@ -126,20 +126,14 @@ class VisitService(
       return alreadyCancelledVisit
     }
 
-    val cancelledVisit = visitStoreService.cancelVisit(reference, cancelVisitDto)
-    return processCancelEvents(cancelledVisit, cancelVisitDto)
+    val cancelledVisit = visitStoreService.cancelVisit(reference, cancelVisitDto.cancelOutcome, cancelVisitDto.userType)
+    return processCancelEvents(cancelledVisit, cancelVisitDto.actionedBy, cancelVisitDto.userType, cancelVisitDto.applicationMethodType)
   }
 
   fun cancelVisitFromExternalSystem(reference: String, request: CancelVisitFromExternalSystemDto): VisitDto {
-    validateAuditUsernameLength(request.actionedBy, request.userType)
-    val cancelVisitDto = CancelVisitDto(
-      cancelOutcome = request.cancelOutcome,
-      actionedBy = request.actionedBy,
-      userType = request.userType,
-      applicationMethodType = request.applicationMethodType,
-    )
-    val result = visitStoreService.cancelVisitFromExternalSystem(reference, request.clientName, cancelVisitDto)
-    return if (result.alreadyCancelled) result.visit else processCancelEvents(result.visit, cancelVisitDto)
+    validateExternalVisitActionedBy(request.actionedBy, request.userType)
+    val result = visitStoreService.cancelVisitFromExternalSystem(reference, request)
+    return if (result.alreadyCancelled) result.visit else processCancelEvents(result.visit, result.actionedBy, request.userType, request.applicationMethodType)
   }
 
   @Transactional(readOnly = true)
@@ -235,7 +229,7 @@ class VisitService(
   private fun processCreateVisitFromExternalSystemEvents(
     bookedVisitDto: VisitDto,
     createVisitFromExternalSystemDto: CreateVisitFromExternalSystemDto,
-    actionedBy: String,
+    actionedBy: String?,
     userType: UserType,
   ): VisitDto {
     val bookingEventAuditDto = visitEventAuditService.saveBookingEventAudit(
@@ -265,7 +259,7 @@ class VisitService(
     existingVisitDto: VisitDto,
     updatedVisitDto: VisitDto,
     updateVisitFromExternalSystemDto: UpdateVisitFromExternalSystemDto,
-    actionedBy: String,
+    actionedBy: String?,
     userType: UserType,
   ): VisitDto {
     val bookingEventAuditDto = visitEventAuditService.saveBookingEventAudit(
@@ -316,11 +310,13 @@ class VisitService(
 
   private fun processCancelEvents(
     visitDto: VisitDto,
-    cancelVisitDto: CancelVisitDto,
+    actionedBy: String?,
+    userType: UserType,
+    applicationMethodType: ApplicationMethodType,
   ): VisitDto {
-    val cancelledEventAuditDto = visitEventAuditService.saveCancelledEventAudit(cancelVisitDto, visitDto)
+    val cancelledEventAuditDto = visitEventAuditService.saveCancelledEventAudit(actionedBy, userType, applicationMethodType, visitDto)
 
-    telemetryClientService.trackCancelBookingEvent(visitDto, cancelVisitDto, cancelledEventAuditDto)
+    telemetryClientService.trackCancelBookingEvent(visitDto, cancelledEventAuditDto)
 
     val snsDomainEventPublishDto = SnsDomainEventPublishDto(
       visitDto.reference,
@@ -456,24 +452,6 @@ class VisitService(
     val updatedVisitDto = visitStoreService.updateVisitFromExternalSystem(updateVisitFromExternalSystemDto, existingVisit)
 
     return processUpdateVisitFromExternalSystemEvents(existingVisitDto, updatedVisitDto, updateVisitFromExternalSystemDto, actionedBy, userType)
-  }
-
-  private fun validateExternalVisitActionedBy(actionedBy: String?, userType: UserType) {
-    if ((userType == UserType.STAFF || userType == UserType.PUBLIC) && actionedBy.isNullOrBlank()) {
-      throw ValidationException("actionedBy must be provided for STAFF or PUBLIC users")
-    }
-  }
-
-  private fun resolveExternalVisitActionedBy(actionedBy: String?, userType: UserType, prisonerId: String): String {
-    val effectiveActionedBy = if (userType == UserType.PRISONER) prisonerId else actionedBy ?: prisonerId
-    validateAuditUsernameLength(effectiveActionedBy, userType)
-    return effectiveActionedBy
-  }
-
-  private fun validateAuditUsernameLength(actionedBy: String, userType: UserType) {
-    if ((userType == UserType.STAFF || userType == UserType.PRISONER) && actionedBy.length > 60) {
-      throw ValidationException("Audit username must not exceed 60 characters")
-    }
   }
 
   @Transactional(readOnly = true)

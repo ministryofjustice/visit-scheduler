@@ -5,7 +5,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigratedCancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
@@ -71,7 +70,7 @@ class VisitEventAuditService(
   )
 
   fun saveBookingEventAudit(
-    actionedByValue: String,
+    actionedByValue: String?,
     visit: VisitDto,
     type: EventAuditType,
     applicationMethodType: ApplicationMethodType,
@@ -108,8 +107,6 @@ class VisitEventAuditService(
       auditAttributes = emptyMap(),
     ),
   )
-
-  fun saveCancelledEventAudit(cancelVisitDto: CancelVisitDto, visit: VisitDto): EventAuditDto = saveCancelledEventAudit(cancelVisitDto.actionedBy, cancelVisitDto.userType, cancelVisitDto.applicationMethodType, visit)
 
   fun saveCancelledMigratedEventAudit(cancelVisitDto: MigratedCancelVisitDto, visit: VisitDto): EventAuditDto = saveCancelledEventAudit(cancelVisitDto.actionedBy, STAFF, NOT_KNOWN, visit)
 
@@ -188,7 +185,7 @@ class VisitEventAuditService(
 
   fun findByBookingReferenceOrderById(bookingReference: String): List<EventAuditDto> = eventAuditRepository.findByBookingReferenceOrderById(bookingReference).map { EventAuditDto(it) }
 
-  private fun saveCancelledEventAudit(actionedByValue: String, userType: UserType, applicationMethodType: ApplicationMethodType, visit: VisitDto): EventAuditDto {
+  fun saveCancelledEventAudit(actionedByValue: String?, userType: UserType, applicationMethodType: ApplicationMethodType, visit: VisitDto): EventAuditDto {
     val eventAuditType = if (visit.visitSubStatus == VisitSubStatus.WITHDRAWN) {
       REQUESTED_VISIT_WITHDRAWN
     } else {

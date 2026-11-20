@@ -19,6 +19,7 @@ import org.mockito.kotlin.verifyNoMoreInteractions
 import org.mockito.kotlin.whenever
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.test.context.ActiveProfiles
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitFromExternalSystemDto
@@ -70,7 +71,9 @@ internal class VisitStoreServiceTest {
     whenever(visitRepository.findByReference("visit-reference")).thenReturn(visit)
 
     assertThrows<AccessDeniedException> {
-      visitStoreService.cancelVisitFromExternalSystem("visit-reference", "MDI", mock())
+      val request = mock<CancelVisitFromExternalSystemDto>()
+      whenever(request.clientName).thenReturn("MDI")
+      visitStoreService.cancelVisitFromExternalSystem("visit-reference", request)
     }
 
     verify(visitRepository).findByReference("visit-reference")
