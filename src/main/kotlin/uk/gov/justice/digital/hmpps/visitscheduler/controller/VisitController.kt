@@ -42,11 +42,13 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visit.VisitorLastApproved
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visit.VisitorLastApprovedDatesRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
+import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService.Companion.MAX_RECORDS
 import java.time.LocalDate
 
 const val VISIT_CONTROLLER_PATH: String = "/visits"
 const val GET_VISIT_HISTORY_CONTROLLER_PATH: String = "$VISIT_CONTROLLER_PATH/{reference}/history"
 const val VISIT_CONTROLLER_SEARCH_PATH: String = "$VISIT_CONTROLLER_PATH/search"
+const val VISIT_REFERENCE_SEARCH_PATH: String = "$VISIT_CONTROLLER_SEARCH_PATH/references"
 const val VISIT_CONTROLLER_SEARCH_FUTURE_VISITS_PATH: String = "$VISIT_CONTROLLER_PATH/search/future/{prisonerNumber}"
 const val GET_VISIT_BY_APPLICATION_REFERENCE: String = "$VISIT_CONTROLLER_PATH/{applicationReference}/visit"
 const val UPDATE_VISIT_BY_APPLICATION_REFERENCE: String = "$VISIT_CONTROLLER_PATH/{applicationReference}/visit/update"
@@ -403,6 +405,57 @@ class VisitController(
     page,
     size,
   )
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @GetMapping(VISIT_REFERENCE_SEARCH_PATH)
+  @Operation(
+    summary = "Search for visit references",
+    description = "Returns only social visit references in the page content. The visit date range is inclusive. " +
+      "Optional filters are combined with AND. Results are ordered by visit start, most recent first.",
+    responses = [
+      ApiResponse(responseCode = "200", description = "Page of matching visit references"),
+      ApiResponse(
+        responseCode = "400",
+        description = "Invalid dates, filters or pagination parameters",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to retrieve visit references",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun findVisitReferences(
+    @RequestParam
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    @Parameter(description = "Earliest visit date", example = "2026-11-01")
+    fromDate: LocalDate,
+    @RequestParam
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    @Parameter(description = "Latest visit date", example = "2026-11-30")
+    toDate: LocalDate,
+    @RequestParam(required = false)
+    @Parameter(description = "Prisoner ID", example = "A1234AA")
+    prisonerId: String?,
+    @RequestParam(required = false)
+    @Parameter(description = "Prison code", example = "MDI")
+    prisonId: String?,
+    @RequestParam(required = false)
+    @Parameter(description = "Visit status", example = "BOOKED")
+    visitStatus: VisitStatus?,
+    @RequestParam(defaultValue = "0")
+    @Parameter(description = "Zero-based page number")
+    page: Int,
+    @RequestParam(defaultValue = "20")
+    @Parameter(description = "Page size, from 1 to $MAX_RECORDS")
+    size: Int,
+  ): Page<String> = visitService.findVisitReferences(fromDate, toDate, prisonerId?.trim(), prisonId?.trim(), visitStatus, page, size)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(GET_VISITS_BY)
