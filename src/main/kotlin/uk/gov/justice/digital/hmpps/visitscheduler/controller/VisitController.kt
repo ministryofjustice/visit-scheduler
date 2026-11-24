@@ -412,7 +412,8 @@ class VisitController(
   @Operation(
     summary = "Search for visit references",
     description = "Returns only visit references in the page content. The visit date range is inclusive. " +
-      "Optional filters are combined with AND. Results are ordered by visit start, most recent first.",
+      "Optional filters are combined with AND. Results are ordered by visit start, most recent first. " +
+      "This endpoint includes all visit types by default (on the contrary of the usual endpoints only revealing SOCIAL.",
     responses = [
       ApiResponse(responseCode = "200", description = "Page of matching visit references"),
       ApiResponse(
@@ -451,7 +452,7 @@ class VisitController(
     @Parameter(description = "Visit status", example = "BOOKED")
     visitStatus: VisitStatus?,
     @RequestParam(required = false)
-    @Parameter(description = "Visit type. Omit to include all visit types.", example = "SOCIAL_VIDEO")
+    @Parameter(description = "Visit type. Omit to include all visit types.", example = "SOCIAL")
     visitType: VisitType?,
     @RequestParam(defaultValue = "0")
     @Parameter(description = "Zero-based page number")
