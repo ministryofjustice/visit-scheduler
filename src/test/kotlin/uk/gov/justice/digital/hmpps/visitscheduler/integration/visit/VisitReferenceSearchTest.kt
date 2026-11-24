@@ -7,6 +7,7 @@ import org.junit.jupiter.params.provider.ValueSource
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_REFERENCE_SEARCH_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 
 @DisplayName("GET /visits/search/references")
@@ -59,6 +60,31 @@ class VisitReferenceSearchTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `includes both visit types by default and filters by either type when supplied`() {
+    val social = visitEntityHelper.create(sessionTemplate = sessionTemplateDefault, slotDate = startDate)
+    val video = visitEntityHelper.create(sessionTemplate = sessionTemplateDefault, slotDate = startDate, visitType = VisitType.SOCIAL_VIDEO)
+
+    search(dateRange)
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.content.length()").isEqualTo(2)
+      .jsonPath("$.content[0]").isEqualTo(video.reference)
+      .jsonPath("$.content[1]").isEqualTo(social.reference)
+
+    search("$dateRange&visitType=SOCIAL")
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.content.length()").isEqualTo(1)
+      .jsonPath("$.content[0]").isEqualTo(social.reference)
+
+    search("$dateRange&visitType=SOCIAL_VIDEO")
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.content.length()").isEqualTo(1)
+      .jsonPath("$.content[0]").isEqualTo(video.reference)
+  }
+
+  @Test
   fun `returns an empty page when there are no matches`() {
     search(dateRange)
       .expectStatus().isOk
@@ -78,6 +104,7 @@ class VisitReferenceSearchTest : IntegrationTestBase() {
       "fromDate=2026-11-01&toDate=2026-11-30&size=0",
       "fromDate=2026-11-01&toDate=2026-11-30&size=10001",
       "fromDate=2026-11-01&toDate=2026-11-30&visitStatus=INVALID",
+      "fromDate=2026-11-01&toDate=2026-11-30&visitType=INVALID",
     ],
   )
   fun `rejects invalid search parameters`(params: String) {

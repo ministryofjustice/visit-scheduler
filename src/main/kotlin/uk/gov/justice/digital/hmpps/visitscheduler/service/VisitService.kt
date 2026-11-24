@@ -31,6 +31,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OP
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.UNKNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visit.VisitorLastApprovedDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
@@ -153,6 +154,7 @@ class VisitService(
     prisonerId: String?,
     prisonCode: String?,
     visitStatus: VisitStatus?,
+    visitType: VisitType?,
     page: Int,
     size: Int,
   ): Page<String> {
@@ -163,7 +165,7 @@ class VisitService(
       throw ValidationException("page must be non-negative and size must be between 1 and $MAX_RECORDS")
     }
 
-    return visitRepository.findVisitReferences(fromDate, toDate, prisonerId, prisonCode, visitStatus, PageRequest.of(page, size))
+    return visitRepository.findVisitReferences(fromDate, toDate, prisonerId, prisonCode, visitStatus, visitType, PageRequest.of(page, size))
   }
 
   private fun findVisitsOrderByDateAndTime(visitFilter: VisitFilter, pageable: Pageable): Page<Visit> = visitRepository.findVisitsOrderByDateAndTime(

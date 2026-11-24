@@ -38,6 +38,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitPreviewDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visit.VisitorLastApprovedDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visit.VisitorLastApprovedDatesRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
@@ -410,7 +411,7 @@ class VisitController(
   @GetMapping(VISIT_REFERENCE_SEARCH_PATH)
   @Operation(
     summary = "Search for visit references",
-    description = "Returns only social visit references in the page content. The visit date range is inclusive. " +
+    description = "Returns only visit references in the page content. The visit date range is inclusive. " +
       "Optional filters are combined with AND. Results are ordered by visit start, most recent first.",
     responses = [
       ApiResponse(responseCode = "200", description = "Page of matching visit references"),
@@ -449,13 +450,16 @@ class VisitController(
     @RequestParam(required = false)
     @Parameter(description = "Visit status", example = "BOOKED")
     visitStatus: VisitStatus?,
+    @RequestParam(required = false)
+    @Parameter(description = "Visit type. Omit to include all visit types.", example = "SOCIAL_VIDEO")
+    visitType: VisitType?,
     @RequestParam(defaultValue = "0")
     @Parameter(description = "Zero-based page number")
     page: Int,
     @RequestParam(defaultValue = "20")
     @Parameter(description = "Page size, from 1 to $MAX_RECORDS")
     size: Int,
-  ): Page<String> = visitService.findVisitReferences(fromDate, toDate, prisonerId?.trim(), prisonId?.trim(), visitStatus, page, size)
+  ): Page<String> = visitService.findVisitReferences(fromDate, toDate, prisonerId?.trim(), prisonId?.trim(), visitStatus, visitType, page, size)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(GET_VISITS_BY)

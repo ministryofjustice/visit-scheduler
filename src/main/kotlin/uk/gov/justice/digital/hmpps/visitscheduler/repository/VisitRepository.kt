@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.LastApprovedDateByVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitCountStats
@@ -259,11 +260,11 @@ interface VisitRepository :
   @Query(
     """
     SELECT v.reference FROM Visit v JOIN v.sessionSlot slot
-    WHERE v.visitType = 'SOCIAL'
-      AND slot.slotDate BETWEEN :fromDate AND :toDate
+    WHERE slot.slotDate BETWEEN :fromDate AND :toDate
       AND (:prisonerId IS NULL OR v.prisonerId = :prisonerId)
       AND (:prisonCode IS NULL OR v.prison.code = :prisonCode)
       AND (:visitStatus IS NULL OR v.visitStatus = :visitStatus)
+      AND (:visitType IS NULL OR v.visitType = :visitType)
     ORDER BY slot.slotDate DESC, slot.slotStart DESC, v.id DESC
     """,
   )
@@ -273,6 +274,7 @@ interface VisitRepository :
     prisonerId: String?,
     prisonCode: String?,
     visitStatus: VisitStatus?,
+    visitType: VisitType?,
     pageable: Pageable,
   ): Page<String>
 
