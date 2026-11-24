@@ -112,8 +112,13 @@ class VisitReferenceSearchTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `requires the visit scheduler role`() {
+  fun `rejects an authenticated caller with no role`() {
     search(dateRange, roles = emptyList()).expectStatus().isForbidden
+  }
+
+  @Test
+  fun `rejects a caller with only the general visit scheduler role`() {
+    search(dateRange, roles = listOf("ROLE_VISIT_SCHEDULER")).expectStatus().isForbidden
   }
 
   @Test
@@ -125,7 +130,7 @@ class VisitReferenceSearchTest : IntegrationTestBase() {
 
   private val dateRange get() = "fromDate=$startDate&toDate=$startDate"
 
-  private fun search(params: String, roles: List<String> = listOf("ROLE_VISIT_SCHEDULER")) = webTestClient.get()
+  private fun search(params: String, roles: List<String> = listOf("ROLE_VISIT_SCHEDULER__VISIT_REFERENCE_SEARCH")) = webTestClient.get()
     .uri("$VISIT_REFERENCE_SEARCH_PATH?$params")
     .headers(setAuthorisation(roles = roles))
     .exchange()

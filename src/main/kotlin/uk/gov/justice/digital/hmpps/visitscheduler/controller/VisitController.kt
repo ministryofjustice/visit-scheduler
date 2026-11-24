@@ -407,13 +407,13 @@ class VisitController(
     size,
   )
 
-  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PreAuthorize("hasRole('VISIT_SCHEDULER__VISIT_REFERENCE_SEARCH')")
   @GetMapping(VISIT_REFERENCE_SEARCH_PATH)
   @Operation(
     summary = "Search for visit references",
     description = "Returns only visit references in the page content. The visit date range is inclusive. " +
       "Optional filters are combined with AND. Results are ordered by visit start, most recent first. " +
-      "This endpoint includes all visit types by default (on the contrary of the usual endpoints only revealing SOCIAL.",
+      "This endpoint includes all visit types by default and requires ROLE_VISIT_SCHEDULER__VISIT_REFERENCE_SEARCH.",
     responses = [
       ApiResponse(responseCode = "200", description = "Page of matching visit references"),
       ApiResponse(
