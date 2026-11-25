@@ -99,7 +99,7 @@ class PairedVisitsNotificationEventTest : NotificationTestBase() {
     assertThat(visitNotifications[0].visit.reference).isEqualTo(prisoner2Visit.reference)
     assertThat(visitNotifications[0].type).isEqualTo(VISITOR_UNAPPROVED_EVENT)
 
-    assertHelper.assertPairedVisitsNotificationEventAudit(CANCELLED_NON_ASSOCIATION_VISIT_EVENT, prisoner2Visit.reference, "Non-association's visit with reference - ${prisoner1Visit.reference} was cancelled.")
+    assertHelper.assertPairedVisitsNotificationEventAudit(eventAuditType = CANCELLED_NON_ASSOCIATION_VISIT_EVENT, visitReference = prisoner2Visit.reference, pairedVisitReference = prisoner1Visit.reference, text = "Non-association's visit with reference - ${prisoner1Visit.reference} was cancelled.")
   }
 
   /**
@@ -153,7 +153,12 @@ class PairedVisitsNotificationEventTest : NotificationTestBase() {
     assertThat(visitNotifications[0].visit.reference).isEqualTo(prisoner2Visit.reference)
     assertThat(visitNotifications[0].type).isEqualTo(VISITOR_UNAPPROVED_EVENT)
 
-    assertHelper.assertPairedVisitsNotificationEventAudit(UPDATED_NON_ASSOCIATION_VISIT_EVENT, prisoner2Visit.reference, "Non-association's visit with reference - ${prisoner1Visit.reference} was updated.")
+    assertHelper.assertPairedVisitsNotificationEventAudit(
+      eventAuditType = UPDATED_NON_ASSOCIATION_VISIT_EVENT,
+      visitReference = prisoner2Visit.reference,
+      pairedVisitReference = prisoner1Visit.reference,
+      text = "Non-association's visit with reference - ${prisoner1Visit.reference} was updated.",
+    )
   }
 
   /**
@@ -198,7 +203,12 @@ class PairedVisitsNotificationEventTest : NotificationTestBase() {
     visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(0)
 
-    assertHelper.assertPairedVisitsNotificationEventAudit(IGNORED_NON_ASSOCIATION_VISIT_NOTIFICATIONS_EVENT, prisoner2Visit.reference, "Non-association's visit with reference - ${prisoner1Visit.reference}'s notifications were ignored.")
+    assertHelper.assertPairedVisitsNotificationEventAudit(
+      eventAuditType = IGNORED_NON_ASSOCIATION_VISIT_NOTIFICATIONS_EVENT,
+      visitReference = prisoner2Visit.reference,
+      pairedVisitReference = prisoner1Visit.reference,
+      text = "Non-association's visit with reference - ${prisoner1Visit.reference}'s notifications were ignored.",
+    )
   }
 
   /**
@@ -245,9 +255,19 @@ class PairedVisitsNotificationEventTest : NotificationTestBase() {
 
     visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(0)
-    assertHelper.assertPairedVisitsNotificationEventAudit(CANCELLED_NON_ASSOCIATION_VISIT_EVENT, prisoner2Visit1.reference, "Non-association's visit with reference - ${prisoner1Visit.reference} was cancelled.")
+    assertHelper.assertPairedVisitsNotificationEventAudit(
+      eventAuditType = CANCELLED_NON_ASSOCIATION_VISIT_EVENT,
+      visitReference = prisoner2Visit1.reference,
+      pairedVisitReference = prisoner1Visit.reference,
+      text = "Non-association's visit with reference - ${prisoner1Visit.reference} was cancelled.",
+    )
 
-    assertHelper.assertPairedVisitsNotificationEventAudit(CANCELLED_NON_ASSOCIATION_VISIT_EVENT, prisoner2Visit1.reference, "Non-association's visit with reference - ${prisoner1Visit.reference} was cancelled.")
+    assertHelper.assertPairedVisitsNotificationEventAudit(
+      eventAuditType = CANCELLED_NON_ASSOCIATION_VISIT_EVENT,
+      visitReference = prisoner2Visit1.reference,
+      pairedVisitReference = prisoner1Visit.reference,
+      text = "Non-association's visit with reference - ${prisoner1Visit.reference} was cancelled.",
+    )
   }
 
   /**
@@ -304,8 +324,12 @@ class PairedVisitsNotificationEventTest : NotificationTestBase() {
     // notification 4 - booking reference for prisoner2 visit and paired with prisoner2's visit on same day
     assertNotificationEvent(visitNotifications[1], prisoner2Visit.reference, listOf(VisitNotificationEventAttributeDto(PAIRED_VISIT, prisoner1Visit2.reference)))
 
-    val eventAudit = this.eventAuditRepository.findLastEventByBookingReference(prisoner2Visit.reference)
-    assertHelper.assertPairedVisitsNotificationEventAudit(IGNORED_NON_ASSOCIATION_VISIT_NOTIFICATIONS_EVENT, prisoner2Visit.reference, "Non-association's visit with reference - ${prisoner1Visit1.reference}'s notifications were ignored.")
+    assertHelper.assertPairedVisitsNotificationEventAudit(
+      eventAuditType = IGNORED_NON_ASSOCIATION_VISIT_NOTIFICATIONS_EVENT,
+      visitReference = prisoner2Visit.reference,
+      pairedVisitReference = prisoner1Visit1.reference,
+      text = "Non-association's visit with reference - ${prisoner1Visit1.reference}'s notifications were ignored.",
+    )
   }
 
   private fun assertNotificationEvent(visitNotificationEvent: VisitNotificationEvent, expectedVisitReference: String, expectedNotificationEventAttributes: List<VisitNotificationEventAttributeDto>?) {

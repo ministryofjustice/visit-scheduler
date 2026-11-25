@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditAttributeTypes
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import java.time.LocalDate
 import java.time.LocalTime
@@ -29,6 +30,20 @@ class UpdateVisitSummaryUtil {
     }
   }
 
+  fun getUpdateVisitAuditAttributes(
+    visitDtoAfterUpdate: VisitDto,
+    visitDtoBeforeUpdate: VisitDto,
+  ): Map<EventAuditAttributeTypes, String> {
+    val updateAttributes = mutableMapOf<EventAuditAttributeTypes, String>()
+    updateAttributes.putAll(getRestrictionUpdateAttributes(visitDtoAfterUpdate.visitRestriction, visitDtoBeforeUpdate.visitRestriction))
+    updateAttributes.putAll(getVisitorUpdateAttributes(visitDtoAfterUpdate.visitors, visitDtoBeforeUpdate.visitors))
+    updateAttributes.putAll(getSessionSlotUpdateAttributes(visitDtoAfterUpdate, visitDtoBeforeUpdate))
+    updateAttributes.putAll(getAdditionalInformationUpdateAttributes(visitDtoAfterUpdate.visitorSupport?.description, visitDtoBeforeUpdate.visitorSupport?.description))
+    updateAttributes.putAll(getVisitContactUpdateAttributes(visitDtoAfterUpdate.visitContact, visitDtoBeforeUpdate.visitContact))
+
+    return updateAttributes
+  }
+
   private fun getRestrictionUpdateText(
     newVisitRestriction: VisitRestriction,
     oldVisitRestriction: VisitRestriction,
@@ -36,6 +51,18 @@ class UpdateVisitSummaryUtil {
     "Visit restriction changed from ${oldVisitRestriction.name} to ${newVisitRestriction.name}"
   } else {
     null
+  }
+
+  private fun getRestrictionUpdateAttributes(
+    newVisitRestriction: VisitRestriction,
+    oldVisitRestriction: VisitRestriction,
+  ): Map<EventAuditAttributeTypes, String> = if (newVisitRestriction != oldVisitRestriction) {
+    mapOf(
+      EventAuditAttributeTypes.VISIT_UPDATE_OLD_RESTRICTION to oldVisitRestriction.name,
+      EventAuditAttributeTypes.VISIT_UPDATE_NEW_RESTRICTION to newVisitRestriction.name,
+    )
+  } else {
+    emptyMap()
   }
 
   private fun getVisitorUpdateText(
@@ -60,6 +87,24 @@ class UpdateVisitSummaryUtil {
     }
   }
 
+  private fun getVisitorUpdateAttributes(
+    newVisitVisitors: List<VisitorDto>,
+    oldVisitVisitors: List<VisitorDto>,
+  ): Map<EventAuditAttributeTypes, String> {
+    val attributes = mutableMapOf<EventAuditAttributeTypes, String>()
+    val addedVisitorCount = (newVisitVisitors.map { it.nomisPersonId }.count { applicationVisitorId -> !(oldVisitVisitors.map { it.nomisPersonId }.contains(applicationVisitorId)) })
+    val removedVisitorCount = (oldVisitVisitors.map { it.nomisPersonId }.count { existingVisitorId -> !(newVisitVisitors.map { it.nomisPersonId }.contains(existingVisitorId)) })
+
+    if (addedVisitorCount > 0) {
+      attributes.put(EventAuditAttributeTypes.VISIT_UPDATE_VISITORS_ADDED, addedVisitorCount.toString())
+    }
+    if (removedVisitorCount > 0) {
+      attributes.put(EventAuditAttributeTypes.VISIT_UPDATE_VISITORS_REMOVED, removedVisitorCount.toString())
+    }
+
+    return attributes.toMap()
+  }
+
   private fun getSessionSlotUpdateText(
     visitDtoAfterUpdate: VisitDto,
     visitDtoBeforeUpdate: VisitDto,
@@ -79,6 +124,35 @@ class UpdateVisitSummaryUtil {
     null
   }
 
+  private fun getSessionSlotUpdateAttributes(
+    visitDtoAfterUpdate: VisitDto,
+    visitDtoBeforeUpdate: VisitDto,
+  ): Map<EventAuditAttributeTypes, String> {
+    val attributes = mutableMapOf<EventAuditAttributeTypes, String>()
+
+    if (visitDtoAfterUpdate.sessionTemplateReference != visitDtoBeforeUpdate.sessionTemplateReference ||
+      (visitDtoAfterUpdate.startTimestamp != visitDtoBeforeUpdate.startTimestamp || visitDtoAfterUpdate.endTimestamp != visitDtoBeforeUpdate.endTimestamp)
+    ) {
+      visitDtoBeforeUpdate.sessionTemplateReference?.let {
+        attributes.put(EventAuditAttributeTypes.VISIT_UPDATE_SLOT_CHANGED_OLD_SESSION_TEMPLATE_REFERENCE, it)
+      }
+      attributes[EventAuditAttributeTypes.VISIT_UPDATE_SLOT_CHANGED_OLD_START_DATE] = visitDtoBeforeUpdate.startTimestamp.toLocalDate().toString()
+      attributes[EventAuditAttributeTypes.VISIT_UPDATE_SLOT_CHANGED_OLD_START_TIME] = visitDtoBeforeUpdate.startTimestamp.toLocalTime().toString()
+      attributes[EventAuditAttributeTypes.VISIT_UPDATE_SLOT_CHANGED_OLD_END_DATE] = visitDtoBeforeUpdate.endTimestamp.toLocalDate().toString()
+      attributes[EventAuditAttributeTypes.VISIT_UPDATE_SLOT_CHANGED_OLD_END_TIME] = visitDtoBeforeUpdate.endTimestamp.toLocalTime().toString()
+
+      visitDtoAfterUpdate.sessionTemplateReference?.let {
+        attributes.put(EventAuditAttributeTypes.VISIT_UPDATE_SLOT_CHANGED_NEW_SESSION_TEMPLATE_REFERENCE, it)
+      }
+      attributes[EventAuditAttributeTypes.VISIT_UPDATE_SLOT_CHANGED_NEW_START_DATE] = visitDtoAfterUpdate.startTimestamp.toLocalDate().toString()
+      attributes[EventAuditAttributeTypes.VISIT_UPDATE_SLOT_CHANGED_NEW_START_TIME] = visitDtoAfterUpdate.startTimestamp.toLocalTime().toString()
+      attributes[EventAuditAttributeTypes.VISIT_UPDATE_SLOT_CHANGED_NEW_END_DATE] = visitDtoAfterUpdate.endTimestamp.toLocalDate().toString()
+      attributes[EventAuditAttributeTypes.VISIT_UPDATE_SLOT_CHANGED_NEW_END_TIME] = visitDtoAfterUpdate.endTimestamp.toLocalTime().toString()
+    }
+
+    return attributes.toMap()
+  }
+
   private fun getAdditionalInformationUpdateText(
     newVisitAdditionalInformation: String?,
     oldVisitAdditionalInformation: String?,
@@ -88,6 +162,15 @@ class UpdateVisitSummaryUtil {
     null
   }
 
+  private fun getAdditionalInformationUpdateAttributes(
+    newVisitAdditionalInformation: String?,
+    oldVisitAdditionalInformation: String?,
+  ): Map<EventAuditAttributeTypes, String> = if (newVisitAdditionalInformation != oldVisitAdditionalInformation) {
+    mapOf(EventAuditAttributeTypes.VISIT_UPDATE_ADDITIONAL_INFO_UPDATED to "updated")
+  } else {
+    emptyMap()
+  }
+
   private fun getVisitContactUpdateText(
     newVisitContact: ContactDto,
     oldVisitContact: ContactDto,
@@ -95,6 +178,15 @@ class UpdateVisitSummaryUtil {
     "Updated contact information"
   } else {
     null
+  }
+
+  private fun getVisitContactUpdateAttributes(
+    newVisitContact: ContactDto,
+    oldVisitContact: ContactDto,
+  ): Map<EventAuditAttributeTypes, String> = if (newVisitContact != oldVisitContact) {
+    mapOf(EventAuditAttributeTypes.VISIT_UPDATE_CONTACT_INFO_UPDATED to "updated")
+  } else {
+    emptyMap()
   }
 
   private fun getSessionDateString(sessionDate: LocalDate): String {

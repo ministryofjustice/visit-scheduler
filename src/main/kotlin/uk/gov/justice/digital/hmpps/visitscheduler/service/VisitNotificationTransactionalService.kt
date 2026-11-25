@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.IgnoreVisitNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditAttributeTypes
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventAttributeType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_RECEIVED_EVENT
@@ -141,7 +142,8 @@ class VisitNotificationTransactionalService(
 
     // finally add an event audit for the paired event
     visitRepository.findByReference(visitNotificationEvent.visit.reference)?.let { pairedVisit ->
-      visitEventAuditService.savePairedVisitChangeEventAudit(pairedVisit, pairedUnFlagEventAuditType, pairedUnFlagEventAuditText)
+      val eventAttributeTypeValueMap = mapOf(EventAuditAttributeTypes.PAIRED_VISIT_REFERENCE to changedVisitReference)
+      visitEventAuditService.savePairedVisitChangeEventAudit(pairedVisit, pairedUnFlagEventAuditType, pairedUnFlagEventAuditText, eventAttributeTypeValueMap)
     }
 
     // after deleting the visit notifications - update application insights

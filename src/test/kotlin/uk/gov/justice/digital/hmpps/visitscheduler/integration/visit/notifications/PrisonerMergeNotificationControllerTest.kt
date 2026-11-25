@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_MERGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditAttributeTypes
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
@@ -128,6 +129,10 @@ class PrisonerMergeNotificationControllerTest : NotificationTestBase() {
         expectedType = EventAuditType.PRISONER_MERGED,
         expectedApplicationMethodType = ApplicationMethodType.NOT_APPLICABLE,
         expectedText = "Prisoner merge event occurred - old prisoner number ${notificationDto.oldPrisonerNumber}, new prisoner number - ${notificationDto.newPrisonerNumber}",
+        expectedAuditAttributes = mapOf(
+          EventAuditAttributeTypes.OLD_PRISONER_NUMBER to oldPrisonerNumber,
+          EventAuditAttributeTypes.NEW_PRISONER_NUMBER to newPrisonerNumber,
+        ),
       )
     }
 
@@ -290,9 +295,16 @@ class PrisonerMergeNotificationControllerTest : NotificationTestBase() {
     expectedType: EventAuditType,
     expectedApplicationMethodType: ApplicationMethodType,
     expectedText: String,
+    expectedAuditAttributes: Map<EventAuditAttributeTypes, String>,
   ) {
     assertThat(eventAudit.type).isEqualTo(expectedType)
     assertThat(eventAudit.applicationMethodType).isEqualTo(expectedApplicationMethodType)
     assertThat(eventAudit.text).isEqualTo(expectedText)
+    assertThat(eventAudit.eventAuditAttributes).hasSize(expectedAuditAttributes.size)
+    val eventAuditAttributesMap = mutableMapOf<EventAuditAttributeTypes, String>()
+    eventAudit.eventAuditAttributes.forEach { attribute ->
+      eventAuditAttributesMap[attribute.attributeName] = attribute.attributeValue
+    }
+    assertThat(eventAuditAttributesMap).containsExactlyInAnyOrderEntriesOf(expectedAuditAttributes)
   }
 }

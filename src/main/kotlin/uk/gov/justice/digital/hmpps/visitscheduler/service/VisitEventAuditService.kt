@@ -76,6 +76,7 @@ class VisitEventAuditService(
     applicationMethodType: ApplicationMethodType,
     userType: UserType,
     text: String? = null,
+    auditAttributes: Map<EventAuditAttributeTypes, String> = emptyMap(),
   ): EventAuditDto = EventAuditDto(
     saveEventAudit(
       actionedByValue = actionedByValue,
@@ -86,7 +87,7 @@ class VisitEventAuditService(
       eventAuditType = type,
       applicationMethodType = applicationMethodType,
       text = text,
-      auditAttributes = emptyMap(),
+      auditAttributes = auditAttributes,
     ),
   )
 
@@ -162,6 +163,7 @@ class VisitEventAuditService(
     bookingRequestDto: BookingRequestDto,
     eventType: EventAuditType,
     text: String?,
+    auditAttributes: Map<EventAuditAttributeTypes, String>,
   ): EventAuditDto {
     if (bookedVisitDto.applicationReference == null) {
       // This should not happen as application reference should always be set here
@@ -180,6 +182,7 @@ class VisitEventAuditService(
       bookingRequestDto.applicationMethodType,
       userType = bookingRequestDto.userType,
       text = text,
+      auditAttributes = auditAttributes,
     )
   }
 
@@ -211,6 +214,7 @@ class VisitEventAuditService(
     visitEntity: Visit,
     type: EventAuditType,
     auditText: String,
+    eventAttributeTypeValueMap: Map<EventAuditAttributeTypes, String>,
   ): EventAudit = saveEventAudit(
     actionedByValue = null,
     userType = SYSTEM,
@@ -220,7 +224,7 @@ class VisitEventAuditService(
     eventAuditType = type,
     applicationMethodType = NOT_APPLICABLE,
     text = auditText,
-    auditAttributes = emptyMap(),
+    auditAttributes = eventAttributeTypeValueMap,
   )
 
   fun saveVisitRequestApprovedOrRejectedEventAudit(
@@ -235,6 +239,12 @@ class VisitEventAuditService(
       EventAuditType.REQUESTED_VISIT_REJECTED
     }
 
+    val auditAttributes = if (!isApproved && visitRequestRejectionReason != null) {
+      mapOf(EventAuditAttributeTypes.MANUAL_REJECTION_REASON to visitRequestRejectionReason.name)
+    } else {
+      emptyMap()
+    }
+
     return EventAuditDto(
       saveEventAudit(
         actionedByValue = actionedByValue,
@@ -245,7 +255,7 @@ class VisitEventAuditService(
         applicationMethodType = ApplicationMethodType.WEBSITE,
         text = if (isApproved) null else visitRequestRejectionReason?.name,
         eventAuditType = eventType,
-        auditAttributes = emptyMap(),
+        auditAttributes = auditAttributes,
       ),
     )
   }
@@ -268,17 +278,37 @@ class VisitEventAuditService(
     val actionedBy = createOrGetActionBy(null, SYSTEM)
     val eventAudits = mutableListOf<EventAudit>()
     visits.forEach { visit ->
-      eventAudits.add(
-        EventAudit(
-          actionedBy = actionedBy,
-          bookingReference = visit.reference,
-          applicationReference = visit.applicationReference,
-          sessionTemplateReference = visit.sessionTemplateReference,
-          type = EventAuditType.PRISONER_MERGED,
-          applicationMethodType = NOT_APPLICABLE,
-          text = "Prisoner merge event occurred - old prisoner number $oldPrisonerNumber, new prisoner number - $newPrisonerNumber",
+      var eventAudit = EventAudit(
+        actionedBy = actionedBy,
+        bookingReference = visit.reference,
+        applicationReference = visit.applicationReference,
+        sessionTemplateReference = visit.sessionTemplateReference,
+        type = EventAuditType.PRISONER_MERGED,
+        applicationMethodType = NOT_APPLICABLE,
+        text = "Prisoner merge event occurred - old prisoner number $oldPrisonerNumber, new prisoner number - $newPrisonerNumber",
+      )
+
+      eventAudit = eventAuditRepository.save(eventAudit)
+
+      eventAudit.eventAuditAttributes.add(
+        EventAuditAttribute(
+          eventAuditId = eventAudit.id,
+          attributeName = EventAuditAttributeTypes.OLD_PRISONER_NUMBER,
+          attributeValue = oldPrisonerNumber,
+          eventAudit = eventAudit,
         ),
       )
+
+      eventAudit.eventAuditAttributes.add(
+        EventAuditAttribute(
+          eventAuditId = eventAudit.id,
+          attributeName = EventAuditAttributeTypes.NEW_PRISONER_NUMBER,
+          attributeValue = newPrisonerNumber,
+          eventAudit = eventAudit,
+        ),
+      )
+
+      eventAudits.add(eventAudit)
     }
 
     eventAuditRepository.saveAll(eventAudits)

@@ -11,6 +11,14 @@ import java.time.LocalDateTime
 
 @Repository
 interface TestEventAuditRepository : JpaRepository<EventAudit, Long> {
+  @Query(
+    "select ea from EventAudit ea left join fetch ea.eventAuditAttributes",
+  )
+  override fun findAll(): List<EventAudit>
+
+  @Query(
+    "select ea from EventAudit ea left join fetch ea.eventAuditAttributes where ea.bookingReference = :bookingReference",
+  )
   fun findAllByBookingReference(bookingReference: String): List<EventAudit>
 
   @Query("SELECT e FROM EventAudit e JOIN FETCH e.actionedBy WHERE e.bookingReference = :bookingReference")
