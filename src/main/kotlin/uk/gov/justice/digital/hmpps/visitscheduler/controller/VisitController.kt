@@ -12,6 +12,7 @@ import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Pattern
 import org.hibernate.validator.constraints.Length
 import org.springframework.data.domain.Page
+import org.springframework.data.web.PagedModel
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -460,7 +461,7 @@ class VisitController(
     @RequestParam(defaultValue = "20")
     @Parameter(description = "Page size, from 1 to $MAX_RECORDS")
     size: Int,
-  ): Page<String> = visitService.findVisitReferences(fromDate, toDate, prisonerId?.trim(), prisonId?.trim(), visitStatus, visitType, page, size)
+  ): PagedModel<String> = visitService.findVisitReferences(fromDate, toDate, prisonerId?.trim(), prisonId?.trim(), visitStatus, visitType, page, size)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(GET_VISITS_BY)
