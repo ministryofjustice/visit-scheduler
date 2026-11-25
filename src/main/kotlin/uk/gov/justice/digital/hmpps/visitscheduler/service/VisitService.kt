@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
+import org.springframework.data.web.PagedModel
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
@@ -157,15 +158,14 @@ class VisitService(
     visitType: VisitType?,
     page: Int,
     size: Int,
-  ): Page<String> {
+  ): PagedModel<String> {
     if (toDate.isBefore(fromDate)) {
       throw ValidationException("toDate must be on or after fromDate")
     }
     if (page < 0 || size !in 1..MAX_RECORDS) {
       throw ValidationException("page must be non-negative and size must be between 1 and $MAX_RECORDS")
     }
-
-    return visitRepository.findVisitReferences(fromDate, toDate, prisonerId, prisonCode, visitStatus, visitType, PageRequest.of(page, size))
+    return PagedModel(visitRepository.findVisitReferences(fromDate, toDate, prisonerId, prisonCode, visitStatus, visitType, PageRequest.of(page, size)))
   }
 
   private fun findVisitsOrderByDateAndTime(visitFilter: VisitFilter, pageable: Pageable): Page<Visit> = visitRepository.findVisitsOrderByDateAndTime(
