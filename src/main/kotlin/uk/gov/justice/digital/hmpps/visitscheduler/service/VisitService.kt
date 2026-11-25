@@ -291,7 +291,7 @@ class VisitService(
       type = EventAuditType.UPDATED_VISIT,
       applicationMethodType = updateVisitFromExternalSystemDto.applicationMethodType ?: ApplicationMethodType.BY_PRISONER,
       userType = userType,
-      auditAttributes = emptyMap(),
+      auditAttributes = updateVisitSummaryUtil.getUpdateVisitAuditAttributes(visitDtoAfterUpdate = updatedVisitDto, visitDtoBeforeUpdate = existingVisitDto),
     )
 
     telemetryClientService.trackUpdateBookingEvent(existingVisitDto, updatedVisitDto, bookingEventAuditDto)
