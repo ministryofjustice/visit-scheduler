@@ -239,7 +239,7 @@ class VisitEventAuditService(
       EventAuditType.REQUESTED_VISIT_REJECTED
     }
 
-    val auditAttributes = if (visitRequestRejectionReason != null) {
+    val auditAttributes = if (!isApproved && visitRequestRejectionReason != null) {
       mapOf(EventAuditAttributeTypes.MANUAL_REJECTION_REASON to visitRequestRejectionReason.name)
     } else {
       emptyMap()

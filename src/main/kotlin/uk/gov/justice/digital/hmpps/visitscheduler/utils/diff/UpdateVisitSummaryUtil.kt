@@ -131,7 +131,7 @@ class UpdateVisitSummaryUtil {
     val attributes = mutableMapOf<EventAuditAttributeTypes, String>()
 
     if (visitDtoAfterUpdate.sessionTemplateReference != visitDtoBeforeUpdate.sessionTemplateReference ||
-      (visitDtoAfterUpdate.startTimestamp != visitDtoBeforeUpdate.startTimestamp && visitDtoAfterUpdate.endTimestamp != visitDtoBeforeUpdate.endTimestamp)
+      (visitDtoAfterUpdate.startTimestamp != visitDtoBeforeUpdate.startTimestamp || visitDtoAfterUpdate.endTimestamp != visitDtoBeforeUpdate.endTimestamp)
     ) {
       visitDtoBeforeUpdate.sessionTemplateReference?.let {
         attributes.put(EventAuditAttributeTypes.VISIT_UPDATE_SLOT_CHANGED_OLD_SESSION_TEMPLATE_REFERENCE, it)
