@@ -31,6 +31,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OP
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.UNKNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visit.VisitorLastApprovedDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
@@ -144,6 +145,27 @@ class VisitService(
 
     val page: Pageable = PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS)
     return findVisitsOrderByDateAndTime(visitFilter, pageable = page).map { visitDtoBuilder.build(it) }
+  }
+
+  @Transactional(readOnly = true)
+  fun findVisitReferences(
+    fromDate: LocalDate,
+    toDate: LocalDate,
+    prisonerId: String?,
+    prisonCode: String?,
+    visitStatus: VisitStatus?,
+    visitType: VisitType?,
+    page: Int,
+    size: Int,
+  ): Page<String> {
+    if (toDate.isBefore(fromDate)) {
+      throw ValidationException("toDate must be on or after fromDate")
+    }
+    if (page < 0 || size !in 1..MAX_RECORDS) {
+      throw ValidationException("page must be non-negative and size must be between 1 and $MAX_RECORDS")
+    }
+
+    return visitRepository.findVisitReferences(fromDate, toDate, prisonerId, prisonCode, visitStatus, visitType, PageRequest.of(page, size))
   }
 
   private fun findVisitsOrderByDateAndTime(visitFilter: VisitFilter, pageable: Pageable): Page<Visit> = visitRepository.findVisitsOrderByDateAndTime(
