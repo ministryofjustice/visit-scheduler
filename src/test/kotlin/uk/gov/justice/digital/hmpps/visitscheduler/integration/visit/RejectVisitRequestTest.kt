@@ -21,10 +21,14 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_REQUESTS_REJECT_VISIT_BY_REFERENCE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApproveRejectionVisitRequestBodyDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditAttributeTypes
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRequestRejectionReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
@@ -108,6 +112,20 @@ class RejectVisitRequestTest : IntegrationTestBase() {
     )
 
     assertVisitRequestRejectedDomainEvent(visitPrimary.reference)
+
+    val eventAuditManualRejection = eventAuditRepository.findAllByBookingReference(visitPrimary.reference).firstOrNull { it.type == EventAuditType.REQUESTED_VISIT_REJECTED }
+    assertThat(eventAuditManualRejection).isNotNull
+
+    assertAuditEvent(
+      eventAudit = EventAuditDto(eventAuditManualRejection!!),
+      expectedUserName = rejectVisitRequestBodyDto.actionedBy,
+      expectedUserType = UserType.STAFF,
+      expectedAuditType = EventAuditType.REQUESTED_VISIT_REJECTED,
+      expectedApplicationMethodType = ApplicationMethodType.WEBSITE,
+      expectedSessionTemplateReference = rejectedVisit.sessionTemplateReference!!,
+      expectedText = VisitRequestRejectionReason.NO_VISIT_ALLOWANCE.name,
+      expectedAuditAttributes = mapOf(EventAuditAttributeTypes.MANUAL_REJECTION_REASON to VisitRequestRejectionReason.NO_VISIT_ALLOWANCE.name),
+    )
   }
 
   @Test
@@ -139,6 +157,20 @@ class RejectVisitRequestTest : IntegrationTestBase() {
       )
       assertThat(it.single { event -> event.type == EventAuditType.REQUESTED_VISIT_REJECTED }.text).isNull()
     }
+
+    val eventAuditManualRejection = eventAuditRepository.findAllByBookingReference(visitPrimary.reference).firstOrNull { it.type == EventAuditType.REQUESTED_VISIT_REJECTED }
+    assertThat(eventAuditManualRejection).isNotNull
+
+    assertAuditEvent(
+      eventAudit = EventAuditDto(eventAuditManualRejection!!),
+      expectedUserName = rejectVisitRequestBodyDto.actionedBy,
+      expectedUserType = UserType.STAFF,
+      expectedAuditType = EventAuditType.REQUESTED_VISIT_REJECTED,
+      expectedApplicationMethodType = ApplicationMethodType.WEBSITE,
+      expectedSessionTemplateReference = rejectedVisit.sessionTemplateReference!!,
+      expectedText = null,
+      expectedAuditAttributes = emptyMap(),
+    )
 
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(0)

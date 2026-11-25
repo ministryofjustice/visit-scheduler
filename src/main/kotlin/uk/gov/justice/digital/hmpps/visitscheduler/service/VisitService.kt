@@ -209,7 +209,7 @@ class VisitService(
       EventAuditType.BOOKED_VISIT
     }
 
-    val bookingEventAuditDto = visitEventAuditService.updateVisitApplicationAndSaveEvent(bookedVisitDto, bookingRequestDto, eventType, text = null)
+    val bookingEventAuditDto = visitEventAuditService.updateVisitApplicationAndSaveEvent(bookedVisitDto, bookingRequestDto, eventType, text = null, auditAttributes = emptyMap())
 
     telemetryClientService.trackBookingEvent(bookedVisitDto, bookingEventAuditDto, bookingRequestDto)
 
@@ -238,6 +238,7 @@ class VisitService(
       type = EventAuditType.BOOKED_VISIT,
       applicationMethodType = createVisitFromExternalSystemDto.applicationMethodType ?: ApplicationMethodType.BY_PRISONER,
       userType = userType,
+      auditAttributes = emptyMap(),
     )
 
     telemetryClientService.trackBookingEvent(bookedVisitDto, bookingEventAuditDto, bookingRequestDto = null)
@@ -268,6 +269,7 @@ class VisitService(
       type = EventAuditType.UPDATED_VISIT,
       applicationMethodType = updateVisitFromExternalSystemDto.applicationMethodType ?: ApplicationMethodType.BY_PRISONER,
       userType = userType,
+      auditAttributes = emptyMap(),
     )
 
     telemetryClientService.trackUpdateBookingEvent(existingVisitDto, updatedVisitDto, bookingEventAuditDto)
@@ -293,7 +295,13 @@ class VisitService(
     val updateText = visitBeforeUpdate?.let {
       updateVisitSummaryUtil.getDiff(visitDtoAfterUpdate = visitAfterUpdate, visitDtoBeforeUpdate = visitBeforeUpdate)
     }
-    val updatedEventAuditDto = visitEventAuditService.updateVisitApplicationAndSaveEvent(visitAfterUpdate, bookingRequestDto, EventAuditType.UPDATED_VISIT, text = updateText)
+    val updateAttributes = if (visitBeforeUpdate != null) {
+      updateVisitSummaryUtil.getUpdateVisitAuditAttributes(visitDtoAfterUpdate = visitAfterUpdate, visitDtoBeforeUpdate = visitBeforeUpdate)
+    } else {
+      emptyMap()
+    }
+
+    val updatedEventAuditDto = visitEventAuditService.updateVisitApplicationAndSaveEvent(visitAfterUpdate, bookingRequestDto, EventAuditType.UPDATED_VISIT, text = updateText, auditAttributes = updateAttributes)
 
     telemetryClientService.trackUpdateBookingEvent(visitBeforeUpdate, visitAfterUpdate, updatedEventAuditDto, bookingRequestDto)
 

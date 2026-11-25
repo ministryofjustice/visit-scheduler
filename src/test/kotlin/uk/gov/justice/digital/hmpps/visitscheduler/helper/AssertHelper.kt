@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.PHONE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_NO_SLOT_CAPACITY
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditAttributeTypes
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents
@@ -176,7 +177,12 @@ class AssertHelper {
     assertThat(eventAuditList[0].actionedBy.userType).isEqualTo(STAFF)
   }
 
-  fun assertPairedVisitsNotificationEventAudit(eventAuditType: EventAuditType, visitReference: String, text: String) {
+  fun assertPairedVisitsNotificationEventAudit(
+    eventAuditType: EventAuditType,
+    visitReference: String,
+    pairedVisitReference: String,
+    text: String,
+  ) {
     val eventAudit = this.eventAuditRepository.findLastEventByBookingReference(visitReference)
 
     assertThat(eventAudit.type).isEqualTo(eventAuditType)
@@ -187,6 +193,9 @@ class AssertHelper {
     assertThat(eventAudit.applicationReference).isNull()
     assertThat(eventAudit.actionedBy.id).isNotNull()
     assertThat(eventAudit.text).isEqualTo(text)
+    assertThat(eventAudit.eventAuditAttributes).hasSize(1)
+    assertThat(eventAudit.eventAuditAttributes[0].attributeName).isEqualTo(EventAuditAttributeTypes.PAIRED_VISIT_REFERENCE)
+    assertThat(eventAudit.eventAuditAttributes[0].attributeValue).isEqualTo(pairedVisitReference)
   }
 
   fun assertCancelVisitTelemetryClientEvents(
