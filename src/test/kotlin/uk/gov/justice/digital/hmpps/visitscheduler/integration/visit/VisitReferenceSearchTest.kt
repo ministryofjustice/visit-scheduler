@@ -24,11 +24,12 @@ class VisitReferenceSearchTest : IntegrationTestBase() {
     search("$dates&size=2")
       .expectStatus().isOk
       .expectBody()
-      .jsonPath("$.content.length()").isEqualTo(2)
+      .jsonPath("$.page.number").isEqualTo(0)
+      .jsonPath("$.page.size").isEqualTo(2)
+      .jsonPath("$.page.totalElements").isEqualTo(3)
+      .jsonPath("$.page.totalPages").isEqualTo(2)
       .jsonPath("$.content[0]").isEqualTo(third.reference)
       .jsonPath("$.content[1]").isEqualTo(second.reference)
-      .jsonPath("$.totalElements").isEqualTo(3)
-      .jsonPath("$.totalPages").isEqualTo(2)
 
     search("$dates&page=1&size=2")
       .expectStatus().isOk
@@ -90,7 +91,8 @@ class VisitReferenceSearchTest : IntegrationTestBase() {
       .expectStatus().isOk
       .expectBody()
       .jsonPath("$.content").isEmpty
-      .jsonPath("$.totalElements").isEqualTo(0)
+      .jsonPath("$.page.totalElements").isEqualTo(0)
+      .jsonPath("$.page.totalPages").isEqualTo(0)
   }
 
   @ParameterizedTest
