@@ -17,7 +17,6 @@ import tools.jackson.databind.ObjectMapper
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ApplicationValidationErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.PHONE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_NO_SLOT_CAPACITY
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditAttributeTypes
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType

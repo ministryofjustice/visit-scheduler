@@ -324,7 +324,6 @@ class PairedVisitsNotificationEventTest : NotificationTestBase() {
     // notification 4 - booking reference for prisoner2 visit and paired with prisoner2's visit on same day
     assertNotificationEvent(visitNotifications[1], prisoner2Visit.reference, listOf(VisitNotificationEventAttributeDto(PAIRED_VISIT, prisoner1Visit2.reference)))
 
-    val eventAudit = this.eventAuditRepository.findLastEventByBookingReference(prisoner2Visit.reference)
     assertHelper.assertPairedVisitsNotificationEventAudit(
       eventAuditType = IGNORED_NON_ASSOCIATION_VISIT_NOTIFICATIONS_EVENT,
       visitReference = prisoner2Visit.reference,
