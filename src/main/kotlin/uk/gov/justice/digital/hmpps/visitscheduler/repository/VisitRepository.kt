@@ -239,8 +239,9 @@ interface VisitRepository :
   ): List<Visit>
 
   @Query(
-    "SELECT v FROM Visit v WHERE " +
-      "v.visitType = 'SOCIAL' AND " +
+    "SELECT v FROM Visit v " +
+      "LEFT JOIN FETCH v.attendanceDetails " +
+      "WHERE v.visitType = 'SOCIAL' AND " +
       "(:#{#prisonerId} is null OR v.prisonerId = :prisonerId)  AND  " +
       "(:#{#prisonCode} is null OR v.prison.code = :prisonCode) AND " +
       "(:#{#visitStatusList} is null OR v.visitStatus in :visitStatusList) AND " +

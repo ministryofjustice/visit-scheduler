@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpHeaders
 import org.springframework.jdbc.core.JdbcTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CONTROLLER_SEARCH_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus.COMPLETED_NORMALLY
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSearchSubject.PRISONER
@@ -106,6 +107,40 @@ class VisitAttendanceTest : IntegrationTestBase() {
       .jsonPath("$.visitSubStatus").isEqualTo("NOT_ATTENDED")
       .jsonPath("$.outcomeStatus").doesNotHaveJsonPath()
       .jsonPath("$.attendanceDetails").doesNotHaveJsonPath()
+  }
+
+  @Test
+  fun `Visit search pages include visits with and without attendance details`() {
+    val booked = visitEntityHelper.create(
+      sessionTemplate = sessionTemplateDefault,
+      visitContact = ContactDto("Jane Doe", null, null),
+    )
+    val completed = visitEntityHelper.create(
+      visitStatus = COMPLETED,
+      visitSubStatus = VisitSubStatus.ATTENDED,
+      prisonerId = booked.prisonerId,
+      sessionTemplate = sessionTemplateDefault,
+      visitContact = ContactDto("Jane Doe", null, null),
+    )
+    completed.attendanceDetails = VisitAttendanceDetails(
+      visitId = completed.id,
+      visit = completed,
+      searchSubject = PRISONER,
+    )
+    visitEntityHelper.save(completed)
+
+    val search = "$VISIT_CONTROLLER_SEARCH_PATH?prisonerId=${booked.prisonerId}&visitStatus=BOOKED,COMPLETED&size=1"
+    webTestClient.get().uri("$search&page=0").headers(roleVisitSchedulerHttpHeaders).exchange()
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.totalElements").isEqualTo(2)
+      .jsonPath("$.content[0].reference").isEqualTo(completed.reference)
+      .jsonPath("$.content[0].attendanceDetails.search.subject").isEqualTo("PRISONER")
+    webTestClient.get().uri("$search&page=1").headers(roleVisitSchedulerHttpHeaders).exchange()
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.content[0].reference").isEqualTo(booked.reference)
+      .jsonPath("$.content[0].attendanceDetails").doesNotHaveJsonPath()
   }
 
   @Test
