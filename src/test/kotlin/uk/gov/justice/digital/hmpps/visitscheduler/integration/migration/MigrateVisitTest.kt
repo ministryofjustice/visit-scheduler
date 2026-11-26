@@ -32,11 +32,13 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.COMPLETED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestApplicationRepository
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -47,6 +49,9 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
 
   @Autowired
   private lateinit var visitDtoBuilder: VisitDtoBuilder
+
+  @Autowired
+  private lateinit var testApplicationRepository: TestApplicationRepository
 
   @BeforeEach
   internal fun setUp() {
@@ -548,6 +553,20 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
 
     // And
     verify(telemetryClient, times(1)).trackEvent(eq("visit-migrated"), any(), isNull())
+  }
+
+  @Test
+  fun `Migrate visit rejects COMPLETED without persisting a visit or application`() {
+    val request = createMigrateVisitRequestDto(visitStatus = COMPLETED)
+    createSessionTemplateFrom(request)
+
+    callMigrateVisit(roleVisitSchedulerHttpHeaders, request)
+      .expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.developerMessage").isEqualTo("COMPLETED visits cannot be migrated through this endpoint")
+
+    assertThat(visitRepository.count()).isZero()
+    assertThat(testApplicationRepository.count()).isZero()
   }
 
   @Test
