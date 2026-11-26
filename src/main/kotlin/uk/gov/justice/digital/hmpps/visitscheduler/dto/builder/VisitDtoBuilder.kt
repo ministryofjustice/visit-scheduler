@@ -4,6 +4,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitAttendanceDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitExternalSystemDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitNoteDto
@@ -43,6 +44,7 @@ class VisitDtoBuilder {
       sessionTemplateReference = visitEntity.sessionSlot.sessionTemplateReference,
       userType = visitEntity.userType,
       visitExternalSystemDetails = visitEntity.visitExternalSystemDetails?.let { VisitExternalSystemDetailsDto(it) },
+      attendanceDetails = visitEntity.attendanceDetails?.let { VisitAttendanceDetailsDto(it) },
     )
   }
 

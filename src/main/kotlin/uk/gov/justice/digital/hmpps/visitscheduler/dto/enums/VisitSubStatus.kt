@@ -12,4 +12,7 @@ enum class VisitSubStatus(
   AUTO_REJECTED("Auto_Rejected"),
   WITHDRAWN("Withdrawn"),
   CANCELLED("Cancelled"),
+
+  ATTENDED("Attended"),
+  NOT_ATTENDED("Not_Attended"),
 }

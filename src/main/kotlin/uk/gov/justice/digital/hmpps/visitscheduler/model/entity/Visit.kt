@@ -113,6 +113,9 @@ class Visit(
   @OneToOne(fetch = FetchType.LAZY, cascade = [ALL], mappedBy = "visit", orphanRemoval = true)
   var visitExternalSystemDetails: VisitExternalSystemDetails? = null
 
+  @OneToOne(fetch = FetchType.LAZY, cascade = [ALL], mappedBy = "visit", orphanRemoval = true)
+  var attendanceDetails: VisitAttendanceDetails? = null
+
   @PostPersist
   fun createReference() {
     if (reference.isBlank()) {

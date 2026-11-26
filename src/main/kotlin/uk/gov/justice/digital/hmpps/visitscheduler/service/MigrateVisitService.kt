@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.COMPLETED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitSubStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.notify.LanguagePreference
@@ -83,6 +84,12 @@ class MigrateVisitService(
   private lateinit var capitaliseUtil: CapitaliseUtil
 
   fun migrateVisit(migrateVisitRequest: MigrateVisitRequestDto): String {
+    val visitSubStatus = when (migrateVisitRequest.visitStatus) {
+      BOOKED -> VisitSubStatus.AUTO_APPROVED
+      CANCELLED -> VisitSubStatus.CANCELLED
+      COMPLETED -> throw ValidationException("COMPLETED visits cannot be migrated through this endpoint")
+    }
+
     if (migrateVisitRequest.visitType != VisitType.SOCIAL) {
       throw ValidationException("SOCIAL_VIDEO visits can only be created through the external-system endpoint")
     }
@@ -116,7 +123,7 @@ class MigrateVisitService(
     }
 
     val applicationEntity: Application = createApplication(migrateVisitRequest, prison, sessionSlot, migrateVisitRequest.actionedBy!!)
-    val visitEntity = createVisit(migrateVisitRequest, prison, visitRoom, sessionSlot, outcomeStatus)
+    val visitEntity = createVisit(migrateVisitRequest, prison, visitRoom, sessionSlot, outcomeStatus, visitSubStatus)
     visitEntity.addApplication(applicationEntity)
 
     sendMigratedTrackEvent(visitEntity, TelemetryVisitEvents.VISIT_MIGRATED_EVENT)
@@ -202,12 +209,8 @@ class MigrateVisitService(
     visitRoom: String,
     sessionSlot: SessionSlot,
     outcomeStatus: OutcomeStatus,
+    visitSubStatus: VisitSubStatus,
   ): Visit {
-    val visitSubStatus = when (migrateVisitRequest.visitStatus) {
-      BOOKED -> VisitSubStatus.AUTO_APPROVED
-      CANCELLED -> VisitSubStatus.CANCELLED
-    }
-
     val visitEntity = visitRepository.saveAndFlush(
       Visit(
         prisonerId = migrateVisitRequest.prisonerId,
